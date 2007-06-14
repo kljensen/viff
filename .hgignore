@@ -3,3 +3,4 @@ syntax: glob
 *~
 *-[1-9].ini
 *.bak
+*.orig
