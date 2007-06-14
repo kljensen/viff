@@ -7,7 +7,6 @@ elements whereas GF256Element models elements from the GF(2^8) field.
 # TODO: add unit tests
 
 from gmpy import mpz
-from warnings import warn
 
 class FieldElement:
     """Common base class for elements."""
@@ -28,10 +27,7 @@ class IntegerFieldElement(FieldElement):
 
     modulus = None
 
-    def __init__(self, value, not_used=None):
-        if not_used is not None:
-            warn("Don't pass the modulo to the constructor, assign to "
-                 "IntegerFieldElement.modulus instead.", DeprecationWarning)
+    def __init__(self, value):
         if self.modulus is None:
             raise ValueError("You must assign a value to "
                              "IntegerFieldElement.modulus")
@@ -110,8 +106,8 @@ class IntegerFieldElement(FieldElement):
         return IntegerFieldElement(inverse)
 
     def __div__(self, other):
-        assert isinstance(other, IntegerFieldElement), "Must supply an IntegerFieldElement, " \
-            "you gave a %s" % type(other)
+        assert isinstance(other, IntegerFieldElement), \
+            "Must supply an IntegerFieldElement, you gave a %s" % type(other)
         return self * ~other
 
     def __rdiv__(self, other):
