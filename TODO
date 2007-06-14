@@ -1,0 +1,21 @@
+
+TODO list for pysmpc. Roughly ordered in order of priority.
+
+* Seeds from command line, program uses random seed (and prints it!)
+  otherwise.
+
+* Rewrite runtime to facilitate unit tests.
+
+* Benchmark Python vs. GMPY on different key sizes.
+
+* Profile and optimize.
+
+* Rework the pc facility.
+
+* Add global debug option which will fix random seeds instead of
+   having them hardwired to zero.
+
+* Have an option which will make things run more or less sequentially.
+
+* Provide a small install-daimi.sh shell script which will set up
+  PYTHONPATH corrrectly for people on DAIMI?

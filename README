@@ -1,0 +1,46 @@
+
+PySMPC: Python Secure Multi-Party Computation
+=============================================
+
+This is a general framework for doing secure multi-party computations.
+
+
+Configuring the Environment
+---------------------------
+
+To run pysmpc you must configure your Python path correctly by setting
+the PYTHONPATH environment variable. In Bash shells this is done by
+
+  % export PYTHONPATH=/path/to/pysmpc/checkout
+
+If you have checked out pysmpc to ~/pysmpc, then do
+
+  % export PYTHONPATH=~/pysmpc
+
+Requirements:
+
+  * Twisted:   http://twistedmatrix.com/
+  * ConfigObj: http://voidspace.org.uk/python/configobj.html
+  * GMPY:      http://gmpy.sourceforge.net/
+
+On DAIMI these modules have been installed into
+
+  ~mg/opt/lib/python2.4/site-packages
+
+and so one can simply access them by appending that directory to
+PYTHONPATH, e.g., putting these three lines
+
+  PYTHONPATH=/path/to/pysmpc/checkout
+  PYTHONPATH=$PYTHONPATH:~mg/opt/lib/python2.4/site-packages
+  export PYTHONPATH
+
+into a new file called python.rc under ~/.daimi-setup/bash/bashrc.d/.
+
+
+Example Applications
+--------------------
+
+The apps directory contains a number of example apps. They require
+player configuration files to be generated in advance, use
+pysmpc/generate_config.py for that. Then execute three players,
+starting with player 3, then 2 and finally 1.
