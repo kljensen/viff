@@ -1,6 +1,6 @@
 
 """
-Modeleling of fields. The IntegerFieldElement models integer field
+Modeling of fields. The IntegerFieldElement models integer field
 elements whereas GF256Element models elements from the GF(2^8) field.
 """
 
@@ -92,7 +92,7 @@ class IntegerFieldElement(FieldElement):
     def __invert__(self):
         def extended_gcd(a, b):
             """
-            The extended Euclidian algorithm.
+            The extended Euclidean algorithm.
             """
             x = 0
             lastx = 1
@@ -238,7 +238,8 @@ _exp_table = {}
 _inv_table = {}
 
 def _generate_tables():
-    """Generate tables with logarithms, exponentials and inverses.
+    """
+    Generate tables with logarithms, exponentials and inverses.
 
     Code adapted from http://www.samiam.org/galois.html.
     """
