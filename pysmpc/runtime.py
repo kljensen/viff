@@ -247,11 +247,14 @@ class Runtime:
         # List of Deferreds yielding protocols
         self.protocols = dict((id, Deferred()) for id, p in players.iteritems())
         self.protocols[self.id].callback("Unused")
+        # Now try connecting...
+        self.connect()
 
+    def connect(self):
         # Resolving the hostname into an IP address is a blocking
         # operation, but this is acceptable since it is only done when
         # the runtime is initialized.
-        ip_addresses = [socket.gethostbyname(p.host) for p in players.values()]
+        ip_addresses = [socket.gethostbyname(p.host) for p in self.players.values()]
 
         mapping = dict()
         for ip, (id, p) in zip(ip_addresses, self.players.iteritems()):
@@ -267,7 +270,7 @@ class Runtime:
                 bind_port = self.players[self.id].port + id
                 println("Will connect to %s from port %d", player, bind_port)
                 reactor.connectTCP(player.host, player.port, factory,
-                                   bindAddress=(players[self.id].host,
+                                   bindAddress=(self.players[self.id].host,
                                                 bind_port))
 
         println("Initialized Runtime with %d players, threshold %d",
