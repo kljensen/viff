@@ -10,7 +10,10 @@ TODO list for pysmpc. Roughly ordered in order of priority.
    Initial tests seems to indicate that the network is the
    bottle-neck, but this should be systematically checked.
 
-* Profile and optimize.
+* Profile and optimize
+   We need to see if the time is spend on network latency or in the
+   CPU. If the latter is the case, then we could consider writing the
+   inner loop in C for more speed.
 
 * Remove program counters
    An idea for this was suggested by Thomas Mølhave: label each share
