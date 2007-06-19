@@ -6,9 +6,6 @@ TODO list for pysmpc. Roughly ordered in order of priority.
    program start. Allow the user to specify another seed on the
    command line.
 
-* Rewrite runtime to facilitate unit tests
-   Deterministic unit test that does not use the network.
-
 * Benchmark Python vs. GMPY on different key sizes
    Initial tests seems to indicate that the network is the
    bottle-neck, but this should be systematically checked.
