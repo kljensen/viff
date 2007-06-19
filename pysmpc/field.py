@@ -4,8 +4,6 @@ Modeling of fields. The IntegerFieldElement models integer field
 elements whereas GF256Element models elements from the GF(2^8) field.
 """
 
-# TODO: add unit tests
-
 from gmpy import mpz
 
 class FieldElement:
@@ -35,6 +33,7 @@ class IntegerFieldElement(FieldElement):
         self.value = value % self.modulus
 
     def __add__(self, other):
+        """Addition."""
         if isinstance(other, IntegerFieldElement):
             other = other.value
         return IntegerFieldElement(self.value + other)
@@ -70,6 +69,7 @@ class IntegerFieldElement(FieldElement):
         return IntegerFieldElement(other - self.value)
 
     def __mul__(self, other):
+        """Multiplication."""
         if isinstance(other, IntegerFieldElement):
             other = other.value
         return IntegerFieldElement(self.value * other)
@@ -80,12 +80,21 @@ class IntegerFieldElement(FieldElement):
     # constructed objects.
 
     def __pow__(self, exponent):
+        """Exponentiation."""
         return IntegerFieldElement(pow(self.value, exponent, self.modulus))
 
     def __neg__(self):
+        """Negation."""
         return IntegerFieldElement(-self.value)
 
     def __invert__(self):
+        """Inversion.
+
+        Note that zero cannot be inverted.
+        """
+        if self.value == 0:
+            raise ZeroDivisionError, "Cannot invert zero"
+
         def extended_gcd(a, b):
             """
             The extended Euclidean algorithm.
@@ -106,11 +115,13 @@ class IntegerFieldElement(FieldElement):
         return IntegerFieldElement(inverse)
 
     def __div__(self, other):
+        """Division."""
         assert isinstance(other, IntegerFieldElement), \
             "Must supply an IntegerFieldElement, you gave a %s" % type(other)
         return self * ~other
 
     def __rdiv__(self, other):
+        """Division (reflected argument version)."""
         return IntegerFieldElement(other) / self
 
     def sqrt(self):
@@ -128,6 +139,7 @@ class IntegerFieldElement(FieldElement):
 
         Note that {28} = {-3} which is a proper square-root of {9}.
         """
+        # TODO: what if (self.modulus+1) cannot be divided by four?
         root = pow(self.value, (self.modulus+1)//4, self.modulus)
         return IntegerFieldElement(root)
 
@@ -144,11 +156,17 @@ class IntegerFieldElement(FieldElement):
 
     def __repr__(self):
         return "{%s}" % self.value
+        #return "IntegerFieldElement(%d)" % self.value
 
-#    def __repr__(self):
-#        return "IntegerFieldElement(%d)" % (self.value)
+    def __str__(self):
+        """Informal string representation.
+
+        This is simply the value enclosed in curly braces.
+        """
+        return "{%s}" % self.value
 
     def __eq__(self, other):
+        """Equality test."""
         if isinstance(other, IntegerFieldElement):
             other = other.value
         return self.value == other
@@ -330,10 +348,19 @@ class GF256Element(FieldElement):
     def __rdiv__(self, other):
         return GF256Element(other) / self
 
+    def __neg__(self):
+        return self
+
     def __invert__(self):
+        if self.value == 0:
+            raise ZeroDivisionError, "Cannot invert zero"
         return GF256Element(_inv_table[self.value])
 
     def __repr__(self):
+        return "[%d]" % self.value
+        #return "GF256Element(%d)" % self.value
+
+    def __str__(self):
         return "[%d]" % self.value
 
     def __eq__(self, other):
