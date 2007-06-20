@@ -1,5 +1,3 @@
-#!/usr/bin/python
-
 # Copyright 2007 Martin Geisler
 #
 # This file is part of PySMPC
@@ -794,7 +792,3 @@ class Runtime:
 
         return defer.succeed(share)
 
-
-if __name__ == "__main__":
-    import doctest
-    doctest.testmod()
