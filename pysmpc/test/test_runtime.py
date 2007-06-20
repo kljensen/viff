@@ -12,7 +12,7 @@ from twisted.protocols.loopback import loopbackAsync
 
 from pysmpc.field import IntegerFieldElement, GF256Element
 from pysmpc.runtime import Runtime, ShareExchanger
-from pysmpc.generate_config import load_config
+from pysmpc.generate_config import generate_configs, load_config
 from pysmpc import shamir
 
 
@@ -54,20 +54,19 @@ class ShareTestCase(TestCase):
         IntegerFieldElement.modulus = 1031
 
     def test_share(self):
+        configs = generate_configs(3, 1)
         connections = {}
         runtimes = {}
 
-        # TODO: relative path and/or fix generate_config so that we
-        # can call it from here.
-        id, players = load_config("/home/mg/src/pysmpc/player-3.ini")
+        id, players = load_config(configs[3])
         rt3 = LoopbackRuntime(players, id, 1, connections, runtimes)
         runtimes[3] = rt3
 
-        id, players = load_config("/home/mg/src/pysmpc/player-2.ini")
+        id, players = load_config(configs[2])
         rt2 = LoopbackRuntime(players, id, 1, connections, runtimes)
         runtimes[2] = rt2
 
-        id, players = load_config("/home/mg/src/pysmpc/player-1.ini")
+        id, players = load_config(configs[1])
         rt1 = LoopbackRuntime(players, id, 1, connections, runtimes)
         runtimes[1] = rt1
 

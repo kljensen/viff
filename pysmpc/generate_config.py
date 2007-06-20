@@ -37,8 +37,11 @@ def d_unstr(str):
     return int(str[7:])
 
 
-def load_config(file):
-    config = ConfigObj(file, file_error=True)
+def load_config(source):
+    if isinstance(source, ConfigObj):
+        config = source
+    else:
+        config = ConfigObj(source, file_error=True)
     players = {}
 
     for player in config:
@@ -70,55 +73,28 @@ def load_config(file):
     return owner_id, players
 
 
-def generate_config_files():
-    # TODO: make this function usable programmatically.
-
-    parser = OptionParser()
-
-    parser.add_option("-p", "--prefix", default="player",
-                      help="output filename prefix")
-    parser.add_option("-v", "--verbose", dest="verbose", action="store_true",
-                      help="be verbose")
-    parser.add_option("-q", "--quiet", dest="verbose", action="store_false",
-                      help="be quiet")
-
-    parser.add_option("-n", "--players", dest="n", type="int",
-                      help="number of players")
-    parser.add_option("-t", "--threshold", dest="t", type="int",
-                      help="threshold (it must hold that t < n/2)")
-
-    parser.set_defaults(verbose=True,
-                        n=3, t=1,
-                        file='players.ini')
-
-    (options, args) = parser.parse_args()
-
-    if not options.t < options.n/2:
-        parser.error("must have t < n/2")
-
-    if len(args) != options.n:
-        parser.error("must supply a hostname:port argument for each player")
-
-    players = frozenset(range(1, options.n+1))
-    max_unqualified_subsets = generate_subsets(players, options.n-options.t)
+def generate_configs(n, t, addresses=None, prefix=None):
+    players = frozenset(range(1, n+1))
+    max_unqualified_subsets = generate_subsets(players, n-t)
     # TODO: rand = SystemRandom()
     rand = Random(0)
 
     def generate_key():
         return str(rand.randint(0, 1000))
 
-
     configs = {}
     for p in players:
         config = ConfigObj(indent_type='  ')
-        config.filename = "%s-%d.ini" % (options.prefix, p)
+        config.filename = "%s-%d.ini" % (prefix, p)
         config.initial_comment = ['PySMPC config file for Player %d' % p]
         config.final_comment = ['', 'End of config', '']
-
         configs[p] = config
 
     for p in players:
-        host, port = args[p-1].split(':', 1)
+        if addresses is None:
+            host, port = 'no-host', 0
+        else:
+            host, port = addresses[p-1]
 
         for player, config in configs.iteritems():
             config[p_str(p)] = dict(host=host, port=port)
@@ -150,9 +126,34 @@ def generate_config_files():
 
                 configs[player][p]['prss_dealer_keys'][d][s] = key
 
-    for config in configs.itervalues():
-        config.write()
+    return configs
 
 
 if __name__ == "__main__":
-    generate_config_files()
+    parser = OptionParser()
+    parser.add_option("-p", "--prefix",
+                      help="output filename prefix")
+    parser.add_option("-v", "--verbose", dest="verbose", action="store_true",
+                      help="be verbose")
+    parser.add_option("-q", "--quiet", dest="verbose", action="store_false",
+                      help="be quiet")
+    parser.add_option("-n", "--players", dest="n", type="int",
+                      help="number of players")
+    parser.add_option("-t", "--threshold", dest="t", type="int",
+                      help="threshold (it must hold that t < n/2)")
+
+    parser.set_defaults(verbose=True, n=3, t=1, prefix='players')
+
+    (options, args) = parser.parse_args()
+
+    if not options.t < options.n/2:
+        parser.error("must have t < n/2")
+
+    if len(args) != options.n:
+        parser.error("must supply a hostname:port argument for each player")
+
+    addresses = [arg.split(':', 1) for arg in args]
+    configs = generate_configs(options.n, options.t, addresses, options.prefix)
+
+    for config in configs.itervalues():
+        config.write()
