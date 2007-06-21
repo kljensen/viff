@@ -1,4 +1,3 @@
-
 # Copyright 2007 Martin Geisler
 #
 # This file is part of PySMPC
@@ -64,8 +63,8 @@ class IntegerFieldElementTestCase(TestCase):
         self._test_binary_operator(operator.mul, 5, 8, 9)
 
     def test_div(self):
-        self.assertRaises(ZeroDivisionError,
-                          lambda: IntegerFieldElement(10) / IntegerFieldElement(0))
+        self.assertRaises(ZeroDivisionError, operator.div,
+                          IntegerFieldElement(10), IntegerFieldElement(0))
 
         self.assertEquals(IntegerFieldElement(10) / IntegerFieldElement(10),
                           IntegerFieldElement(1))
@@ -112,16 +111,17 @@ class IntegerFieldElementTestCase(TestCase):
 # TODO: figure out how to use the todo attribute correctly. Update
 # this if and when __repr__ return the proper string
 #    def test_repr(self):
-#        self.assertEquals(repr(IntegerFieldElement(0)), "IntegerFieldElement(0)")
-#        self.assertEquals(repr(IntegerFieldElement(1)), "IntegerFieldElement(1)")
-#        self.assertEquals(repr(IntegerFieldElement(10)), "IntegerFieldElement(10)")
-#    test_repr.todo = (FailTest, "'{0}' != 'IntegerFieldElement(0)'")
+#        self.assertEquals(repr(IntegerFieldElement(0)),
+#                          "IntegerFieldElement(0)")
+#        self.assertEquals(repr(IntegerFieldElement(1)),
+#                          "IntegerFieldElement(1)")
+#        self.assertEquals(repr(IntegerFieldElement(10)),
+#                          "IntegerFieldElement(10)")
 
     def test_str(self):
         self.assertEquals(str(IntegerFieldElement(0)), "{0}")
         self.assertEquals(str(IntegerFieldElement(1)), "{1}")
         self.assertEquals(str(IntegerFieldElement(10)), "{10}")
-
 
 
 class GF256ElementTestCase(TestCase):
@@ -197,4 +197,3 @@ class GF256ElementTestCase(TestCase):
         self.assertEquals(str(GF256Element(0)), "[0]")
         self.assertEquals(str(GF256Element(1)), "[1]")
         self.assertEquals(str(GF256Element(10)), "[10]")
-

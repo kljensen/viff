@@ -64,7 +64,8 @@ class LoopbackRuntime(Runtime):
                     # and the other player is the server.
                     client = protocol
                     server = self.runtimes[id].real_protocols[self.id]
-                    self.connections[(self.id, id)] = loopbackAsync(server, client)
+                    key = (self.id, id)
+                    self.connections[key] = loopbackAsync(server, client)
 
 class ShareTestCase(TestCase):
 
@@ -97,8 +98,8 @@ class ShareTestCase(TestCase):
         a3, b3, c3 = rt3.shamir_share(c)
 
         def check_recombine(shares, value):
-            shares = [(IntegerFieldElement(i+1), s) for i,s in enumerate(shares)]
-            self.assertEquals(shamir.recombine(shares), value)
+            ids = map(IntegerFieldElement, range(1, len(shares) + 1))
+            self.assertEquals(shamir.recombine(zip(ids, shares)), value)
 
         a_shares = gatherResults([a1, a2, a3])
         a_shares.addCallback(check_recombine, a)
