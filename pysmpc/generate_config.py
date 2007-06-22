@@ -27,9 +27,8 @@ from optparse import OptionParser
 from random import Random, SystemRandom
 from pprint import pprint
 
-from prss import generate_subsets
-
-from runtime import Player
+from pysmpc.prss import generate_subsets
+from pysmpc.runtime import Player
 
 
 def s_str(subset):

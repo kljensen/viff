@@ -42,8 +42,9 @@ import socket
 # TODO: use SystemRandom instead (runs out of entropy?)
 from random import Random
 
-import shamir, prss
-from field import FieldElement, IntegerFieldElement, GF256Element
+from pysmpc import shamir
+from pysmpc.prss import prss
+from pysmpc.field import FieldElement, IntegerFieldElement, GF256Element
 
 from twisted.internet import defer, reactor
 from twisted.internet.defer import Deferred, DeferredList, gatherResults
@@ -459,7 +460,7 @@ class Runtime:
             prns[subset] = prf.randint(0, modulus-1)
 
         #println(prns)
-        return prss.prss(len(self.players), self.threshold, id, prns, field)
+        return prss(len(self.players), self.threshold, id, prns, field)
 
     def _share_known(self, element, field, program_counter):
         # The shares for which we have all the keys.

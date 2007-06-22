@@ -19,7 +19,7 @@
 
 import operator
 
-import shamir
+from pysmpc import shamir
 
 
 def prss(n, t, j, prns, field):
