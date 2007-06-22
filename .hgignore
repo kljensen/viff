@@ -5,3 +5,4 @@ syntax: glob
 *.bak
 *.orig
 _trial_temp
+profile.data
