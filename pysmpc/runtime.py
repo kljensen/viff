@@ -345,7 +345,7 @@ class Runtime:
     #@trace
     def open(self, sharing, threshold=None, program_counter=None):
         """
-        Open a share. Returns nothing, then share given is mutated.
+        Open a share. Returns nothing, the share given is mutated.
 
         Communication cost: n broadcasts.
         """
