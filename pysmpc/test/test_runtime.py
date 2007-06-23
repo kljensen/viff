@@ -134,6 +134,9 @@ class RuntimeTestCase(TestCase):
         b.addCallback(self.assertEquals, input)
         c.addCallback(self.assertEquals, input)
 
+        # TODO: This looks funny because shamir.share return a list of
+        # (player-id, share) tuples. Maybe it should be changed so
+        # that it simply returns a list of shares?
         a.callback(shares[0][1])
         c.callback(shares[2][1])
 
