@@ -23,7 +23,7 @@ import twisted.internet.base
 twisted.internet.base.DelayedCall.debug = True
 
 from twisted.internet import reactor
-from twisted.internet.defer import gatherResults
+from twisted.internet.defer import Deferred, succeed, gatherResults
 from twisted.internet.protocol import Protocol
 from twisted.trial.unittest import TestCase
 from twisted.protocols.loopback import loopbackAsync
@@ -66,6 +66,170 @@ class LoopbackRuntime(Runtime):
                     server = self.runtimes[id].real_protocols[self.id]
                     key = (self.id, id)
                     self.connections[key] = loopbackAsync(server, client)
+
+
+# TODO: find a way to specify the program for each player once and run
+# it several times.
+
+class RuntimeTestCase(TestCase):
+    
+    def setUp(self):
+        IntegerFieldElement.modulus = 1031
+
+        configs = generate_configs(3, 1)
+        connections = {}
+        runtimes = {}
+
+        id, players = load_config(configs[3])
+        self.rt3 = LoopbackRuntime(players, id, 1, connections, runtimes)
+        runtimes[3] = self.rt3
+
+        id, players = load_config(configs[2])
+        self.rt2 = LoopbackRuntime(players, id, 1, connections, runtimes)
+        runtimes[2] = self.rt2
+
+        id, players = load_config(configs[1])
+        self.rt1 = LoopbackRuntime(players, id, 1, connections, runtimes)
+        runtimes[1] = self.rt1
+
+    def test_open(self):
+        """
+        Shamir share a value and open it.
+        """
+        
+        input = IntegerFieldElement(42)
+        a, b, c = shamir.share(input, 1, 3)
+
+        a = succeed(a[1])
+        b = succeed(b[1])
+        c = succeed(c[1])
+
+        self.rt1.open(a)
+        self.rt2.open(b)
+        self.rt3.open(c)
+
+        a.addCallback(self.assertEquals, input)
+        b.addCallback(self.assertEquals, input)
+        c.addCallback(self.assertEquals, input)
+
+        return gatherResults([a, b, c])
+
+    def test_open_deferred(self):
+        """
+        Shamir share a value and open it, but let some of the shares
+        arrive "late" to the runtimes.
+        """
+        input = IntegerFieldElement(42)
+        shares = shamir.share(input, 1, 3)
+        
+        a = Deferred()
+        b = succeed(shares[1][1])
+        c = Deferred()
+
+        self.rt1.open(a)
+        self.rt2.open(b)
+        self.rt3.open(c)
+
+        a.addCallback(self.assertEquals, input)
+        b.addCallback(self.assertEquals, input)
+        c.addCallback(self.assertEquals, input)
+
+        a.callback(shares[0][1])
+        c.callback(shares[2][1])
+
+        return gatherResults([a, b, c])
+
+    # TODO: factor out common code from test_add* and test_sub*.
+
+    def test_add(self):
+        share_a = Deferred()
+        share_b = succeed(IntegerFieldElement(200))
+        share_c = self.rt1.add(share_a, share_b)
+
+        share_c.addCallback(self.assertEquals, IntegerFieldElement(300))
+        share_a.callback(IntegerFieldElement(100))
+        return share_c
+
+    def test_add_coerce(self):
+        share_a = Deferred()
+        share_b = IntegerFieldElement(200)
+        share_c = self.rt1.add(share_a, share_b)
+
+        share_c.addCallback(self.assertEquals, IntegerFieldElement(300))
+        share_a.callback(IntegerFieldElement(100))
+        return share_c
+
+    def test_sub(self):
+        share_a = succeed(IntegerFieldElement(200))
+        share_b = Deferred()
+        share_c = self.rt1.sub(share_a, share_b)
+
+        share_c.addCallback(self.assertEquals, IntegerFieldElement(100))
+        share_b.callback(IntegerFieldElement(100))
+        return share_c
+
+    def test_sub_coerce(self):
+        share_a = IntegerFieldElement(200)
+        share_b = Deferred()
+        share_c = self.rt1.sub(share_a, share_b)
+
+        share_c.addCallback(self.assertEquals, IntegerFieldElement(100))
+        share_b.callback(IntegerFieldElement(100))
+        return share_c
+
+    def test_mul(self):
+        shares_a = shamir.share(IntegerFieldElement(20), 1, 3)
+        shares_b = shamir.share(IntegerFieldElement(30), 1, 3)
+
+        res1 = self.rt1.mul(shares_a[0][1], shares_b[0][1])
+        res2 = self.rt1.mul(shares_a[1][1], shares_b[1][1])
+        res3 = self.rt1.mul(shares_a[2][1], shares_b[2][1])
+
+        def recombine(shares):
+            ids = map(IntegerFieldElement, range(1, len(shares) + 1))
+            return shamir.recombine(zip(ids, shares))
+
+        res = gatherResults([res1, res2, res3])
+        res.addCallback(recombine)
+        res.addCallback(self.assertEquals, IntegerFieldElement(600))
+
+    def test_xor(self):
+
+        def first(sequence):
+            return [x[0] for x in sequence]
+
+        def second(sequence):
+            return [x[1] for x in sequence]
+
+        for a, b in (0,0), (0,1), (1,0), (1,1):
+            int_a = IntegerFieldElement(a)
+            int_b = IntegerFieldElement(b)
+
+            bit_a = GF256Element(a)
+            bit_b = GF256Element(b)
+        
+            int_a_shares = second(shamir.share(int_a, 1, 3))
+            int_b_shares = second(shamir.share(int_b, 1, 3))
+
+            bit_a_shares = second(shamir.share(bit_a, 1, 3))
+            bit_b_shares = second(shamir.share(bit_b, 1, 3))
+
+            int_res1 = self.rt1.xor_int(int_a_shares[0], int_b_shares[0])
+            int_res2 = self.rt2.xor_int(int_a_shares[1], int_b_shares[1])
+            int_res3 = self.rt3.xor_int(int_a_shares[2], int_b_shares[2])
+
+            for res in int_res1, int_res2, int_res3:
+                res.addCallback(self.assertEquals, IntegerFieldElement(a ^ b))
+
+            bit_res1 = self.rt1.xor_bit(bit_a_shares[0], bit_b_shares[0])
+            bit_res2 = self.rt2.xor_bit(bit_a_shares[1], bit_b_shares[1])
+            bit_res3 = self.rt3.xor_bit(bit_a_shares[2], bit_b_shares[2])
+
+            for res in bit_res1, bit_res2, bit_res3:
+                res.addCallback(self.assertEquals, IntegerFieldElement(a ^ b))
+
+            return gatherResults([int_res1, int_res2, int_res3,
+                                  bit_res1, bit_res2, bit_res3])
 
 class ShareTestCase(TestCase):
 
@@ -139,3 +303,56 @@ class ShareTestCase(TestCase):
         return wait
 
     test_share.timeout = 1
+
+
+
+
+class ComparisonTestCase(TestCase):
+
+    skip = "Not yet reliable."
+
+    def test_compare(self):
+        IntegerFieldElement.modulus = 2039
+
+        configs = generate_configs(3, 1)
+        connections = {}
+        runtimes = {}
+
+        id, players = load_config(configs[3])
+        rt3 = LoopbackRuntime(players, id, 1, connections, runtimes)
+        runtimes[3] = rt3
+
+        id, players = load_config(configs[2])
+        rt2 = LoopbackRuntime(players, id, 1, connections, runtimes)
+        runtimes[2] = rt2
+
+        id, players = load_config(configs[1])
+        rt1 = LoopbackRuntime(players, id, 1, connections, runtimes)
+        runtimes[1] = rt1
+
+        a = IntegerFieldElement(10)
+        b = IntegerFieldElement(20)
+        c = IntegerFieldElement(30)
+
+        a1, b1, c1 = rt1.shamir_share(a)
+        a2, b2, c2 = rt2.shamir_share(b)
+        a3, b3, c3 = rt3.shamir_share(c)
+
+        res_ab1 = rt1.greater_than(a1, b1)
+        res_ab2 = rt2.greater_than(a2, b2)
+        res_ab3 = rt3.greater_than(a3, b3)
+
+        rt1.open(res_ab1)
+        rt2.open(res_ab2)
+        rt3.open(res_ab3)
+
+        res_ab1.addCallback(self.assertEquals, GF256Element(a >= b))
+        #res_ab2.addCallback(self.assertEquals, GF256Element(a >= b))
+        #res_ab3.addCallback(self.assertEquals, GF256Element(a >= b))
+
+        #wait = gatherResults([a1, a2, a3, b1, b2, b3, c1, c2, c3,
+        #                      res_ab1, res_ab2, res_ab3])
+        return gatherResults([a1, a2, a3, b1, b2, b3, c1, c2, c3,
+                              res_ab1, res_ab2, res_ab3])
+
+    
