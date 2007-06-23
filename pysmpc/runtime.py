@@ -390,7 +390,7 @@ class Runtime:
         return result
 
     #@trace
-    def subtract(self, share_a, share_b):
+    def sub(self, share_a, share_b):
         """
         Subtraction of shares.
 
@@ -687,8 +687,8 @@ class Runtime:
 
         # Preprocessing done
 
-        a = self.add(self.subtract(share_a, share_b), 2**l)
-        T = self.add(self.subtract(2**t, int_b), a)
+        a = self.add(self.sub(share_a, share_b), 2**l)
+        T = self.add(self.sub(2**t, int_b), a)
         program_counter = self.inc_pc(program_counter)
         self.open(T, program_counter=program_counter)
 
