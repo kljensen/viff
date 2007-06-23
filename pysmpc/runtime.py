@@ -441,6 +441,11 @@ class Runtime:
         
         Communication cost: 1 multiplication.
         """
+        if not isinstance(share_a, Deferred):
+            share_a = defer.succeed(share_a)
+        if not isinstance(share_b, Deferred):
+            share_b = defer.succeed(share_b)
+
         program_counter = self.init_pc(program_counter)
         share_c = self.mul(share_a, share_b, self.sub_pc(program_counter))
         result = gatherResults([share_a, share_b, share_c])
