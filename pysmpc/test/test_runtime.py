@@ -204,6 +204,7 @@ class RuntimeTestCase(TestCase):
         def second(sequence):
             return [x[1] for x in sequence]
 
+        results = []
         for a, b in (0,0), (0,1), (1,0), (1,1):
             int_a = IntegerFieldElement(a)
             int_b = IntegerFieldElement(b)
@@ -231,8 +232,11 @@ class RuntimeTestCase(TestCase):
             for res in bit_res1, bit_res2, bit_res3:
                 res.addCallback(self.assertEquals, IntegerFieldElement(a ^ b))
 
-            return gatherResults([int_res1, int_res2, int_res3,
-                                  bit_res1, bit_res2, bit_res3])
+            results.extend([int_res1, int_res2, int_res3,
+                            bit_res1, bit_res2, bit_res3])
+                
+        return gatherResults(results)
+
 
 class ShareTestCase(TestCase):
 
