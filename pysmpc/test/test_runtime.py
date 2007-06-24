@@ -237,6 +237,58 @@ class RuntimeTestCase(TestCase):
                 
         return gatherResults(results)
 
+
+    def test_shamir_share(self):
+        a = IntegerFieldElement(10)
+        b = IntegerFieldElement(20)
+        c = IntegerFieldElement(30)
+
+        a1, b1, c1 = self.rt1.shamir_share(a)
+        a2, b2, c2 = self.rt2.shamir_share(b)
+        a3, b3, c3 = self.rt3.shamir_share(c)
+
+        def check_recombine(shares, value):
+            ids = map(IntegerFieldElement, range(1, len(shares) + 1))
+            self.assertEquals(shamir.recombine(zip(ids, shares)), value)
+
+        a_shares = gatherResults([a1, a2, a3])
+        a_shares.addCallback(check_recombine, a)
+
+        b_shares = gatherResults([b1, b2, b3])
+        b_shares.addCallback(check_recombine, b)
+
+        c_shares = gatherResults([c1, c2, c3])
+        c_shares.addCallback(check_recombine, c)
+
+        self.rt1.open(a1)
+        self.rt2.open(a2)
+        self.rt3.open(a3)
+
+        self.rt1.open(b1)
+        self.rt2.open(b2)
+        self.rt3.open(b3)
+
+        self.rt1.open(c1)
+        self.rt2.open(c2)
+        self.rt3.open(c3)
+
+        a1.addCallback(self.assertEquals, a)
+        a2.addCallback(self.assertEquals, a)
+        a3.addCallback(self.assertEquals, a)
+
+        b1.addCallback(self.assertEquals, b)
+        b2.addCallback(self.assertEquals, b)
+        b3.addCallback(self.assertEquals, b)
+
+        c1.addCallback(self.assertEquals, c)
+        c2.addCallback(self.assertEquals, c)
+        c3.addCallback(self.assertEquals, c)
+
+        # TODO: ought to wait on connections.values() as well
+        wait = gatherResults([a1, a2, a3, b1, b2, b3, c1, c2, c3])
+        return wait
+    test_shamir_share.timeout = 1
+
     def test_share_int(self):
         a = IntegerFieldElement(10)
         b = IntegerFieldElement(20)
@@ -348,87 +400,7 @@ class RuntimeTestCase(TestCase):
         
         return gatherResults([res_0, res_1])
 
-class ShareTestCase(TestCase):
-
-    def setUp(self):
-        IntegerFieldElement.modulus = 1031
-
-    def test_share(self):
-        configs = generate_configs(3, 1)
-        connections = {}
-        runtimes = {}
-
-        id, players = load_config(configs[3])
-        rt3 = LoopbackRuntime(players, id, 1, connections, runtimes)
-        runtimes[3] = rt3
-
-        id, players = load_config(configs[2])
-        rt2 = LoopbackRuntime(players, id, 1, connections, runtimes)
-        runtimes[2] = rt2
-
-        id, players = load_config(configs[1])
-        rt1 = LoopbackRuntime(players, id, 1, connections, runtimes)
-        runtimes[1] = rt1
-
-        a = IntegerFieldElement(10)
-        b = IntegerFieldElement(20)
-        c = IntegerFieldElement(30)
-
-        a1, b1, c1 = rt1.shamir_share(a)
-        a2, b2, c2 = rt2.shamir_share(b)
-        a3, b3, c3 = rt3.shamir_share(c)
-
-        def check_recombine(shares, value):
-            ids = map(IntegerFieldElement, range(1, len(shares) + 1))
-            self.assertEquals(shamir.recombine(zip(ids, shares)), value)
-
-        a_shares = gatherResults([a1, a2, a3])
-        a_shares.addCallback(check_recombine, a)
-
-        b_shares = gatherResults([b1, b2, b3])
-        b_shares.addCallback(check_recombine, b)
-
-        c_shares = gatherResults([c1, c2, c3])
-        c_shares.addCallback(check_recombine, c)
-
-        rt1.open(a1)
-        rt2.open(a2)
-        rt3.open(a3)
-
-        rt1.open(b1)
-        rt2.open(b2)
-        rt3.open(b3)
-
-        rt1.open(c1)
-        rt2.open(c2)
-        rt3.open(c3)
-
-        a1.addCallback(self.assertEquals, a)
-        a2.addCallback(self.assertEquals, a)
-        a3.addCallback(self.assertEquals, a)
-
-        b1.addCallback(self.assertEquals, b)
-        b2.addCallback(self.assertEquals, b)
-        b3.addCallback(self.assertEquals, b)
-
-        c1.addCallback(self.assertEquals, c)
-        c2.addCallback(self.assertEquals, c)
-        c3.addCallback(self.assertEquals, c)
-
-        # TODO: ought to wait on connections.values() as well
-        wait = gatherResults([a1, a2, a3, b1, b2, b3, c1, c2, c3])
-        return wait
-
-    test_share.timeout = 1
-
-
-
-
-class ComparisonTestCase(TestCase):
-
-    skip = "Not yet reliable."
-
-    def test_compare(self):
+    def test_greater_than(self):
         IntegerFieldElement.modulus = 2039
 
         configs = generate_configs(3, 1)
@@ -467,9 +439,6 @@ class ComparisonTestCase(TestCase):
         #res_ab2.addCallback(self.assertEquals, GF256Element(a >= b))
         #res_ab3.addCallback(self.assertEquals, GF256Element(a >= b))
 
-        #wait = gatherResults([a1, a2, a3, b1, b2, b3, c1, c2, c3,
-        #                      res_ab1, res_ab2, res_ab3])
         return gatherResults([a1, a2, a3, b1, b2, b3, c1, c2, c3,
                               res_ab1, res_ab2, res_ab3])
-
-    
+    test_greater_than.skip = "Not yet reliable."
