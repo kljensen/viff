@@ -74,7 +74,7 @@ class LoopbackRuntime(Runtime):
 class RuntimeTestCase(TestCase):
     
     def setUp(self):
-        IntegerFieldElement.modulus = 1031
+        IntegerFieldElement.modulus = 2039
 
         configs = generate_configs(3, 1)
         connections = {}
@@ -197,10 +197,6 @@ class RuntimeTestCase(TestCase):
         res.addCallback(self.assertEquals, IntegerFieldElement(600))
 
     def test_xor(self):
-
-        def first(sequence):
-            return [x[0] for x in sequence]
-
         def second(sequence):
             return [x[1] for x in sequence]
 
@@ -234,9 +230,8 @@ class RuntimeTestCase(TestCase):
 
             results.extend([int_res1, int_res2, int_res3,
                             bit_res1, bit_res2, bit_res3])
-                
-        return gatherResults(results)
 
+        return gatherResults(results)
 
     def test_shamir_share(self):
         a = IntegerFieldElement(10)
@@ -285,9 +280,7 @@ class RuntimeTestCase(TestCase):
         c3.addCallback(self.assertEquals, c)
 
         # TODO: ought to wait on connections.values() as well
-        wait = gatherResults([a1, a2, a3, b1, b2, b3, c1, c2, c3])
-        return wait
-    test_shamir_share.timeout = 1
+        return gatherResults([a1, a2, a3, b1, b2, b3, c1, c2, c3])
 
     def test_share_int(self):
         a = IntegerFieldElement(10)
@@ -397,43 +390,24 @@ class RuntimeTestCase(TestCase):
 
         res_1 = gatherResults([res_1_1, res_1_2, res_1_3])
         res_1.addCallback(check_recombine, GF256Element(1))
-        
         return gatherResults([res_0, res_1])
 
     def test_greater_than(self):
-        IntegerFieldElement.modulus = 2039
-
-        configs = generate_configs(3, 1)
-        connections = {}
-        runtimes = {}
-
-        id, players = load_config(configs[3])
-        rt3 = LoopbackRuntime(players, id, 1, connections, runtimes)
-        runtimes[3] = rt3
-
-        id, players = load_config(configs[2])
-        rt2 = LoopbackRuntime(players, id, 1, connections, runtimes)
-        runtimes[2] = rt2
-
-        id, players = load_config(configs[1])
-        rt1 = LoopbackRuntime(players, id, 1, connections, runtimes)
-        runtimes[1] = rt1
-
         a = IntegerFieldElement(10)
         b = IntegerFieldElement(20)
         c = IntegerFieldElement(30)
 
-        a1, b1, c1 = rt1.shamir_share(a)
-        a2, b2, c2 = rt2.shamir_share(b)
-        a3, b3, c3 = rt3.shamir_share(c)
+        a1, b1, c1 = self.rt1.shamir_share(a)
+        a2, b2, c2 = self.rt2.shamir_share(b)
+        a3, b3, c3 = self.rt3.shamir_share(c)
 
-        res_ab1 = rt1.greater_than(a1, b1)
-        res_ab2 = rt2.greater_than(a2, b2)
-        res_ab3 = rt3.greater_than(a3, b3)
+        res_ab1 = self.rt1.greater_than(a1, b1)
+        res_ab2 = self.rt2.greater_than(a2, b2)
+        res_ab3 = self.rt3.greater_than(a3, b3)
 
-        rt1.open(res_ab1)
-        rt2.open(res_ab2)
-        rt3.open(res_ab3)
+        self.rt1.open(res_ab1)
+        self.rt2.open(res_ab2)
+        self.rt3.open(res_ab3)
 
         res_ab1.addCallback(self.assertEquals, GF256Element(False))
         res_ab2.addCallback(self.assertEquals, GF256Element(False))
