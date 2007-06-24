@@ -237,6 +237,116 @@ class RuntimeTestCase(TestCase):
                 
         return gatherResults(results)
 
+    def test_share_int(self):
+        a = IntegerFieldElement(10)
+        b = IntegerFieldElement(20)
+        c = IntegerFieldElement(30)
+
+        a1, b1, c1 = self.rt1.share_int(a)
+        a2, b2, c2 = self.rt2.share_int(b)
+        a3, b3, c3 = self.rt3.share_int(c)
+        
+        def check_recombine(shares, value):
+            ids = map(IntegerFieldElement, range(1, len(shares) + 1))
+            self.assertEquals(shamir.recombine(zip(ids, shares)), value)
+
+        a_shares = gatherResults([a1, a2, a3])
+        a_shares.addCallback(check_recombine, a)
+
+        b_shares = gatherResults([b1, b2, b3])
+        b_shares.addCallback(check_recombine, b)
+
+        c_shares = gatherResults([c1, c2, c3])
+        c_shares.addCallback(check_recombine, c)
+        return gatherResults([a_shares, b_shares, c_shares])
+
+    def test_share_bit(self):
+        a = GF256Element(10)
+        b = GF256Element(20)
+        c = GF256Element(30)
+
+        a1, b1, c1 = self.rt1.share_bit(a)
+        a2, b2, c2 = self.rt2.share_bit(b)
+        a3, b3, c3 = self.rt3.share_bit(c)
+        
+        def check_recombine(shares, value):
+            ids = map(GF256Element, range(1, len(shares) + 1))
+            self.assertEquals(shamir.recombine(zip(ids, shares)), value)
+
+        a_shares = gatherResults([a1, a2, a3])
+        a_shares.addCallback(check_recombine, a)
+
+        b_shares = gatherResults([b1, b2, b3])
+        b_shares.addCallback(check_recombine, b)
+
+        c_shares = gatherResults([c1, c2, c3])
+        c_shares.addCallback(check_recombine, c)
+        return gatherResults([a_shares, b_shares, c_shares])
+
+    def test_share_random_bit(self):
+        """
+        Tests the sharing of a 0/1 GF256Element.
+        """
+        # TODO: how can we test if a sharing of a random GF256Element
+        # is correct? Any three shares are "correct", so it seems that
+        # the only thing we can test is that the three players gets
+        # their shares. But this is also tested with the test below.
+        a1 = self.rt1.share_random_bit(binary=True)
+        a2 = self.rt2.share_random_bit(binary=True) 
+        a3 = self.rt3.share_random_bit(binary=True)
+        
+        def check_binary_recombine(shares):
+            ids = map(GF256Element, range(1, len(shares) + 1))
+            self.assertIn(shamir.recombine(zip(ids, shares)),
+                          [GF256Element(0), GF256Element(1)])
+
+        a_shares = gatherResults([a1, a2, a3])
+        a_shares.addCallback(check_binary_recombine)
+        return a_shares
+
+    def test_share_random_int(self):
+        a1 = self.rt1.share_random_int(binary=True)
+        a2 = self.rt2.share_random_int(binary=True) 
+        a3 = self.rt3.share_random_int(binary=True)
+        
+        def check_binary_recombine(shares):
+            ids = map(IntegerFieldElement, range(1, len(shares) + 1))
+            self.assertIn(shamir.recombine(zip(ids, shares)),
+                          [IntegerFieldElement(0), IntegerFieldElement(1)])
+
+        a_shares = gatherResults([a1, a2, a3])
+        a_shares.addCallback(check_binary_recombine)
+        return a_shares
+
+    # TODO: make a test when the method is implemented in runtime.
+    #def test_bit_to_int(self):
+
+    def test_int_to_bit(self):
+        def second(sequence):
+            return [x[1] for x in sequence]
+
+        int_0_shares = second(shamir.share(IntegerFieldElement(0), 1, 3))
+        int_1_shares = second(shamir.share(IntegerFieldElement(1), 1, 3))
+
+        res_0_1 = self.rt1.int_to_bit(int_0_shares[0])
+        res_0_2 = self.rt2.int_to_bit(int_0_shares[1])
+        res_0_3 = self.rt3.int_to_bit(int_0_shares[2])
+
+        res_1_1 = self.rt1.int_to_bit(int_1_shares[0])
+        res_1_2 = self.rt2.int_to_bit(int_1_shares[1])
+        res_1_3 = self.rt3.int_to_bit(int_1_shares[2])
+
+        def check_recombine(shares, value):
+            ids = map(GF256Element, range(1, len(shares) + 1))
+            self.assertEquals(shamir.recombine(zip(ids, shares)), value)
+        
+        res_0 = gatherResults([res_0_1, res_0_2, res_0_3])
+        res_0.addCallback(check_recombine, GF256Element(0))
+
+        res_1 = gatherResults([res_1_1, res_1_2, res_1_3])
+        res_1.addCallback(check_recombine, GF256Element(1))
+        
+        return gatherResults([res_0, res_1])
 
 class ShareTestCase(TestCase):
 
