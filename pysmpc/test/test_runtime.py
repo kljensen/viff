@@ -435,10 +435,9 @@ class RuntimeTestCase(TestCase):
         rt2.open(res_ab2)
         rt3.open(res_ab3)
 
-        res_ab1.addCallback(self.assertEquals, GF256Element(a >= b))
-        #res_ab2.addCallback(self.assertEquals, GF256Element(a >= b))
-        #res_ab3.addCallback(self.assertEquals, GF256Element(a >= b))
+        res_ab1.addCallback(self.assertEquals, GF256Element(False))
+        res_ab2.addCallback(self.assertEquals, GF256Element(False))
+        res_ab3.addCallback(self.assertEquals, GF256Element(False))
 
         return gatherResults([a1, a2, a3, b1, b2, b3, c1, c2, c3,
                               res_ab1, res_ab2, res_ab3])
-    test_greater_than.skip = "Not yet reliable."
