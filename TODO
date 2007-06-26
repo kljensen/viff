@@ -58,8 +58,5 @@ TODO list for pysmpc. Roughly ordered in order of priority.
 * Provide a small install-daimi.sh shell script which will set up
    PYTHONPATH corrrectly for people on DAIMI?
 
-* Add copyright and license information to files
-   As a starting point I intend to release pysmpc under the GNU GPL.
-
 * Merge GMPIntegerFieldElement and IntegerFieldElement?
    The two classes are almost identical and should be merged.
