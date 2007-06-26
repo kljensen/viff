@@ -415,3 +415,54 @@ class RuntimeTestCase(TestCase):
 
         return gatherResults([a1, a2, a3, b1, b2, b3, c1, c2, c3,
                               res_ab1, res_ab2, res_ab3])
+
+
+class StressTestCase(TestCase):
+
+    def setUp(self):
+        # 65 bit prime
+        IntegerFieldElement.modulus = 30916444023318367583
+
+        configs = generate_configs(3, 1)
+        connections = {}
+        runtimes = {}
+
+        id, players = load_config(configs[3])
+        self.rt3 = LoopbackRuntime(players, id, 1, connections, runtimes)
+        runtimes[3] = self.rt3
+
+        id, players = load_config(configs[2])
+        self.rt2 = LoopbackRuntime(players, id, 1, connections, runtimes)
+        runtimes[2] = self.rt2
+
+        id, players = load_config(configs[1])
+        self.rt1 = LoopbackRuntime(players, id, 1, connections, runtimes)
+        runtimes[1] = self.rt1
+
+    def test_mul(self):
+        a, b, c = 17, 42, 111
+
+        a1, b1, c1 = self.rt1.shamir_share(IntegerFieldElement(a))
+        a2, b2, c2 = self.rt2.shamir_share(IntegerFieldElement(b))
+        a3, b3, c3 = self.rt3.shamir_share(IntegerFieldElement(c))
+
+        x, y, z = 1, 1, 1
+
+        count = 500
+
+        for i in range(count):
+            x = self.rt1.mul(a1, self.rt1.mul(b1, self.rt1.mul(c1, x)))
+            y = self.rt2.mul(a2, self.rt2.mul(b2, self.rt2.mul(c2, y)))
+            z = self.rt3.mul(a3, self.rt3.mul(b3, self.rt3.mul(c3, z)))
+        
+        self.rt1.open(x)
+        self.rt2.open(y)
+        self.rt3.open(z)
+
+        result = IntegerFieldElement((a * b * c)**count)
+
+        x.addCallback(self.assertEquals, result)
+        y.addCallback(self.assertEquals, result)
+        z.addCallback(self.assertEquals, result)
+
+        return gatherResults([x,y,z])
