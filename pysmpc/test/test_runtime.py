@@ -439,7 +439,7 @@ class StressTestCase(TestCase):
         self.rt1 = LoopbackRuntime(players, id, 1, connections, runtimes)
         runtimes[1] = self.rt1
 
-    def test_mul(self):
+    def _stress_test(self, count):
         a, b, c = 17, 42, 111
 
         a1, b1, c1 = self.rt1.shamir_share(IntegerFieldElement(a))
@@ -447,8 +447,6 @@ class StressTestCase(TestCase):
         a3, b3, c3 = self.rt3.shamir_share(IntegerFieldElement(c))
 
         x, y, z = 1, 1, 1
-
-        count = 500
 
         for i in range(count):
             x = self.rt1.mul(a1, self.rt1.mul(b1, self.rt1.mul(c1, x)))
@@ -466,3 +464,17 @@ class StressTestCase(TestCase):
         z.addCallback(self.assertEquals, result)
 
         return gatherResults([x,y,z])
+
+    def test_mul_100(self):
+        return self._stress_test(100)
+
+    def test_mul_200(self):
+        return self._stress_test(200)
+
+    def test_mul_400(self):
+        return self._stress_test(400)
+
+    def test_mul_800(self):
+        return self._stress_test(800)
+
+       
