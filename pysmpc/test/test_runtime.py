@@ -22,6 +22,8 @@
 import twisted.internet.base
 twisted.internet.base.DelayedCall.debug = True
 
+from random import Random
+
 from twisted.internet import reactor
 from twisted.internet.defer import Deferred, succeed, gatherResults
 from twisted.internet.protocol import Protocol
@@ -477,4 +479,70 @@ class StressTestCase(TestCase):
     def test_mul_800(self):
         return self._mul_stress_test(800)
 
-       
+
+    def _compare_stress_test(self, count):
+        """
+        This test repeatedly shares and compares random inputs.
+        """
+
+        # TODO: this must match the l used in Runtime.greater_than.
+        l = 7
+
+        # Random generators
+        rand = {1: Random(count + 1), 2: Random(count + 2), 3: Random(count + 3)}
+        results = []
+
+        for i in range(count):
+            a = rand[1].randint(0, pow(2, l))
+            b = rand[2].randint(0, pow(2, l))
+            c = rand[3].randint(0, pow(2, l))
+
+            a1, b1, c1 = self.rt1.shamir_share(IntegerFieldElement(a))
+            a2, b2, c2 = self.rt2.shamir_share(IntegerFieldElement(b))
+            a3, b3, c3 = self.rt3.shamir_share(IntegerFieldElement(c))
+
+            # Do all six possible comparisons between a, b, and c
+            results1 = [self.rt1.greater_than(a1, b1), self.rt1.greater_than(b1, a1),
+                        self.rt1.greater_than(a1, c1), self.rt1.greater_than(c1, a1),
+                        self.rt1.greater_than(b1, c1), self.rt1.greater_than(c1, b1)]
+
+            results2 = [self.rt2.greater_than(a2, b2), self.rt2.greater_than(b2, a2),
+                        self.rt2.greater_than(a2, c2), self.rt2.greater_than(c2, a2),
+                        self.rt2.greater_than(b2, c2), self.rt2.greater_than(c2, b2)]
+
+            results3 = [self.rt3.greater_than(a3, b3), self.rt3.greater_than(b3, a3),
+                        self.rt3.greater_than(a3, c3), self.rt3.greater_than(c3, a3),
+                        self.rt3.greater_than(b3, c3), self.rt3.greater_than(c3, b3)]
+
+            # Open all results
+            map(self.rt1.open, results1)
+            map(self.rt2.open, results2)
+            map(self.rt3.open, results3)
+
+            expected = map(GF256Element, [a >= b, b >= a,
+                                          a >= c, c >= a,
+                                          b >= c, c >= b])
+
+            result1 = gatherResults(results1)
+            result2 = gatherResults(results2)
+            result3 = gatherResults(results3)
+
+            result1.addCallback(self.assertEquals, expected)
+            result2.addCallback(self.assertEquals, expected)
+            result3.addCallback(self.assertEquals, expected)
+
+            results.extend([result1, result2, result3])
+
+        return gatherResults(results)
+
+    def test_compare_10(self):
+        return self._compare_stress_test(10)
+
+    #def test_compare_20(self):
+    #    return self._compare_stress_test(20)
+
+    #def test_compare_40(self):
+    #    return self._compare_stress_test(40)
+
+    #def test_compare_80(self):
+    #    return self._compare_stress_test(80)
