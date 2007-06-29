@@ -1,6 +1,11 @@
 
 TODO list for pysmpc. Roughly ordered in order of priority.
 
+* Create unit tests which randomizes network delay
+   The current unit test with LoopbackRuntime are strictly sequential
+   and does not capture the random delays possible with real network
+   traffic.
+
 * Seeds for random number generators
    Use one random seed for entire program execution, print this at
    program start. Allow the user to specify another seed on the
