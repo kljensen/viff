@@ -69,9 +69,12 @@ signal.signal(2, finish)
 
 
 id, players = load_config(sys.argv[1])
+
 big = mpz(2) ** 1000 - 1000
 Field.modulus = big.next_prime()
 #Field.modulus = 13407807929942597099574024998205846127479365820592393377723561443721764030073546976801874298166903427690031858186486050853753882811946569946433649006084171L
+Field.modulus = 30916444023318367583 # 65 bit
+
 input = Field(42)
 count = int(sys.argv[2])
 print "I am player %d, will multiply %d numbers" % (id, count)
@@ -99,7 +102,12 @@ def run_test(_):
     product.addCallback(record_stop)
 
     rt.open(product)
-    product.addCallback(output, "result: %s")
+    def check(result, expected):
+        if result.value == expected:
+            print "Result: %s (correct)" % result
+        else:
+            print "Result: %s (incorrect, expected %d)" % (result, expected)
+    product.addCallback(check, pow(42, count, Field.modulus))
     product.addCallback(finish)
 
 # We want to wait until all numbers have been shared
