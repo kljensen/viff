@@ -60,3 +60,8 @@ TODO list for pysmpc. Roughly ordered in order of priority.
 
 * Merge GMPIntegerFieldElement and IntegerFieldElement?
    The two classes are almost identical and should be merged.
+
+* Define and document a semantics for operations on deferred shares
+   Variables containing deferred shares should be immutable.
+   Operations like add and mul already obey this: add(x,y) does not
+   change x and y. The open method changes its argument.
