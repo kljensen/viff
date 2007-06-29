@@ -535,14 +535,14 @@ class StressTestCase(TestCase):
 
         return gatherResults(results)
 
-    def test_compare_10(self):
-        return self._compare_stress_test(10)
+    def test_compare_1(self):
+        return self._compare_stress_test(1)
 
-    #def test_compare_20(self):
-    #    return self._compare_stress_test(20)
+    def test_compare_2(self):
+        return self._compare_stress_test(2)
 
-    #def test_compare_40(self):
-    #    return self._compare_stress_test(40)
+    def test_compare_4(self):
+        return self._compare_stress_test(4)
 
-    #def test_compare_80(self):
-    #    return self._compare_stress_test(80)
+    def test_compare_8(self):
+        return self._compare_stress_test(8)
