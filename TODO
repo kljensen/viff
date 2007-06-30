@@ -95,3 +95,22 @@ TODO list for pysmpc. Roughly ordered in order of priority.
    protocol execution can begin as normal with pair-wise connections
    between the players. So the coordinator is only used in a setup
    phase and wont become a bottleneck later.
+
+* Support preprocessing
+   With the use of deferreds, some amount of preprocessing is already
+   being done before the protocol begins proper. But this kind of
+   preprocessing does nothing for the double auction case where the
+   program branches during execution.
+
+   So a general mechanism is needed by which one can preprocess a
+   given number of multiplications, comparisons, etc.
+
+   A possible design could be one in which this is done dynamically:
+   when a protocol is executed, preprocessed stuff is taken from a
+   pool as needed. If the pool runs dry, then more stuff is generated
+   online. At the end of a run, the program will know how much stuff
+   was needed -- this information can then be dumped to a file.
+
+   A separate preprocessing script can read this information from the
+   file and produce another file with a pickled pool of preprocessed
+   stuff.
