@@ -70,3 +70,28 @@ TODO list for pysmpc. Roughly ordered in order of priority.
    Variables containing deferred shares should be immutable.
    Operations like add and mul already obey this: add(x,y) does not
    change x and y. The open method changes its argument.
+
+* Allow players to be started in any order
+   At the moment one must start playes in decending order, 3-2-1, but
+   it would be nice if they could be started in any order. Player 1
+   would still try and connect to player 2 and 3, but if they cannot
+   be reached, then player 1 should retry a bit later.
+
+* More robust handling of port allocation
+   Players should check if the wanted port number is free, and if not,
+   then retry after a timeout. Ports can be occupied if a player is
+   killed, for then the ports normally end up in the TIME_WAIT state
+   for 60 seconds.
+
+* Rework port number magic
+   Instead of requiring each player to use the correct port number for
+   outgoing connections, we could let player 1 act as a coordinator.
+   This one player would be required to listen on a well-known port,
+   but the other players would not -- they simply listen to some port
+   chosen by the OS and announce that to player 1, which in turn let
+   the other players know.
+
+   When everybody has been informed of everybody elses presence, the
+   protocol execution can begin as normal with pair-wise connections
+   between the players. So the coordinator is only used in a setup
+   phase and wont become a bottleneck later.
