@@ -9,7 +9,15 @@ TODO list for pysmpc. Roughly ordered in order of priority.
 * Seeds for random number generators
    Use one random seed for entire program execution, print this at
    program start. Allow the user to specify another seed on the
-   command line.
+   command line or perhaps as an environmental variable.
+
+* Implement a SHA1-based PRNG
+   The Mersenne Twister PRNG provided by the Python standard library
+   can be predicted after observing only 624 iterations.
+
+   A SHA1-based PRNG in pure Python can be found here:
+
+     http://www.nightsong.com/phr/python/sharandom.py
 
 * Benchmark Python vs. GMPY on different key sizes
    Initial tests seems to indicate that the network is the

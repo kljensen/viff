@@ -160,7 +160,7 @@ if __name__ == "__main__":
     parser.add_option("-t", "--threshold", dest="t", type="int",
                       help="threshold (it must hold that t < n/2)")
 
-    parser.set_defaults(verbose=True, n=3, t=1, prefix='players')
+    parser.set_defaults(verbose=True, n=3, t=1, prefix='player')
 
     (options, args) = parser.parse_args()
 
