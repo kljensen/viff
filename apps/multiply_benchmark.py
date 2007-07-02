@@ -44,7 +44,7 @@ def record_stop(x):
     stop = time.time()
     print
     print "Total time used: %.3f sec" % (stop-start)
-    print "Time for 100 multiplications: %.3f ms" % (100000*float(stop-start) / count)
+    print "Time per multiplication: %.3f ms" % (1000*float(stop-start) / count)
     print "*" * 64
     return x
 
