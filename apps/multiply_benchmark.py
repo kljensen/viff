@@ -20,12 +20,13 @@
 # 02110-1301 USA
 
 import sys, time, signal
+from optparse import OptionParser
 
 from twisted.internet import reactor
 from twisted.internet.defer import DeferredList
 
 from gmpy import mpz
-from pysmpc.field import GMPIntegerFieldElement as Field
+from pysmpc.field import GMPIntegerFieldElement, IntegerFieldElement
 from pysmpc.runtime import Runtime
 from pysmpc.generate_config import load_config
 
@@ -38,7 +39,6 @@ def record_start():
     start = time.time()
     print "*" * 64
     print "Started"
-    print
 
 def record_stop(x):
     stop = time.time()
@@ -68,15 +68,47 @@ def output(x, format="output: %s"):
 signal.signal(2, finish)
 
 
+parser = OptionParser()
+parser.add_option("-m", "--modulus",
+                  help="lower limit for modulus (can be an expression)")
+parser.add_option("--gmp", action="store_true", help="use GMP")
+parser.add_option("-i", "--input", type="int", help="input number")
+parser.add_option("-c", "--count", type="int", help="number of multiplications")
+
+parser.set_defaults(modulus="30916444023318367583",
+                    gmp=False, input=42, count=100)
+
+(options, args) = parser.parse_args()
+
+if len(args) == 0:
+    parser.error("you must specify a config file")
+
 id, players = load_config(sys.argv[1])
 
-big = mpz(2) ** 1000 - 1000
-Field.modulus = big.next_prime()
-#Field.modulus = 13407807929942597099574024998205846127479365820592393377723561443721764030073546976801874298166903427690031858186486050853753882811946569946433649006084171L
-Field.modulus = 30916444023318367583 # 65 bit
+modulus = eval(options.modulus, {}, {})
 
-input = Field(42)
-count = int(sys.argv[2])
+if modulus < 0:
+    parser.error("modulus is negative: %d" % modulus)
+
+prime = long(mpz(modulus-1).next_prime())
+
+if str(prime) != options.modulus:
+    print "Using %d as modulus" % prime
+    if prime != modulus:
+        print "Adjusted from %d" % modulus
+
+if options.gmp:
+    print "Using GMP"
+    Field = GMPIntegerFieldElement
+    Field.modulus = mpz(prime)
+else:
+    print "Not using GMP"
+    Field = IntegerFieldElement
+    Field.modulus = int(prime) # Convert long to int if possible,
+                               # leave as long if not.
+
+input = Field(options.input)
+count = options.count
 print "I am player %d, will multiply %d numbers" % (id, count)
 
 rt = Runtime(players, id, (len(players) -1)//2)
