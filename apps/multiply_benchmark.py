@@ -143,7 +143,7 @@ def run_test(_):
     product.addCallback(finish)
 
 # We want to wait until all numbers have been shared
-dl = DeferredList(shares[:])
+dl = DeferredList(shares)
 dl.addCallback(run_test)
     
 print "#### Starting reactor ###"
