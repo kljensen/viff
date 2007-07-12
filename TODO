@@ -19,6 +19,11 @@ TODO list for pysmpc. Roughly ordered in order of priority.
 
      http://www.nightsong.com/phr/python/sharandom.py
 
+   The PyCrypto guys also has a cryptographically strong random number
+   generator:
+
+     http://www.amk.ca/python/code/crypto
+
 * Benchmark Python vs. GMPY on different key sizes
    Initial tests seems to indicate that the network is the
    bottle-neck, but this should be systematically checked.
