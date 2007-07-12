@@ -76,6 +76,8 @@ def output(arg, format="output: %s"):
 
 indent = 0
 
+_trace_counters = {}
+
 def trace(func):
     """
     Decorator which will make print function entry and exit.
@@ -85,13 +87,15 @@ def trace(func):
         Wrapper.
         """
         global indent
+        count = _trace_counters.setdefault(func.func_name, 1)
         try:
-            print "%s-> Entering: %s" % ("  " * indent, func.func_name)
+            print "%s-> Entering: %s (%d)" % ("  " * indent, func.func_name, count)
             indent += 1
+            _trace_counters[func.func_name] += 1
             return func(*args, **kwargs)
         finally:
             indent -= 1
-            print "%s<- Exiting:  %s" % ("  " * indent, func.func_name)
+            print "%s<- Exiting:  %s (%d)" % ("  " * indent, func.func_name, count)
     
     return wrapper
 
