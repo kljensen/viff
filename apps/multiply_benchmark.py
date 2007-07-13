@@ -51,7 +51,7 @@ def record_stop(x):
 def timestamp(x):
     global last_timestamp
     now = time.time()
-    print "Timestamp: %.2f, time since last: %.3f" % (now, now - last_timestamp)
+    print "Delta: %8.3f ms" % (1000*(now-last_timestamp))
     last_timestamp = now
     return x
 
