@@ -203,9 +203,12 @@ class GMPIntegerFieldElement(FieldElement):
         self.value = mpz(value) % self.modulus
 
     def __getstate__(self):
+        # TODO: probably more efficient to use self.value.binary(),
+        # but needs to be tested.
         return long(self.value)
 
     def __setstate__(self, state):
+        # TODO: read binary format with mpz(state, 256).
         self.value = mpz(state)
 
     def __add__(self, other):
