@@ -24,11 +24,7 @@ The runtime is responsible for sharing inputs, handling communication,
 and running the calculations.
 """
 
-try:
-    import cPickle as pickle
-except ImportError:
-    print "Warning, no cPickle"
-    import pickle
+import marshal
 
 try:
     from cStringIO import StringIO
@@ -44,7 +40,7 @@ from random import Random
 
 from pysmpc import shamir
 from pysmpc.prss import prss
-from pysmpc.field import FieldElement, IntegerFieldElement, GF256Element
+from pysmpc.field import FieldElement, IntegerFieldElement, GF256Element, GMPIntegerFieldElement
 
 from twisted.internet import defer, reactor
 from twisted.internet.defer import Deferred, DeferredList, gatherResults
@@ -134,21 +130,15 @@ class ShareExchanger(Int16StringReceiver):
     #@trace
     def __init__(self, id):
         self.id = id
-        self.in_buf = StringIO()
-        self.out_buf = StringIO()
+        vals = [IntegerFieldElement, GMPIntegerFieldElement, GF256Element]
+        keys = range(len(vals))
+        self.class_to_type = dict(zip(vals, keys))
+        self.type_to_class = dict(zip(keys, vals))
         
-        self.pickler = pickle.Pickler(self.out_buf, protocol=-1)
-        self.unpickler = pickle.Unpickler(self.in_buf)
-
     #@trace
     def stringReceived(self, string):
-        # We start by appending the incoming data.
-        pos = self.in_buf.tell()
-        self.in_buf.seek(0, 2)
-        self.in_buf.write(string)
-        self.in_buf.seek(pos)
-
-        program_counter, share = self.unpickler.load()
+        program_counter, share_type, value = marshal.loads(string)
+        share = self.type_to_class[share_type](value)
         key = (program_counter, self.id)
 
         shares = self.factory.incoming_shares
@@ -157,7 +147,8 @@ class ShareExchanger(Int16StringReceiver):
         else:
             shares[key] = defer.succeed(share)
 
-        self.in_buf.truncate(0)
+        # TODO: marshal.loads can raise EOFError, ValueError, and
+        # TypeError. They should be handled somehow.
 
     #@trace
     def sendShare(self, program_counter, share):
@@ -166,14 +157,10 @@ class ShareExchanger(Int16StringReceiver):
         """
         #println("Sending to id=%d: program_counter=%s, share=%s",
         #        self.id, program_counter, share)
-        pos = self.out_buf.tell()
-        self.pickler.dump((program_counter, share))
-        self.out_buf.seek(pos)
-        
-        self.sendString(self.out_buf.read())
-        # This method is called via addCallback, and must return self
-        # again to ensure that the next callback can execute
-        # correctly.
+
+        # TODO: find a nicer way to communicate the type of the share.
+        data = (program_counter, self.class_to_type[share.__class__], share.value)
+        self.sendString(marshal.dumps(data))
         return self
 
 
