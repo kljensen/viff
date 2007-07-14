@@ -49,6 +49,7 @@ from pysmpc.field import FieldElement, IntegerFieldElement, GF256Element
 from twisted.internet import defer, reactor
 from twisted.internet.defer import Deferred, DeferredList, gatherResults
 from twisted.internet.protocol import ClientFactory, ServerFactory, Protocol
+from twisted.protocols.basic import Int16StringReceiver
 
 class Player:
     """
@@ -125,7 +126,7 @@ def dump_incoming_shares(shares):
     print
 
 
-class ShareExchanger(Protocol):
+class ShareExchanger(Int16StringReceiver):
     """
     The protocol responsible for exchanging shares.
     """
@@ -140,45 +141,23 @@ class ShareExchanger(Protocol):
         self.unpickler = pickle.Unpickler(self.in_buf)
 
     #@trace
-    def dataReceived(self, data):
-        # We must be careful because several pickles might be
-        # concatenated and delived as one, or a pickle might be split
-        # into two deliveries.
-
+    def stringReceived(self, string):
         # We start by appending the incoming data.
         pos = self.in_buf.tell()
         self.in_buf.seek(0, 2)
-        self.in_buf.write(data)
+        self.in_buf.write(string)
         self.in_buf.seek(pos)
 
-        loop = 0
+        program_counter, share = self.unpickler.load()
+        key = (program_counter, self.id)
 
-        while True:
-            try:
-                program_counter, share = self.unpickler.load()
-                key = (program_counter, self.id)
+        shares = self.factory.incoming_shares
+        if key in shares:
+            reactor.callLater(0, shares[key].callback, share)
+        else:
+            shares[key] = defer.succeed(share)
 
-                shares = self.factory.incoming_shares
-                if key in shares:
-                    reactor.callLater(0, shares[key].callback, share)
-                else:
-                    shares[key] = defer.succeed(share)
-                    
-                loop += 1
-
-            except (pickle.UnpicklingError, ImportError,
-                    AttributeError, IndexError, ValueError):
-                # Not enough data yet... we seek back to last good
-                # position and quit the loop.
-                self.in_buf.seek(pos)
-                break
-            except EOFError:
-                #print "Unpickled %d bytes in %d loops" % (self.in_buf.tell(),
-                #                                          loop)
-                # TODO: next line releases some memory and might or
-                # might not make the code more efficient.
-                self.in_buf.truncate(0)
-                break
+        self.in_buf.truncate(0)
 
     #@trace
     def sendShare(self, program_counter, share):
@@ -191,7 +170,7 @@ class ShareExchanger(Protocol):
         self.pickler.dump((program_counter, share))
         self.out_buf.seek(pos)
         
-        self.transport.write(self.out_buf.read())
+        self.sendString(self.out_buf.read())
         # This method is called via addCallback, and must return self
         # again to ensure that the next callback can execute
         # correctly.
