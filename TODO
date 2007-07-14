@@ -127,3 +127,7 @@ TODO list for pysmpc. Roughly ordered in order of priority.
    A separate preprocessing script can read this information from the
    file and produce another file with a pickled pool of preprocessed
    stuff.
+
+* Use a logging module
+   Use a better technique for debug output than scattering print
+   statements around the source code.
