@@ -25,14 +25,6 @@ and running the calculations.
 """
 
 import marshal
-
-try:
-    from cStringIO import StringIO
-except ImportError:
-    print "Warning, no cStringIO" 
-    from StringIO import StringIO
-
-
 import socket
 #from pprint import pformat, pprint
 # TODO: use SystemRandom instead (runs out of entropy?)
