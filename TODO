@@ -69,9 +69,9 @@ TODO list for pysmpc. Roughly ordered in order of priority.
 * Have an option which will make things run more or less sequentially
    For example: no parallelism would mean that all operations queue up
    and wait on each other, semi-parallelism could mean that different
-   operations (mul and greater_than, say) queue up, and full parallism
-   would run with no restrictions except those imposed by the program
-   itself.
+   operations (mul and greater_than, say) queue up, and full
+   parallelism would run with no restrictions except those imposed by
+   the program itself.
 
 * Provide a small install-daimi.sh shell script which will set up
    PYTHONPATH corrrectly for people on DAIMI?
@@ -85,9 +85,9 @@ TODO list for pysmpc. Roughly ordered in order of priority.
    change x and y. The open method changes its argument.
 
 * Allow players to be started in any order
-   At the moment one must start playes in decending order, 3-2-1, but
-   it would be nice if they could be started in any order. Player 1
-   would still try and connect to player 2 and 3, but if they cannot
+   At the moment one must start players in descending order, 3-2-1,
+   but it would be nice if they could be started in any order. Player
+   1 would still try and connect to player 2 and 3, but if they cannot
    be reached, then player 1 should retry a bit later.
 
 * More robust handling of port allocation
