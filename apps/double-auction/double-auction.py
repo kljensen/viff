@@ -24,7 +24,7 @@ import sys, time, random
 from twisted.internet import reactor
 from twisted.internet.defer import gatherResults, succeed
 
-import pysmpc.shamir
+from pysmpc import shamir
 from pysmpc.field import IntegerFieldElement as F
 from pysmpc.runtime import Runtime
 from pysmpc.generate_config import load_config
@@ -33,7 +33,7 @@ def output(x, format="output: %s"):
     print format % x
     return x
 
-F.modulus = 1031
+F.modulus = 2039
 # Bit length of input values to greater_than.
 l = 7
 
