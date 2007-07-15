@@ -19,7 +19,7 @@
 # Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 # 02110-1301 USA
 
-import sys, time, signal
+import time, signal
 from optparse import OptionParser
 
 from twisted.internet import reactor
@@ -83,7 +83,7 @@ parser.set_defaults(modulus="30916444023318367583",
 if len(args) == 0:
     parser.error("you must specify a config file")
 
-id, players = load_config(sys.argv[1])
+id, players = load_config(args[0])
 
 modulus = eval(options.modulus, {}, {})
 
