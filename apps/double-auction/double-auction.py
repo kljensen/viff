@@ -49,15 +49,20 @@ rt = Runtime(players, id, t)
 # has secret shared the bids and encrypted them for each player. These
 # have then been read, decrypted and summed up...
 
-B = [30, 28, 25, 18, 15, 10]
-S = [ 5, 15, 20, 22, 23, 25]
+random.seed(0)
+
+# Generate random bids -- we could generate numbers up to 2**l, but
+# restricting them to only two digits use less space in the output.
+B = [random.randint(1, 99) for _ in range(24)]
+S = [random.randint(1, 99) for _ in range(24)]
+
+# Make the bids monotone.
+B.sort(reverse=True)
+S.sort()
 
 seller_bids = [shamir.share(F(x), t, n)[id-1][1] for x in S]
 buyer_bids  = [shamir.share(F(x), t, n)[id-1][1] for x in B]
 
-
-print "B:", buyer_bids
-print "S:", seller_bids
 
 def debug(low, mid, high):
     string = ["  " for _ in range(high+1)]
@@ -93,7 +98,15 @@ def branch(result, low, mid, high):
 
 def auction():
     result = branch(0, 0, len(seller_bids), 0)
-    result.addCallback(output, "result: %s")
+
+    def check_result(result):
+        expected = max([i for i, (b,s) in enumerate(zip(B,S)) if b > s])
+        if result == expected:
+            print "Result: %d (correct)" % result
+        else:
+            print "Result: %d (incorrect, expected %d)" % (result, expected)
+
+    result.addCallback(check_result)
     result.addCallback(lambda _: reactor.stop())
 
 reactor.callLater(0, auction)
