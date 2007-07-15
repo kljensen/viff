@@ -22,6 +22,7 @@
 import twisted.internet.base
 twisted.internet.base.DelayedCall.debug = True
 
+import os
 from random import Random
 
 from twisted.internet import reactor
@@ -470,14 +471,15 @@ class StressTestCase(TestCase):
     def test_mul_100(self):
         return self._mul_stress_test(100)
 
-    def test_mul_200(self):
-        return self._mul_stress_test(200)
+    if 'STRESS' in os.environ:
+        def test_mul_200(self):
+            return self._mul_stress_test(200)
 
-    def test_mul_400(self):
-        return self._mul_stress_test(400)
+        def test_mul_400(self):
+            return self._mul_stress_test(400)
 
-    def test_mul_800(self):
-        return self._mul_stress_test(800)
+        def test_mul_800(self):
+            return self._mul_stress_test(800)
 
 
     def _compare_stress_test(self, count):
@@ -538,11 +540,12 @@ class StressTestCase(TestCase):
     def test_compare_1(self):
         return self._compare_stress_test(1)
 
-    def test_compare_2(self):
-        return self._compare_stress_test(2)
+    if 'STRESS' in os.environ:
+        def test_compare_2(self):
+            return self._compare_stress_test(2)
 
-    def test_compare_4(self):
-        return self._compare_stress_test(4)
+        def test_compare_4(self):
+            return self._compare_stress_test(4)
 
-    def test_compare_8(self):
-        return self._compare_stress_test(8)
+        def test_compare_8(self):
+            return self._compare_stress_test(8)
