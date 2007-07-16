@@ -20,6 +20,7 @@
 # 02110-1301 USA
 
 import sys, time, random
+from optparse import OptionParser
 
 from twisted.internet import reactor
 from twisted.internet.defer import gatherResults, succeed
@@ -27,7 +28,7 @@ from twisted.internet.defer import gatherResults, succeed
 from gmpy import mpz
 
 from pysmpc import shamir
-from pysmpc.field import IntegerFieldElement as F
+from pysmpc.field import IntegerFieldElement, GMPIntegerFieldElement
 from pysmpc.runtime import Runtime
 from pysmpc.generate_config import load_config
 
@@ -35,19 +36,63 @@ def output(x, format="output: %s"):
     print format % x
     return x
 
-# Find a 64 bit Blum prime
-prime = mpz(2**64).next_prime()
+last_timestamp = time.time()
+def timestamp():
+    global last_timestamp
+    now = time.time()
+    print "Delta: %8.3f ms" % (1000*(now-last_timestamp))
+    last_timestamp = now
+
+parser = OptionParser()
+parser.add_option("-m", "--modulus",
+                  help="lower limit for modulus (can be an expression)")
+parser.add_option("--gmp", action="store_true", help="use GMP")
+parser.add_option("-c", "--count", type="int", help="number of bids")
+parser.add_option("-v", "--verbose", action="store_true",
+                  help="verbose output after each iteration")
+parser.add_option("-q", "--quiet", action="store_false",
+                  help="little output after each iteration")
+parser.add_option("-l", "--length", type="int",
+                  help="bit length of input numbers")
+
+parser.set_defaults(modulus="30916444023318367583",
+                    gmp=False, verbose=False, length=32, count=4000)
+
+(options, args) = parser.parse_args()
+
+if len(args) == 0:
+    parser.error("you must specify a config file")
+
+id, players = load_config(args[0])
+
+modulus = eval(options.modulus, {}, {})
+
+if modulus < 0:
+    parser.error("modulus is negative: %d" % modulus)
+
+prime = mpz(modulus-1).next_prime()
 while prime % 4 == 1:
     prime = prime.next_prime()
-    
-F.modulus = long(prime)
-# Bit length of input values to greater_than.
-l = 32
 
-id, players = load_config(sys.argv[1])
+if str(prime) != options.modulus:
+    print "Using %d as modulus" % prime
+    if prime != modulus:
+        print "Adjusted from %d" % modulus
+
+if options.gmp:
+    print "Using GMP"
+    F = GMPIntegerFieldElement
+    F.modulus = mpz(prime)
+else:
+    print "Not using GMP"
+    F = IntegerFieldElement
+    F.modulus = long(prime)
+
+
 print "I am player %d" % id
 
-t = 1
+l = options.length
+t = (len(players) -1)//2
 n = len(players)
 
 rt = Runtime(players, id, t)
@@ -60,8 +105,8 @@ random.seed(0)
 
 # Generate random bids -- we could generate numbers up to 2**l, but
 # restricting them to only two digits use less space in the output.
-B = [random.randint(1, 2**l) for _ in range(4000)]
-S = [random.randint(1, 2**l) for _ in range(4000)]
+B = [random.randint(1, 2**l) for _ in range(options.count)]
+S = [random.randint(1, 2**l) for _ in range(options.count)]
 
 # Make the bids monotone.
 B.sort(reverse=True)
@@ -85,6 +130,8 @@ def debug(low, mid, high):
 
 def branch(result, low, mid, high):
     print "low: %d, high: %d, last result: %s" % (low, high, result)
+    if options.verbose:
+        timestamp()
 
     if result == 1:
         low = mid
@@ -93,14 +140,16 @@ def branch(result, low, mid, high):
 
     if low+1 < high:
         mid = (low + high)//2
-        debug(low, mid, high)
+        if options.verbose:
+            debug(low, mid, high)
         result = rt.greater_than(buyer_bids[mid], seller_bids[mid])
         rt.open(result)
         result.addCallback(output, str(B[mid]) + " >= " + str(S[mid]) + ": %s")
         result.addCallback(branch, low, mid, high)
         return result
     else:
-        debug(low,mid,high)
+        if options.verbose:
+            debug(low,mid,high)
         return low
 
 def auction():
