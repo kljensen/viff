@@ -89,7 +89,9 @@ modulus = eval(options.modulus, {}, {})
 if modulus < 0:
     parser.error("modulus is negative: %d" % modulus)
 
-prime = long(mpz(modulus-1).next_prime())
+prime = mpz(modulus-1).next_prime()
+while prime % 4 != 3:
+    prime = prime.next_prime()
 
 if str(prime) != options.modulus:
     print "Using %d as modulus" % prime
@@ -103,8 +105,7 @@ if options.gmp:
 else:
     print "Not using GMP"
     Field = IntegerFieldElement
-    Field.modulus = int(prime) # Convert long to int if possible,
-                               # leave as long if not.
+    Field.modulus = long(prime)
 
 count = options.count
 print "I am player %d, will compare %d numbers" % (id, count)
