@@ -130,7 +130,7 @@ def run_test(_):
         a = shares.pop(0)
         b = shares.pop(0)
         c = rt.greater_than(a,b)
-        c.addCallback(timestamp)
+        #c.addCallback(timestamp)
         bits.append(c)
 
     stop = DeferredList(bits)
