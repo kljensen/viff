@@ -111,7 +111,7 @@ print "I am player %d, will compare %d numbers" % (id, count)
 
 rt = Runtime(players, id, (len(players) -1)//2)
 
-l = 7 # TODO: needs to be taken from the runtime or a config file.
+l = 32 # TODO: needs to be taken from the runtime or a config file.
 
 shares = []
 for n in range(2*count//len(players) + 1):
