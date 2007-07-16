@@ -77,7 +77,8 @@ class LoopbackRuntime(Runtime):
 class RuntimeTestCase(TestCase):
     
     def setUp(self):
-        IntegerFieldElement.modulus = 2039
+        # Our standard 65 bit Blum prime 
+        IntegerFieldElement.modulus = 30916444023318367583
 
         configs = generate_configs(3, 1)
         connections = {}
