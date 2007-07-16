@@ -24,6 +24,8 @@ import sys, time, random
 from twisted.internet import reactor
 from twisted.internet.defer import gatherResults, succeed
 
+from gmpy import mpz
+
 from pysmpc import shamir
 from pysmpc.field import IntegerFieldElement as F
 from pysmpc.runtime import Runtime
@@ -33,9 +35,14 @@ def output(x, format="output: %s"):
     print format % x
     return x
 
-F.modulus = 2039
+# Find a 64 bit Blum prime
+prime = mpz(2**64).next_prime()
+while prime % 4 == 1:
+    prime = prime.next_prime()
+    
+F.modulus = long(prime)
 # Bit length of input values to greater_than.
-l = 7
+l = 32
 
 id, players = load_config(sys.argv[1])
 print "I am player %d" % id
@@ -53,8 +60,8 @@ random.seed(0)
 
 # Generate random bids -- we could generate numbers up to 2**l, but
 # restricting them to only two digits use less space in the output.
-B = [random.randint(1, 99) for _ in range(24)]
-S = [random.randint(1, 99) for _ in range(24)]
+B = [random.randint(1, 2**l) for _ in range(4000)]
+S = [random.randint(1, 2**l) for _ in range(4000)]
 
 # Make the bids monotone.
 B.sort(reverse=True)

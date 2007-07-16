@@ -617,7 +617,7 @@ class Runtime:
         program_counter = self.init_pc(program_counter)
 
         # TODO: get these from a configuration file or similar
-        l = 7 # bit-length of input numbers
+        l = 32 # bit-length of input numbers
         m = l + 2
         t = m + 1
 
