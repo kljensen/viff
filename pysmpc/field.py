@@ -41,6 +41,23 @@ class FieldElement:
     def unmarshal(cls, value):
         return cls(value)
 
+    def __cmp__(self, other):
+        """Comparison.
+
+        The comparison is done on the value only since it is assumed
+        that all instances will have the same modulus."""
+        try:
+            return cmp(self.value, other.value)
+        except AttributeError:
+            return cmp(self.value, other)
+
+    def __hash__(self):
+        """Hash value.
+
+        The modulus is ignored by the assumption that all instances
+        will have the same modulus. """
+        return hash((self.value, self.__class__))
+
 
 class IntegerFieldElement(FieldElement):
     """
