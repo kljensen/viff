@@ -134,9 +134,9 @@ class ShareExchanger(Int16StringReceiver):
         key = (program_counter, self.id)
 
         shares = self.factory.incoming_shares
-        if key in shares:
-            reactor.callLater(0, shares[key].callback, share)
-        else:
+        try:
+            reactor.callLater(0, shares.pop(key).callback, share)
+        except KeyError:
             shares[key] = defer.succeed(share)
 
         # TODO: marshal.loads can raise EOFError, ValueError, and
@@ -729,8 +729,7 @@ class Runtime:
 
         key = (program_counter, id)
         if id == self.id:
-            assert key not in self.incoming_shares
-            self.incoming_shares[key] = defer.succeed(share)
+            return defer.succeed(share)
         else:
             if key not in self.incoming_shares:
                 self.incoming_shares[key] = Deferred()
