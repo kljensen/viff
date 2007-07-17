@@ -130,7 +130,7 @@ class ShareExchanger(Int16StringReceiver):
     #@trace
     def stringReceived(self, string):
         program_counter, share_type, value = marshal.loads(string)
-        share = self.type_to_class[share_type](value)
+        share = self.type_to_class[share_type].unmarshal(value)
         key = (program_counter, self.id)
 
         shares = self.factory.incoming_shares
@@ -151,7 +151,9 @@ class ShareExchanger(Int16StringReceiver):
         #        self.id, program_counter, share)
 
         # TODO: find a nicer way to communicate the type of the share.
-        data = (program_counter, self.class_to_type[share.__class__], share.value)
+        data = (program_counter,
+                self.class_to_type[share.__class__],
+                share.marshal())
         self.sendString(marshal.dumps(data))
         return self
 

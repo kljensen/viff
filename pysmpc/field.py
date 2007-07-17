@@ -34,6 +34,13 @@ class FieldElement:
         """
         return cls(value)
 
+    def marshal(self):
+        return self.value
+
+    @classmethod
+    def unmarshal(cls, value):
+        return cls(value)
+
 
 class IntegerFieldElement(FieldElement):
     """
@@ -201,14 +208,12 @@ class GMPIntegerFieldElement(FieldElement):
     def __init__(self, value):
         self.value = mpz(value) % self.modulus
 
-    def __getstate__(self):
-        # TODO: probably more efficient to use self.value.binary(),
-        # but needs to be tested.
-        return long(self.value)
+    def marshal(self):
+        return self.value.binary()
 
-    def __setstate__(self, state):
-        # TODO: read binary format with mpz(state, 256).
-        self.value = mpz(state)
+    @classmethod
+    def unmarshal(cls, value):
+        return cls(mpz(value, 256))
 
     def __add__(self, other):
         if isinstance(other, GMPIntegerFieldElement):
