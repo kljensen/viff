@@ -157,7 +157,8 @@ class IntegerFieldElement(FieldElement):
 
         Note that {28} = {-3} which is a proper square-root of {9}.
         """
-        # TODO: what if (self.modulus+1) cannot be divided by four?
+        # Since the modulus is a Blum prime (congurent to 3 mod 4),
+        # there will be no reminder in the division.
         root = pow(self.value, (self.modulus+1)//4, self.modulus)
         return IntegerFieldElement(root)
 
