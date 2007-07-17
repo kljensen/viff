@@ -39,15 +39,28 @@ def share(secret, threshold, num_players):
     rnd = random.Random(0)
     coef = [secret]
     for j in range(threshold):
-        # TODO: introduce a random() method in FieldElements.
+        # TODO: introduce a random() method in FieldElements so that
+        # this wont have to be a long when we are sharing a
+        # GMPIntegerFieldElement.
         coef.append(rnd.randint(0, long(secret.modulus)-1))
 
     shares = []
     for i in range(1, num_players+1):
+        # Instead of calculating s_i as
+        #
+        #   s_i = s + a_1 x_i + a_2 x_i^2 + ... + a_t x_i^t
+        #
+        # we avoid the exponentiations by calculating s_i by
+        #
+        #   s_i = s + x_i (a_1 + x_i (a_2 + x_i ( ... (a_t) ... )))
+        #
+        # This is a little faster, even for small n and t.
         cur_point = secret.field(i)
-        cur_share = secret
-        for j in range(1, threshold+1):
-            cur_share += cur_point**j * coef[j]
+        cur_share = coef[threshold]
+        # Go backwards from threshold-1 down to 0
+        for j in range(threshold-1, -1, -1):
+            cur_share = coef[j] + cur_point * cur_share
+
         shares.append((cur_point, cur_share))
 
     return shares
