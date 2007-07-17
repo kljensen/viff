@@ -94,8 +94,6 @@ class IntegerFieldElement(FieldElement):
 
     __rmul__ = __mul__
 
-    # TODO: add in-place operators to save on the number of newly
-    # constructed objects.
 
     def __pow__(self, exponent):
         """Exponentiation."""
@@ -329,14 +327,6 @@ class GF256Element(FieldElement):
     __radd__ = __add__
     __sub__ = __add__
     __rsub__ = __sub__
-
-    def __iadd__(self, other):
-        if isinstance(other, GF256Element):
-            other = other.value
-        self.value ^= other
-        return self
-
-    __isub__ = __iadd__
 
     def __mul__(self, other):
         """Multiply this and another GF256Element.
