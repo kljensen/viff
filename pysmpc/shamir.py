@@ -52,19 +52,27 @@ def share(secret, threshold, num_players):
 
     return shares
 
+# Cached recombination vectors.
+_recombination_vectors = {}
+
 def recombine(shares, x_recomb=0):
     """
     Recombines list of (xi, yi) pairs. Recombination is done in the
     optional point x.
     """
-    result = 0
-    for i, (x_i, y_i) in enumerate(shares):
-        factors = [(x_k - x_recomb) / (x_k - x_i)
-                   for k, (x_k, _) in enumerate(shares) if k != i]
-        result += y_i * reduce(operator.mul, factors)
-
-    return result
-    
+    xs = [x_i for (x_i, _) in shares]
+    ys = [y_i for (_, y_i) in shares]
+    try:
+        key = tuple(xs) + (x_recomb, xs[0].__class__)
+        vector = _recombination_vectors[key]
+    except KeyError:
+        vector = []
+        for i, x_i in enumerate(xs):
+            factors = [(x_k - x_recomb) / (x_k - x_i)
+                       for k, x_k in enumerate(xs) if k != i]
+            vector.append(reduce(operator.mul, factors))
+        _recombination_vectors[key] = vector
+    return sum(map(operator.mul, ys, vector))
 
 if __name__ == "__main__":
     import doctest
