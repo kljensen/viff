@@ -76,7 +76,7 @@ def recombine(shares, x_recomb=0):
     xs = [x_i for (x_i, _) in shares]
     ys = [y_i for (_, y_i) in shares]
     try:
-        key = tuple(xs) + (x_recomb, xs[0].__class__)
+        key = tuple(xs) + (x_recomb,)
         vector = _recombination_vectors[key]
     except KeyError:
         vector = []

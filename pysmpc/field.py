@@ -52,11 +52,11 @@ class FieldElement:
             return cmp(self.value, other)
 
     def __hash__(self):
-        """Hash value.
-
-        The modulus is ignored by the assumption that all instances
-        will have the same modulus. """
-        return hash((self.value, self.__class__))
+        """Hash value."""
+        # TODO: adding the modulus is only necessary if people change
+        # modulus during a program run. The test suite does this, but
+        # normal program should not, so maybe we can leave it out.
+        return hash((self.value, self.__class__, self.modulus))
 
 
 class IntegerFieldElement(FieldElement):
