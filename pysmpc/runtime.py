@@ -315,6 +315,8 @@ class Runtime:
         """
         assert isinstance(sharing, Deferred)
         program_counter = self.init_pc(program_counter)
+        if threshold is None:
+            threshold = self.threshold
 
         def broadcast(share):
             """
@@ -330,9 +332,7 @@ class Runtime:
 
             # TODO: This list ought to trigger as soon as more than
             # threshold shares has been received.
-            dl = gatherResults(deferreds)
-            dl.addCallback(self.recombine, threshold)
-            return dl
+            return self._recombine(deferreds, threshold)
 
         sharing.addCallback(broadcast)
         # TODO: should open() return a new deferred?
@@ -381,11 +381,6 @@ class Runtime:
         # return a FieldElement.
         program_counter = self.init_pc(program_counter)
 
-        def reattach_id(shares):
-            for i, share in enumerate(shares):
-                share.addCallback(lambda s, i: (s.field(i), s), i+1)            
-            return gatherResults(shares)
-
         if not isinstance(share_a, Deferred):
             share_a = defer.succeed(share_a)
         if not isinstance(share_b, Deferred):
@@ -393,9 +388,8 @@ class Runtime:
 
         result = gatherResults([share_a, share_b])
         result.addCallback(lambda (a, b): a * b)
-        result.addCallback(self.shamir_share, self.sub_pc(program_counter))
-        result.addCallback(reattach_id)
-        result.addCallback(self.recombine, threshold=2*self.threshold)
+        result.addCallback(self._shamir_share, self.sub_pc(program_counter))
+        result.addCallback(self._recombine, threshold=2*self.threshold)
         return result
     
     #@trace
@@ -549,24 +543,40 @@ class Runtime:
                                    GF256Element, program_counter)
         return defer.succeed(share)
 
-    #@trace
-    def shamir_share(self, number, program_counter=None):
+    def _shamir_share(self, number, program_counter):
         """
-        Share an IntegerFieldElement using Shamir sharing.
+        Share a FieldElement using Shamir sharing.
 
-        Communication cost: n elements transmitted.
+        Returns a list of (id, share) pairs.
         """
-        assert isinstance(number, FieldElement)
-        program_counter = self.init_pc(program_counter)
-
         shares = shamir.share(number, self.threshold, len(self.players))
         #println("Shares of %s: %s", number, shares)
         
         result = []
         for other_id, share in shares:
             d = self.exchange_shares(program_counter, other_id.value, share)
+            d.addCallback(lambda share, id: (id, share), other_id)
             result.append(d)
 
+        return result
+
+    #@trace
+    def shamir_share(self, number, program_counter=None):
+        """
+        Share an IntegerFieldElement using Shamir sharing.
+
+        Returns a list of shares.
+
+        Communication cost: n elements transmitted.
+        """
+        assert isinstance(number, FieldElement)
+        program_counter = self.init_pc(program_counter)
+
+        def split(pair):
+            pair.addCallback(lambda (_, share): share)
+
+        result = self._shamir_share(number, program_counter)
+        map(split, result)
         return result
 
     def bit_to_int(self, b_share, program_counter=None):
@@ -741,20 +751,12 @@ class Runtime:
                                            program_counter, share)
             return self.incoming_shares[key]
 
-
-    #@trace
-    def recombine(self, shares, threshold=None):
+    def _recombine(self, shares, threshold):
         """
-        Recombine a set of Shamir shares.
+        Shamir recombine a list of deferreds which must yield
+        (id,share) pairs.
         """
-        # TODO: move this up to open()?
-        if threshold is None:
-            threshold = self.threshold
-
-        #shares = [r[1] for r in results if r[0]]
         assert len(shares) > threshold
-        share = shamir.recombine(shares[:threshold+1])
-        #print "Recombining %s -> %s" % (shares[:threshold+1], share)
-
-        return defer.succeed(share)
-
+        result = gatherResults(shares[:threshold+1])
+        result.addCallback(shamir.recombine)
+        return result
