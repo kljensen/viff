@@ -55,17 +55,10 @@ def timestamp(x):
     last_timestamp = now
     return x
 
-def finish(*x):
-    reactor.stop()
-    print "Stopped reactor"
-
 def output(x, format="output: %s"):
     print format % x
     return x
 
-# To avoid having leaving the ports in boring TIME_WAIT state, we must
-# shut the reactor down cleanly if killed.
-signal.signal(2, finish)
 
 
 parser = OptionParser()
@@ -112,6 +105,15 @@ count = options.count
 print "I am player %d, will multiply %d numbers" % (id, count)
 
 rt = Runtime(players, id, (len(players) -1)//2)
+
+def finish(*x):
+    rt.shutdown()
+    print "Stopped reactor"
+
+# To avoid having leaving the ports in boring TIME_WAIT state, we must
+# try to shutdown the runtime cleanly if killed.
+signal.signal(2, finish)
+
 
 shares = []
 for n in range(count//len(players) + 1):
