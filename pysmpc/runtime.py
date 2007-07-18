@@ -729,20 +729,17 @@ class Runtime:
         #println("exchange_shares sending: program_counter=%s, id=%d, share=%s",
         #        program_counter, id, share)
 
-        key = (program_counter, id)
         if id == self.id:
             return defer.succeed(share)
         else:
+            key = (program_counter, id)
             if key not in self.incoming_shares:
                 self.incoming_shares[key] = Deferred()
 
             # Send the share to the other side
-            self.protocols[id].addCallback(lambda p, program_counter, share: \
-                                               p.sendShare(program_counter,
-                                                           share),
+            self.protocols[id].addCallback(ShareExchanger.sendShare,
                                            program_counter, share)
-        
-        return self.incoming_shares[key]
+            return self.incoming_shares[key]
 
 
     #@trace
