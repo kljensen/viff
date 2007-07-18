@@ -1,5 +1,9 @@
 
-TODO list for pysmpc. Roughly ordered in order of priority.
+TODO list for pysmpc.
+
+There are a number of small and large design changes listed below. In
+addition to those, the source code contains a number of comments
+marked with 'TODO' which document things on a more local level.
 
 * Enforce the use of Blum primes
    The comparison only works with Blum primes, that is, primes that
