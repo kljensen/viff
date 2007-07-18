@@ -6,3 +6,4 @@ syntax: glob
 *.orig
 _trial_temp
 profile.data
+*.prof
