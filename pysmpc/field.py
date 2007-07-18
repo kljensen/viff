@@ -24,7 +24,7 @@ elements whereas GF256Element models elements from the GF(2^8) field.
 
 from gmpy import mpz
 
-class FieldElement:
+class FieldElement(object):
     """Common base class for elements."""
 
     @classmethod
@@ -56,7 +56,7 @@ class FieldElement:
         # TODO: adding the modulus is only necessary if people change
         # modulus during a program run. The test suite does this, but
         # normal program should not, so maybe we can leave it out.
-        return hash((self.value, self.__class__, self.modulus))
+        return hash((self.value, type(self), self.modulus))
 
 
 class IntegerFieldElement(FieldElement):

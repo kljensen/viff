@@ -152,7 +152,7 @@ class ShareExchanger(Int16StringReceiver):
 
         # TODO: find a nicer way to communicate the type of the share.
         data = (program_counter,
-                self.class_to_type[share.__class__],
+                self.class_to_type[type(share)],
                 share.marshal())
         self.sendString(marshal.dumps(data))
         return self
