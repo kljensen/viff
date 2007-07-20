@@ -55,6 +55,9 @@ def d_unstr(str):
     return int(str[7:])
 
 
+# TODO: as noted in the Player constructor, one must set the field
+# modulus before loading any config file. This weird requirement on
+# the loading order should be changed.
 def load_config(source):
     if isinstance(source, ConfigObj):
         config = source
@@ -70,7 +73,7 @@ def load_config(source):
         if 'prss_keys' in config[player]:
             keys = {}
             for subset in config[player]['prss_keys']:
-                keys[s_unstr(subset)] = int(config[player]['prss_keys'][subset])
+                keys[s_unstr(subset)] = config[player]['prss_keys'][subset]
 
             dealer_keys = {}
             for dealer in config[player]['prss_dealer_keys']:
@@ -79,7 +82,7 @@ def load_config(source):
 
                 # TODO: rewrite with shorter lines
                 for subset in config[player]['prss_dealer_keys'][dealer]:
-                    dealer_keys[d][s_unstr(subset)] = int(config[player]['prss_dealer_keys'][dealer][subset])
+                    dealer_keys[d][s_unstr(subset)] = config[player]['prss_dealer_keys'][dealer][subset]
 
             players[id] = Player(id, host, port, keys, dealer_keys)
 
@@ -98,7 +101,12 @@ def generate_configs(n, t, addresses=None, prefix=None):
     rand = Random(0)
 
     def generate_key():
-        return str(rand.randint(0, 1000))
+        # TODO: is a 40 byte hex string as good as a 20 byte binary
+        # string when it is used for SHA1 hashing? It ought to be
+        # since they contain the same entropy.
+
+        # A SHA1 hash is 160 bit
+        return hex(rand.randint(0, 2**160))
 
     configs = {}
     for p in players:

@@ -82,8 +82,6 @@ parser.set_defaults(modulus="30916444023318367583",
 if len(args) == 0:
     parser.error("you must specify a config file")
 
-id, players = load_config(args[0])
-
 modulus = eval(options.modulus, {}, {})
 
 if modulus < 0:
@@ -106,6 +104,10 @@ else:
     print "Not using GMP"
     Field = IntegerFieldElement
     Field.modulus = long(prime)
+
+id, players = load_config(args[0])
+
+
 
 count = options.count
 print "I am player %d, will compare %d numbers" % (id, count)

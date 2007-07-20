@@ -76,8 +76,6 @@ parser.set_defaults(modulus="30916444023318367583",
 if len(args) == 0:
     parser.error("you must specify a config file")
 
-id, players = load_config(args[0])
-
 modulus = eval(options.modulus, {}, {})
 
 if modulus < 0:
@@ -99,6 +97,9 @@ else:
     Field = IntegerFieldElement
     Field.modulus = int(prime) # Convert long to int if possible,
                                # leave as long if not.
+
+id, players = load_config(args[0])
+
 
 input = Field(options.input)
 count = options.count

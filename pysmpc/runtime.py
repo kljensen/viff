@@ -31,7 +31,7 @@ import socket
 from random import Random
 
 from pysmpc import shamir
-from pysmpc.prss import prss
+from pysmpc.prss import prss, PRF
 from pysmpc.field import FieldElement, IntegerFieldElement, GF256Element, GMPIntegerFieldElement
 
 from twisted.internet import defer, reactor
@@ -39,18 +39,44 @@ from twisted.internet.defer import Deferred, DeferredList, gatherResults
 from twisted.internet.protocol import ClientFactory, ServerFactory, Protocol
 from twisted.protocols.basic import Int16StringReceiver
 
+# TODO: move this to another file, probably together with the
+# configuration loading/saving machinery.
 class Player:
     """
     Wrapper for information about a player in the protocol.
     """
 
-    def __init__(self, id, host, port, seeds=None, dealer_keys=None):
+    def __init__(self, id, host, port, keys=None, dealer_keys=None):
         self.id = id
         self.host = host
         self.port = port
-        self.seeds = seeds
-        self.dealer_keys = dealer_keys
 
+        if keys is not None:
+            self.prfs = {}
+
+            # TODO: using the modulus here requires that it has been
+            # set previously! Since players are constructed when a
+            # config file is loaded, one must set the modulus before
+            # loading any config files.
+            for modulus in 2, GF256Element.modulus, IntegerFieldElement.modulus:
+                prfs = {}
+                for subset, key in keys.iteritems():
+                    prfs[subset] = PRF(key, modulus)
+                self.prfs[modulus] = prfs
+
+        if dealer_keys is not None:
+            self.dealer_prfs = {}
+
+            for modulus in GF256Element.modulus, IntegerFieldElement.modulus:
+                dealers = {}
+                for dealer in dealer_keys:
+                    prfs = {}
+                    for subset, key in dealer_keys[dealer].iteritems():
+                        prfs[subset] = PRF(key, modulus)
+                    dealers[dealer] = prfs
+                self.dealer_prfs[modulus] = dealers
+                    
+                    
     def __repr__(self):
         return "<Player %d: %s:%d>" % (self.id, self.host, self.port)
 
@@ -216,8 +242,6 @@ class Runtime:
         self.players = players
         self.id = id
         self.threshold = threshold
-
-        self.seeds = players[id].seeds
 
         self.program_counter = 0
 
@@ -412,18 +436,11 @@ class Runtime:
 
     xor_bit = add
 
-    def _share_random(self, keys, id, modulus, field, program_counter):
+    def _share_random(self, prfs, id, field, key):
         """
         Do a PRSS using pseudo-random numbers from the field given.
         """
-        prns = dict()
-        for subset, key in keys.iteritems():
-            prf = Random(key)
-            prf.jumpahead(abs(hash(program_counter)))
-            prns[subset] = prf.randint(0, modulus-1)
-
-        #println(prns)
-        return prss(len(self.players), self.threshold, id, prns, field)
+        return prss(len(self.players), self.threshold, id, field, prfs, key)
 
     def _share_known(self, element, field, program_counter):
         # The shares for which we have all the keys.
@@ -432,7 +449,7 @@ class Runtime:
         # Shares we calculate from doing PRSS with the other players.
         tmp_shares = {}
 
-        dealer_keys = self.players[self.id].dealer_keys
+        dealer_prfs = self.players[self.id].dealer_prfs[field.modulus]
 
         # TODO: Stop calculating shares for all_shares at
         # self.threshold+1 since that is all we need to do the Shamir
@@ -440,12 +457,12 @@ class Runtime:
         for player in self.players:
             # TODO: when player == self.id, the two calls to
             # _share_random are the same.
-            share = self._share_random(dealer_keys[self.id], player,
-                                       field.modulus, field, program_counter)
+            share = self._share_random(dealer_prfs[self.id], player,
+                                       field, program_counter)
             all_shares.append((field(player), share))
 
-            tmp_shares[player] = self._share_random(dealer_keys[player],
-                                                    self.id, field.modulus,
+            tmp_shares[player] = self._share_random(dealer_prfs[player],
+                                                    self.id,
                                                     field, program_counter)
 
         # We can now calculate what was shared and derive the
@@ -495,10 +512,9 @@ class Runtime:
         Communication cost: none if binary=False, 1 open otherwise.
         """
         program_counter = self.init_pc(program_counter)
-
-        share = self._share_random(self.seeds, self.id,
-                                   IntegerFieldElement.modulus,
-                                   IntegerFieldElement, program_counter)
+        prfs = self.players[self.id].prfs[IntegerFieldElement.modulus]
+        share = self._share_random(prfs, self.id, IntegerFieldElement,
+                                   program_counter)
 
         if not binary:
             return defer.succeed(share)
@@ -539,8 +555,8 @@ class Runtime:
             modulus = 2
         else:
             modulus = GF256Element.modulus
-        share = self._share_random(self.seeds, self.id, modulus,
-                                   GF256Element, program_counter)
+        prfs = self.players[self.id].prfs[modulus]
+        share = self._share_random(prfs, self.id, GF256Element, program_counter)
         return defer.succeed(share)
 
     def _shamir_share(self, number, program_counter):

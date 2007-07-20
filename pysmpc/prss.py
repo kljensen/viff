@@ -25,21 +25,24 @@ from struct import pack, unpack
 from pysmpc import shamir
 
 
-def prss(n, t, j, prns, field):
+def prss(n, t, j, field, prfs, key):
     """
     Generates a pseudo-random secret share for player j based on the
-    pseuro-random numbers prns.
+    pseudo-random functions given. The key is used when evaluating the
+    PRFs.
 
     An example with (n,t) = (3,1) and a modulus of 31:
     >>> from field import IntegerFieldElement
     >>> IntegerFieldElement.modulus = 31
-    >>> prns = {frozenset([1,2]): 10, frozenset([1,3]): 20, frozenset([2,3]): 30}
-    >>> prss(3, 1, 1, prns, IntegerFieldElement)
-    {27}
-    >>> prss(3, 1, 2, prns, IntegerFieldElement)
-    {25}
-    >>> prss(3, 1, 3, prns, IntegerFieldElement)
-    {23}
+    >>> prfs = {frozenset([1,2]): PRF("a", 31),
+    ...         frozenset([1,3]): PRF("b", 31),
+    ...         frozenset([2,3]): PRF("c", 31)}
+    >>> prss(3, 1, 1, IntegerFieldElement, prfs, "key")
+    {22}
+    >>> prss(3, 1, 2, IntegerFieldElement, prfs, "key")
+    {20}
+    >>> prss(3, 1, 3, IntegerFieldElement, prfs, "key")
+    {18}
 
     We see that the sharing is consistant because each subset of two
     players will recombine their shares to {29}.
@@ -47,7 +50,7 @@ def prss(n, t, j, prns, field):
     result = 0
     all = frozenset(range(1,n+1))
     # TODO: generate_subsets could skip all subsets without j. Or
-    # could we simply use the subsets given by prns.keys()?
+    # could we simply use the subsets given by prfs.keys()?
     for subset in generate_subsets(all, n-t):
         if j in subset:
             points = [(field(x), 0) for x in all-subset]
@@ -55,7 +58,7 @@ def prss(n, t, j, prns, field):
             f_in_j = shamir.recombine(points, j)
             #print "points:", points
             #print "f(%s): %s" % (j, f_in_j)
-            result += prns[subset] * f_in_j
+            result += prfs[subset](key) * f_in_j
 
     return result
     
