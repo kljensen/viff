@@ -87,6 +87,38 @@ def generate_subsets(s, size):
         return frozenset()
 
 
+def _bytestolong(bytes):
+    """Convert a byte string to a long integer.
+
+    Taken from a message on comp.lang.python by Tim Peters:
+    
+    http://groups.google.com/group/comp.lang.python/msg/912f4203a942713f
+    """
+    nchunks, leftover = divmod(len(bytes), 4)
+    if leftover:
+        bytes = '\000' * (4 - leftover) + bytes
+        nchunks = nchunks + 1
+    pieces = unpack(">%dI" % nchunks, bytes)
+
+    # TODO: Can be skipped?
+    pieces = list(pieces)
+    pieces.reverse()    # least-significant first
+
+    nbits = 32
+    while nchunks > 1:
+        j = 0
+        odd = nchunks & 1
+        nchunks = nchunks >> 1
+        for i in xrange(nchunks):
+            pieces[i] = pieces[j] | (pieces[j + 1] << nbits)
+            j = j + 2
+        if odd:
+            pieces[nchunks] = pieces[j]
+            nchunks = nchunks + 1
+        nbits = nbits << 1
+    return pieces[0]        
+
+
 class PRF(object):
     """
     Models a pseudo random function (a PRF).
@@ -192,7 +224,7 @@ class PRF(object):
             rand_bytes = digest[:self.bytes]
             # Convert this to a long and shift it to get rid of the
             # surplus bits.
-            result = self._bytestolong(rand_bytes) >> (8 - self.bits)
+            result = _bytestolong(rand_bytes) >> (8 - self.bits)
 
             if result < self.max:
                 return result
@@ -206,38 +238,6 @@ class PRF(object):
                 # predict it and so it should be hard to find pairs of
                 # inputs which give the same output value.
                 input += digest[-1]
-            
-    def _bytestolong(self, bytes):
-        """Convert a byte string to a long integer.
-
-        Taken from a message on comp.lang.python by Tim Peters:
-
-        http://groups.google.com/group/comp.lang.python/msg/912f4203a942713f
-        """
-        nchunks, leftover = divmod(len(bytes), 4)
-        if leftover:
-            bytes = '\000' * (4 - leftover) + bytes
-            nchunks = nchunks + 1
-        pieces = unpack(">%dI" % nchunks, bytes)
-
-        # TODO: Can be skipped?
-        pieces = list(pieces)
-        pieces.reverse()    # least-significant first
-
-        nbits = 32
-        while nchunks > 1:
-            j = 0
-            odd = nchunks & 1
-            nchunks = nchunks >> 1
-            for i in xrange(nchunks):
-                pieces[i] = pieces[j] | (pieces[j + 1] << nbits)
-                j = j + 2
-            if odd:
-                pieces[nchunks] = pieces[j]
-                nchunks = nchunks + 1
-            nbits = nbits << 1
-        return pieces[0]        
-
 
 if __name__ == "__main__":
     import doctest
