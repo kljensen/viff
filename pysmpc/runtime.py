@@ -621,9 +621,7 @@ class Runtime:
         program_counter = self.inc_pc(program_counter)
         int_shares = self.share_int(IntegerFieldElement(bit), program_counter)
 
-        tmp = i_share
-        for int_share in int_shares:
-            tmp = self.xor_int(tmp, int_share)
+        tmp = self.xor_int(i_share, reduce(self.xor_int, int_shares))
 
         # We open the tmp variable and convert the value to a bit
         # sharing.
@@ -631,10 +629,7 @@ class Runtime:
         self.open(tmp, program_counter=program_counter)
         tmp.addCallback(lambda i: GF256Element(i.value))
         
-        for bit_share in bit_shares:
-            tmp = self.xor_bit(tmp, bit_share)
-
-        return tmp
+        return self.xor_bit(tmp, reduce(self.xor_bit, bit_shares))
 
     #@trace
     def greater_than(self, share_a, share_b, program_counter=None):
