@@ -88,36 +88,29 @@ def generate_subsets(s, size):
 
 
 def _bytestolong(bytes):
-    """Convert a byte string to a long integer.
+    """
+    Convert a byte string to a long integer.
 
-    Taken from a message on comp.lang.python by Tim Peters:
-    
-    http://groups.google.com/group/comp.lang.python/msg/912f4203a942713f
+    The string is interpreted using little-endian byte order:
+    >>> _bytestolong("\\1")
+    1L
+    >>> _bytestolong("\\1\\0")
+    1L
+    >>> _bytestolong("\\0\\1")
+    256L
+
+    Large numbers work too:
+    >>> _bytestolong("\\1\\2\\3\\4\\5\\6\\7")
+    1976943448883713L
     """
     nchunks, leftover = divmod(len(bytes), 4)
     if leftover:
-        bytes = '\000' * (4 - leftover) + bytes
+        bytes += '\000' * (4 - leftover)
         nchunks = nchunks + 1
-    pieces = unpack(">%dI" % nchunks, bytes)
 
-    # TODO: Can be skipped?
-    pieces = list(pieces)
-    pieces.reverse()    # least-significant first
-
-    nbits = 32
-    while nchunks > 1:
-        j = 0
-        odd = nchunks & 1
-        nchunks = nchunks >> 1
-        for i in xrange(nchunks):
-            pieces[i] = pieces[j] | (pieces[j + 1] << nbits)
-            j = j + 2
-        if odd:
-            pieces[nchunks] = pieces[j]
-            nchunks = nchunks + 1
-        nbits = nbits << 1
-    return pieces[0]        
-
+    pieces = enumerate(unpack("<%dI" % nchunks, bytes))
+    return reduce(operator.xor, map(lambda (i,n): n << (32*i), pieces))
+    
 
 class PRF(object):
     """
@@ -138,14 +131,14 @@ class PRF(object):
 
         The PRF can be evaluated by calling it on some input:
         >>> f("input")
-        327L
+        816L
 
         Creating another PRF with the same key gives identical results
         since f and g are deterministic functions, depending only on
         the key:
         >>> g = PRF("key", 1000)
         >>> g("input")
-        327L
+        816L
         
         >>> [f(i) for i in range(100)] == [g(i) for i in range(100)]
         True
@@ -192,16 +185,16 @@ class PRF(object):
         Example:
         >>> prf = PRF("key", 1000)
         >>> prf(1), prf(2), prf(3)
-        (714L, 80L, 617L)
+        (718L, 172L, 470L)
         
         Since prf is a function we can of course evaluate the same
         input to get the same output:
         >>> prf(1)
-        714L
+        718L
 
         The prf can take arbitrary input:
         >>> prf(("input", 123))
-        474L
+        629L
 
         but it must be hashable:
         >>> prf(["input", 123])
