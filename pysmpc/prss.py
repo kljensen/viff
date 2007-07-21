@@ -49,15 +49,14 @@ def prss(n, t, j, field, prfs, key):
     """
     result = 0
     all = frozenset(range(1,n+1))
-    # TODO: generate_subsets could skip all subsets without j. Or
-    # could we simply use the subsets given by prfs.keys()?
-    for subset in generate_subsets(all, n-t):
+    # The PRFs contain the subsets we need, plus some extra in the
+    # case of dealer_keys. That is why we have to check that j is in
+    # the subset before using it.
+    for subset in prfs.iterkeys():
         if j in subset:
             points = [(field(x), 0) for x in all-subset]
             points.append((0,1))
             f_in_j = shamir.recombine(points, j)
-            #print "points:", points
-            #print "f(%s): %s" % (j, f_in_j)
             result += prfs[subset](key) * f_in_j
 
     return result
