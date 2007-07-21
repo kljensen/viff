@@ -19,8 +19,8 @@
 
 import operator, sha
 from math import log, ceil
-
-from struct import pack, unpack
+from struct import pack
+from binascii import hexlify
 
 from pysmpc import shamir
 
@@ -87,31 +87,6 @@ def generate_subsets(s, size):
         return frozenset()
 
 
-def _bytestolong(bytes):
-    """
-    Convert a byte string to a long integer.
-
-    The string is interpreted using little-endian byte order:
-    >>> _bytestolong("\\1")
-    1L
-    >>> _bytestolong("\\1\\0")
-    1L
-    >>> _bytestolong("\\0\\1")
-    256L
-
-    Large numbers work too:
-    >>> _bytestolong("\\1\\2\\3\\4\\5\\6\\7")
-    1976943448883713L
-    """
-    nchunks, leftover = divmod(len(bytes), 4)
-    if leftover:
-        bytes += '\000' * (4 - leftover)
-        nchunks = nchunks + 1
-
-    pieces = enumerate(unpack("<%dI" % nchunks, bytes))
-    return reduce(operator.xor, map(lambda (i,n): n << (32*i), pieces))
-    
-
 class PRF(object):
     """
     Models a pseudo random function (a PRF).
@@ -131,14 +106,14 @@ class PRF(object):
 
         The PRF can be evaluated by calling it on some input:
         >>> f("input")
-        816L
+        327L
 
         Creating another PRF with the same key gives identical results
         since f and g are deterministic functions, depending only on
         the key:
         >>> g = PRF("key", 1000)
         >>> g("input")
-        816L
+        327L
         
         >>> [f(i) for i in range(100)] == [g(i) for i in range(100)]
         True
@@ -185,16 +160,16 @@ class PRF(object):
         Example:
         >>> prf = PRF("key", 1000)
         >>> prf(1), prf(2), prf(3)
-        (718L, 172L, 470L)
+        (714L, 80L, 617L)
         
         Since prf is a function we can of course evaluate the same
         input to get the same output:
         >>> prf(1)
-        718L
+        714L
 
         The prf can take arbitrary input:
         >>> prf(("input", 123))
-        629L
+        474L
 
         but it must be hashable:
         >>> prf(["input", 123])
@@ -215,9 +190,10 @@ class PRF(object):
             # accommodate for the extra bits needed.
             digest = sha1.digest()
             rand_bytes = digest[:self.bytes]
-            # Convert this to a long and shift it to get rid of the
-            # surplus bits.
-            result = _bytestolong(rand_bytes) >> (8 - self.bits)
+            # Convert the random bytes to a long (by converting it to
+            # hexadecimal representation first) and shift it to get
+            # rid of the surplus bits.
+            result = long(hexlify(rand_bytes), 16) >> (8 - self.bits)
 
             if result < self.max:
                 return result
