@@ -130,8 +130,7 @@ def debug(low, mid, high):
 
 def branch(result, low, mid, high):
     print "low: %d, high: %d, last result: %s" % (low, high, result)
-    if options.verbose:
-        timestamp()
+    timestamp()
 
     if result == 1:
         low = mid
