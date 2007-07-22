@@ -92,7 +92,7 @@ while prime % 4 != 3:
     prime = prime.next_prime()
 
 if str(prime) != options.modulus:
-    print "Using %d as modulus" % prime
+    print "Using %s as modulus" % prime
     if prime != modulus:
         print "Adjusted from %d" % modulus
 
