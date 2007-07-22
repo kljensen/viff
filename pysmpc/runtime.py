@@ -57,7 +57,9 @@ class Player:
             # set previously! Since players are constructed when a
             # config file is loaded, one must set the modulus before
             # loading any config files.
-            for modulus in 2, GF256Element.modulus, IntegerFieldElement.modulus:
+
+            # TODO: fix long line!
+            for modulus in 2, GF256Element.modulus, IntegerFieldElement.modulus or GMPIntegerFieldElement.modulus:
                 prfs = {}
                 for subset, key in keys.iteritems():
                     prfs[subset] = PRF(key, modulus)
@@ -66,7 +68,8 @@ class Player:
         if dealer_keys is not None:
             self.dealer_prfs = {}
 
-            for modulus in GF256Element.modulus, IntegerFieldElement.modulus:
+            # TODO: fix long line!
+            for modulus in GF256Element.modulus, IntegerFieldElement.modulus or GMPIntegerFieldElement.modulus:
                 dealers = {}
                 for dealer in dealer_keys:
                     prfs = {}
