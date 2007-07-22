@@ -218,22 +218,27 @@ class RuntimeTestCase(TestCase):
             bit_a_shares = second(shamir.share(bit_a, 1, 3))
             bit_b_shares = second(shamir.share(bit_b, 1, 3))
 
+            def recombine(shares, field):
+                ids = map(field, range(1, len(shares) + 1))
+                return shamir.recombine(zip(ids, shares))
+
             int_res1 = self.rt1.xor_int(int_a_shares[0], int_b_shares[0])
             int_res2 = self.rt2.xor_int(int_a_shares[1], int_b_shares[1])
             int_res3 = self.rt3.xor_int(int_a_shares[2], int_b_shares[2])
-
-            for res in int_res1, int_res2, int_res3:
-                res.addCallback(self.assertEquals, IntegerFieldElement(a ^ b))
+            
+            int_res = gatherResults([int_res1, int_res2, int_res3])
+            int_res.addCallback(recombine, IntegerFieldElement)
+            int_res.addCallback(self.assertEquals, IntegerFieldElement(a ^ b))
 
             bit_res1 = self.rt1.xor_bit(bit_a_shares[0], bit_b_shares[0])
             bit_res2 = self.rt2.xor_bit(bit_a_shares[1], bit_b_shares[1])
             bit_res3 = self.rt3.xor_bit(bit_a_shares[2], bit_b_shares[2])
 
-            for res in bit_res1, bit_res2, bit_res3:
-                res.addCallback(self.assertEquals, IntegerFieldElement(a ^ b))
+            bit_res = gatherResults([bit_res1, bit_res2, bit_res3])
+            bit_res.addCallback(recombine, GF256Element)
+            bit_res.addCallback(self.assertEquals, GF256Element(a ^ b))
 
-            results.extend([int_res1, int_res2, int_res3,
-                            bit_res1, bit_res2, bit_res3])
+            results.extend([int_res, bit_res])
 
         return gatherResults(results)
 
