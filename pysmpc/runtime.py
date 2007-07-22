@@ -229,6 +229,22 @@ class ShareExchangerFactory(ServerFactory, ClientFactory):
  
 ########################################
 
+
+#@trace
+def inc_pc(program_counter):
+    """
+    Increment a program counter.
+    """
+    return program_counter[:-1] + (program_counter[-1]+1,)
+
+#@trace
+def sub_pc(program_counter):
+    """
+    Generate a sub-counter from a program counter.
+    """
+    return program_counter + (1,)
+
+
 class Runtime:
     """
     The PySMPC runtime.
@@ -313,24 +329,6 @@ class Runtime:
         return program_counter
 
     #@trace
-    def inc_pc(self, program_counter):
-        """
-        Increment a program counter.
-        """
-        program_counter = program_counter[:-1] + (program_counter[-1]+1,)
-        #println("**** Inc PC: %s ****", program_counter)
-        return program_counter
- 
-    #@trace
-    def sub_pc(self, program_counter):
-        """
-        Generate a sub-counter from a program counter.
-        """
-        program_counter = program_counter + (1,)
-        #println("****** Sub PC: %s ******", program_counter)
-        return program_counter
-
-    #@trace
     def open(self, sharing, threshold=None, program_counter=None):
         """
         Open a share. Returns nothing, the share given is mutated.
@@ -412,7 +410,7 @@ class Runtime:
 
         result = gatherResults([share_a, share_b])
         result.addCallback(lambda (a, b): a * b)
-        result.addCallback(self._shamir_share, self.sub_pc(program_counter))
+        result.addCallback(self._shamir_share, sub_pc(program_counter))
         result.addCallback(self._recombine, threshold=2*self.threshold)
         return result
     
@@ -429,7 +427,7 @@ class Runtime:
             share_b = defer.succeed(share_b)
 
         program_counter = self.init_pc(program_counter)
-        share_c = self.mul(share_a, share_b, self.sub_pc(program_counter))
+        share_c = self.mul(share_a, share_b, sub_pc(program_counter))
         result = gatherResults([share_a, share_b, share_c])
         result.addCallback(lambda (a, b, c): a + b - 2*c)
         return result
@@ -521,14 +519,14 @@ class Runtime:
 
         result = self.mul(share, share)
 
-        program_counter = self.sub_pc(program_counter)
+        program_counter = sub_pc(program_counter)
         # Open the square and compute a square-root
         self.open(result, 2*self.threshold, program_counter)
 
         def finish(square, share, binary, program_counter):
             if square == 0:
                 # We were unlucky, try again...
-                return self.share_random_int(binary, self.sub_pc(program_counter))
+                return self.share_random_int(binary, sub_pc(program_counter))
             else:
                 # We can finish the calculation
                 root = square.sqrt()
@@ -615,17 +613,17 @@ class Runtime:
         # TODO: temporary seed for consistant testing
         bit = Random(0).randint(0, 1)
 
-        program_counter = self.sub_pc(program_counter)
+        program_counter = sub_pc(program_counter)
         bit_shares = self.share_bit(GF256Element(bit), program_counter)
 
-        program_counter = self.inc_pc(program_counter)
+        program_counter = inc_pc(program_counter)
         int_shares = self.share_int(IntegerFieldElement(bit), program_counter)
 
         tmp = reduce(self.xor_int, int_shares, i_share)
 
         # We open the tmp variable and convert the value to a bit
         # sharing.
-        program_counter = self.inc_pc(program_counter)
+        program_counter = inc_pc(program_counter)
         self.open(tmp, program_counter=program_counter)
         tmp.addCallback(lambda i: GF256Element(i.value))
         
@@ -651,9 +649,9 @@ class Runtime:
         assert len(self.players) + 2 < 2**l
 
         int_bits = []
-        program_counter = self.sub_pc(program_counter)
+        program_counter = sub_pc(program_counter)
         for _ in range(m):
-            program_counter = self.inc_pc(program_counter)
+            program_counter = inc_pc(program_counter)
             int_bits.append(self.share_random_int(True, program_counter))
 
         # We must use int_bits without adding callbacks to the bits --
@@ -670,7 +668,7 @@ class Runtime:
 
         bit_bits = []
         for b in int_bits:
-            program_counter = self.inc_pc(program_counter)
+            program_counter = inc_pc(program_counter)
             # TODO: this changes int_bits! It should be okay since
             # int_bits is not used any further, but still...
             bit_bits.append(self.int_to_bit(b, program_counter))
@@ -679,7 +677,7 @@ class Runtime:
 
         a = self.add(self.sub(share_a, share_b), 2**l)
         T = self.add(self.sub(2**t, int_b), a)
-        program_counter = self.inc_pc(program_counter)
+        program_counter = inc_pc(program_counter)
         self.open(T, program_counter=program_counter)
 
         #@trace
@@ -706,10 +704,10 @@ class Runtime:
                 (x, X) `diamond` (0, Y) = (0, Y)
                 (x, X) `diamond` (1, Y) = (x, X)
                 """
-                program_counter = self.sub_pc(program_counter)
+                program_counter = sub_pc(program_counter)
                 top = self.mul(top_a, top_b, program_counter)
                 #   = x * y
-                program_counter = self.inc_pc(program_counter)
+                program_counter = inc_pc(program_counter)
                 bot = self.xor_bit(self.mul(top_b, self.xor_bit(bot_a, bot_b),
                                             program_counter), bot_b)
                 #   = (y * (X ^ Y)) ^ Y
@@ -719,7 +717,7 @@ class Runtime:
             while len(vec) > 1:
                 tmp = []
                 while len(vec) > 1:
-                    program_counter = self.inc_pc(program_counter)
+                    program_counter = inc_pc(program_counter)
                     tmp.append(diamond(vec.pop(0), vec.pop(0), program_counter))
                 if len(vec) == 1:
                     tmp.append(vec[0])
@@ -729,7 +727,7 @@ class Runtime:
                                 self.xor_bit(bit_bits[l], vec[0][1]))
 
         result = gatherResults([T] + bit_bits)
-        program_counter = self.inc_pc(program_counter)
+        program_counter = inc_pc(program_counter)
         result.addCallback(calculate, program_counter)
         return result
         
