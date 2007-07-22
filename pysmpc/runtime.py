@@ -619,21 +619,24 @@ class Runtime:
         program_counter = inc_pc(program_counter)
         int_shares = self.share_int(IntegerFieldElement(bit), program_counter)
 
+        # TODO: Using a parallel reduce here seems to be slower than
+        # using the built-in reduce.
         tmp = reduce(self.xor_int, int_shares, i_share)
 
-        # We open the tmp variable and convert the value to a bit
-        # sharing.
+        # We open tmp and convert the value to a bit sharing.
         program_counter = inc_pc(program_counter)
         self.open(tmp, program_counter=program_counter)
         tmp.addCallback(lambda i: GF256Element(i.value))
         
+        # Since xor_bit does not do any network communication there is
+        # no need to do any kind of parallel reduce.
         return reduce(self.xor_bit, bit_shares, tmp)
 
     #@trace
     def greater_than(self, share_a, share_b, program_counter=None):
         """
         Computes share_a >= share_b, where share_a and share_b are
-        IntegerFieldElements. The result is aGF256Element share.
+        IntegerFieldElements. The result is a GF256Element share.
         """
         program_counter = self.init_pc(program_counter)
 
@@ -714,6 +717,10 @@ class Runtime:
 
                 return (top, bot)
 
+            # Reduce using the diamond operator. We want to do as much
+            # as possible in parallel while being careful not to
+            # switch the order of elements since the diamond operator
+            # is non-commutative.
             while len(vec) > 1:
                 tmp = []
                 while len(vec) > 1:
