@@ -18,6 +18,18 @@ marked with 'TODO' which document things on a more local level.
    Initial tests seems to indicate that the network is the
    bottle-neck, but this should be systematically checked.
 
+* Benchmark parallel vs. sequential execution
+   Test multiplications that are forced to be done sequential:
+
+       *
+      / \
+     1   *
+        / \
+       2   *
+          / \
+         3   ...
+
+
 * Profile and optimize
    We need to see if the time is spend on network latency or in the
    CPU. If the latter is the case, then we could consider writing the
