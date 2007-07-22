@@ -24,12 +24,11 @@ from __future__ import division
 import sys
 from configobj import ConfigObj
 from optparse import OptionParser
-from random import Random, SystemRandom
 from pprint import pprint
 
 from pysmpc.prss import generate_subsets
 from pysmpc.runtime import Player
-
+from pysmpc.util import rand
 
 def s_str(subset):
     return " ".join(map(str, subset))
@@ -97,8 +96,6 @@ def load_config(source):
 def generate_configs(n, t, addresses=None, prefix=None):
     players = frozenset(range(1, n+1))
     max_unqualified_subsets = generate_subsets(players, n-t)
-    # TODO: rand = SystemRandom()
-    rand = Random(0)
 
     def generate_key():
         # TODO: is a 40 byte hex string as good as a 20 byte binary

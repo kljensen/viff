@@ -1,0 +1,41 @@
+# Copyright 2007 Martin Geisler
+#
+# This file is part of PySMPC
+#
+# PySMPC is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# PySMPC is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with PySMPC in the file COPYING; if not, write to the Free
+# Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+
+
+import os, random
+
+seed = os.environ.get('SEED')
+
+if seed is None:
+    # If the environmental variable is not set, then a random seed is
+    # chosen.
+    seed = random.randint(0, 10000)
+    print 'Seeding random generator with random seed %d' % seed
+    rand = random.Random(seed)
+elif seed == '':
+    # If it is set, but set to the empty empty string (SEED=), then no
+    # seed is used.
+    rand = random.SystemRandom()
+else:
+    # Otherwise use the seed given, which must be an integer.
+    seed = int(seed)
+    print 'Seeding random generator with seed %d' % seed
+    rand = random.Random(seed)
+
+__all__ = ['rand']

@@ -27,12 +27,11 @@ and running the calculations.
 import marshal
 import socket
 #from pprint import pformat, pprint
-# TODO: use SystemRandom instead (runs out of entropy?)
-from random import Random
 
 from pysmpc import shamir
 from pysmpc.prss import prss, PRF
 from pysmpc.field import FieldElement, IntegerFieldElement, GF256Element, GMPIntegerFieldElement
+from pysmpc.util import rand
 
 from twisted.internet import defer, reactor
 from twisted.internet.defer import Deferred, DeferredList, gatherResults
@@ -609,9 +608,7 @@ class Runtime:
         GF256Element sharing of the same bit.
         """
         program_counter = self.init_pc(program_counter)
-
-        # TODO: temporary seed for consistant testing
-        bit = Random(0).randint(0, 1)
+        bit = rand.randint(0, 1)
 
         program_counter = sub_pc(program_counter)
         bit_shares = self.share_bit(GF256Element(bit), program_counter)

@@ -21,7 +21,8 @@
 Shamir sharing and recombination.
 """
 
-import random, operator
+import operator
+from pysmpc.util import rand
     
 def share(secret, threshold, num_players):
     """
@@ -35,14 +36,16 @@ def share(secret, threshold, num_players):
     """
     assert threshold > 0 and threshold < num_players
     
-    # TODO: rnd = random.SystemRandom() and remove debugging-seed
-    rnd = random.Random(0)
+    # TODO: debugging
+    #from random import Random
+    #rand = Random(0)
+
     coef = [secret]
     for j in range(threshold):
         # TODO: introduce a random() method in FieldElements so that
         # this wont have to be a long when we are sharing a
         # GMPIntegerFieldElement.
-        coef.append(rnd.randint(0, long(secret.modulus)-1))
+        coef.append(rand.randint(0, long(secret.modulus)-1))
 
     shares = []
     for i in range(1, num_players+1):
