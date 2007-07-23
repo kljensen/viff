@@ -75,9 +75,6 @@ marked with 'TODO' which document things on a more local level.
    parallelism would run with no restrictions except those imposed by
    the program itself.
 
-* Provide a small install-daimi.sh shell script which will set up
-   PYTHONPATH corrrectly for people on DAIMI?
-
 * Merge GMPIntegerFieldElement and IntegerFieldElement?
    The two classes are almost identical and should be merged.
 

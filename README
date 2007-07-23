@@ -8,6 +8,13 @@ This is a general framework for doing secure multi-party computations.
 Configuring the Environment
 ---------------------------
 
+On DAIMI you can simply run the install-daimi.sh script:
+
+  % sh install-daimi.dk
+
+It will attempt to configure the environment for you. If that fails,
+then please follow the generic instructions below:
+
 To run pysmpc you must configure your Python path correctly by setting
 the PYTHONPATH environment variable. In Bash shells this is done by
 
@@ -34,7 +41,7 @@ PYTHONPATH, e.g., putting these three lines
   PYTHONPATH=$PYTHONPATH:~mg/opt/lib/python2.4/site-packages
   export PYTHONPATH
 
-into a new file called python.rc under ~/.daimi-setup/bash/bashrc.d/.
+into a new file called pysmpc.rc under ~/.daimi-setup/bash/bashrc.d/.
 
 
 Example Applications
