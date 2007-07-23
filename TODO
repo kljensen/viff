@@ -7,7 +7,7 @@ marked with 'TODO' which document things on a more local level.
 
 * Enforce the use of Blum primes
    The comparison only works with Blum primes, that is, primes that
-   are congurent to 3 modulu 4.
+   are congruent to 3 modulo 4.
 
 * Create unit tests which randomizes network delay
    The current unit test with LoopbackRuntime are strictly sequential

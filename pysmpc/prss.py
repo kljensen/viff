@@ -44,7 +44,7 @@ def prss(n, t, j, field, prfs, key):
     >>> prss(3, 1, 3, IntegerFieldElement, prfs, "key")
     {18}
 
-    We see that the sharing is consistant because each subset of two
+    We see that the sharing is consistent because each subset of two
     players will recombine their shares to {29}.
     """
     result = 0

@@ -29,8 +29,8 @@ if seed is None:
     print 'Seeding random generator with random seed %d' % seed
     rand = random.Random(seed)
 elif seed == '':
-    # If it is set, but set to the empty empty string (SEED=), then no
-    # seed is used.
+    # If it is set, but set to the empty string (SEED=), then no seed
+    # is used.
     rand = random.SystemRandom()
 else:
     # Otherwise use the seed given, which must be an integer.

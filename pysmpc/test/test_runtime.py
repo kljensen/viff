@@ -63,7 +63,7 @@ class LoopbackRuntime(Runtime):
 
                 if id > self.id:
                     # Make a "connection" to the other player. We are
-                    # the client (because we innitiate the connection)
+                    # the client (because we initiate the connection)
                     # and the other player is the server.
                     client = protocol
                     server = self.runtimes[id].real_protocols[self.id]

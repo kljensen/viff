@@ -127,7 +127,7 @@ def println(format="", *args):
 
 def dump_incoming_shares(shares):
     """
-    Debug dump of the incomming shares.
+    Debug dump of the incoming shares.
     """
     print "Incoming shares:"
     shares = list(shares.iteritems())

@@ -40,7 +40,7 @@ def record_start():
 def total_time(x):
     now = time.time()
     print
-    print "Total time used: %.3f sek" % (now-start)
+    print "Total time used: %.3f sec" % (now-start)
     print "*" * 64
     return x
 
