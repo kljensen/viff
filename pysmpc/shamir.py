@@ -25,9 +25,9 @@ import operator
 from pysmpc.util import rand
     
 def share(secret, threshold, num_players):
-    """
-    Shamir share secret into num_players shares with the given
-    threshold. It holds that
+    """Shamir share secret.
+
+    It holds that
     >>> from field import IntegerFieldElement
     >>> IntegerFieldElement.modulus = 47
     >>> secret = IntegerFieldElement(42)
@@ -72,9 +72,9 @@ def share(secret, threshold, num_players):
 _recombination_vectors = {}
 
 def recombine(shares, x_recomb=0):
-    """
-    Recombines list of (xi, yi) pairs. Recombination is done in the
-    optional point x.
+    """Recombines list of (xi, yi) pairs.
+
+    Recombination is done in the optional point x.
     """
     xs = [x_i for (x_i, _) in shares]
     ys = [y_i for (_, y_i) in shares]

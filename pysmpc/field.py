@@ -45,7 +45,8 @@ class FieldElement(object):
         """Comparison.
 
         The comparison is done on the value only since it is assumed
-        that all instances will have the same modulus."""
+        that all instances will have the same modulus.
+        """
         try:
             return cmp(self.value, other.value)
         except AttributeError:
@@ -60,9 +61,9 @@ class FieldElement(object):
 
 
 class IntegerFieldElement(FieldElement):
-    """
-    Implements an integer field, Zp for some p. Assign to
-    IntegerFieldElement.modulus before use.
+    """Integer field, Zp for some p.
+
+    Assign to IntegerFieldElement.modulus before use.
     """
 
     modulus = None
@@ -130,15 +131,14 @@ class IntegerFieldElement(FieldElement):
     def __invert__(self):
         """Inversion.
 
-        Note that zero cannot be inverted.
+        Note that zero cannot be inverted, trying to do so will raise
+        a ZeroDivisionError.
         """
         if self.value == 0:
             raise ZeroDivisionError, "Cannot invert zero"
 
         def extended_gcd(a, b):
-            """
-            The extended Euclidean algorithm.
-            """
+            """The extended Euclidean algorithm."""
             x = 0
             lastx = 1
             y = 1
@@ -165,10 +165,9 @@ class IntegerFieldElement(FieldElement):
         return IntegerFieldElement(other) / self
 
     def sqrt(self):
-        """
-        Computes a square-root.
+        """Square root.
 
-        No attempt is made the to return the positive square-root:
+        No attempt is made the to return the positive square root:
 
         >>> IntegerFieldElement.modulus = 31
         >>> a = IntegerFieldElement(3)
@@ -177,7 +176,7 @@ class IntegerFieldElement(FieldElement):
         >>> (a**2).sqrt()
         {28}
 
-        Note that {28} = {-3} which is a proper square-root of {9}.
+        Note that {28} = {-3} which is a proper square root of {9}.
         """
         # Since the modulus is a Blum prime (congruent to 3 mod 4),
         # there will be no reminder in the division.
@@ -185,8 +184,7 @@ class IntegerFieldElement(FieldElement):
         return IntegerFieldElement(root)
 
     def bit(self, index):
-        """
-        Extract the bit with the given index (counted from zero).
+        """Extract the bit with the given index (counted from zero).
 
         >>> IntegerFieldElement.modulus = 31
         >>> a = IntegerFieldElement(20)
@@ -215,10 +213,7 @@ class IntegerFieldElement(FieldElement):
 
 
 class GMPIntegerFieldElement(FieldElement):
-    """
-    Models elements from an integer field. Uses GMPY in an attempt to
-    speed things up.
-    """
+    """Integer field, using GMPY extension."""
 
     modulus = None
 
@@ -273,9 +268,7 @@ class GMPIntegerFieldElement(FieldElement):
         return GMPIntegerFieldElement(other) / self
 
     def sqrt(self):
-        """
-        Return a square root.
-        """
+        """Return a square root."""
         root = pow(self.value, (self.modulus+1)//4, self.modulus)
         return GMPIntegerFieldElement(root)
 
@@ -294,8 +287,7 @@ _exp_table = {}
 _inv_table = {}
 
 def _generate_tables():
-    """
-    Generate tables with logarithms, exponentials and inverses.
+    """Generate tables with logarithms, exponentials and inverses.
 
     Code adapted from http://www.samiam.org/galois.html.
     """
@@ -319,9 +311,7 @@ def _generate_tables():
 _generate_tables()
 
 class GF256Element(FieldElement):
-    """
-    Models an element of the GF(2^8) field.
-    """
+    """Models an element of the GF(2^8) field."""
 
     modulus = 256
 

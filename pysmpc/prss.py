@@ -26,10 +26,10 @@ from pysmpc import shamir
 
 
 def prss(n, t, j, field, prfs, key):
-    """
-    Generates a pseudo-random secret share for player j based on the
-    pseudo-random functions given. The key is used when evaluating the
-    PRFs.
+    """Return a pseudo-random secret share for a random number.
+
+    The share is for player j based on the pseudo-random functions
+    given. The key is used when evaluating the PRFs.
 
     An example with (n,t) = (3,1) and a modulus of 31:
     >>> from field import IntegerFieldElement
@@ -64,14 +64,14 @@ def prss(n, t, j, field, prfs, key):
 
 
 def generate_subsets(s, size):
-    """
-    Generates the set of all subsets of a specific size:
+    """Generates the set of all subsets of a specific size.
 
+    Example:
     >>> generate_subsets(frozenset('abc'), 2)
     frozenset([frozenset(['c', 'b']), frozenset(['a', 'c']), frozenset(['a', 'b'])])
 
-    Generating subsets larger than the initial set return the empty set:
-
+    Generating subsets larger than the initial set return the empty
+    set:
     >>> generate_subsets(frozenset('a'), 2)
     frozenset([])
     """
@@ -87,20 +87,19 @@ def generate_subsets(s, size):
 
 
 class PRF(object):
-    """
-    Models a pseudo random function (a PRF).
+    """Models a pseudo random function (a PRF).
 
     The numbers are based on a SHA1 hash of the initial key.
     """
 
     def __init__(self, key, max):
-        """
-        Creates the PRF keyed with the given key and max. The key must
-        be a string whereas the max must be a number. Output value
-        will be in the range zero to max, with zero included and max
-        excluded.
+        """Create a PRF keyed with the given key and max.
+
+        The key must be a string whereas the max must be a number.
+        Output value will be in the range zero to max, with zero
+        included and max excluded.
         
-        So to make a PRF what generates numbers less than 1000 do:
+        To make a PRF what generates numbers less than 1000 do:
         >>> f = PRF("key", 1000)
 
         The PRF can be evaluated by calling it on some input:

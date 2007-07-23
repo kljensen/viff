@@ -17,8 +17,7 @@
 # Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 # 02110-1301 USA
 
-"""
-PySMPC runtime.
+"""PySMPC runtime.
 
 The runtime is responsible for sharing inputs, handling communication,
 and running the calculations.
@@ -26,7 +25,6 @@ and running the calculations.
 
 import marshal
 import socket
-#from pprint import pformat, pprint
 
 from pysmpc import shamir
 from pysmpc.prss import prss, PRF
@@ -41,9 +39,7 @@ from twisted.protocols.basic import Int16StringReceiver
 # TODO: move this to another file, probably together with the
 # configuration loading/saving machinery.
 class Player:
-    """
-    Wrapper for information about a player in the protocol.
-    """
+    """Wrapper for information about a player in the protocol."""
 
     def __init__(self, id, host, port, keys=None, dealer_keys=None):
         self.id = id
@@ -96,9 +92,7 @@ indent = 0
 _trace_counters = {}
 
 def trace(func):
-    """
-    Decorator which will make print function entry and exit.
-    """
+    """Trace function entry and exit."""
     def wrapper(*args, **kwargs):
         """
         Wrapper.
@@ -117,18 +111,14 @@ def trace(func):
     return wrapper
 
 def println(format="", *args):
-    """
-    Print an indented line.
-    """
+    """Print a line indented according to the stack depth."""
     if len(args) > 0:
         format = format % args
 
     print "%s %s" % ("  " * indent, format)
 
 def dump_incoming_shares(shares):
-    """
-    Debug dump of the incoming shares.
-    """
+    """Dump the incoming shares."""
     print "Incoming shares:"
     shares = list(shares.iteritems())
     shares.sort()
@@ -143,9 +133,7 @@ def dump_incoming_shares(shares):
 
 
 class ShareExchanger(Int16StringReceiver):
-    """
-    The protocol responsible for exchanging shares.
-    """
+    """Send and receive shares."""
 
     #@trace
     def __init__(self, id):
@@ -172,9 +160,7 @@ class ShareExchanger(Int16StringReceiver):
 
     #@trace
     def sendShare(self, program_counter, share):
-        """
-        Send a share.
-        """
+        """Send a share."""
         #println("Sending to id=%d: program_counter=%s, share=%s",
         #        self.id, program_counter, share)
 
@@ -187,18 +173,14 @@ class ShareExchanger(Int16StringReceiver):
 
 
     def loseConnection(self):
-        """
-        Disconnect this protocol instance.
-        """
+        """Disconnect this protocol instance."""
         self.transport.loseConnection()
         # TODO: this ought to be the last callback and so it might not
         # be necessary to pass self on?
         return self
 
 class ShareExchangerFactory(ServerFactory, ClientFactory):
-    """
-    Factory for creating ShareExchanger protocols.
-    """
+    """Factory for creating ShareExchanger protocols."""
 
     #@trace
     def __init__(self, incoming_shares, port_player_mapping, protocols):
@@ -210,9 +192,7 @@ class ShareExchangerFactory(ServerFactory, ClientFactory):
 
     #@trace
     def buildProtocol(self, addr):
-        """
-        Build a new protocol for communicating with addr.
-        """
+        """Build and return a new protocol for communicating with addr."""
         port = addr.port - (addr.port % 100)
         # Resolving the hostname into an IP address is a blocking
         # operation, but this is acceptable since buildProtocol is
@@ -234,22 +214,17 @@ class ShareExchangerFactory(ServerFactory, ClientFactory):
 
 #@trace
 def inc_pc(program_counter):
-    """
-    Increment a program counter.
-    """
+    """Increment a program counter."""
     return program_counter[:-1] + (program_counter[-1]+1,)
 
 #@trace
 def sub_pc(program_counter):
-    """
-    Generate a sub-counter from a program counter.
-    """
+    """Generate a sub-counter from a program counter."""
     return program_counter + (1,)
 
 
 class Runtime:
-    """
-    The PySMPC runtime.
+    """The PySMPC runtime.
 
     Each party in the protocol must instantiate an object from this
     class and use it for all calculations.
@@ -300,8 +275,10 @@ class Runtime:
                 len(self.players), self.threshold)
 
     def shutdown(self):
-        """
-        Callback used for shutting down the runtime gracefully.
+        """Shutdown the runtime.
+
+        All connections are closed and the runtime cannot be used
+        again after this has been called.
         """
         println("Initiating shutdown sequence.")
         for _, protocol in self.protocols.iteritems():
@@ -310,9 +287,9 @@ class Runtime:
         reactor.callLater(1, reactor.stop)
 
     def wait_for(self, *vars):
-        """
-        Start the runtime and wait for the variables given. The
-        runtime is shut down when all variables are calculated.
+        """Start the runtime and wait for the variables given.
+
+        The runtime is shut down when all variables are calculated.
         """
         dl = DeferredList(vars)
         dl.addCallback(lambda _: self.shutdown())
@@ -322,9 +299,7 @@ class Runtime:
 
     #@trace
     def init_pc(self, program_counter):
-        """
-        Initialize a program counter.
-        """
+        """Initialize a program counter."""
         if program_counter is None:
             self.program_counter += 1
             program_counter = (self.program_counter,)
@@ -332,8 +307,7 @@ class Runtime:
 
     #@trace
     def open(self, sharing, threshold=None, program_counter=None):
-        """
-        Open a share. Returns nothing, the share given is mutated.
+        """Open a share. Returns nothing, the share given is mutated.
 
         Communication cost: n broadcasts.
         """
@@ -343,9 +317,7 @@ class Runtime:
             threshold = self.threshold
 
         def broadcast(share):
-            """
-            Broadcast share to all players.
-            """
+            """Broadcast share to all players."""
             assert isinstance(share, FieldElement)
 
             deferreds = []
@@ -363,8 +335,7 @@ class Runtime:
         
     #@trace
     def add(self, share_a, share_b):
-        """
-        Addition of shares.
+        """Addition of shares.
 
         Communication cost: none.
         """
@@ -379,8 +350,7 @@ class Runtime:
 
     #@trace
     def sub(self, share_a, share_b):
-        """
-        Subtraction of shares.
+        """Subtraction of shares.
 
         Communication cost: none.
         """
@@ -395,8 +365,7 @@ class Runtime:
 
     #@trace
     def mul(self, share_a, share_b, program_counter=None):
-        """
-        Multiplication of shares.
+        """Multiplication of shares.
 
         Communication cost: 1 Shamir sharing.
         """
@@ -418,8 +387,7 @@ class Runtime:
     
     #@trace
     def xor_int(self, share_a, share_b, program_counter=None):
-        """
-        Exclusive-or of integer sharings.
+        """Exclusive-or of integer sharings.
         
         Communication cost: 1 multiplication.
         """
@@ -437,9 +405,7 @@ class Runtime:
     xor_bit = add
 
     def _share_random(self, prfs, id, field, key):
-        """
-        Do a PRSS using pseudo-random numbers from the field given.
-        """
+        """Do a PRSS using the PRFs given."""
         return prss(len(self.players), self.threshold, id, field, prfs, key)
 
     def _share_known(self, element, field, program_counter):
@@ -485,7 +451,8 @@ class Runtime:
     def share_int(self, integer, program_counter=None):
         """Share an integer.
 
-        Communication cost: 1 broadcast."""
+        Communication cost: 1 broadcast.
+        """
         assert isinstance(integer, IntegerFieldElement)
         program_counter = self.init_pc(program_counter)
 
@@ -495,7 +462,8 @@ class Runtime:
     def share_bit(self, bit, program_counter=None):
         """Share a bit.
 
-        Communication cost: 1 broadcast."""
+        Communication cost: 1 broadcast.
+        """
         assert isinstance(bit, GF256Element)
         program_counter = self.init_pc(program_counter)
 
@@ -504,10 +472,9 @@ class Runtime:
 
     #@trace
     def share_random_int(self, binary=False, program_counter=None):
-        """
-        Generate integer shares of a uniformly random number
-        IntegerFieldElement. No player learns the value of the
-        integer.
+        """Generate shares of a uniformly random IntegerFieldElement.
+
+        No player learns the value of the integer.
 
         Communication cost: none if binary=False, 1 open otherwise.
         """
@@ -542,10 +509,10 @@ class Runtime:
         
     #@trace
     def share_random_bit(self, binary=False, program_counter=None):
-        """
-        Generate shares of a uniformly random GF256Element, or a 0/1
-        element if binary is True. No player learns the value of the
-        element.
+        """Generate shares of a uniformly random GF256Element.
+
+        If binary is True, a 0/1 element is generated. No player
+        learns the value of the element.
 
         Communication cost: none.
         """
@@ -560,8 +527,7 @@ class Runtime:
         return defer.succeed(share)
 
     def _shamir_share(self, number, program_counter):
-        """
-        Share a FieldElement using Shamir sharing.
+        """Share a FieldElement using Shamir sharing.
 
         Returns a list of (id, share) pairs.
         """
@@ -578,8 +544,7 @@ class Runtime:
 
     #@trace
     def shamir_share(self, number, program_counter=None):
-        """
-        Share an IntegerFieldElement using Shamir sharing.
+        """Share an IntegerFieldElement using Shamir sharing.
 
         Returns a list of shares.
 
@@ -596,20 +561,14 @@ class Runtime:
         return result
 
     def bit_to_int(self, b_share, program_counter=None):
-        """
-        Converts a GF256Element sharing of a bit to a
-        IntegerFieldElement sharing of the same bit.
-        """
+        """Convert a GF256Element share to an IntegerFieldElement share."""
         # TODO: This ought to be the reverse of int_to_bit, but it is
         # not needed right now.
         pass
 
     #@trace
     def int_to_bit(self, i_share, program_counter=None):
-        """
-        Converts an IntegerFieldElement sharing of a bit to a
-        GF256Element sharing of the same bit.
-        """
+        """Convert an IntegerFieldElement share to a GF256Element share."""
         program_counter = self.init_pc(program_counter)
         bit = rand.randint(0, 1)
 
@@ -634,9 +593,10 @@ class Runtime:
 
     #@trace
     def greater_than(self, share_a, share_b, program_counter=None):
-        """
-        Computes share_a >= share_b, where share_a and share_b are
-        IntegerFieldElements. The result is a GF256Element share.
+        """Compute share_a >= share_b.
+
+        Both arguments must be IntegerFieldElements. The result is a
+        GF256Element share.
         """
         program_counter = self.init_pc(program_counter)
 
@@ -661,9 +621,7 @@ class Runtime:
         # having int_b wait on them ensures this.
 
         def bits_to_int(bits):
-            """
-            Converts a list of bits to an integer.
-            """
+            """Converts a list of bits to an integer."""
             return sum([2**i * b for (i, b) in enumerate(bits)])
 
         int_b = gatherResults(int_bits)
@@ -685,9 +643,7 @@ class Runtime:
 
         #@trace
         def calculate(results, program_counter):
-            """
-            Finish the calculation.
-            """
+            """Finish the calculation."""
             T = results[0]
             bit_bits = results[1:]
 
@@ -701,8 +657,9 @@ class Runtime:
 
             #@trace
             def diamond((top_a, bot_a), (top_b, bot_b), program_counter):
-                """
-                The "diamond-operator" where
+                """The "diamond-operator".
+
+                Defined by
 
                 (x, X) `diamond` (0, Y) = (0, Y)
                 (x, X) `diamond` (1, Y) = (x, X)
@@ -745,8 +702,7 @@ class Runtime:
 
     #@trace
     def exchange_shares(self, program_counter, id, share):
-        """
-        Exchange shares with another player.
+        """Exchange shares with another player.
 
         We send the player our share and record a Deferred which will
         trigger when the share from the other side arrives.
@@ -768,10 +724,7 @@ class Runtime:
             return self.incoming_shares[key]
 
     def _recombine(self, shares, threshold):
-        """
-        Shamir recombine a list of deferreds which must yield
-        (id,share) pairs.
-        """
+        """Shamir recombine a list of deferred (id,share) pairs."""
         assert len(shares) > threshold
         result = gatherResults(shares[:threshold+1])
         result.addCallback(shamir.recombine)
