@@ -36,10 +36,6 @@ def share(secret, threshold, num_players):
     """
     assert threshold > 0 and threshold < num_players
     
-    # TODO: debugging
-    #from random import Random
-    #rand = Random(0)
-
     coef = [secret]
     for j in range(threshold):
         # TODO: introduce a random() method in FieldElements so that
