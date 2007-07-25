@@ -63,7 +63,6 @@ parser.set_defaults(modulus="30916444023318367583",
 if len(args) == 0:
     parser.error("you must specify a config file")
 
-id, players = load_config(args[0])
 
 modulus = eval(options.modulus, {}, {})
 
@@ -88,6 +87,7 @@ else:
     F = IntegerFieldElement
     F.modulus = long(prime)
 
+id, players = load_config(args[0])
 
 print "I am player %d" % id
 
