@@ -249,9 +249,6 @@ class GMPIntegerFieldElement(FieldElement):
 
     __rmul__ = __mul__
 
-    # TODO: add in-place operators to save on the number of newly
-    # constructed objects.
-
     def __pow__(self, exponent):
         return GMPIntegerFieldElement(pow(self.value, exponent, self.modulus))
 
