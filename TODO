@@ -151,3 +151,7 @@ marked with 'TODO' which document things on a more local level.
    does not seem to be many places where we do stuff like that,
    though. So the overhead of keeping track of when resharing is
    needed might be too big for this to be an improvement.
+
+* More than one field
+   Tomas has a protocol that involves the use of multiple fields, each
+   with their own modulus.
