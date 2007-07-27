@@ -28,7 +28,8 @@ import socket
 
 from pysmpc import shamir
 from pysmpc.prss import prss, PRF
-from pysmpc.field import FieldElement, IntegerFieldElement, GF256Element, GMPIntegerFieldElement
+from pysmpc.field import (FieldElement, IntegerFieldElement,
+                          GF256Element, GMPIntegerFieldElement)
 from pysmpc.util import rand
 
 from twisted.internet import defer, reactor
@@ -46,16 +47,19 @@ class Player:
         self.host = host
         self.port = port
 
+        # TODO: using the modulus of IntegerFieldElement or
+        # GMPIntegerFieldElement here requires that it has been set
+        # previously! Since players are constructed when a config file
+        # is loaded, one must set the modulus before loading any
+        # config files. This dependency should be removed.
+        if IntegerFieldElement.modulus:
+            field_modulus = IntegerFieldElement.modulus
+        else:
+            field_modulus = GMPIntegerFieldElement.modulus
+        
         if keys is not None:
             self.prfs = {}
-
-            # TODO: using the modulus here requires that it has been
-            # set previously! Since players are constructed when a
-            # config file is loaded, one must set the modulus before
-            # loading any config files.
-
-            # TODO: fix long line!
-            for modulus in 2, GF256Element.modulus, IntegerFieldElement.modulus or GMPIntegerFieldElement.modulus:
+            for modulus in 2, GF256Element.modulus, field_modulus:
                 prfs = {}
                 for subset, key in keys.iteritems():
                     prfs[subset] = PRF(key, modulus)
@@ -63,9 +67,7 @@ class Player:
 
         if dealer_keys is not None:
             self.dealer_prfs = {}
-
-            # TODO: fix long line!
-            for modulus in GF256Element.modulus, IntegerFieldElement.modulus or GMPIntegerFieldElement.modulus:
+            for modulus in GF256Element.modulus, field_modulus:
                 dealers = {}
                 for dealer in dealer_keys:
                     prfs = {}
@@ -100,13 +102,15 @@ def trace(func):
         global indent
         count = _trace_counters.setdefault(func.func_name, 1)
         try:
-            print "%s-> Entering: %s (%d)" % ("  " * indent, func.func_name, count)
+            print "%s-> Entering: %s (%d)" % ("  " * indent,
+                                              func.func_name, count)
             indent += 1
             _trace_counters[func.func_name] += 1
             return func(*args, **kwargs)
         finally:
             indent -= 1
-            print "%s<- Exiting:  %s (%d)" % ("  " * indent, func.func_name, count)
+            print "%s<- Exiting:  %s (%d)" % ("  " * indent,
+                                              func.func_name, count)
     
     return wrapper
 
@@ -243,7 +247,8 @@ class Runtime:
         self.incoming_shares = {}
 
         # List of Deferreds yielding protocols
-        self.protocols = dict((id, Deferred()) for id, p in players.iteritems())
+        self.protocols = dict((id, Deferred())
+                              for id, p in players.iteritems())
         self.protocols[self.id].callback("Unused")
         # Now try connecting...
         self.connect()
@@ -252,7 +257,8 @@ class Runtime:
         # Resolving the hostname into an IP address is a blocking
         # operation, but this is acceptable since it is only done when
         # the runtime is initialized.
-        ip_addresses = [socket.gethostbyname(p.host) for p in self.players.values()]
+        ip_addresses = [socket.gethostbyname(p.host)
+                        for p in self.players.values()]
 
         mapping = dict()
         for ip, (id, p) in zip(ip_addresses, self.players.iteritems()):
@@ -522,8 +528,8 @@ class Runtime:
             modulus = 2
         else:
             modulus = GF256Element.modulus
-        prfs = self.players[self.id].prfs[modulus]
-        share = self._share_random(prfs, self.id, GF256Element, program_counter)
+        share = self._share_random(self.players[self.id].prfs[modulus],
+                                   self.id, GF256Element, program_counter)
         return defer.succeed(share)
 
     def _shamir_share(self, number, program_counter):
@@ -608,7 +614,8 @@ class Runtime:
         # Preprocessing begin
 
         # TODO: why must these relations hold?
-        assert 2**(l+1) + 2**t < IntegerFieldElement.modulus, "2^(l+1) + 2^t < p must hold"
+        assert 2**(l+1) + 2**t < IntegerFieldElement.modulus, \
+               "2^(l+1) + 2^t < p must hold"
         assert len(self.players) + 2 < 2**l
 
         int_bits = []
