@@ -53,11 +53,9 @@ marked with 'TODO' which document things on a more local level.
    ('add', ('mul', ('share', 1), ('share', 2)),
            ('mul', ('share', 1), ('share', 2)))
 
-   The labels grow exponentially in the length of dependencies! This
-   length roughly corresponds to the old notion of communication
-   rounds. One could trim the labels when it is known that old labels
-   aren't needed anymore.
-
+   The labels grow exponentially in the length of dependencies! To
+   counter this, one could hash the labels.
+   
    Consider this program:
 
    x = rt.add(a,b)
@@ -67,6 +65,13 @@ marked with 'TODO' which document things on a more local level.
    when sent over the network. Since x and y have the exact same
    history, and so represent the same value, this ought to cause no
    trouble.
+   
+   A bigger problem with this approach seems to be the functions that
+   work with no input: the PRSS functions. They have no input to work
+   on, and so the output have no context to base its history on. They
+   cannot simply use a global counter since the calls might occur in
+   different order among different players -- we are back at the
+   original problem that was solved using the tuple program counters.
 
 * Have an option which will make things run more or less sequentially
    For example: no parallelism would mean that all operations queue up
