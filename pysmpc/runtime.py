@@ -30,7 +30,7 @@ from pysmpc import shamir
 from pysmpc.prss import prss, PRF
 from pysmpc.field import (FieldElement, IntegerFieldElement,
                           GF256Element, GMPIntegerFieldElement)
-from pysmpc.util import rand
+from pysmpc.util import rand, deprecation
 
 from twisted.internet import defer, reactor
 from twisted.internet.defer import Deferred, DeferredList, gatherResults
@@ -475,21 +475,25 @@ class Runtime:
 
         return self._share_known(bit, GF256Element, program_counter)
 
+    def prss_share_random(self, field, binary=False, program_counter=None):
+        """Generate shares of a uniformly random element from the field given.
 
-    #@trace
-    def share_random_int(self, binary=False, program_counter=None):
-        """Generate shares of a uniformly random IntegerFieldElement.
-
-        No player learns the value of the integer.
+        If binary is True, a 0/1 element is generated. No player
+        learns the value of the element.
 
         Communication cost: none if binary=False, 1 open otherwise.
         """
         program_counter = self.init_pc(program_counter)
-        prfs = self.players[self.id].prfs[IntegerFieldElement.modulus]
-        share = self._share_random(prfs, self.id, IntegerFieldElement,
-                                   program_counter)
 
-        if not binary:
+        if field == GF256Element and binary:
+            modulus = 2
+        else:
+            modulus = field.modulus
+
+        prfs = self.players[self.id].prfs[modulus]
+        share = self._share_random(prfs, self.id, field, program_counter)
+
+        if field == GF256Element or not binary:
             return defer.succeed(share)
 
         result = self.mul(share, share)
@@ -501,17 +505,28 @@ class Runtime:
         def finish(square, share, binary, program_counter):
             if square == 0:
                 # We were unlucky, try again...
-                return self.share_random_int(binary, sub_pc(program_counter))
+                return self.prss_share_random(field, binary, sub_pc(program_counter))
             else:
                 # We can finish the calculation
                 root = square.sqrt()
                 # When the root is computed, we divide the share and
                 # convert the resulting -1/1 share into a 0/1 share.
-                two = IntegerFieldElement(2)
+                two = field(2)
                 return defer.succeed((share/root + 1) / two)
 
         result.addCallback(finish, share, binary, program_counter)
         return result
+
+    #@trace
+    def share_random_int(self, binary=False, program_counter=None):
+        """Generate shares of a uniformly random IntegerFieldElement.
+
+        No player learns the value of the integer.
+
+        Communication cost: none if binary=False, 1 open otherwise.
+        """
+        deprecation("Use self.prss_share_random instead") # 2007-07-30
+        return self.prss_share_random(IntegerFieldElement, binary, program_counter)
         
     #@trace
     def share_random_bit(self, binary=False, program_counter=None):
@@ -522,15 +537,8 @@ class Runtime:
 
         Communication cost: none.
         """
-        program_counter = self.init_pc(program_counter)
-
-        if binary:
-            modulus = 2
-        else:
-            modulus = GF256Element.modulus
-        share = self._share_random(self.players[self.id].prfs[modulus],
-                                   self.id, GF256Element, program_counter)
-        return defer.succeed(share)
+        deprecation("Use self.prss_share_random instead") # 2007-07-30
+        return self.prss_share_random(GF256Element, binary, program_counter)
 
     def _shamir_share(self, number, program_counter):
         """Share a FieldElement using Shamir sharing.
