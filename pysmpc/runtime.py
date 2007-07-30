@@ -585,10 +585,10 @@ class Runtime:
         bit = rand.randint(0, 1)
 
         program_counter = sub_pc(program_counter)
-        bit_shares = self.share_bit(GF256Element(bit), program_counter)
+        bit_shares = self.prss_share(GF256Element(bit), program_counter)
 
         program_counter = inc_pc(program_counter)
-        int_shares = self.share_int(IntegerFieldElement(bit), program_counter)
+        int_shares = self.prss_share(IntegerFieldElement(bit), program_counter)
 
         # TODO: Using a parallel reduce here seems to be slower than
         # using the built-in reduce.
@@ -628,7 +628,8 @@ class Runtime:
         program_counter = sub_pc(program_counter)
         for _ in range(m):
             program_counter = inc_pc(program_counter)
-            int_bits.append(self.share_random_int(True, program_counter))
+            int_bits.append(self.prss_share_random(IntegerFieldElement, True,
+                                                   program_counter))
 
         # We must use int_bits without adding callbacks to the bits --
         # having int_b wait on them ensures this.

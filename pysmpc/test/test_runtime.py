@@ -291,14 +291,14 @@ class RuntimeTestCase(TestCase):
         # TODO: ought to wait on connections.values() as well
         return gatherResults([a1, a2, a3, b1, b2, b3, c1, c2, c3])
 
-    def test_share_int(self):
+    def test_prss_share_int(self):
         a = IntegerFieldElement(10)
         b = IntegerFieldElement(20)
         c = IntegerFieldElement(30)
 
-        a1, b1, c1 = self.rt1.share_int(a)
-        a2, b2, c2 = self.rt2.share_int(b)
-        a3, b3, c3 = self.rt3.share_int(c)
+        a1, b1, c1 = self.rt1.prss_share(a)
+        a2, b2, c2 = self.rt2.prss_share(b)
+        a3, b3, c3 = self.rt3.prss_share(c)
         
         def check_recombine(shares, value):
             ids = map(IntegerFieldElement, range(1, len(shares) + 1))
@@ -314,14 +314,14 @@ class RuntimeTestCase(TestCase):
         c_shares.addCallback(check_recombine, c)
         return gatherResults([a_shares, b_shares, c_shares])
 
-    def test_share_bit(self):
+    def test_prss_share_bit(self):
         a = GF256Element(10)
         b = GF256Element(20)
         c = GF256Element(30)
 
-        a1, b1, c1 = self.rt1.share_bit(a)
-        a2, b2, c2 = self.rt2.share_bit(b)
-        a3, b3, c3 = self.rt3.share_bit(c)
+        a1, b1, c1 = self.rt1.prss_share(a)
+        a2, b2, c2 = self.rt2.prss_share(b)
+        a3, b3, c3 = self.rt3.prss_share(c)
         
         def check_recombine(shares, value):
             ids = map(GF256Element, range(1, len(shares) + 1))
@@ -337,7 +337,7 @@ class RuntimeTestCase(TestCase):
         c_shares.addCallback(check_recombine, c)
         return gatherResults([a_shares, b_shares, c_shares])
 
-    def test_share_random_bit(self):
+    def test_prss_share_random_bit(self):
         """
         Tests the sharing of a 0/1 GF256Element.
         """
@@ -345,9 +345,9 @@ class RuntimeTestCase(TestCase):
         # is correct? Any three shares are "correct", so it seems that
         # the only thing we can test is that the three players gets
         # their shares. But this is also tested with the test below.
-        a1 = self.rt1.share_random_bit(binary=True)
-        a2 = self.rt2.share_random_bit(binary=True) 
-        a3 = self.rt3.share_random_bit(binary=True)
+        a1 = self.rt1.prss_share_random(field=GF256Element, binary=True)
+        a2 = self.rt2.prss_share_random(field=GF256Element, binary=True) 
+        a3 = self.rt3.prss_share_random(field=GF256Element, binary=True)
         
         def check_binary_recombine(shares):
             ids = map(GF256Element, range(1, len(shares) + 1))
@@ -358,10 +358,10 @@ class RuntimeTestCase(TestCase):
         a_shares.addCallback(check_binary_recombine)
         return a_shares
 
-    def test_share_random_int(self):
-        a1 = self.rt1.share_random_int(binary=True)
-        a2 = self.rt2.share_random_int(binary=True) 
-        a3 = self.rt3.share_random_int(binary=True)
+    def test_prss_share_random_int(self):
+        a1 = self.rt1.prss_share_random(field=IntegerFieldElement, binary=True)
+        a2 = self.rt2.prss_share_random(field=IntegerFieldElement, binary=True)
+        a3 = self.rt3.prss_share_random(field=IntegerFieldElement, binary=True)
         
         def check_binary_recombine(shares):
             ids = map(IntegerFieldElement, range(1, len(shares) + 1))
