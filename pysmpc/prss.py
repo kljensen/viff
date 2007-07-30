@@ -17,7 +17,9 @@
 # Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 # 02110-1301 USA
 
-import operator, sha
+"""Methods for pseudo-random secret sharing."""
+
+import sha
 from math import log, ceil
 from struct import pack
 from binascii import hexlify
@@ -25,7 +27,7 @@ from binascii import hexlify
 from pysmpc import shamir
 
 
-def prss(n, t, j, field, prfs, key):
+def prss(n, j, field, prfs, key):
     """Return a pseudo-random secret share for a random number.
 
     The share is for player j based on the pseudo-random functions
@@ -37,25 +39,25 @@ def prss(n, t, j, field, prfs, key):
     >>> prfs = {frozenset([1,2]): PRF("a", 31),
     ...         frozenset([1,3]): PRF("b", 31),
     ...         frozenset([2,3]): PRF("c", 31)}
-    >>> prss(3, 1, 1, IntegerFieldElement, prfs, "key")
+    >>> prss(3, 1, IntegerFieldElement, prfs, "key")
     {22}
-    >>> prss(3, 1, 2, IntegerFieldElement, prfs, "key")
+    >>> prss(3, 2, IntegerFieldElement, prfs, "key")
     {20}
-    >>> prss(3, 1, 3, IntegerFieldElement, prfs, "key")
+    >>> prss(3, 3, IntegerFieldElement, prfs, "key")
     {18}
 
     We see that the sharing is consistent because each subset of two
     players will recombine their shares to {29}.
     """
     result = 0
-    all = frozenset(range(1,n+1))
+    all = frozenset(range(1, n+1))
     # The PRFs contain the subsets we need, plus some extra in the
     # case of dealer_keys. That is why we have to check that j is in
     # the subset before using it.
     for subset in prfs.iterkeys():
         if j in subset:
             points = [(field(x), 0) for x in all-subset]
-            points.append((0,1))
+            points.append((0, 1))
             f_in_j = shamir.recombine(points, j)
             result += prfs[subset](key) * f_in_j
 
@@ -63,7 +65,7 @@ def prss(n, t, j, field, prfs, key):
     
 
 
-def generate_subsets(s, size):
+def generate_subsets(orig_set, size):
     """Generates the set of all subsets of a specific size.
 
     Example:
@@ -75,13 +77,13 @@ def generate_subsets(s, size):
     >>> generate_subsets(frozenset('a'), 2)
     frozenset([])
     """
-    if len(s) > size:
+    if len(orig_set) > size:
         result = set()
-        for e in s:
-            result.update(generate_subsets(s - set([e]), size))
+        for element in orig_set:
+            result.update(generate_subsets(orig_set - set([element]), size))
         return frozenset(result)
-    elif len(s) == size:
-        return frozenset([s])
+    elif len(orig_set) == size:
+        return frozenset([orig_set])
     else:
         return frozenset()
 

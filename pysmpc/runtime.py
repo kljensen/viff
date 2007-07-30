@@ -34,7 +34,7 @@ from pysmpc.util import rand, deprecation
 
 from twisted.internet import defer, reactor
 from twisted.internet.defer import Deferred, DeferredList, gatherResults
-from twisted.internet.protocol import ClientFactory, ServerFactory, Protocol
+from twisted.internet.protocol import ClientFactory, ServerFactory
 from twisted.protocols.basic import Int16StringReceiver
 
 # TODO: move this to another file, probably together with the
@@ -76,21 +76,11 @@ class Player:
                     dealers[dealer] = prfs
                 self.dealer_prfs[modulus] = dealers
                     
-                    
     def __repr__(self):
         return "<Player %d: %s:%d>" % (self.id, self.host, self.port)
 
-def output(arg, format="output: %s"):
-    """
-    Callback used for printing values while still passing them along
-    to the next callback the processing chain.
-    """
-    print format % arg
-    return arg
 
-
-indent = 0
-
+_indent = 0
 _trace_counters = {}
 
 def trace(func):
@@ -99,19 +89,18 @@ def trace(func):
         """
         Wrapper.
         """
-        global indent
+        global _indent
         count = _trace_counters.setdefault(func.func_name, 1)
         try:
-            print "%s-> Entering: %s (%d)" % ("  " * indent,
+            print "%s-> Entering: %s (%d)" % ("  " * _indent,
                                               func.func_name, count)
-            indent += 1
+            _indent += 1
             _trace_counters[func.func_name] += 1
             return func(*args, **kwargs)
         finally:
-            indent -= 1
-            print "%s<- Exiting:  %s (%d)" % ("  " * indent,
+            _indent -= 1
+            print "%s<- Exiting:  %s (%d)" % ("  " * _indent,
                                               func.func_name, count)
-    
     return wrapper
 
 def println(format="", *args):
@@ -119,21 +108,7 @@ def println(format="", *args):
     if len(args) > 0:
         format = format % args
 
-    print "%s %s" % ("  " * indent, format)
-
-def dump_incoming_shares(shares):
-    """Dump the incoming shares."""
-    print "Incoming shares:"
-    shares = list(shares.iteritems())
-    shares.sort()
-    for key, value in shares:
-        print "  %s -> %s" % (key, value)
-        #if len(value.callbacks) > 0:
-        #    print "  %d callbacks:" % len(value.callbacks)
-        #    for callback in value.callbacks:
-        #        print "    %s" % (callback[0], )
-
-    print
+    print "%s %s" % ("  " * _indent, format)
 
 
 class ShareExchanger(Int16StringReceiver):
@@ -175,7 +150,6 @@ class ShareExchanger(Int16StringReceiver):
         self.sendString(marshal.dumps(data))
         return self
 
-
     def loseConnection(self):
         """Disconnect this protocol instance."""
         self.transport.loseConnection()
@@ -202,7 +176,6 @@ class ShareExchangerFactory(ServerFactory, ClientFactory):
         # operation, but this is acceptable since buildProtocol is
         # only called when the runtime is initialized.
         ip = socket.gethostbyname(addr.host)
-
         id = self.port_player_mapping[(ip, port)]
         println("Peer id: %s", id)
         
@@ -213,9 +186,6 @@ class ShareExchangerFactory(ServerFactory, ClientFactory):
         return p
 
  
-########################################
-
-
 #@trace
 def inc_pc(program_counter):
     """Increment a program counter."""
@@ -266,7 +236,6 @@ class Runtime:
 
         factory = ShareExchangerFactory(self.incoming_shares, mapping,
                                         self.protocols)
-
         reactor.listenTCP(self.players[self.id].port, factory)
 
         for id, player in self.players.iteritems():
@@ -287,7 +256,7 @@ class Runtime:
         again after this has been called.
         """
         println("Initiating shutdown sequence.")
-        for _, protocol in self.protocols.iteritems():
+        for protocol in self.protocols.itervalues():
             protocol.addCallback(lambda p: p.loseConnection())
         println("Waiting 1 second")
         reactor.callLater(1, reactor.stop)
@@ -299,7 +268,6 @@ class Runtime:
         """
         dl = DeferredList(vars)
         dl.addCallback(lambda _: self.shutdown())
-
         reactor.run()
         println("Reactor stopped")
 
@@ -325,10 +293,9 @@ class Runtime:
         def broadcast(share):
             """Broadcast share to all players."""
             assert isinstance(share, FieldElement)
-
             deferreds = []
             for id in self.players:
-                d = self.exchange_shares(program_counter, id, share)
+                d = self._exchange_shares(program_counter, id, share)
                 d.addCallback(lambda s, id: (s.field(id), s), id)
                 deferreds.append(d)
 
@@ -419,7 +386,6 @@ class Runtime:
         program_counter = self.init_pc(program_counter)
         field = type(element)
         n = len(self.players)
-        t = self.threshold
 
         # The shares for which we have all the keys.
         all_shares = []
@@ -435,10 +401,10 @@ class Runtime:
         for player in self.players:
             # TODO: when player == self.id, the two calls to prss are
             # the same.
-            share = prss(n, t, player, field, dealer_prfs[self.id], program_counter)
+            share = prss(n, player, field, dealer_prfs[self.id],
+                         program_counter)
             all_shares.append((field(player), share))
-
-            tmp_shares[player] = prss(n, t, self.id, field, dealer_prfs[player],
+            tmp_shares[player] = prss(n, self.id, field, dealer_prfs[player],
                                       program_counter)
 
         # We can now calculate what was shared and derive the
@@ -449,7 +415,7 @@ class Runtime:
         result = []
         for player in self.players:
             # TODO: more efficient broadcast?
-            d = self.exchange_shares(program_counter, player, correction)
+            d = self._exchange_shares(program_counter, player, correction)
             # We have to add our own share to the correction factor
             # received.
             d.addCallback(lambda c, s: s + c, tmp_shares[player])
@@ -463,7 +429,6 @@ class Runtime:
         """
         deprecation("Use self.prss_share instead") # 2007-07-30
         return self.prss_share(integer, program_counter)
-
 
     def share_bit(self, bit, program_counter=None):
         """Share a bit.
@@ -489,7 +454,7 @@ class Runtime:
             modulus = field.modulus
 
         prfs = self.players[self.id].prfs[modulus]
-        share = prss(len(self.players), self.threshold, self.id, field, prfs, program_counter)
+        share = prss(len(self.players), self.id, field, prfs, program_counter)
 
         if field == GF256Element or not binary:
             return defer.succeed(share)
@@ -503,7 +468,8 @@ class Runtime:
         def finish(square, share, binary, program_counter):
             if square == 0:
                 # We were unlucky, try again...
-                return self.prss_share_random(field, binary, sub_pc(program_counter))
+                return self.prss_share_random(field, binary,
+                                              sub_pc(program_counter))
             else:
                 # We can finish the calculation
                 root = square.sqrt()
@@ -524,7 +490,8 @@ class Runtime:
         Communication cost: none if binary=False, 1 open otherwise.
         """
         deprecation("Use self.prss_share_random instead") # 2007-07-30
-        return self.prss_share_random(IntegerFieldElement, binary, program_counter)
+        return self.prss_share_random(IntegerFieldElement, binary,
+                                      program_counter)
         
     #@trace
     def share_random_bit(self, binary=False, program_counter=None):
@@ -548,7 +515,7 @@ class Runtime:
         
         result = []
         for other_id, share in shares:
-            d = self.exchange_shares(program_counter, other_id.value, share)
+            d = self._exchange_shares(program_counter, other_id.value, share)
             d.addCallback(lambda share, id: (id, share), other_id)
             result.append(d)
 
@@ -619,7 +586,6 @@ class Runtime:
 
         # Preprocessing begin
 
-        # TODO: why must these relations hold?
         assert 2**(l+1) + 2**t < IntegerFieldElement.modulus, \
                "2^(l+1) + 2^t < p must hold"
         assert len(self.players) + 2 < 2**l
@@ -709,13 +675,8 @@ class Runtime:
         result.addCallback(calculate, program_counter)
         return result
         
-
-    ########################################################################
-    ########################################################################
-
-
     #@trace
-    def exchange_shares(self, program_counter, id, share):
+    def _exchange_shares(self, program_counter, id, share):
         """Exchange shares with another player.
 
         We send the player our share and record a Deferred which will
