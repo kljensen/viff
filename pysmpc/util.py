@@ -20,22 +20,20 @@
 
 import os, random
 
-seed = os.environ.get('SEED')
+_seed = os.environ.get('SEED')
 
-if seed is None:
+if _seed is None:
     # If the environmental variable is not set, then a random seed is
     # chosen.
-    seed = random.randint(0, 10000)
-    print 'Seeding random generator with random seed %d' % seed
-    rand = random.Random(seed)
-elif seed == '':
+    _seed = random.randint(0, 10000)
+    print 'Seeding random generator with random seed %d' % _seed
+    rand = random.Random(_seed)
+elif _seed == '':
     # If it is set, but set to the empty string (SEED=), then no seed
     # is used.
     rand = random.SystemRandom()
 else:
     # Otherwise use the seed given, which must be an integer.
-    seed = int(seed)
-    print 'Seeding random generator with seed %d' % seed
-    rand = random.Random(seed)
-
-__all__ = ['rand']
+    _seed = int(_seed)
+    print 'Seeding random generator with seed %d' % _seed
+    rand = random.Random(_seed)
