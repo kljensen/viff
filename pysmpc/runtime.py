@@ -453,16 +453,22 @@ class Runtime:
 
         return result
 
+    def prss_share(self, number, program_counter=None):
+        """Share a field element.
+
+        Communication cost: 1 broadcast.
+        """
+        assert isinstance(number, FieldElement)
+        program_counter = self.init_pc(program_counter)
+        return self._share_known(number, type(number), program_counter)
 
     def share_int(self, integer, program_counter=None):
         """Share an integer.
 
         Communication cost: 1 broadcast.
         """
-        assert isinstance(integer, IntegerFieldElement)
-        program_counter = self.init_pc(program_counter)
-
-        return self._share_known(integer, IntegerFieldElement, program_counter)
+        deprecation("Use self.prss_share instead") # 2007-07-30
+        return self.prss_share(integer, program_counter)
 
 
     def share_bit(self, bit, program_counter=None):
@@ -470,10 +476,8 @@ class Runtime:
 
         Communication cost: 1 broadcast.
         """
-        assert isinstance(bit, GF256Element)
-        program_counter = self.init_pc(program_counter)
-
-        return self._share_known(bit, GF256Element, program_counter)
+        deprecation("Use self.prss_share instead") # 2007-07-30
+        return self.prss_share(bit, program_counter)
 
     def prss_share_random(self, field, binary=False, program_counter=None):
         """Generate shares of a uniformly random element from the field given.
