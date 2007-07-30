@@ -18,7 +18,9 @@
 # 02110-1301 USA
 
 
-import os, random
+import os
+import random
+import warnings
 
 _seed = os.environ.get('SEED')
 
@@ -37,3 +39,8 @@ else:
     _seed = int(_seed)
     print 'Seeding random generator with seed %d' % _seed
     rand = random.Random(_seed)
+
+
+def deprecation(message):
+    """Issue a deprecation warning."""
+    warnings.warn(message, DeprecationWarning, stacklevel=3)
