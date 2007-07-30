@@ -410,11 +410,17 @@ class Runtime:
 
     xor_bit = add
 
-    def _share_random(self, prfs, id, field, key):
-        """Do a PRSS using the PRFs given."""
-        return prss(len(self.players), self.threshold, id, field, prfs, key)
+    def prss_share(self, element, program_counter=None):
+        """PRSS share a field element.
 
-    def _share_known(self, element, field, program_counter):
+        Communication cost: 1 broadcast.
+        """
+        assert isinstance(element, FieldElement)
+        program_counter = self.init_pc(program_counter)
+        field = type(element)
+        n = len(self.players)
+        t = self.threshold
+
         # The shares for which we have all the keys.
         all_shares = []
         
@@ -427,15 +433,13 @@ class Runtime:
         # self.threshold+1 since that is all we need to do the Shamir
         # recombine below.
         for player in self.players:
-            # TODO: when player == self.id, the two calls to
-            # _share_random are the same.
-            share = self._share_random(dealer_prfs[self.id], player,
-                                       field, program_counter)
+            # TODO: when player == self.id, the two calls to prss are
+            # the same.
+            share = prss(n, t, player, field, dealer_prfs[self.id], program_counter)
             all_shares.append((field(player), share))
 
-            tmp_shares[player] = self._share_random(dealer_prfs[player],
-                                                    self.id,
-                                                    field, program_counter)
+            tmp_shares[player] = prss(n, t, self.id, field, dealer_prfs[player],
+                                      program_counter)
 
         # We can now calculate what was shared and derive the
         # correction factor.
@@ -450,17 +454,7 @@ class Runtime:
             # received.
             d.addCallback(lambda c, s: s + c, tmp_shares[player])
             result.append(d)
-
         return result
-
-    def prss_share(self, number, program_counter=None):
-        """Share a field element.
-
-        Communication cost: 1 broadcast.
-        """
-        assert isinstance(number, FieldElement)
-        program_counter = self.init_pc(program_counter)
-        return self._share_known(number, type(number), program_counter)
 
     def share_int(self, integer, program_counter=None):
         """Share an integer.
@@ -495,7 +489,7 @@ class Runtime:
             modulus = field.modulus
 
         prfs = self.players[self.id].prfs[modulus]
-        share = self._share_random(prfs, self.id, field, program_counter)
+        share = prss(len(self.players), self.threshold, self.id, field, prfs, program_counter)
 
         if field == GF256Element or not binary:
             return defer.succeed(share)
