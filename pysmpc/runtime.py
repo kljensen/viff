@@ -523,7 +523,7 @@ class Runtime:
 
     #@trace
     def shamir_share(self, number, program_counter=None):
-        """Share an IntegerFieldElement using Shamir sharing.
+        """Share a field element using Shamir sharing.
 
         Returns a list of shares.
 
