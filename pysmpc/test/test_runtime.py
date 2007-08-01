@@ -425,133 +425,132 @@ class RuntimeTestCase(TestCase):
         return gatherResults([a1, a2, a3, b1, b2, b3, c1, c2, c3,
                               res_ab1, res_ab2, res_ab3])
 
+if 'STRESS' in os.environ:
 
-class StressTestCase(TestCase):
+    class StressTestCase(TestCase):
 
-    def setUp(self):
-        # 65 bit prime
-        IntegerFieldElement.modulus = 30916444023318367583
+        def setUp(self):
+            # 65 bit prime
+            IntegerFieldElement.modulus = 30916444023318367583
 
-        configs = generate_configs(3, 1)
-        connections = {}
-        runtimes = {}
+            configs = generate_configs(3, 1)
+            connections = {}
+            runtimes = {}
 
-        id, players = load_config(configs[3])
-        self.rt3 = LoopbackRuntime(players, id, 1, connections, runtimes)
-        runtimes[3] = self.rt3
+            id, players = load_config(configs[3])
+            self.rt3 = LoopbackRuntime(players, id, 1, connections, runtimes)
+            runtimes[3] = self.rt3
 
-        id, players = load_config(configs[2])
-        self.rt2 = LoopbackRuntime(players, id, 1, connections, runtimes)
-        runtimes[2] = self.rt2
+            id, players = load_config(configs[2])
+            self.rt2 = LoopbackRuntime(players, id, 1, connections, runtimes)
+            runtimes[2] = self.rt2
 
-        id, players = load_config(configs[1])
-        self.rt1 = LoopbackRuntime(players, id, 1, connections, runtimes)
-        runtimes[1] = self.rt1
+            id, players = load_config(configs[1])
+            self.rt1 = LoopbackRuntime(players, id, 1, connections, runtimes)
+            runtimes[1] = self.rt1
 
-    def _mul_stress_test(self, count):
-        a, b, c = 17, 42, 111
-
-        a1, b1, c1 = self.rt1.shamir_share(IntegerFieldElement(a))
-        a2, b2, c2 = self.rt2.shamir_share(IntegerFieldElement(b))
-        a3, b3, c3 = self.rt3.shamir_share(IntegerFieldElement(c))
-
-        x, y, z = 1, 1, 1
-
-        for i in range(count):
-            x = self.rt1.mul(a1, self.rt1.mul(b1, self.rt1.mul(c1, x)))
-            y = self.rt2.mul(a2, self.rt2.mul(b2, self.rt2.mul(c2, y)))
-            z = self.rt3.mul(a3, self.rt3.mul(b3, self.rt3.mul(c3, z)))
-        
-        self.rt1.open(x)
-        self.rt2.open(y)
-        self.rt3.open(z)
-
-        result = IntegerFieldElement((a * b * c)**count)
-
-        x.addCallback(self.assertEquals, result)
-        y.addCallback(self.assertEquals, result)
-        z.addCallback(self.assertEquals, result)
-
-        return gatherResults([x,y,z])
-
-    def test_mul_100(self):
-        return self._mul_stress_test(100)
-
-    if 'STRESS' in os.environ:
-        def test_mul_200(self):
-            return self._mul_stress_test(200)
-
-        def test_mul_400(self):
-            return self._mul_stress_test(400)
-
-        def test_mul_800(self):
-            return self._mul_stress_test(800)
-
-
-    def _compare_stress_test(self, count):
-        """
-        This test repeatedly shares and compares random inputs.
-        """
-
-        # TODO: this must match the l used in Runtime.greater_than.
-        l = 7
-
-        # Random generators
-        rand = {1: Random(count + 1), 2: Random(count + 2), 3: Random(count + 3)}
-        results = []
-
-        for i in range(count):
-            a = rand[1].randint(0, pow(2, l))
-            b = rand[2].randint(0, pow(2, l))
-            c = rand[3].randint(0, pow(2, l))
+        def _mul_stress_test(self, count):
+            a, b, c = 17, 42, 111
 
             a1, b1, c1 = self.rt1.shamir_share(IntegerFieldElement(a))
             a2, b2, c2 = self.rt2.shamir_share(IntegerFieldElement(b))
             a3, b3, c3 = self.rt3.shamir_share(IntegerFieldElement(c))
 
-            # Do all six possible comparisons between a, b, and c
-            results1 = [self.rt1.greater_than(a1, b1), self.rt1.greater_than(b1, a1),
-                        self.rt1.greater_than(a1, c1), self.rt1.greater_than(c1, a1),
-                        self.rt1.greater_than(b1, c1), self.rt1.greater_than(c1, b1)]
+            x, y, z = 1, 1, 1
 
-            results2 = [self.rt2.greater_than(a2, b2), self.rt2.greater_than(b2, a2),
-                        self.rt2.greater_than(a2, c2), self.rt2.greater_than(c2, a2),
-                        self.rt2.greater_than(b2, c2), self.rt2.greater_than(c2, b2)]
+            for i in range(count):
+                x = self.rt1.mul(a1, self.rt1.mul(b1, self.rt1.mul(c1, x)))
+                y = self.rt2.mul(a2, self.rt2.mul(b2, self.rt2.mul(c2, y)))
+                z = self.rt3.mul(a3, self.rt3.mul(b3, self.rt3.mul(c3, z)))
 
-            results3 = [self.rt3.greater_than(a3, b3), self.rt3.greater_than(b3, a3),
-                        self.rt3.greater_than(a3, c3), self.rt3.greater_than(c3, a3),
-                        self.rt3.greater_than(b3, c3), self.rt3.greater_than(c3, b3)]
+            self.rt1.open(x)
+            self.rt2.open(y)
+            self.rt3.open(z)
 
-            # Open all results
-            map(self.rt1.open, results1)
-            map(self.rt2.open, results2)
-            map(self.rt3.open, results3)
+            result = IntegerFieldElement((a * b * c)**count)
 
-            expected = map(GF256Element, [a >= b, b >= a,
-                                          a >= c, c >= a,
-                                          b >= c, c >= b])
+            x.addCallback(self.assertEquals, result)
+            y.addCallback(self.assertEquals, result)
+            z.addCallback(self.assertEquals, result)
 
-            result1 = gatherResults(results1)
-            result2 = gatherResults(results2)
-            result3 = gatherResults(results3)
+            return gatherResults([x,y,z])
 
-            result1.addCallback(self.assertEquals, expected)
-            result2.addCallback(self.assertEquals, expected)
-            result3.addCallback(self.assertEquals, expected)
+        def test_mul_100(self):
+            return self._mul_stress_test(100)
 
-            results.extend([result1, result2, result3])
+        def test_mul_200(self):
+            return self._mul_stress_test(200)
+        
+        def test_mul_400(self):
+            return self._mul_stress_test(400)
+        
+        def test_mul_800(self):
+            return self._mul_stress_test(800)
+        
 
-        return gatherResults(results)
+        def _compare_stress_test(self, count):
+            """
+            This test repeatedly shares and compares random inputs.
+            """
 
-    def test_compare_1(self):
-        return self._compare_stress_test(1)
+            # TODO: this must match the l used in Runtime.greater_than.
+            l = 7
 
-    if 'STRESS' in os.environ:
+            # Random generators
+            rand = {1: Random(count + 1), 2: Random(count + 2), 3: Random(count + 3)}
+            results = []
+
+            for i in range(count):
+                a = rand[1].randint(0, pow(2, l))
+                b = rand[2].randint(0, pow(2, l))
+                c = rand[3].randint(0, pow(2, l))
+
+                a1, b1, c1 = self.rt1.shamir_share(IntegerFieldElement(a))
+                a2, b2, c2 = self.rt2.shamir_share(IntegerFieldElement(b))
+                a3, b3, c3 = self.rt3.shamir_share(IntegerFieldElement(c))
+
+                # Do all six possible comparisons between a, b, and c
+                results1 = [self.rt1.greater_than(a1, b1), self.rt1.greater_than(b1, a1),
+                            self.rt1.greater_than(a1, c1), self.rt1.greater_than(c1, a1),
+                            self.rt1.greater_than(b1, c1), self.rt1.greater_than(c1, b1)]
+
+                results2 = [self.rt2.greater_than(a2, b2), self.rt2.greater_than(b2, a2),
+                            self.rt2.greater_than(a2, c2), self.rt2.greater_than(c2, a2),
+                            self.rt2.greater_than(b2, c2), self.rt2.greater_than(c2, b2)]
+
+                results3 = [self.rt3.greater_than(a3, b3), self.rt3.greater_than(b3, a3),
+                            self.rt3.greater_than(a3, c3), self.rt3.greater_than(c3, a3),
+                            self.rt3.greater_than(b3, c3), self.rt3.greater_than(c3, b3)]
+
+                # Open all results
+                map(self.rt1.open, results1)
+                map(self.rt2.open, results2)
+                map(self.rt3.open, results3)
+
+                expected = map(GF256Element, [a >= b, b >= a,
+                                              a >= c, c >= a,
+                                              b >= c, c >= b])
+
+                result1 = gatherResults(results1)
+                result2 = gatherResults(results2)
+                result3 = gatherResults(results3)
+
+                result1.addCallback(self.assertEquals, expected)
+                result2.addCallback(self.assertEquals, expected)
+                result3.addCallback(self.assertEquals, expected)
+
+                results.extend([result1, result2, result3])
+
+            return gatherResults(results)
+
+        def test_compare_1(self):
+            return self._compare_stress_test(1)
+
         def test_compare_2(self):
             return self._compare_stress_test(2)
-
+        
         def test_compare_4(self):
             return self._compare_stress_test(4)
-
+        
         def test_compare_8(self):
             return self._compare_stress_test(8)
