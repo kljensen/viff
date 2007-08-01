@@ -17,6 +17,7 @@ The framework offers the following:
 * secret sharing based on Shamir and PRSS.
 * addition, multiplication, exclusive-or of shares.
 * comparison of secret shared Zp inputs, with secret GF(2^8) output.
+* all computations are symmetric and involve three or more players.
 
 All operations are automatically scheduled to run in parallel meaning
 that an operation starts as soon as the operands are ready.
