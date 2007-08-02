@@ -23,7 +23,7 @@ import sys, time, random
 
 from twisted.internet.defer import gatherResults
 
-from pysmpc.field import IntegerFieldElement, GF256Element
+from pysmpc.field import GF, GF256Element
 from pysmpc.runtime import Runtime
 from pysmpc.generate_config import load_config
 
@@ -31,7 +31,7 @@ def output(x, format="output: %s"):
     print format % x
     return x
 
-IntegerFieldElement.modulus = 2039
+Zp = GF(30916444023318367583)
 
 id, players = load_config(sys.argv[1])
 print "I am player %d" % id
@@ -53,8 +53,8 @@ for i in range(3):
 inputs.append({1: 20, 2: 25, 3: 0})
 
 for input in inputs:
-    x, y, z = rt.shamir_share(IntegerFieldElement(input[id]))
-    bit = rt.greater_than(x,y)
+    x, y, z = rt.shamir_share(Zp(input[id]))
+    bit = rt.greater_than(x, y, Zp)
     rt.open(bit)
     bit.addCallback(lambda b: b == GF256Element(1))
     bit.addCallback(lambda b, x, y: "%3d >= %3d: %-5s (%s)" % (x, y, b, b == (x >= y)),

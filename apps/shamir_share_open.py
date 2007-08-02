@@ -19,9 +19,9 @@
 # Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 # 02110-1301 USA
 
-import sys, time
+import sys
 
-from pysmpc.field import GF, GF256Element
+from pysmpc.field import GF
 from pysmpc.runtime import Runtime
 from pysmpc.generate_config import load_config
 
@@ -30,43 +30,25 @@ def output(x, format="output: %s"):
     return x
 
 id, players = load_config(sys.argv[1])
-print "I am player %d" % id
+Zp = GF(int(sys.argv[2]))
+input = Zp(int(sys.argv[3]))
 
-rt = Runtime(players, id, (len(players) -1)//2)
+print "I am player %d and will input %s" % (id, input)
 
-Zp = GF(11)
+rt = Runtime(players, id, 1)
 
-a, b, c = rt.prss_share(Zp(0))
-x, y, z = rt.prss_share(Zp(1))
+print "-" * 64
+print "Program started"
+print
 
-a_b = rt.int_to_bit(a, Zp)
-b_b = rt.int_to_bit(b, Zp)
-c_b = rt.int_to_bit(c, Zp)
+a, b, c = rt.shamir_share(input)
 
-x_b = rt.int_to_bit(x, Zp)
-y_b = rt.int_to_bit(y, Zp)
-z_b = rt.int_to_bit(z, Zp)
+rt.open(a)
+rt.open(b)
+rt.open(c)
 
-rt.open(a_b)
-rt.open(b_b)
-rt.open(c_b)
+a.addCallback(output, "\n### opened a: %s ###\n")
+b.addCallback(output, "\n### opened b: %s ###\n")
+c.addCallback(output, "\n### opened c: %s ###\n")
 
-rt.open(x_b)
-rt.open(y_b)
-rt.open(z_b)
-
-def check(result, variable, expected):
-    if result == expected:
-        print "%s: %s (correct)" % (variable, result)
-    else:
-        print "%s: %s (incorrect, expected %d)" % (variable, result, expected)
-
-a_b.addCallback(check, "a_b", GF256Element(0))
-b_b.addCallback(check, "b_b", GF256Element(0))
-c_b.addCallback(check, "c_b", GF256Element(0))
-
-x_b.addCallback(check, "x_b", GF256Element(1))
-y_b.addCallback(check, "y_b", GF256Element(1))
-z_b.addCallback(check, "z_b", GF256Element(1))
-
-rt.wait_for(a_b, b_b, c_b, x_b, y_b, z_b)
+rt.wait_for(a,b,c)

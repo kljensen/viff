@@ -21,7 +21,7 @@
 
 import sys
 
-from pysmpc.field import *
+from pysmpc.field import GF256Element
 from pysmpc.runtime import Runtime
 from pysmpc.generate_config import load_config
 
@@ -40,7 +40,7 @@ print "-" * 64
 print "Program started"
 print
 
-shares = rt.share_bit(input)
+shares = rt.prss_share(input)
 
 while len(shares) > 1:
     a = shares.pop(0)

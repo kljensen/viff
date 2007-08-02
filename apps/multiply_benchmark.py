@@ -26,7 +26,7 @@ from twisted.internet import reactor
 from twisted.internet.defer import DeferredList
 
 from gmpy import mpz
-from pysmpc.field import GMPIntegerFieldElement, IntegerFieldElement
+from pysmpc.field import GF
 from pysmpc.runtime import Runtime
 from pysmpc.generate_config import load_config
 
@@ -60,21 +60,20 @@ def output(x, format="output: %s"):
     return x
 
 
-
 parser = OptionParser()
 parser.add_option("-m", "--modulus",
                   help="lower limit for modulus (can be an expression)")
-parser.add_option("--gmp", action="store_true", help="use GMP")
 parser.add_option("-i", "--input", type="int", help="input number")
 parser.add_option("-c", "--count", type="int", help="number of multiplications")
 
-parser.set_defaults(modulus="30916444023318367583",
-                    gmp=False, input=42, count=100)
+parser.set_defaults(modulus="30916444023318367583", input=42, count=100)
 
 (options, args) = parser.parse_args()
 
 if len(args) == 0:
     parser.error("you must specify a config file")
+
+id, players = load_config(args[0])
 
 modulus = eval(options.modulus, {}, {})
 
@@ -88,20 +87,9 @@ if str(prime) != options.modulus:
     if prime != modulus:
         print "Adjusted from %d" % modulus
 
-if options.gmp:
-    print "Using GMP"
-    Field = GMPIntegerFieldElement
-    Field.modulus = mpz(prime)
-else:
-    print "Not using GMP"
-    Field = IntegerFieldElement
-    Field.modulus = int(prime) # Convert long to int if possible,
-                               # leave as long if not.
+Zp = GF(prime)
 
-id, players = load_config(args[0])
-
-
-input = Field(options.input)
+input = Zp(options.input)
 count = options.count
 print "I am player %d, will multiply %d numbers" % (id, count)
 
@@ -142,7 +130,7 @@ def run_test(_):
             print "Result: %s (correct)" % result
         else:
             print "Result: %s (incorrect, expected %d)" % (result, expected)
-    product.addCallback(check, pow(42, count, Field.modulus))
+    product.addCallback(check, pow(42, count, Zp.modulus))
     product.addCallback(finish)
 
 # We want to wait until all numbers have been shared
