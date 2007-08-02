@@ -46,36 +46,26 @@ class Player:
         self.id = id
         self.host = host
         self.port = port
+        self.keys = keys
+        self.dealer_keys = dealer_keys
 
-        # TODO: using the modulus of IntegerFieldElement or
-        # GMPIntegerFieldElement here requires that it has been set
-        # previously! Since players are constructed when a config file
-        # is loaded, one must set the modulus before loading any
-        # config files. This dependency should be removed.
-        if IntegerFieldElement.modulus:
-            field_modulus = IntegerFieldElement.modulus
-        else:
-            field_modulus = GMPIntegerFieldElement.modulus
-        
-        if keys is not None:
-            self.prfs = {}
-            for modulus in 2, GF256Element.modulus, field_modulus:
-                prfs = {}
-                for subset, key in keys.iteritems():
-                    prfs[subset] = PRF(key, modulus)
-                self.prfs[modulus] = prfs
+    # TODO: the PRFs ought to be cached
+    def prfs(self, modulus):
+        prfs = {}
+        for subset, key in self.keys.iteritems():
+            prfs[subset] = PRF(key, modulus)
+        return prfs
 
-        if dealer_keys is not None:
-            self.dealer_prfs = {}
-            for modulus in GF256Element.modulus, field_modulus:
-                dealers = {}
-                for dealer in dealer_keys:
-                    prfs = {}
-                    for subset, key in dealer_keys[dealer].iteritems():
-                        prfs[subset] = PRF(key, modulus)
-                    dealers[dealer] = prfs
-                self.dealer_prfs[modulus] = dealers
-                    
+    # TODO: the PRFs ought to be cached
+    def dealer_prfs(self, modulus):
+        dealers = {}
+        for dealer, keys in self.dealer_keys.iteritems():
+            prfs = {}
+            for subset, key in keys.iteritems():
+                prfs[subset] = PRF(key, modulus)
+                dealers[dealer] = prfs
+        return dealers
+
     def __repr__(self):
         return "<Player %d: %s:%d>" % (self.id, self.host, self.port)
 
@@ -393,7 +383,7 @@ class Runtime:
         # Shares we calculate from doing PRSS with the other players.
         tmp_shares = {}
 
-        dealer_prfs = self.players[self.id].dealer_prfs[field.modulus]
+        dealer_prfs = self.players[self.id].dealer_prfs(field.modulus)
 
         # TODO: Stop calculating shares for all_shares at
         # self.threshold+1 since that is all we need to do the Shamir
@@ -453,7 +443,7 @@ class Runtime:
         else:
             modulus = field.modulus
 
-        prfs = self.players[self.id].prfs[modulus]
+        prfs = self.players[self.id].prfs(modulus)
         share = prss(len(self.players), self.id, field, prfs, program_counter)
 
         if field == GF256Element or not binary:
