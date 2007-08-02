@@ -28,8 +28,7 @@ import socket
 
 from pysmpc import shamir
 from pysmpc.prss import prss, PRF
-from pysmpc.field import (FieldElement, IntegerFieldElement,
-                          GF256Element, GMPIntegerFieldElement)
+from pysmpc.field import FieldElement, IntegerFieldElement, GF256Element
 from pysmpc.util import rand
 
 from twisted.internet import defer, reactor
@@ -107,7 +106,7 @@ class ShareExchanger(Int16StringReceiver):
     #@trace
     def __init__(self, id):
         self.id = id
-        vals = [IntegerFieldElement, GMPIntegerFieldElement, GF256Element]
+        vals = [IntegerFieldElement, GF256Element]
         keys = range(len(vals))
         self.class_to_type = dict(zip(vals, keys))
         self.type_to_class = dict(zip(keys, vals))

@@ -22,8 +22,6 @@ Modeling of fields. The IntegerFieldElement models integer field
 elements whereas GF256Element models elements from the GF(2^8) field.
 """
 
-from gmpy import mpz
-
 class FieldElement(object):
     """Common base class for elements."""
 
@@ -209,74 +207,6 @@ class IntegerFieldElement(FieldElement):
         if isinstance(other, IntegerFieldElement):
             other = other.value
         return self.value == other
-
-
-
-class GMPIntegerFieldElement(FieldElement):
-    """Integer field, using GMPY extension."""
-
-    modulus = None
-
-    def __init__(self, value):
-        self.value = mpz(value) % self.modulus
-
-    def marshal(self):
-        return self.value.binary()
-
-    @classmethod
-    def unmarshal(cls, value):
-        return cls(mpz(value, 256))
-
-    def __add__(self, other):
-        if isinstance(other, GMPIntegerFieldElement):
-            other = other.value
-        return GMPIntegerFieldElement(self.value + other)
-
-    __radd__ = __add__
-
-    def __sub__(self, other):
-        if isinstance(other, GMPIntegerFieldElement):
-            other = other.value
-        return GMPIntegerFieldElement(self.value - other)
-
-    def __rsub__(self, other):
-        return GMPIntegerFieldElement(other - self.value)
-
-    def __mul__(self, other):
-        if isinstance(other, GMPIntegerFieldElement):
-            other = other.value
-        return GMPIntegerFieldElement(self.value * other)
-
-    __rmul__ = __mul__
-
-    def __pow__(self, exponent):
-        return GMPIntegerFieldElement(pow(self.value, exponent, self.modulus))
-
-    def __neg__(self):
-        return GMPIntegerFieldElement(-self.value)
-
-    def __invert__(self):
-        return GMPIntegerFieldElement(self.value.invert(self.modulus))
-
-    def __div__(self, other):
-        return self * ~other
-
-    def __rdiv__(self, other):
-        return GMPIntegerFieldElement(other) / self
-
-    def sqrt(self):
-        """Return a square root."""
-        root = pow(self.value, (self.modulus+1)//4, self.modulus)
-        return GMPIntegerFieldElement(root)
-
-    def __repr__(self):
-        return "{%s}" % self.value
-
-#    def __repr__(self):
-#        return "GMPIntegerFieldElement(%d)" % self.value
-
-    def __eq__(self, other):
-        return self.value == other.value
 
 
 _log_table = {}
