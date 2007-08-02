@@ -17,7 +17,7 @@
 # Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 # 02110-1301 USA
 
-from pysmpc.field import IntegerFieldElement, GF256Element
+from pysmpc.field import GF, GF256Element
 
 from twisted.trial.unittest import TestCase, FailTest
 import operator
@@ -27,24 +27,20 @@ import operator
 __doctests__ = ['pysmpc.field']
 
 
-class IntegerFieldElementTestCase(TestCase):
+class GFpElementTestCase(TestCase):
 
     def setUp(self):
-        IntegerFieldElement.modulus = 31
-
-    def test_construct(self):
-        IntegerFieldElement.modulus = None
-        self.assertRaises(ValueError, lambda: IntegerFieldElement(0))
+        self.field = GF(31)
 
     def _test_binary_operator(self, operation, a, b, expected):
-        result = operation(IntegerFieldElement(a), IntegerFieldElement(b))
-        self.assertEquals(result, IntegerFieldElement(expected))
+        result = operation(self.field(a), self.field(b))
+        self.assertEquals(result, self.field(expected))
 
-        result = operation(IntegerFieldElement(a), b)
-        self.assertEquals(result, IntegerFieldElement(expected))
+        result = operation(self.field(a), b)
+        self.assertEquals(result, self.field(expected))
 
-        result = operation(a, IntegerFieldElement(b))
-        self.assertEquals(result, IntegerFieldElement(expected))
+        result = operation(a, self.field(b))
+        self.assertEquals(result, self.field(expected))
 
     def test_add(self):
         self._test_binary_operator(operator.add, 5, 0, 5)
@@ -64,41 +60,41 @@ class IntegerFieldElementTestCase(TestCase):
 
     def test_div(self):
         self.assertRaises(ZeroDivisionError, operator.div,
-                          IntegerFieldElement(10), IntegerFieldElement(0))
+                          self.field(10), self.field(0))
 
-        self.assertEquals(IntegerFieldElement(10) / IntegerFieldElement(10),
-                          IntegerFieldElement(1))
-        self.assertEquals(IntegerFieldElement(10) / IntegerFieldElement(9),
-                          IntegerFieldElement(8))
-        self.assertEquals(IntegerFieldElement(10) / IntegerFieldElement(5),
-                          IntegerFieldElement(2))
+        self.assertEquals(self.field(10) / self.field(10),
+                          self.field(1))
+        self.assertEquals(self.field(10) / self.field(9),
+                          self.field(8))
+        self.assertEquals(self.field(10) / self.field(5),
+                          self.field(2))
 
-        self.assertEquals(10 / IntegerFieldElement(5),
-                          IntegerFieldElement(2))
+        self.assertEquals(10 / self.field(5),
+                          self.field(2))
 
     def test_invert(self):
-        self.assertRaises(ZeroDivisionError, lambda: ~IntegerFieldElement(0))
-        self.assertEquals(~IntegerFieldElement(1), IntegerFieldElement(1))
+        self.assertRaises(ZeroDivisionError, lambda: ~self.field(0))
+        self.assertEquals(~self.field(1), self.field(1))
 
     def test_neg(self):
-        self.assertEquals(-IntegerFieldElement(10), IntegerFieldElement(21))
-        self.assertEquals(-IntegerFieldElement(10), IntegerFieldElement(-10))
+        self.assertEquals(-self.field(10), self.field(21))
+        self.assertEquals(-self.field(10), self.field(-10))
 
     def test_sqrt(self):
-        square = IntegerFieldElement(4)**2
+        square = self.field(4)**2
         root = square.sqrt()
         self.assertEquals(root**2, square)
         
-        square = IntegerFieldElement(5)**2
+        square = self.field(5)**2
         root = square.sqrt()
         self.assertEquals(root**2, square)
         
-        square = IntegerFieldElement(6)**2
+        square = self.field(6)**2
         root = square.sqrt()
         self.assertEquals(root**2, square)
 
     def test_bit(self):
-        a = IntegerFieldElement(14)
+        a = self.field(14)
         self.assertEquals(a.bit(0), 0)
         self.assertEquals(a.bit(1), 1)
         self.assertEquals(a.bit(2), 1)
@@ -119,9 +115,9 @@ class IntegerFieldElementTestCase(TestCase):
 #                          "IntegerFieldElement(10)")
 
     def test_str(self):
-        self.assertEquals(str(IntegerFieldElement(0)), "{0}")
-        self.assertEquals(str(IntegerFieldElement(1)), "{1}")
-        self.assertEquals(str(IntegerFieldElement(10)), "{10}")
+        self.assertEquals(str(self.field(0)), "{0}")
+        self.assertEquals(str(self.field(1)), "{1}")
+        self.assertEquals(str(self.field(10)), "{10}")
 
 
 class GF256ElementTestCase(TestCase):
