@@ -34,16 +34,16 @@ def prss(n, j, field, prfs, key):
     given. The key is used when evaluating the PRFs.
 
     An example with (n,t) = (3,1) and a modulus of 31:
-    >>> from field import IntegerFieldElement
-    >>> IntegerFieldElement.modulus = 31
+    >>> from field import GF
+    >>> Zp = GF(31)
     >>> prfs = {frozenset([1,2]): PRF("a", 31),
     ...         frozenset([1,3]): PRF("b", 31),
     ...         frozenset([2,3]): PRF("c", 31)}
-    >>> prss(3, 1, IntegerFieldElement, prfs, "key")
+    >>> prss(3, 1, Zp, prfs, "key")
     {22}
-    >>> prss(3, 2, IntegerFieldElement, prfs, "key")
+    >>> prss(3, 2, Zp, prfs, "key")
     {20}
-    >>> prss(3, 3, IntegerFieldElement, prfs, "key")
+    >>> prss(3, 3, Zp, prfs, "key")
     {18}
 
     We see that the sharing is consistent because each subset of two

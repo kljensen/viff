@@ -28,7 +28,7 @@ import socket
 
 from pysmpc import shamir
 from pysmpc.prss import prss, PRF
-from pysmpc.field import FieldElement, IntegerFieldElement, GF256Element
+from pysmpc.field import GF, GF256Element, FieldElement
 from pysmpc.util import rand
 
 from twisted.internet import defer, reactor
@@ -106,15 +106,12 @@ class ShareExchanger(Int16StringReceiver):
     #@trace
     def __init__(self, id):
         self.id = id
-        vals = [IntegerFieldElement, GF256Element]
-        keys = range(len(vals))
-        self.class_to_type = dict(zip(vals, keys))
-        self.type_to_class = dict(zip(keys, vals))
         
     #@trace
     def stringReceived(self, string):
-        program_counter, share_type, value = marshal.loads(string)
-        share = self.type_to_class[share_type].unmarshal(value)
+        program_counter, modulus, value = marshal.loads(string)
+
+        share = GF(modulus)(value)
         key = (program_counter, self.id)
 
         shares = self.factory.incoming_shares
@@ -132,10 +129,7 @@ class ShareExchanger(Int16StringReceiver):
         #println("Sending to id=%d: program_counter=%s, share=%s",
         #        self.id, program_counter, share)
 
-        # TODO: find a nicer way to communicate the type of the share.
-        data = (program_counter,
-                self.class_to_type[type(share)],
-                share.marshal())
+        data = (program_counter, share.modulus, share.value)
         self.sendString(marshal.dumps(data))
         return self
 
@@ -488,15 +482,15 @@ class Runtime:
         map(split, result)
         return result
 
-    def bit_to_int(self, b_share, program_counter=None):
-        """Convert a GF256Element share to an IntegerFieldElement share."""
+    def bit_to_int(self, b_share, field, program_counter=None):
+        """Convert a GF256Element share to a share in the field given."""
         # TODO: This ought to be the reverse of int_to_bit, but it is
         # not needed right now.
         pass
 
     #@trace
-    def int_to_bit(self, i_share, program_counter=None):
-        """Convert an IntegerFieldElement share to a GF256Element share."""
+    def int_to_bit(self, i_share, field, program_counter=None):
+        """Convert a share from the given field to a GF256Element share."""
         program_counter = self.init_pc(program_counter)
         bit = rand.randint(0, 1)
 
@@ -504,7 +498,7 @@ class Runtime:
         bit_shares = self.prss_share(GF256Element(bit), program_counter)
 
         program_counter = inc_pc(program_counter)
-        int_shares = self.prss_share(IntegerFieldElement(bit), program_counter)
+        int_shares = self.prss_share(field(bit), program_counter)
 
         # TODO: Using a parallel reduce here seems to be slower than
         # using the built-in reduce.
@@ -520,10 +514,10 @@ class Runtime:
         return reduce(self.xor_bit, bit_shares, tmp)
 
     #@trace
-    def greater_than(self, share_a, share_b, program_counter=None):
+    def greater_than(self, share_a, share_b, field, program_counter=None):
         """Compute share_a >= share_b.
 
-        Both arguments must be IntegerFieldElements. The result is a
+        Both arguments must be from the field given. The result is a
         GF256Element share.
         """
         program_counter = self.init_pc(program_counter)
@@ -535,15 +529,14 @@ class Runtime:
 
         # Preprocessing begin
 
-        assert 2**(l+1) + 2**t < IntegerFieldElement.modulus, \
-               "2^(l+1) + 2^t < p must hold"
+        assert 2**(l+1) + 2**t < field.modulus, "2^(l+1) + 2^t < p must hold"
         assert len(self.players) + 2 < 2**l
 
         int_bits = []
         program_counter = sub_pc(program_counter)
         for _ in range(m):
             program_counter = inc_pc(program_counter)
-            int_bits.append(self.prss_share_random(IntegerFieldElement, True,
+            int_bits.append(self.prss_share_random(field, True,
                                                    program_counter))
 
         # We must use int_bits without adding callbacks to the bits --
@@ -561,7 +554,7 @@ class Runtime:
             program_counter = inc_pc(program_counter)
             # TODO: this changes int_bits! It should be okay since
             # int_bits is not used any further, but still...
-            bit_bits.append(self.int_to_bit(b, program_counter))
+            bit_bits.append(self.int_to_bit(b, field, program_counter))
 
         # Preprocessing done
 
