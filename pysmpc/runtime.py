@@ -30,7 +30,7 @@ from pysmpc import shamir
 from pysmpc.prss import prss, PRF
 from pysmpc.field import (FieldElement, IntegerFieldElement,
                           GF256Element, GMPIntegerFieldElement)
-from pysmpc.util import rand, deprecation
+from pysmpc.util import rand
 
 from twisted.internet import defer, reactor
 from twisted.internet.defer import Deferred, DeferredList, gatherResults
@@ -412,22 +412,6 @@ class Runtime:
             result.append(d)
         return result
 
-    def share_int(self, integer, program_counter=None):
-        """Share an integer.
-
-        Communication cost: 1 broadcast.
-        """
-        deprecation("Use self.prss_share instead") # 2007-07-30
-        return self.prss_share(integer, program_counter)
-
-    def share_bit(self, bit, program_counter=None):
-        """Share a bit.
-
-        Communication cost: 1 broadcast.
-        """
-        deprecation("Use self.prss_share instead") # 2007-07-30
-        return self.prss_share(bit, program_counter)
-
     def prss_share_random(self, field, binary=False, program_counter=None):
         """Generate shares of a uniformly random element from the field given.
 
@@ -470,30 +454,6 @@ class Runtime:
 
         result.addCallback(finish, share, binary, program_counter)
         return result
-
-    #@trace
-    def share_random_int(self, binary=False, program_counter=None):
-        """Generate shares of a uniformly random IntegerFieldElement.
-
-        No player learns the value of the integer.
-
-        Communication cost: none if binary=False, 1 open otherwise.
-        """
-        deprecation("Use self.prss_share_random instead") # 2007-07-30
-        return self.prss_share_random(IntegerFieldElement, binary,
-                                      program_counter)
-        
-    #@trace
-    def share_random_bit(self, binary=False, program_counter=None):
-        """Generate shares of a uniformly random GF256Element.
-
-        If binary is True, a 0/1 element is generated. No player
-        learns the value of the element.
-
-        Communication cost: none.
-        """
-        deprecation("Use self.prss_share_random instead") # 2007-07-30
-        return self.prss_share_random(GF256Element, binary, program_counter)
 
     def _shamir_share(self, number, program_counter):
         """Share a FieldElement using Shamir sharing.
