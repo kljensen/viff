@@ -19,11 +19,8 @@
 # Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 # 02110-1301 USA
 
-from __future__ import division
-
 import sys
 from configobj import ConfigObj
-from optparse import OptionParser
 from pprint import pprint
 
 from pysmpc.prss import generate_subsets
@@ -150,33 +147,3 @@ def generate_configs(n, t, addresses=None, prefix=None):
                 configs[player][p]['prss_dealer_keys'][d][s] = key
 
     return configs
-
-
-if __name__ == "__main__":
-    parser = OptionParser()
-    parser.add_option("-p", "--prefix",
-                      help="output filename prefix")
-    parser.add_option("-v", "--verbose", dest="verbose", action="store_true",
-                      help="be verbose")
-    parser.add_option("-q", "--quiet", dest="verbose", action="store_false",
-                      help="be quiet")
-    parser.add_option("-n", "--players", dest="n", type="int",
-                      help="number of players")
-    parser.add_option("-t", "--threshold", dest="t", type="int",
-                      help="threshold (it must hold that t < n/2)")
-
-    parser.set_defaults(verbose=True, n=3, t=1, prefix='player')
-
-    (options, args) = parser.parse_args()
-
-    if not options.t < options.n/2:
-        parser.error("must have t < n/2")
-
-    if len(args) != options.n:
-        parser.error("must supply a hostname:port argument for each player")
-
-    addresses = [arg.split(':', 1) for arg in args]
-    configs = generate_configs(options.n, options.t, addresses, options.prefix)
-
-    for config in configs.itervalues():
-        config.write()
