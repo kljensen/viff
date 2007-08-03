@@ -1,5 +1,3 @@
-#!/usr/bin/python
-
 # Copyright 2007 Martin Geisler
 #
 # This file is part of PySMPC
@@ -19,9 +17,7 @@
 # Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 # 02110-1301 USA
 
-import sys
 from configobj import ConfigObj
-from pprint import pprint
 
 from pysmpc.prss import generate_subsets
 from pysmpc.runtime import Player
@@ -30,30 +26,21 @@ from pysmpc.util import rand
 def s_str(subset):
     return " ".join(map(str, subset))
 
-
 def s_unstr(str):
     return frozenset(map(int, str.split()))
-
 
 def p_str(player):
     return "Player " + str(player)
 
-
 def p_unstr(str):
     return int(str[7:])
-
 
 def d_str(dealer):
     return "Dealer " + str(dealer)
 
-
 def d_unstr(str):
     return int(str[7:])
 
-
-# TODO: as noted in the Player constructor, one must set the field
-# modulus before loading any config file. This weird requirement on
-# the loading order should be changed.
 def load_config(source):
     if isinstance(source, ConfigObj):
         config = source
@@ -143,7 +130,6 @@ def generate_configs(n, t, addresses=None, prefix=None):
             key = generate_key()
             for player in (subset | set([dealer])):
                 p = p_str(player)
-
                 configs[player][p]['prss_dealer_keys'][d][s] = key
 
     return configs
