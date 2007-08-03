@@ -27,7 +27,7 @@ import marshal
 import socket
 
 from pysmpc import shamir
-from pysmpc.prss import prss, PRF
+from pysmpc.prss import prss
 from pysmpc.field import GF, GF256Element, FieldElement
 from pysmpc.util import rand
 
@@ -35,38 +35,6 @@ from twisted.internet import defer, reactor
 from twisted.internet.defer import Deferred, DeferredList, gatherResults
 from twisted.internet.protocol import ClientFactory, ServerFactory
 from twisted.protocols.basic import Int16StringReceiver
-
-# TODO: move this to another file, probably together with the
-# configuration loading/saving machinery.
-class Player:
-    """Wrapper for information about a player in the protocol."""
-
-    def __init__(self, id, host, port, keys=None, dealer_keys=None):
-        self.id = id
-        self.host = host
-        self.port = port
-        self.keys = keys
-        self.dealer_keys = dealer_keys
-
-    # TODO: the PRFs ought to be cached
-    def prfs(self, modulus):
-        prfs = {}
-        for subset, key in self.keys.iteritems():
-            prfs[subset] = PRF(key, modulus)
-        return prfs
-
-    # TODO: the PRFs ought to be cached
-    def dealer_prfs(self, modulus):
-        dealers = {}
-        for dealer, keys in self.dealer_keys.iteritems():
-            prfs = {}
-            for subset, key in keys.iteritems():
-                prfs[subset] = PRF(key, modulus)
-                dealers[dealer] = prfs
-        return dealers
-
-    def __repr__(self):
-        return "<Player %d: %s:%d>" % (self.id, self.host, self.port)
 
 
 _indent = 0
