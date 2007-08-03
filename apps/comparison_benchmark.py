@@ -28,7 +28,7 @@ from twisted.internet.defer import DeferredList
 from gmpy import mpz
 from pysmpc.field import GF
 from pysmpc.runtime import Runtime
-from pysmpc.generate_config import load_config
+from pysmpc.config import load_config
 
 
 last_timestamp = time.time()

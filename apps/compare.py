@@ -25,7 +25,7 @@ from twisted.internet.defer import gatherResults
 
 from pysmpc.field import GF, GF256Element
 from pysmpc.runtime import Runtime
-from pysmpc.generate_config import load_config
+from pysmpc.config import load_config
 
 def output(x, format="output: %s"):
     print format % x

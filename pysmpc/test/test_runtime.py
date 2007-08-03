@@ -33,7 +33,7 @@ from twisted.protocols.loopback import loopbackAsync
 
 from pysmpc.field import GF, GF256Element
 from pysmpc.runtime import Runtime, ShareExchanger
-from pysmpc.generate_config import generate_configs, load_config
+from pysmpc.config import generate_configs, load_config
 from pysmpc import shamir
 
 
