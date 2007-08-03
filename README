@@ -30,5 +30,5 @@ Example Applications
 
 The apps directory contains a number of example apps. They require
 player configuration files to be generated in advance, use
-pysmpc/generate_config.py for that. Then execute three players,
+apps/generate_config_files.py for that. Then execute three players,
 starting with player 3, then 2 and finally 1.
