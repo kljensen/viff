@@ -90,7 +90,25 @@ def generate_subsets(orig_set, size):
         return frozenset()
 
 
-# TODO: test randomness.
+# Generating 100,000 bytes like this:
+#
+# x = PRF("a", 256)
+# for i in xrange(100000):
+#     sys.stdout.write(chr(x(i)))
+# 
+# and piping them into ent (http://www.fourmilab.ch/random/) gives:
+#    
+# Entropy = 7.998124 bits per byte.
+#
+# Optimum compression would reduce the size
+# of this 100000 byte file by 0 percent.
+#
+# Chi square distribution for 100000 samples is 260.10, and randomly
+# would exceed this value 50.00 percent of the times.
+#
+# Arithmetic mean value of data bytes is 127.6850 (127.5 = random).
+# Monte Carlo value for Pi is 3.156846274 (error 0.49 percent).
+# Serial correlation coefficient is 0.000919 (totally uncorrelated = 0.0).
 class PRF(object):
     """Models a pseudo random function (a PRF).
 
