@@ -98,13 +98,15 @@ class PRF(object):
 
     Each PRF is created based on a key (which should be random and
     secret) and a maximum (which may be public):
-    >>> f = PRF("some random key", 1000)
+    >>> f = PRF("some random key", 256)
 
     Calling f return values between zero and the given maximum:
     >>> f(1)
-    441L
+    246L
     >>> f(2)
-    862L
+    254L
+    >>> f(3)
+    13L
     """
 
     def __init__(self, key, max):
@@ -213,10 +215,13 @@ class PRF(object):
             digest = ''.join(digests)
             random_bytes = digest[:self.bytes]
 
-            # Convert the random bytes to a long (by converting it to
-            # hexadecimal representation first) and shift it to get
-            # rid of the surplus bits.
-            result = long(hexlify(random_bytes), 16) >> (8 - self.bits)
+            # Convert the random bytes to a long by converting it to
+            # hexadecimal representation first.
+            result = long(hexlify(random_bytes), 16)
+
+            # Shift to get rid of the surplus bits (if needed).
+            if self.bits:
+                result >>= (8 - self.bits)
 
             if result < self.max:
                 return result
