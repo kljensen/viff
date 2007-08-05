@@ -24,6 +24,8 @@ from math import log, ceil
 from struct import pack
 from binascii import hexlify
 
+from gmpy import numdigits
+
 from pysmpc import shamir
 
 
@@ -88,10 +90,21 @@ def generate_subsets(orig_set, size):
         return frozenset()
 
 
+# TODO: test randomness.
 class PRF(object):
     """Models a pseudo random function (a PRF).
 
     The numbers are based on a SHA1 hash of the initial key.
+
+    Each PRF is created based on a key (which should be random and
+    secret) and a maximum (which may be public):
+    >>> f = PRF("some random key", 1000)
+
+    Calling f return values between zero and the given maximum:
+    >>> f(1)
+    441L
+    >>> f(2)
+    862L
     """
 
     def __init__(self, key, max):
@@ -124,30 +137,34 @@ class PRF(object):
         >>> g = PRF("key", 10000)
         >>> [f(i) for i in range(100)] == [g(i) for i in range(100)]
         False
-
-        Should the max given be too large, an error is raised:
-        >>> prf = PRF("key", 2**161)
-        Traceback (most recent call last):
-            ...
-        ValueError: max cannot be larger than 160 bit
         """
-        # Use log2 to calculate the number of bits in max, then round
-        # up and split it into the number of bytes and bits needed.
-        bit_length = int(ceil(log(max, 2)))
-        if bit_length > sha.digest_size * 8:
-            raise ValueError("max cannot be larger than %d bit" %
-                             (sha.digest_size * 8))
-        
         self.max = max
-        self.bytes = (bit_length // 8) + 1
+
+        # Number of bits needed for a number in the range [0, max-1].
+        bit_length = numdigits(max-1, 2)
+
+        # Number of whole digest blocks needed.
+        blocks = int(ceil(bit_length / 8.0 / sha.digest_size))
+
+        # Number of whole bytes needed.
+        self.bytes = int(ceil(bit_length / 8.0))
+        # Number of bits needed from the final byte.
         self.bits = bit_length % 8
 
-        # Store a sha1 instance already keyed by the key and the
-        # maximum. The maximum is included as well since we want
-        # f("input", 100) and g("input", 1000) to generate different
-        # output.
-        self.sha1 = sha.new(key + str(max))
+        self.sha1s = []
+        for i in range(blocks):
+            # Initial seed is key + str(max). The maximum is included
+            # since we want PRF("input", 100) and PRF("input", 1000)
+            # to generate different output.
+            seed = key + str(max)
 
+            # The i'th generator is seeded with H^i(key + str(max))
+            # where H^i means repeated hashing i times.
+            for j in range(i):
+                seed = sha.new(seed).digest()
+            self.sha1s.append(sha.new(seed))
+
+ 
     def __call__(self, input):
         """Return a number based on input.
 
@@ -182,18 +199,24 @@ class PRF(object):
         if not isinstance(input, str):
             input = pack("L", hash(input))
 
+        # There is a chance that we generate a number that is too big,
+        # so we must keep trying until we succeed.
         while True:
-            # Copy the already keyed sha1 instance.
-            sha1 = self.sha1.copy()
-            sha1.update(input)
-            # Extract the needed number of bytes plus one to
-            # accommodate for the extra bits needed.
-            digest = sha1.digest()
-            rand_bytes = digest[:self.bytes]
+            # We collect a digest for each keyed sha1 instance.
+            digests = []
+            for sha1 in self.sha1s:
+                # Must work on a copy of the keyed sha1 instance.
+                copy = sha1.copy()
+                copy.update(input)
+                digests.append(copy.digest())
+
+            digest = ''.join(digests)
+            random_bytes = digest[:self.bytes]
+
             # Convert the random bytes to a long (by converting it to
             # hexadecimal representation first) and shift it to get
             # rid of the surplus bits.
-            result = long(hexlify(rand_bytes), 16) >> (8 - self.bits)
+            result = long(hexlify(random_bytes), 16) >> (8 - self.bits)
 
             if result < self.max:
                 return result
