@@ -173,6 +173,9 @@ class PRF(object):
 
         self.sha1s = []
         for i in range(blocks):
+            # TODO: this construction is completely ad-hoc and not
+            # known to be secure...
+
             # Initial seed is key + str(max). The maximum is included
             # since we want PRF("input", 100) and PRF("input", 1000)
             # to generate different output.
