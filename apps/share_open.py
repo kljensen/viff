@@ -21,7 +21,7 @@
 
 import sys
 
-from pysmpc.field import GF256Element
+from pysmpc.field import GF256
 from pysmpc.runtime import Runtime
 from pysmpc.config import load_config
 
@@ -30,7 +30,7 @@ def output(x, format="output: %s"):
     return x
 
 id, players = load_config(sys.argv[1])
-input = GF256Element(int(sys.argv[2]))
+input = GF256(int(sys.argv[2]))
 
 print "I am player %d and will input %s" % (id, input)
 

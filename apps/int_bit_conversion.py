@@ -21,7 +21,7 @@
 
 import sys, time
 
-from pysmpc.field import GF, GF256Element
+from pysmpc.field import GF, GF256
 from pysmpc.runtime import Runtime
 from pysmpc.config import load_config
 
@@ -61,12 +61,12 @@ def check(result, variable, expected):
     else:
         print "%s: %s (incorrect, expected %d)" % (variable, result, expected)
 
-a_b.addCallback(check, "a_b", GF256Element(0))
-b_b.addCallback(check, "b_b", GF256Element(0))
-c_b.addCallback(check, "c_b", GF256Element(0))
+a_b.addCallback(check, "a_b", GF256(0))
+b_b.addCallback(check, "b_b", GF256(0))
+c_b.addCallback(check, "c_b", GF256(0))
 
-x_b.addCallback(check, "x_b", GF256Element(1))
-y_b.addCallback(check, "y_b", GF256Element(1))
-z_b.addCallback(check, "z_b", GF256Element(1))
+x_b.addCallback(check, "x_b", GF256(1))
+y_b.addCallback(check, "y_b", GF256(1))
+z_b.addCallback(check, "z_b", GF256(1))
 
 rt.wait_for(a_b, b_b, c_b, x_b, y_b, z_b)

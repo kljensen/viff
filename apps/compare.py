@@ -23,7 +23,7 @@ import sys, time, random
 
 from twisted.internet.defer import gatherResults
 
-from pysmpc.field import GF, GF256Element
+from pysmpc.field import GF, GF256
 from pysmpc.runtime import Runtime
 from pysmpc.config import load_config
 
@@ -56,7 +56,7 @@ for input in inputs:
     x, y, z = rt.shamir_share(Zp(input[id]))
     bit = rt.greater_than(x, y, Zp)
     rt.open(bit)
-    bit.addCallback(lambda b: b == GF256Element(1))
+    bit.addCallback(lambda b: b == GF256(1))
     bit.addCallback(lambda b, x, y: "%3d >= %3d: %-5s (%s)" % (x, y, b, b == (x >= y)),
                     input[1], input[2])
     bit.addCallback(output, "%s")

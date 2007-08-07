@@ -28,7 +28,7 @@ import socket
 
 from pysmpc import shamir
 from pysmpc.prss import prss
-from pysmpc.field import GF, GF256Element, FieldElement
+from pysmpc.field import GF, GF256, FieldElement
 from pysmpc.util import rand
 
 from twisted.internet import defer, reactor
@@ -383,7 +383,7 @@ class Runtime:
         """
         program_counter = self.init_pc(program_counter)
 
-        if field == GF256Element and binary:
+        if field == GF256 and binary:
             modulus = 2
         else:
             modulus = field.modulus
@@ -391,7 +391,7 @@ class Runtime:
         prfs = self.players[self.id].prfs(modulus)
         share = prss(len(self.players), self.id, field, prfs, program_counter)
 
-        if field == GF256Element or not binary:
+        if field == GF256 or not binary:
             return defer.succeed(share)
 
         result = self.mul(share, share)
@@ -465,7 +465,7 @@ class Runtime:
 
         # TODO: merge xor_int and xor_bit into an xor method and move
         # this decission there.
-        if src_field is GF256Element:
+        if src_field is GF256:
             xor = self.xor_bit
         else:
             xor = self.xor_int
@@ -480,7 +480,7 @@ class Runtime:
         self.open(tmp, program_counter=program_counter)
         tmp.addCallback(lambda i: dst_field(i.value))
         
-        if dst_field is GF256Element:
+        if dst_field is GF256:
             xor = self.xor_bit
         else:
             xor = self.xor_int
@@ -492,7 +492,7 @@ class Runtime:
         """Compute share_a >= share_b.
 
         Both arguments must be from the field given. The result is a
-        GF256Element share.
+        GF256 share.
         """
         program_counter = self.init_pc(program_counter)
 
@@ -528,7 +528,7 @@ class Runtime:
             program_counter = inc_pc(program_counter)
             # TODO: this changes int_bits! It should be okay since
             # int_bits is not used any further, but still...
-            bit_bits.append(self.convert_bit_share(b, field, GF256Element,
+            bit_bits.append(self.convert_bit_share(b, field, GF256,
                                                    program_counter))
 
         # Preprocessing done
@@ -544,11 +544,11 @@ class Runtime:
             T = results[0]
             bit_bits = results[1:]
 
-            vec = [(GF256Element(0), GF256Element(0))]
+            vec = [(GF256(0), GF256(0))]
 
             # Calculate the vector, using only the first l bits
             for i, bi in enumerate(bit_bits[:l]):
-                Ti = GF256Element(T.bit(i))
+                Ti = GF256(T.bit(i))
                 ci = self.xor_bit(bi, Ti)
                 vec.append((ci, Ti))
 
@@ -584,7 +584,7 @@ class Runtime:
                     tmp.append(vec[0])
                 vec = tmp
 
-            return self.xor_bit(GF256Element(T.bit(l)),
+            return self.xor_bit(GF256(T.bit(l)),
                                 self.xor_bit(bit_bits[l], vec[0][1]))
 
         result = gatherResults([T] + bit_bits)

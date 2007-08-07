@@ -20,7 +20,7 @@
 """Modeling of fields.
 
 The GF function creates Galois fields (finite fields) whereas the
-GF256Element class models elements from the GF(2^8) field.
+GF256 class models elements from the GF(2^8) field.
 """
 
 from gmpy import mpz
@@ -57,7 +57,11 @@ def _generate_tables():
 
 _generate_tables()
 
-class GF256Element(FieldElement):
+# The class name is slightly wrong since the class instances cannot be
+# said to be represent a field. Instead they represent instances of
+# GF256 elements. But the shorter name is better, though, in the
+# common case where one talks about the class as a field.
+class GF256(FieldElement):
     """Models an element of the GF(2^8) field."""
 
     modulus = 256
@@ -66,52 +70,52 @@ class GF256Element(FieldElement):
         self.value = value % self.modulus
 
     def field(self, value):
-        return GF256Element(value)
+        return GF256(value)
 
     def __add__(self, other):
-        """Add this and another GF256Element.
+        """Add this and another GF256.
 
         For example:
-        >>> GF256Element(0x01) + GF256Element(0x01)
+        >>> GF256(0x01) + GF256(0x01)
         [0]
-        >>> GF256Element(0x01) + GF256Element(0x02)
+        >>> GF256(0x01) + GF256(0x02)
         [3]
 
         Adding integers works too, the other operand is coerced into a
-        GF256Element automatically:
-        >>> GF256Element(0x01) + 1
+        GF256 element automatically:
+        >>> GF256(0x01) + 1
         [0]
         """
-        if isinstance(other, GF256Element):
+        if isinstance(other, GF256):
             other = other.value
-        return GF256Element(self.value ^ other)
+        return GF256(self.value ^ other)
 
     __radd__ = __add__
     __sub__ = __add__
     __rsub__ = __sub__
 
     def __mul__(self, other):
-        """Multiply this and another GF256Element.
+        """Multiply this and another GF256.
 
-        >>> GF256Element(0) * GF256Element(47)
+        >>> GF256(0) * GF256(47)
         [0]
-        >>> GF256Element(2) * GF256Element(3)
+        >>> GF256(2) * GF256(3)
         [6]
-        >>> GF256Element(16) * GF256Element(32)
+        >>> GF256(16) * GF256(32)
         [54]
         """
-        if isinstance(other, GF256Element):
+        if isinstance(other, GF256):
             other = other.value
         if self.value == 0 or other == 0:
-            return GF256Element(0)
+            return GF256(0)
         else:
             log_product = (_log_table[self.value] + _log_table[other]) % 255
-            return GF256Element(_exp_table[log_product])
+            return GF256(_exp_table[log_product])
 
     __rmul__ = __mul__
 
     def __pow__(self, exponent):
-        result = GF256Element(1)
+        result = GF256(1)
         for _ in range(exponent):
             result *= self
         return result
@@ -120,7 +124,7 @@ class GF256Element(FieldElement):
         return self * ~other
 
     def __rdiv__(self, other):
-        return GF256Element(other) / self
+        return GF256(other) / self
 
     def __neg__(self):
         return self
@@ -128,25 +132,25 @@ class GF256Element(FieldElement):
     def __invert__(self):
         if self.value == 0:
             raise ZeroDivisionError, "Cannot invert zero"
-        return GF256Element(_inv_table[self.value])
+        return GF256(_inv_table[self.value])
 
     def __repr__(self):
         return "[%d]" % self.value
-        #return "GF256Element(%d)" % self.value
+        #return "GF256(%d)" % self.value
 
     def __str__(self):
         return "[%d]" % self.value
 
     def __eq__(self, other):
-        if isinstance(other, GF256Element):
+        if isinstance(other, GF256):
             other = other.value
         return self.value == other
 
 
 # Calls to GF with identical modulus must return the same class
 # (field), so we cache them here. The cache is seeded with the
-# GF256Element class which is always defined.
-_field_cache = {256: GF256Element}
+# GF256 class which is always defined.
+_field_cache = {256: GF256}
 
 def GF(modulus):
     """Generate a Galois (finite) field with the given modulus.

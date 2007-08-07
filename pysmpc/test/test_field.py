@@ -17,7 +17,7 @@
 # Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 # 02110-1301 USA
 
-from pysmpc.field import GF, GF256Element
+from pysmpc.field import GF, GF256
 
 from twisted.trial.unittest import TestCase, FailTest
 import operator
@@ -120,21 +120,21 @@ class GFpElementTestCase(TestCase):
         self.assertEquals(str(self.field(10)), "{10}")
 
 
-class GF256ElementTestCase(TestCase):
+class GF256TestCase(TestCase):
 
     def test_construct(self):
-        self.assertEquals(GF256Element(256), GF256Element(0))
-        self.assertEquals(GF256Element(257), GF256Element(1))
+        self.assertEquals(GF256(256), GF256(0))
+        self.assertEquals(GF256(257), GF256(1))
 
     def _test_binary_operator(self, operation, a, b, expected):
-        result = operation(GF256Element(a), GF256Element(b))
-        self.assertEquals(result, GF256Element(expected))
+        result = operation(GF256(a), GF256(b))
+        self.assertEquals(result, GF256(expected))
 
-        result = operation(GF256Element(a), b)
-        self.assertEquals(result, GF256Element(expected))
+        result = operation(GF256(a), b)
+        self.assertEquals(result, GF256(expected))
 
-        result = operation(a, GF256Element(b))
-        self.assertEquals(result, GF256Element(expected))
+        result = operation(a, GF256(b))
+        self.assertEquals(result, GF256(expected))
 
     def test_add(self):
         self._test_binary_operator(operator.add, 0, 0, 0)
@@ -143,9 +143,9 @@ class GF256ElementTestCase(TestCase):
         self._test_binary_operator(operator.add, 0, 1, 1)
         self._test_binary_operator(operator.add, 1, 2, 3)
 
-        a = GF256Element(10)
-        a += GF256Element(10)
-        self.assertEquals(a, GF256Element(0))
+        a = GF256(10)
+        a += GF256(10)
+        self.assertEquals(a, GF256(0))
 
     def test_sub(self):
         self._test_binary_operator(operator.sub, 0, 0, 0)
@@ -160,36 +160,33 @@ class GF256ElementTestCase(TestCase):
         self._test_binary_operator(operator.mul, 16, 32, 54)
 
     def test_div(self):
-        self.assertRaises(ZeroDivisionError,
-                          lambda: GF256Element(10) / GF256Element(0))
+        self.assertRaises(ZeroDivisionError, lambda: GF256(10) / GF256(0))
 
-        self.assertEquals(GF256Element(10) / GF256Element(10), GF256Element(1))
-        self.assertEquals(GF256Element(10) / GF256Element(9), GF256Element(208))
-        self.assertEquals(GF256Element(10) / GF256Element(5), GF256Element(2))
+        self.assertEquals(GF256(10) / GF256(10), GF256(1))
+        self.assertEquals(GF256(10) / GF256(9), GF256(208))
+        self.assertEquals(GF256(10) / GF256(5), GF256(2))
 
-        self.assertEquals(10 / GF256Element(5), GF256Element(2))
+        self.assertEquals(10 / GF256(5), GF256(2))
 
     def test_pow(self):
-        self.assertEquals(GF256Element(3)**3,
-                          GF256Element(3)*GF256Element(3)*GF256Element(3))
-        self.assertEquals(GF256Element(27)**100,
-                          GF256Element(27)**50 * GF256Element(27)**50)
+        self.assertEquals(GF256(3)**3, GF256(3) * GF256(3) * GF256(3))
+        self.assertEquals(GF256(27)**100, GF256(27)**50 * GF256(27)**50)
 
     def test_invert(self):
-        self.assertRaises(ZeroDivisionError, lambda: ~GF256Element(0))
-        self.assertEquals(~GF256Element(1), GF256Element(1))
+        self.assertRaises(ZeroDivisionError, lambda: ~GF256(0))
+        self.assertEquals(~GF256(1), GF256(1))
 
     def test_neg(self):
-        self.assertEquals(-GF256Element(0), GF256Element(0))
-        self.assertEquals(-GF256Element(10), GF256Element(10))
-        self.assertEquals(-GF256Element(100), GF256Element(100))
+        self.assertEquals(-GF256(0), GF256(0))
+        self.assertEquals(-GF256(10), GF256(10))
+        self.assertEquals(-GF256(100), GF256(100))
 
 #    def test_repr(self):
-#        self.assertEquals(repr(GF256Element(0)), "GF256Element(0)")
-#        self.assertEquals(repr(GF256Element(1)), "GF256Element(1)")
-#        self.assertEquals(repr(GF256Element(10)), "GF256Element(10)")
+#        self.assertEquals(repr(GF256(0)), "GF256(0)")
+#        self.assertEquals(repr(GF256(1)), "GF256(1)")
+#        self.assertEquals(repr(GF256(10)), "GF256(10)")
 
     def test_str(self):
-        self.assertEquals(str(GF256Element(0)), "[0]")
-        self.assertEquals(str(GF256Element(1)), "[1]")
-        self.assertEquals(str(GF256Element(10)), "[10]")
+        self.assertEquals(str(GF256(0)), "[0]")
+        self.assertEquals(str(GF256(1)), "[1]")
+        self.assertEquals(str(GF256(10)), "[10]")

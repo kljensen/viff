@@ -22,12 +22,12 @@
 import sys
 
 from pysmpc import shamir
-from pysmpc.field import GF, GF256Element
+from pysmpc.field import GF, GF256
 
 if sys.argv[1].find(":") == -1:
     F = GF(int(sys.argv.pop(1)))
 else:
-    F = GF256Element
+    F = GF256
 
 print "Field: GF%d" % F.modulus
 

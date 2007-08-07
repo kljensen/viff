@@ -31,7 +31,7 @@ from twisted.internet.protocol import Protocol
 from twisted.trial.unittest import TestCase
 from twisted.protocols.loopback import loopbackAsync
 
-from pysmpc.field import GF, GF256Element
+from pysmpc.field import GF, GF256
 from pysmpc.runtime import Runtime, ShareExchanger
 from pysmpc.config import generate_configs, load_config
 from pysmpc import shamir
@@ -209,8 +209,8 @@ class RuntimeTestCase(TestCase):
             int_a = self.Zp(a)
             int_b = self.Zp(b)
 
-            bit_a = GF256Element(a)
-            bit_b = GF256Element(b)
+            bit_a = GF256(a)
+            bit_b = GF256(b)
         
             int_a_shares = second(shamir.share(int_a, 1, 3))
             int_b_shares = second(shamir.share(int_b, 1, 3))
@@ -235,8 +235,8 @@ class RuntimeTestCase(TestCase):
             bit_res3 = self.rt3.xor_bit(bit_a_shares[2], bit_b_shares[2])
 
             bit_res = gatherResults([bit_res1, bit_res2, bit_res3])
-            bit_res.addCallback(recombine, GF256Element)
-            bit_res.addCallback(self.assertEquals, GF256Element(a ^ b))
+            bit_res.addCallback(recombine, GF256)
+            bit_res.addCallback(self.assertEquals, GF256(a ^ b))
 
             results.extend([int_res, bit_res])
 
@@ -315,16 +315,16 @@ class RuntimeTestCase(TestCase):
         return gatherResults([a_shares, b_shares, c_shares])
 
     def test_prss_share_bit(self):
-        a = GF256Element(10)
-        b = GF256Element(20)
-        c = GF256Element(30)
+        a = GF256(10)
+        b = GF256(20)
+        c = GF256(30)
 
         a1, b1, c1 = self.rt1.prss_share(a)
         a2, b2, c2 = self.rt2.prss_share(b)
         a3, b3, c3 = self.rt3.prss_share(c)
         
         def check_recombine(shares, value):
-            ids = map(GF256Element, range(1, len(shares) + 1))
+            ids = map(GF256, range(1, len(shares) + 1))
             self.assertEquals(shamir.recombine(zip(ids, shares)), value)
 
         a_shares = gatherResults([a1, a2, a3])
@@ -339,20 +339,20 @@ class RuntimeTestCase(TestCase):
 
     def test_prss_share_random_bit(self):
         """
-        Tests the sharing of a 0/1 GF256Element.
+        Tests the sharing of a 0/1 GF256.
         """
-        # TODO: how can we test if a sharing of a random GF256Element
+        # TODO: how can we test if a sharing of a random GF256 element
         # is correct? Any three shares are "correct", so it seems that
         # the only thing we can test is that the three players gets
         # their shares. But this is also tested with the test below.
-        a1 = self.rt1.prss_share_random(field=GF256Element, binary=True)
-        a2 = self.rt2.prss_share_random(field=GF256Element, binary=True) 
-        a3 = self.rt3.prss_share_random(field=GF256Element, binary=True)
+        a1 = self.rt1.prss_share_random(field=GF256, binary=True)
+        a2 = self.rt2.prss_share_random(field=GF256, binary=True) 
+        a3 = self.rt3.prss_share_random(field=GF256, binary=True)
         
         def check_binary_recombine(shares):
-            ids = map(GF256Element, range(1, len(shares) + 1))
+            ids = map(GF256, range(1, len(shares) + 1))
             self.assertIn(shamir.recombine(zip(ids, shares)),
-                          [GF256Element(0), GF256Element(1)])
+                          [GF256(0), GF256(1)])
 
         a_shares = gatherResults([a1, a2, a3])
         a_shares.addCallback(check_binary_recombine)
@@ -381,29 +381,23 @@ class RuntimeTestCase(TestCase):
         int_0_shares = second(shamir.share(self.Zp(0), 1, 3))
         int_1_shares = second(shamir.share(self.Zp(1), 1, 3))
 
-        res_0_1 = self.rt1.convert_bit_share(int_0_shares[0], self.Zp,
-                                             GF256Element)
-        res_0_2 = self.rt2.convert_bit_share(int_0_shares[1], self.Zp,
-                                             GF256Element)
-        res_0_3 = self.rt3.convert_bit_share(int_0_shares[2], self.Zp,
-                                             GF256Element)
+        res_0_1 = self.rt1.convert_bit_share(int_0_shares[0], self.Zp, GF256)
+        res_0_2 = self.rt2.convert_bit_share(int_0_shares[1], self.Zp, GF256)
+        res_0_3 = self.rt3.convert_bit_share(int_0_shares[2], self.Zp, GF256)
 
-        res_1_1 = self.rt1.convert_bit_share(int_1_shares[0], self.Zp,
-                                             GF256Element)
-        res_1_2 = self.rt2.convert_bit_share(int_1_shares[1], self.Zp,
-                                             GF256Element)
-        res_1_3 = self.rt3.convert_bit_share(int_1_shares[2], self.Zp,
-                                             GF256Element)
+        res_1_1 = self.rt1.convert_bit_share(int_1_shares[0], self.Zp, GF256)
+        res_1_2 = self.rt2.convert_bit_share(int_1_shares[1], self.Zp, GF256)
+        res_1_3 = self.rt3.convert_bit_share(int_1_shares[2], self.Zp, GF256)
 
         def check_recombine(shares, value):
-            ids = map(GF256Element, range(1, len(shares) + 1))
+            ids = map(GF256, range(1, len(shares) + 1))
             self.assertEquals(shamir.recombine(zip(ids, shares)), value)
         
         res_0 = gatherResults([res_0_1, res_0_2, res_0_3])
-        res_0.addCallback(check_recombine, GF256Element(0))
+        res_0.addCallback(check_recombine, GF256(0))
 
         res_1 = gatherResults([res_1_1, res_1_2, res_1_3])
-        res_1.addCallback(check_recombine, GF256Element(1))
+        res_1.addCallback(check_recombine, GF256(1))
         return gatherResults([res_0, res_1])
 
     def test_greater_than(self):
@@ -423,9 +417,9 @@ class RuntimeTestCase(TestCase):
         self.rt2.open(res_ab2)
         self.rt3.open(res_ab3)
 
-        res_ab1.addCallback(self.assertEquals, GF256Element(False))
-        res_ab2.addCallback(self.assertEquals, GF256Element(False))
-        res_ab3.addCallback(self.assertEquals, GF256Element(False))
+        res_ab1.addCallback(self.assertEquals, GF256(False))
+        res_ab2.addCallback(self.assertEquals, GF256(False))
+        res_ab3.addCallback(self.assertEquals, GF256(False))
 
         return gatherResults([a1, a2, a3, b1, b2, b3, c1, c2, c3,
                               res_ab1, res_ab2, res_ab3])
@@ -541,9 +535,9 @@ if 'STRESS' in os.environ:
                 map(self.rt2.open, results2)
                 map(self.rt3.open, results3)
 
-                expected = map(GF256Element, [a >= b, b >= a,
-                                              a >= c, c >= a,
-                                              b >= c, c >= b])
+                expected = map(GF256, [a >= b, b >= a,
+                                       a >= c, c >= a,
+                                       b >= c, c >= b])
 
                 result1 = gatherResults(results1)
                 result2 = gatherResults(results2)
