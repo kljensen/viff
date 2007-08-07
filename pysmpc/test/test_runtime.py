@@ -372,23 +372,28 @@ class RuntimeTestCase(TestCase):
         a_shares.addCallback(check_binary_recombine)
         return a_shares
 
-    # TODO: make a test when the method is implemented in runtime.
-    #def test_bit_to_int(self):
-
-    def test_int_to_bit(self):
+    def test_convert_bit_share(self):
+        # TODO: test conversion from GF256 to Zp and between Zp and Zq
+        # fields.
         def second(sequence):
             return [x[1] for x in sequence]
 
         int_0_shares = second(shamir.share(self.Zp(0), 1, 3))
         int_1_shares = second(shamir.share(self.Zp(1), 1, 3))
 
-        res_0_1 = self.rt1.int_to_bit(int_0_shares[0], self.Zp)
-        res_0_2 = self.rt2.int_to_bit(int_0_shares[1], self.Zp)
-        res_0_3 = self.rt3.int_to_bit(int_0_shares[2], self.Zp)
+        res_0_1 = self.rt1.convert_bit_share(int_0_shares[0], self.Zp,
+                                             GF256Element)
+        res_0_2 = self.rt2.convert_bit_share(int_0_shares[1], self.Zp,
+                                             GF256Element)
+        res_0_3 = self.rt3.convert_bit_share(int_0_shares[2], self.Zp,
+                                             GF256Element)
 
-        res_1_1 = self.rt1.int_to_bit(int_1_shares[0], self.Zp)
-        res_1_2 = self.rt2.int_to_bit(int_1_shares[1], self.Zp)
-        res_1_3 = self.rt3.int_to_bit(int_1_shares[2], self.Zp)
+        res_1_1 = self.rt1.convert_bit_share(int_1_shares[0], self.Zp,
+                                             GF256Element)
+        res_1_2 = self.rt2.convert_bit_share(int_1_shares[1], self.Zp,
+                                             GF256Element)
+        res_1_3 = self.rt3.convert_bit_share(int_1_shares[2], self.Zp,
+                                             GF256Element)
 
         def check_recombine(shares, value):
             ids = map(GF256Element, range(1, len(shares) + 1))

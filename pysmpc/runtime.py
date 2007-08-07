@@ -450,36 +450,42 @@ class Runtime:
         map(split, result)
         return result
 
-    def bit_to_int(self, b_share, field, program_counter=None):
-        """Convert a GF256Element share to a share in the field given."""
-        # TODO: This ought to be the reverse of int_to_bit, but it is
-        # not needed right now.
-        pass
-
     #@trace
-    def int_to_bit(self, i_share, field, program_counter=None):
-        """Convert a share from the given field to a GF256Element share."""
+    def convert_bit_share(self, share, src_field, dst_field,
+                          program_counter=None):
+        """Convert a 0/1 share from src_field into dst_field."""
         program_counter = self.init_pc(program_counter)
         bit = rand.randint(0, 1)
 
         program_counter = sub_pc(program_counter)
-        bit_shares = self.prss_share(GF256Element(bit), program_counter)
+        dst_shares = self.prss_share(dst_field(bit), program_counter)
 
         program_counter = inc_pc(program_counter)
-        int_shares = self.prss_share(field(bit), program_counter)
+        src_shares = self.prss_share(src_field(bit), program_counter)
 
+        # TODO: merge xor_int and xor_bit into an xor method and move
+        # this decission there.
+        if src_field is GF256Element:
+            xor = self.xor_bit
+        else:
+            xor = self.xor_int
+        
         # TODO: Using a parallel reduce here seems to be slower than
         # using the built-in reduce.
-        tmp = reduce(self.xor_int, int_shares, i_share)
+        tmp = reduce(xor, src_shares, share)
 
-        # We open tmp and convert the value to a bit sharing.
+        # We open tmp and convert the value into a field element from
+        # the dst_field.
         program_counter = inc_pc(program_counter)
         self.open(tmp, program_counter=program_counter)
-        tmp.addCallback(lambda i: GF256Element(i.value))
+        tmp.addCallback(lambda i: dst_field(i.value))
         
-        # Since xor_bit does not do any network communication there is
-        # no need to do any kind of parallel reduce.
-        return reduce(self.xor_bit, bit_shares, tmp)
+        if dst_field is GF256Element:
+            xor = self.xor_bit
+        else:
+            xor = self.xor_int
+
+        return reduce(xor, dst_shares, tmp)
 
     #@trace
     def greater_than(self, share_a, share_b, field, program_counter=None):
@@ -522,7 +528,8 @@ class Runtime:
             program_counter = inc_pc(program_counter)
             # TODO: this changes int_bits! It should be okay since
             # int_bits is not used any further, but still...
-            bit_bits.append(self.int_to_bit(b, field, program_counter))
+            bit_bits.append(self.convert_bit_share(b, field, GF256Element,
+                                                   program_counter))
 
         # Preprocessing done
 
