@@ -24,10 +24,7 @@ import sys
 from pysmpc.field import GF
 from pysmpc.runtime import Runtime
 from pysmpc.config import load_config
-
-def output(x, format="output: %s"):
-    print format % x
-    return x
+from pysmpc.util import dprint
 
 id, players = load_config(sys.argv[1])
 Zp = GF(int(sys.argv[2]))
@@ -47,8 +44,8 @@ rt.open(a)
 rt.open(b)
 rt.open(c)
 
-a.addCallback(output, "\n### opened a: %s ###\n")
-b.addCallback(output, "\n### opened b: %s ###\n")
-c.addCallback(output, "\n### opened c: %s ###\n")
+dprint("### opened a: %s ###", a)
+dprint("### opened b: %s ###", b)
+dprint("### opened c: %s ###", c)
 
 rt.wait_for(a,b,c)

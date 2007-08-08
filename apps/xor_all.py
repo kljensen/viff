@@ -24,10 +24,7 @@ import sys
 from pysmpc.field import GF256
 from pysmpc.runtime import Runtime
 from pysmpc.config import load_config
-
-def output(x, format="output: %s"):
-    print format % x
-    return x
+from pysmpc.util import dprint
 
 id, players = load_config(sys.argv[1])
 input = GF256(int(sys.argv[2]))
@@ -51,6 +48,6 @@ xor = shares[0]
 
 rt.open(xor)
 
-xor.addCallback(output, "result: %s")
+dprint("Result: %s", xor)
     
 rt.wait_for(xor)

@@ -30,7 +30,6 @@ from pysmpc.field import GF
 from pysmpc.runtime import Runtime
 from pysmpc.config import load_config
 
-
 last_timestamp = time.time()
 start = 0
 
@@ -54,11 +53,6 @@ def timestamp(x):
     print "Delta: %8.3f ms" % (1000*(now-last_timestamp))
     last_timestamp = now
     return x
-
-def output(x, format="output: %s"):
-    print format % x
-    return x
-
 
 parser = OptionParser()
 parser.add_option("-m", "--modulus",

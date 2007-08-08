@@ -30,7 +30,6 @@ from pysmpc.field import GF
 from pysmpc.runtime import Runtime
 from pysmpc.config import load_config
 
-
 last_timestamp = time.time()
 start = 0
 
@@ -58,10 +57,6 @@ def timestamp(x):
 def finish(*x):
     reactor.stop()
     print "Stopped reactor"
-
-def output(x, format="output: %s"):
-    print format % x
-    return x
 
 # To avoid having leaving the ports in boring TIME_WAIT state, we must
 # shut the reactor down cleanly if killed.

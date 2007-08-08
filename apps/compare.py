@@ -26,10 +26,7 @@ from twisted.internet.defer import gatherResults
 from pysmpc.field import GF, GF256
 from pysmpc.runtime import Runtime
 from pysmpc.config import load_config
-
-def output(x, format="output: %s"):
-    print format % x
-    return x
+from pysmpc.util import dprint
 
 Zp = GF(30916444023318367583)
 
@@ -59,7 +56,7 @@ for input in inputs:
     bit.addCallback(lambda b: b == GF256(1))
     bit.addCallback(lambda b, x, y: "%3d >= %3d: %-5s (%s)" % (x, y, b, b == (x >= y)),
                     input[1], input[2])
-    bit.addCallback(output, "%s")
+    dprint("%s", bit)
     bits.append(bit)
 
 results = gatherResults(bits)

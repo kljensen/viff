@@ -22,6 +22,7 @@
 import os
 import random
 import warnings
+from twisted.internet.defer import Deferred, succeed, gatherResults
 
 _seed = os.environ.get('SEED')
 
@@ -45,3 +46,22 @@ else:
 def deprecation(message):
     """Issue a deprecation warning."""
     warnings.warn(message, DeprecationWarning, stacklevel=3)
+
+def dprint(fmt, *args):
+    """Deferred print which waits on Deferreds.
+
+    Works like this print statement, except that dprint waits on any
+    Deferreds given in args. When all Deferreds are ready, the print
+    is done.
+    """
+    def output(args, fmt):
+        print fmt % tuple(args)
+
+    deferreds = []
+    for arg in args:
+        if not isinstance(arg, Deferred):
+            arg = succeed(arg)
+        deferreds.append(arg)
+
+    args = gatherResults(deferreds)
+    args.addCallback(output, fmt)

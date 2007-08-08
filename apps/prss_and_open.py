@@ -26,10 +26,7 @@ from twisted.internet.defer import gatherResults
 from pysmpc.field import GF
 from pysmpc.runtime import Runtime
 from pysmpc.config import load_config
-
-def output(x, format="output: %s"):
-    print (("-"*64) + "\n" + format + "\n" + ("-"*64)) % x
-    return x
+from pysmpc.util import dprint
 
 id, players = load_config(sys.argv[1])
 print "I am player %d" % id
@@ -46,7 +43,7 @@ for _ in range(10):
     elements.append(x)
 
 result = gatherResults(elements)
-result.addCallback(output, "bits: %s")
+dprint("bits: %s", result)
 
 rt.wait_for(result)
 

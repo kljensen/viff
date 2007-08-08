@@ -25,10 +25,6 @@ from pysmpc.field import GF, GF256
 from pysmpc.runtime import Runtime
 from pysmpc.config import load_config
 
-def output(x, format="output: %s"):
-    print format % x
-    return x
-
 id, players = load_config(sys.argv[1])
 print "I am player %d" % id
 
