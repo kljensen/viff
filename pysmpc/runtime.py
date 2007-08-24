@@ -706,6 +706,152 @@ class Runtime:
     ########################################################################
     ########################################################################
 
+    #@trace
+    def greater_thanII(self, share_a, share_b, program_counter=None):
+        """Compute share_a >= share_b.
+
+        Both arguments must be IntegerFieldElements. The result is a
+        IntegerFieldElements share.
+        """
+
+        # TODO: incorrect result when comparing equal numbers -- use 2a+1, 2b
+        program_counter = self.init_pc(program_counter)
+
+        # TODO: get these from a configuration file or similar
+        l = 32 # bit-length of input numbers
+        k = 32 # security parameter
+
+        # Preprocessing begin
+       
+
+        int_bits = []
+        program_counter = sub_pc(program_counter)
+        for _ in range(l+k):
+            program_counter = inc_pc(program_counter)
+            int_bits.append(self.share_random_int(True, program_counter))
+
+        # We must use int_bits without adding callbacks to the bits --
+        # having int_b wait on them ensures this.
+
+        def bits_to_int(bits):
+            """Converts a list of bits to an integer."""
+            return sum([2**i * b for (i, b) in enumerate(bits)])
+
+        def bits_to_int_modl(bits):
+            """Converts a list of bits to an integer."""
+            return sum([2**i * b for (i, b) in enumerate(bits[:l])])
+
+
+
+        int_r = gatherResults(int_bits)
+        int_r.addCallback(bits_to_int)
+
+        int_r_mod2l = gatherResults(int_bits)
+        int_r_mod2l.addCallback(bits_to_int_modl)
+
+        
+
+        program_counter = inc_pc(program_counter)
+        s_bit = self.share_random_int(True, program_counter)
+
+        def bit_to_sign(bit):
+            """converts a 0/1 encoded bit to a +/-1 encoded one"""
+            return self.mul(self.sub(bit[0],
+                                     1),
+                            (bit[0].modulus - 1)/2)
+
+        s_sign = gatherResults([s_bit])
+        s_sign.addCallback(bit_to_sign)
+        
+
+        # m: uniformly random -- should be non-zero, however, this
+        # happens with negligible probability
+        program_counter = inc_pc(program_counter)
+        mask = self.share_random_int(False, program_counter)
+        
+
+        ##################################################
+        # Preprocessing done
+        ##################################################
+
+        z = self.add(self.sub(share_a, share_b), 2**l)
+        c = self.add(int_r, z)
+        program_counter = inc_pc(program_counter)
+        self.open(c, program_counter=program_counter)
+
+        #@trace
+        def calculate(results, program_counter):
+            """Finish the calculation."""
+            a = results[0]
+            b = results[1]
+            c = results[2]
+            s = results[3]
+            mask = results[4]
+            r_bits = results[5:l+5]
+
+            c_bits = []
+            for i in range(l):
+                c_bits.append(c.bit(i))
+
+            sumXORs = [None]*(l)
+            # sumXORs[i] = sumXORs[i+1] + r_bits[i+1] + c_(i+1) - 2*r_bits[i+1]*c_(i+1)
+            sumXORs[l-1] = 0
+            for i in range(1,l):
+                sumXORs[l-1 - i] = self.add(sumXORs[l - i],
+                                            self.sub(self.add(r_bits[l - i],
+                                                              c_bits[l - i]),
+                                                     self.mul(2,
+                                                               self.mul(r_bits[l - i],
+                                                                         c_bits[l - i]))))
+
+
+            E_tilde = []
+            for (i,b) in enumerate(r_bits):
+                ## s + rBit[i] - cBit[i] + 3 * sumXors[i+1];
+                ##
+                E_tilde.append(self.add(self.add(s_sign,
+                                                 self.sub(r_bits[i], c_bits[i])),
+                                        self.mul(IntegerFieldElement(3),sumXORs[i])))
+            E_tilde.append(mask)
+
+            while len(E_tilde) > 1:
+                program_counter = inc_pc(program_counter)
+                E_tilde.append(self.mul(E_tilde.pop(0),
+                                        E_tilde.pop(0),
+                                        program_counter))
+
+
+            program_counter = inc_pc(program_counter)
+            non_zero = self.open(E_tilde[0])
+            
+            if (non_zero != 0):
+                non_zero = 1
+
+            # UF == underflow
+            program_counter = inc_pc(program_counter)
+            UF = self.sub(self.add(non_zero,  s_bit),
+                          self.mul(non_zero, s_bit, program_counter))
+
+            # return  z - (c%2**l - r%2**l)+UF*2**l
+            c_mod2l = sum([2**i * c_i for (i, c_i) in enumerate(c_bits)])
+            program_counter = inc_pc(program_counter)
+            return self.add(self.sub(z,
+                                     self.sub(c_mod2l, int_r_mod2l)),
+                            self.mul(UF, 2**l, program_counter))
+                            
+
+
+        
+
+        result = gatherResults([share_a, share_b, c, s_bit, mask] + int_bits)
+        program_counter = inc_pc(program_counter)
+        result.addCallback(calculate, program_counter)
+        return result
+        
+
+    ########################################################################
+    ########################################################################
+
 
     #@trace
     def exchange_shares(self, program_counter, id, share):
