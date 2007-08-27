@@ -293,20 +293,21 @@ class Runtime:
 
         Communication cost: 1 Shamir sharing.
         """
-        # TODO:  mul accept FieldElements and do quick local
-        # multiplication in that case. If two FieldElements are given,
-        # return a FieldElement.
         program_counter = self.init_pc(program_counter)
+        reshare = True
 
         if not isinstance(share_a, Deferred):
             share_a = defer.succeed(share_a)
+            reshare = False
         if not isinstance(share_b, Deferred):
             share_b = defer.succeed(share_b)
+            reshare = False
 
         result = gatherResults([share_a, share_b])
         result.addCallback(lambda (a, b): a * b)
-        result.addCallback(self._shamir_share, sub_pc(program_counter))
-        result.addCallback(self._recombine, threshold=2*self.threshold)
+        if reshare:
+            result.addCallback(self._shamir_share, sub_pc(program_counter))
+            result.addCallback(self._recombine, threshold=2*self.threshold)
         return result
     
     #@trace
