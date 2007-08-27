@@ -31,23 +31,27 @@ from pysmpc.util import dprint
 Zp = GF(30916444023318367583)
 
 id, players = load_config(sys.argv[1])
-print "I am player %d" % id
+try:
+    count = int(sys.argv[2])
+except IndexError:
+    count = 10
 
 rt = Runtime(players, id, 1)
 
 bits = []
-
 l = 7
 
 rand = dict([(i, random.Random(i)) for i in players])
 
 inputs = []
-for i in range(3):
+for i in range(count):
     input = dict([(j, rand[j].randint(0,pow(2,l))) for j in players])
     inputs.append(input)
 
 # Fixed input for easier debugging
 inputs.append({1: 20, 2: 25, 3: 0})
+
+print "I am player %d, will compare %d numbers" % (id, len(inputs))
 
 for input in inputs:
     x, y, z = rt.shamir_share(Zp(input[id]))
