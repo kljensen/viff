@@ -21,16 +21,13 @@
 
 import sys
 
-from pysmpc.field import *
+from pysmpc.field import GF256
 from pysmpc.runtime import Runtime
-from pysmpc.generate_config import load_config
-
-def output(x, format="output: %s"):
-    print format % x
-    return x
+from pysmpc.config import load_config
+from pysmpc.util import dprint
 
 id, players = load_config(sys.argv[1])
-input = GF256Element(int(sys.argv[2]))
+input = GF256(int(sys.argv[2]))
 
 print "I am player %d and will input %s" % (id, input)
 
@@ -40,7 +37,7 @@ print "-" * 64
 print "Program started"
 print
 
-shares = rt.share_bit(input)
+shares = rt.prss_share(input)
 
 while len(shares) > 1:
     a = shares.pop(0)
@@ -51,6 +48,6 @@ xor = shares[0]
 
 rt.open(xor)
 
-xor.addCallback(output, "result: %s")
+dprint("Result: %s", xor)
     
 rt.wait_for(xor)

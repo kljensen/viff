@@ -17,25 +17,51 @@
 # Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 # 02110-1301 USA
 
+"""Utility methods."""
 
-import os, random
+import os
+import random
+import warnings
+from twisted.internet.defer import Deferred, succeed, gatherResults
 
-seed = os.environ.get('SEED')
+_seed = os.environ.get('SEED')
 
-if seed is None:
+if _seed is None:
     # If the environmental variable is not set, then a random seed is
     # chosen.
-    seed = random.randint(0, 10000)
-    print 'Seeding random generator with random seed %d' % seed
-    rand = random.Random(seed)
-elif seed == '':
+    _seed = random.randint(0, 10000)
+    print 'Seeding random generator with random seed %d' % _seed
+    rand = random.Random(_seed)
+elif _seed == '':
     # If it is set, but set to the empty string (SEED=), then no seed
     # is used.
     rand = random.SystemRandom()
 else:
     # Otherwise use the seed given, which must be an integer.
-    seed = int(seed)
-    print 'Seeding random generator with seed %d' % seed
-    rand = random.Random(seed)
+    _seed = int(_seed)
+    print 'Seeding random generator with seed %d' % _seed
+    rand = random.Random(_seed)
 
-__all__ = ['rand']
+
+def deprecation(message):
+    """Issue a deprecation warning."""
+    warnings.warn(message, DeprecationWarning, stacklevel=3)
+
+def dprint(fmt, *args):
+    """Deferred print which waits on Deferreds.
+
+    Works like this print statement, except that dprint waits on any
+    Deferreds given in args. When all Deferreds are ready, the print
+    is done.
+    """
+    def output(args, fmt):
+        print fmt % tuple(args)
+
+    deferreds = []
+    for arg in args:
+        if not isinstance(arg, Deferred):
+            arg = succeed(arg)
+        deferreds.append(arg)
+
+    args = gatherResults(deferreds)
+    args.addCallback(output, fmt)

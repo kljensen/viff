@@ -27,70 +27,17 @@ import marshal
 import socket
 
 from pysmpc import shamir
-from pysmpc.prss import prss, PRF
-from pysmpc.field import (FieldElement, IntegerFieldElement,
-                          GF256Element, GMPIntegerFieldElement)
+from pysmpc.prss import prss
+from pysmpc.field import GF, GF256, FieldElement
 from pysmpc.util import rand
 
 from twisted.internet import defer, reactor
 from twisted.internet.defer import Deferred, DeferredList, gatherResults
-from twisted.internet.protocol import ClientFactory, ServerFactory, Protocol
+from twisted.internet.protocol import ClientFactory, ServerFactory
 from twisted.protocols.basic import Int16StringReceiver
 
-# TODO: move this to another file, probably together with the
-# configuration loading/saving machinery.
-class Player:
-    """Wrapper for information about a player in the protocol."""
 
-    def __init__(self, id, host, port, keys=None, dealer_keys=None):
-        self.id = id
-        self.host = host
-        self.port = port
-
-        # TODO: using the modulus of IntegerFieldElement or
-        # GMPIntegerFieldElement here requires that it has been set
-        # previously! Since players are constructed when a config file
-        # is loaded, one must set the modulus before loading any
-        # config files. This dependency should be removed.
-        if IntegerFieldElement.modulus:
-            field_modulus = IntegerFieldElement.modulus
-        else:
-            field_modulus = GMPIntegerFieldElement.modulus
-        
-        if keys is not None:
-            self.prfs = {}
-            for modulus in 2, GF256Element.modulus, field_modulus:
-                prfs = {}
-                for subset, key in keys.iteritems():
-                    prfs[subset] = PRF(key, modulus)
-                self.prfs[modulus] = prfs
-
-        if dealer_keys is not None:
-            self.dealer_prfs = {}
-            for modulus in GF256Element.modulus, field_modulus:
-                dealers = {}
-                for dealer in dealer_keys:
-                    prfs = {}
-                    for subset, key in dealer_keys[dealer].iteritems():
-                        prfs[subset] = PRF(key, modulus)
-                    dealers[dealer] = prfs
-                self.dealer_prfs[modulus] = dealers
-                    
-                    
-    def __repr__(self):
-        return "<Player %d: %s:%d>" % (self.id, self.host, self.port)
-
-def output(arg, format="output: %s"):
-    """
-    Callback used for printing values while still passing them along
-    to the next callback the processing chain.
-    """
-    print format % arg
-    return arg
-
-
-indent = 0
-
+_indent = 0
 _trace_counters = {}
 
 def trace(func):
@@ -99,19 +46,18 @@ def trace(func):
         """
         Wrapper.
         """
-        global indent
+        global _indent
         count = _trace_counters.setdefault(func.func_name, 1)
         try:
-            print "%s-> Entering: %s (%d)" % ("  " * indent,
+            print "%s-> Entering: %s (%d)" % ("  " * _indent,
                                               func.func_name, count)
-            indent += 1
+            _indent += 1
             _trace_counters[func.func_name] += 1
             return func(*args, **kwargs)
         finally:
-            indent -= 1
-            print "%s<- Exiting:  %s (%d)" % ("  " * indent,
+            _indent -= 1
+            print "%s<- Exiting:  %s (%d)" % ("  " * _indent,
                                               func.func_name, count)
-    
     return wrapper
 
 def println(format="", *args):
@@ -119,21 +65,7 @@ def println(format="", *args):
     if len(args) > 0:
         format = format % args
 
-    print "%s %s" % ("  " * indent, format)
-
-def dump_incoming_shares(shares):
-    """Dump the incoming shares."""
-    print "Incoming shares:"
-    shares = list(shares.iteritems())
-    shares.sort()
-    for key, value in shares:
-        print "  %s -> %s" % (key, value)
-        #if len(value.callbacks) > 0:
-        #    print "  %d callbacks:" % len(value.callbacks)
-        #    for callback in value.callbacks:
-        #        print "    %s" % (callback[0], )
-
-    print
+    print "%s %s" % ("  " * _indent, format)
 
 
 class ShareExchanger(Int16StringReceiver):
@@ -142,15 +74,12 @@ class ShareExchanger(Int16StringReceiver):
     #@trace
     def __init__(self, id):
         self.id = id
-        vals = [IntegerFieldElement, GMPIntegerFieldElement, GF256Element]
-        keys = range(len(vals))
-        self.class_to_type = dict(zip(vals, keys))
-        self.type_to_class = dict(zip(keys, vals))
         
     #@trace
     def stringReceived(self, string):
-        program_counter, share_type, value = marshal.loads(string)
-        share = self.type_to_class[share_type].unmarshal(value)
+        program_counter, modulus, value = marshal.loads(string)
+
+        share = GF(modulus)(value)
         key = (program_counter, self.id)
 
         shares = self.factory.incoming_shares
@@ -168,13 +97,9 @@ class ShareExchanger(Int16StringReceiver):
         #println("Sending to id=%d: program_counter=%s, share=%s",
         #        self.id, program_counter, share)
 
-        # TODO: find a nicer way to communicate the type of the share.
-        data = (program_counter,
-                self.class_to_type[type(share)],
-                share.marshal())
+        data = (program_counter, share.modulus, share.value)
         self.sendString(marshal.dumps(data))
         return self
-
 
     def loseConnection(self):
         """Disconnect this protocol instance."""
@@ -202,7 +127,6 @@ class ShareExchangerFactory(ServerFactory, ClientFactory):
         # operation, but this is acceptable since buildProtocol is
         # only called when the runtime is initialized.
         ip = socket.gethostbyname(addr.host)
-
         id = self.port_player_mapping[(ip, port)]
         println("Peer id: %s", id)
         
@@ -213,9 +137,6 @@ class ShareExchangerFactory(ServerFactory, ClientFactory):
         return p
 
  
-########################################
-
-
 #@trace
 def inc_pc(program_counter):
     """Increment a program counter."""
@@ -266,7 +187,6 @@ class Runtime:
 
         factory = ShareExchangerFactory(self.incoming_shares, mapping,
                                         self.protocols)
-
         reactor.listenTCP(self.players[self.id].port, factory)
 
         for id, player in self.players.iteritems():
@@ -287,7 +207,7 @@ class Runtime:
         again after this has been called.
         """
         println("Initiating shutdown sequence.")
-        for _, protocol in self.protocols.iteritems():
+        for protocol in self.protocols.itervalues():
             protocol.addCallback(lambda p: p.loseConnection())
         println("Waiting 1 second")
         reactor.callLater(1, reactor.stop)
@@ -299,7 +219,6 @@ class Runtime:
         """
         dl = DeferredList(vars)
         dl.addCallback(lambda _: self.shutdown())
-
         reactor.run()
         println("Reactor stopped")
 
@@ -325,10 +244,9 @@ class Runtime:
         def broadcast(share):
             """Broadcast share to all players."""
             assert isinstance(share, FieldElement)
-
             deferreds = []
             for id in self.players:
-                d = self.exchange_shares(program_counter, id, share)
+                d = self._exchange_shares(program_counter, id, share)
                 d.addCallback(lambda s, id: (s.field(id), s), id)
                 deferreds.append(d)
 
@@ -410,32 +328,35 @@ class Runtime:
 
     xor_bit = add
 
-    def _share_random(self, prfs, id, field, key):
-        """Do a PRSS using the PRFs given."""
-        return prss(len(self.players), self.threshold, id, field, prfs, key)
+    def prss_share(self, element, program_counter=None):
+        """PRSS share a field element.
 
-    def _share_known(self, element, field, program_counter):
+        Communication cost: 1 broadcast.
+        """
+        assert isinstance(element, FieldElement)
+        program_counter = self.init_pc(program_counter)
+        field = type(element)
+        n = len(self.players)
+
         # The shares for which we have all the keys.
         all_shares = []
         
         # Shares we calculate from doing PRSS with the other players.
         tmp_shares = {}
 
-        dealer_prfs = self.players[self.id].dealer_prfs[field.modulus]
+        dealer_prfs = self.players[self.id].dealer_prfs(field.modulus)
 
         # TODO: Stop calculating shares for all_shares at
         # self.threshold+1 since that is all we need to do the Shamir
         # recombine below.
         for player in self.players:
-            # TODO: when player == self.id, the two calls to
-            # _share_random are the same.
-            share = self._share_random(dealer_prfs[self.id], player,
-                                       field, program_counter)
+            # TODO: when player == self.id, the two calls to prss are
+            # the same.
+            share = prss(n, player, field, dealer_prfs[self.id],
+                         program_counter)
             all_shares.append((field(player), share))
-
-            tmp_shares[player] = self._share_random(dealer_prfs[player],
-                                                    self.id,
-                                                    field, program_counter)
+            tmp_shares[player] = prss(n, self.id, field, dealer_prfs[player],
+                                      program_counter)
 
         # We can now calculate what was shared and derive the
         # correction factor.
@@ -445,51 +366,32 @@ class Runtime:
         result = []
         for player in self.players:
             # TODO: more efficient broadcast?
-            d = self.exchange_shares(program_counter, player, correction)
+            d = self._exchange_shares(program_counter, player, correction)
             # We have to add our own share to the correction factor
             # received.
             d.addCallback(lambda c, s: s + c, tmp_shares[player])
             result.append(d)
-
         return result
 
+    def prss_share_random(self, field, binary=False, program_counter=None):
+        """Generate shares of a uniformly random element from the field given.
 
-    def share_int(self, integer, program_counter=None):
-        """Share an integer.
-
-        Communication cost: 1 broadcast.
-        """
-        assert isinstance(integer, IntegerFieldElement)
-        program_counter = self.init_pc(program_counter)
-
-        return self._share_known(integer, IntegerFieldElement, program_counter)
-
-
-    def share_bit(self, bit, program_counter=None):
-        """Share a bit.
-
-        Communication cost: 1 broadcast.
-        """
-        assert isinstance(bit, GF256Element)
-        program_counter = self.init_pc(program_counter)
-
-        return self._share_known(bit, GF256Element, program_counter)
-
-
-    #@trace
-    def share_random_int(self, binary=False, program_counter=None):
-        """Generate shares of a uniformly random IntegerFieldElement.
-
-        No player learns the value of the integer.
+        If binary is True, a 0/1 element is generated. No player
+        learns the value of the element.
 
         Communication cost: none if binary=False, 1 open otherwise.
         """
         program_counter = self.init_pc(program_counter)
-        prfs = self.players[self.id].prfs[IntegerFieldElement.modulus]
-        share = self._share_random(prfs, self.id, IntegerFieldElement,
-                                   program_counter)
 
-        if not binary:
+        if field == GF256 and binary:
+            modulus = 2
+        else:
+            modulus = field.modulus
+
+        prfs = self.players[self.id].prfs(modulus)
+        share = prss(len(self.players), self.id, field, prfs, program_counter)
+
+        if field == GF256 or not binary:
             return defer.succeed(share)
 
         result = self.mul(share, share)
@@ -501,36 +403,18 @@ class Runtime:
         def finish(square, share, binary, program_counter):
             if square == 0:
                 # We were unlucky, try again...
-                return self.share_random_int(binary, sub_pc(program_counter))
+                return self.prss_share_random(field, binary,
+                                              sub_pc(program_counter))
             else:
                 # We can finish the calculation
                 root = square.sqrt()
                 # When the root is computed, we divide the share and
                 # convert the resulting -1/1 share into a 0/1 share.
-                two = IntegerFieldElement(2)
+                two = field(2)
                 return defer.succeed((share/root + 1) / two)
 
         result.addCallback(finish, share, binary, program_counter)
         return result
-        
-    #@trace
-    def share_random_bit(self, binary=False, program_counter=None):
-        """Generate shares of a uniformly random GF256Element.
-
-        If binary is True, a 0/1 element is generated. No player
-        learns the value of the element.
-
-        Communication cost: none.
-        """
-        program_counter = self.init_pc(program_counter)
-
-        if binary:
-            modulus = 2
-        else:
-            modulus = GF256Element.modulus
-        share = self._share_random(self.players[self.id].prfs[modulus],
-                                   self.id, GF256Element, program_counter)
-        return defer.succeed(share)
 
     def _shamir_share(self, number, program_counter):
         """Share a FieldElement using Shamir sharing.
@@ -542,7 +426,7 @@ class Runtime:
         
         result = []
         for other_id, share in shares:
-            d = self.exchange_shares(program_counter, other_id.value, share)
+            d = self._exchange_shares(program_counter, other_id.value, share)
             d.addCallback(lambda share, id: (id, share), other_id)
             result.append(d)
 
@@ -550,7 +434,7 @@ class Runtime:
 
     #@trace
     def shamir_share(self, number, program_counter=None):
-        """Share an IntegerFieldElement using Shamir sharing.
+        """Share a field element using Shamir sharing.
 
         Returns a list of shares.
 
@@ -566,43 +450,49 @@ class Runtime:
         map(split, result)
         return result
 
-    def bit_to_int(self, b_share, program_counter=None):
-        """Convert a GF256Element share to an IntegerFieldElement share."""
-        # TODO: This ought to be the reverse of int_to_bit, but it is
-        # not needed right now.
-        pass
-
     #@trace
-    def int_to_bit(self, i_share, program_counter=None):
-        """Convert an IntegerFieldElement share to a GF256Element share."""
+    def convert_bit_share(self, share, src_field, dst_field,
+                          program_counter=None):
+        """Convert a 0/1 share from src_field into dst_field."""
         program_counter = self.init_pc(program_counter)
         bit = rand.randint(0, 1)
 
         program_counter = sub_pc(program_counter)
-        bit_shares = self.share_bit(GF256Element(bit), program_counter)
+        dst_shares = self.prss_share(dst_field(bit), program_counter)
 
         program_counter = inc_pc(program_counter)
-        int_shares = self.share_int(IntegerFieldElement(bit), program_counter)
+        src_shares = self.prss_share(src_field(bit), program_counter)
 
+        # TODO: merge xor_int and xor_bit into an xor method and move
+        # this decission there.
+        if src_field is GF256:
+            xor = self.xor_bit
+        else:
+            xor = self.xor_int
+        
         # TODO: Using a parallel reduce here seems to be slower than
         # using the built-in reduce.
-        tmp = reduce(self.xor_int, int_shares, i_share)
+        tmp = reduce(xor, src_shares, share)
 
-        # We open tmp and convert the value to a bit sharing.
+        # We open tmp and convert the value into a field element from
+        # the dst_field.
         program_counter = inc_pc(program_counter)
         self.open(tmp, program_counter=program_counter)
-        tmp.addCallback(lambda i: GF256Element(i.value))
+        tmp.addCallback(lambda i: dst_field(i.value))
         
-        # Since xor_bit does not do any network communication there is
-        # no need to do any kind of parallel reduce.
-        return reduce(self.xor_bit, bit_shares, tmp)
+        if dst_field is GF256:
+            xor = self.xor_bit
+        else:
+            xor = self.xor_int
+
+        return reduce(xor, dst_shares, tmp)
 
     #@trace
-    def greater_than(self, share_a, share_b, program_counter=None):
+    def greater_than(self, share_a, share_b, field, program_counter=None):
         """Compute share_a >= share_b.
 
-        Both arguments must be IntegerFieldElements. The result is a
-        GF256Element share.
+        Both arguments must be from the field given. The result is a
+        GF256 share.
         """
         program_counter = self.init_pc(program_counter)
 
@@ -613,16 +503,15 @@ class Runtime:
 
         # Preprocessing begin
 
-        # TODO: why must these relations hold?
-        assert 2**(l+1) + 2**t < IntegerFieldElement.modulus, \
-               "2^(l+1) + 2^t < p must hold"
+        assert 2**(l+1) + 2**t < field.modulus, "2^(l+1) + 2^t < p must hold"
         assert len(self.players) + 2 < 2**l
 
         int_bits = []
         program_counter = sub_pc(program_counter)
         for _ in range(m):
             program_counter = inc_pc(program_counter)
-            int_bits.append(self.share_random_int(True, program_counter))
+            int_bits.append(self.prss_share_random(field, True,
+                                                   program_counter))
 
         # We must use int_bits without adding callbacks to the bits --
         # having int_b wait on them ensures this.
@@ -639,7 +528,8 @@ class Runtime:
             program_counter = inc_pc(program_counter)
             # TODO: this changes int_bits! It should be okay since
             # int_bits is not used any further, but still...
-            bit_bits.append(self.int_to_bit(b, program_counter))
+            bit_bits.append(self.convert_bit_share(b, field, GF256,
+                                                   program_counter))
 
         # Preprocessing done
 
@@ -654,11 +544,11 @@ class Runtime:
             T = results[0]
             bit_bits = results[1:]
 
-            vec = [(GF256Element(0), GF256Element(0))]
+            vec = [(GF256(0), GF256(0))]
 
             # Calculate the vector, using only the first l bits
             for i, bi in enumerate(bit_bits[:l]):
-                Ti = GF256Element(T.bit(i))
+                Ti = GF256(T.bit(i))
                 ci = self.xor_bit(bi, Ti)
                 vec.append((ci, Ti))
 
@@ -694,7 +584,7 @@ class Runtime:
                     tmp.append(vec[0])
                 vec = tmp
 
-            return self.xor_bit(GF256Element(T.bit(l)),
+            return self.xor_bit(GF256(T.bit(l)),
                                 self.xor_bit(bit_bits[l], vec[0][1]))
 
         result = gatherResults([T] + bit_bits)
@@ -702,16 +592,15 @@ class Runtime:
         result.addCallback(calculate, program_counter)
         return result
         
-
     ########################################################################
     ########################################################################
 
     #@trace
-    def greater_thanII(self, share_a, share_b, program_counter=None):
+    def greater_thanII(self, share_a, share_b, field, program_counter=None):
         """Compute share_a >= share_b.
 
-        Both arguments must be IntegerFieldElements. The result is a
-        IntegerFieldElements share.
+        Both arguments must be of type field. The result is a
+        field share.
         """
 
         # TODO: incorrect result when comparing equal numbers -- use 2a+1, 2b
@@ -728,11 +617,13 @@ class Runtime:
         program_counter = sub_pc(program_counter)
         for _ in range(l+k):
             program_counter = inc_pc(program_counter)
-            int_bits.append(self.share_random_int(True, program_counter))
+            int_bits.append(self.prss_share_random(field, True, program_counter))
 
         # We must use int_bits without adding callbacks to the bits --
         # having int_b wait on them ensures this.
-
+        #
+        # TODO: not a nice way of writing it...
+        # would be preferable for mul-method to do this automatically
         def bits_to_int(bits):
             """Converts a list of bits to an integer."""
             return sum([2**i * b for (i, b) in enumerate(bits)])
@@ -752,22 +643,18 @@ class Runtime:
         
 
         program_counter = inc_pc(program_counter)
-        s_bit = self.share_random_int(True, program_counter)
+        s_bit = self.prss_share_random(field, True, program_counter)
 
-        def bit_to_sign(bit):
-            """converts a 0/1 encoded bit to a +/-1 encoded one"""
-            return self.mul(self.sub(bit[0],
-                                     1),
-                            (bit[0].modulus - 1)/2)
-
-        s_sign = gatherResults([s_bit])
-        s_sign.addCallback(bit_to_sign)
+        # pc++ shouldn't be needed -- mul is by constant...
+        program_counter = inc_pc(program_counter)
+        s_sign = self.mul(self.sub(s_bit, 1),
+                          ((field.modulus - 1)/2))
         
 
         # m: uniformly random -- should be non-zero, however, this
         # happens with negligible probability
         program_counter = inc_pc(program_counter)
-        mask = self.share_random_int(False, program_counter)
+        mask = self.prss_share_random(field, False, program_counter)
         
 
         ##################################################
@@ -776,8 +663,11 @@ class Runtime:
 
         z = self.add(self.sub(share_a, share_b), 2**l)
         c = self.add(int_r, z)
+
         program_counter = inc_pc(program_counter)
         self.open(c, program_counter=program_counter)
+
+
 
         #@trace
         def calculate(results, program_counter):
@@ -789,6 +679,7 @@ class Runtime:
             mask = results[4]
             r_bits = results[5:l+5]
 
+
             c_bits = []
             for i in range(l):
                 c_bits.append(c.bit(i))
@@ -797,21 +688,22 @@ class Runtime:
             # sumXORs[i] = sumXORs[i+1] + r_bits[i+1] + c_(i+1) - 2*r_bits[i+1]*c_(i+1)
             sumXORs[l-1] = 0
             for i in range(1,l):
-                sumXORs[l-1 - i] = self.add(sumXORs[l - i],
-                                            self.sub(self.add(r_bits[l - i],
-                                                              c_bits[l - i]),
-                                                     self.mul(2,
-                                                               self.mul(r_bits[l - i],
-                                                                         c_bits[l - i]))))
+                # TODO: avoid pc_inc/needing mul-invocation with known
+                program_counter = inc_pc(program_counter)
+                product = self.mul(r_bits[l - i],c_bits[l - i], program_counter)
+                XOR = self.sub(self.add(r_bits[l - i],c_bits[l-1]),
+                               self.add(product, product))
+                sumXORs[l-1 - i] = self.add(sumXORs[l - i],XOR)
 
 
             E_tilde = []
             for (i,b) in enumerate(r_bits):
                 ## s + rBit[i] - cBit[i] + 3 * sumXors[i+1];
                 ##
+                ## TODO: write mult by 3 using mult rather than 2 adds
                 E_tilde.append(self.add(self.add(s_sign,
                                                  self.sub(r_bits[i], c_bits[i])),
-                                        self.mul(IntegerFieldElement(3),sumXORs[i])))
+                                        self.add(self.add(sumXORs[i], sumXORs[i]),sumXORs[i])))
             E_tilde.append(mask)
 
             while len(E_tilde) > 1:
@@ -852,9 +744,8 @@ class Runtime:
     ########################################################################
     ########################################################################
 
-
     #@trace
-    def exchange_shares(self, program_counter, id, share):
+    def _exchange_shares(self, program_counter, id, share):
         """Exchange shares with another player.
 
         We send the player our share and record a Deferred which will

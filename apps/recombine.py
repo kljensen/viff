@@ -21,14 +21,15 @@
 
 import sys
 
-import pysmpc.shamir
-from pysmpc.field import *
+from pysmpc import shamir
+from pysmpc.field import GF, GF256
 
 if sys.argv[1].find(":") == -1:
-    F = IntegerFieldElement
-    F.modulus = int(sys.argv.pop(1))
+    F = GF(int(sys.argv.pop(1)))
 else:
-    F = GF256Element
+    F = GF256
+
+print "Field: GF%d" % F.modulus
 
 shares = [map(int, arg.split(":")) for arg in sys.argv[1:]]
 shares = [(F(id), F(share)) for id,share in shares]

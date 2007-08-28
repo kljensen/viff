@@ -1,5 +1,3 @@
-#!/usr/bin/python
-
 # Copyright 2007 Martin Geisler
 #
 # This file is part of PySMPC
@@ -19,44 +17,59 @@
 # Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 # 02110-1301 USA
 
-from __future__ import division
-
-import sys
 from configobj import ConfigObj
-from optparse import OptionParser
-from pprint import pprint
 
-from pysmpc.prss import generate_subsets
-from pysmpc.runtime import Player
+from pysmpc.prss import generate_subsets, PRF
 from pysmpc.util import rand
+
+class Player:
+    """Wrapper for information about a player in the protocol."""
+
+    def __init__(self, id, host, port, keys=None, dealer_keys=None):
+        self.id = id
+        self.host = host
+        self.port = port
+        self.keys = keys
+        self.dealer_keys = dealer_keys
+
+    # TODO: the PRFs ought to be cached
+    def prfs(self, modulus):
+        prfs = {}
+        for subset, key in self.keys.iteritems():
+            prfs[subset] = PRF(key, modulus)
+        return prfs
+
+    # TODO: the PRFs ought to be cached
+    def dealer_prfs(self, modulus):
+        dealers = {}
+        for dealer, keys in self.dealer_keys.iteritems():
+            prfs = {}
+            for subset, key in keys.iteritems():
+                prfs[subset] = PRF(key, modulus)
+                dealers[dealer] = prfs
+        return dealers
+
+    def __repr__(self):
+        return "<Player %d: %s:%d>" % (self.id, self.host, self.port)
 
 def s_str(subset):
     return " ".join(map(str, subset))
 
-
 def s_unstr(str):
     return frozenset(map(int, str.split()))
-
 
 def p_str(player):
     return "Player " + str(player)
 
-
 def p_unstr(str):
     return int(str[7:])
-
 
 def d_str(dealer):
     return "Dealer " + str(dealer)
 
-
 def d_unstr(str):
     return int(str[7:])
 
-
-# TODO: as noted in the Player constructor, one must set the field
-# modulus before loading any config file. This weird requirement on
-# the loading order should be changed.
 def load_config(source):
     if isinstance(source, ConfigObj):
         config = source
@@ -146,37 +159,6 @@ def generate_configs(n, t, addresses=None, prefix=None):
             key = generate_key()
             for player in (subset | set([dealer])):
                 p = p_str(player)
-
                 configs[player][p]['prss_dealer_keys'][d][s] = key
 
     return configs
-
-
-if __name__ == "__main__":
-    parser = OptionParser()
-    parser.add_option("-p", "--prefix",
-                      help="output filename prefix")
-    parser.add_option("-v", "--verbose", dest="verbose", action="store_true",
-                      help="be verbose")
-    parser.add_option("-q", "--quiet", dest="verbose", action="store_false",
-                      help="be quiet")
-    parser.add_option("-n", "--players", dest="n", type="int",
-                      help="number of players")
-    parser.add_option("-t", "--threshold", dest="t", type="int",
-                      help="threshold (it must hold that t < n/2)")
-
-    parser.set_defaults(verbose=True, n=3, t=1, prefix='player')
-
-    (options, args) = parser.parse_args()
-
-    if not options.t < options.n/2:
-        parser.error("must have t < n/2")
-
-    if len(args) != options.n:
-        parser.error("must supply a hostname:port argument for each player")
-
-    addresses = [arg.split(':', 1) for arg in args]
-    configs = generate_configs(options.n, options.t, addresses, options.prefix)
-
-    for config in configs.itervalues():
-        config.write()

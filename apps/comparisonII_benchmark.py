@@ -26,10 +26,9 @@ from twisted.internet import reactor
 from twisted.internet.defer import DeferredList
 
 from gmpy import mpz
-from pysmpc.field import GMPIntegerFieldElement, IntegerFieldElement
+from pysmpc.field import GF
 from pysmpc.runtime import Runtime
-from pysmpc.generate_config import load_config
-
+from pysmpc.config import load_config
 
 last_timestamp = time.time()
 start = 0
@@ -59,10 +58,6 @@ def finish(*x):
     reactor.stop()
     print "Stopped reactor"
 
-def output(x, format="output: %s"):
-    print format % x
-    return x
-
 # To avoid having leaving the ports in boring TIME_WAIT state, we must
 # shut the reactor down cleanly if killed.
 signal.signal(2, finish)
@@ -71,16 +66,16 @@ signal.signal(2, finish)
 parser = OptionParser()
 parser.add_option("-m", "--modulus",
                   help="lower limit for modulus (can be an expression)")
-parser.add_option("--gmp", action="store_true", help="use GMP")
 parser.add_option("-c", "--count", type="int", help="number of comparisons")
 
-parser.set_defaults(modulus="30916444023318367583",
-                    gmp=False, count=100)
+parser.set_defaults(modulus="30916444023318367583", count=100)
 
 (options, args) = parser.parse_args()
 
 if len(args) == 0:
     parser.error("you must specify a config file")
+
+id, players = load_config(args[0])
 
 modulus = eval(options.modulus, {}, {})
 
@@ -96,18 +91,7 @@ if str(prime) != options.modulus:
     if prime != modulus:
         print "Adjusted from %d" % modulus
 
-if options.gmp:
-    print "Using GMP"
-    Field = GMPIntegerFieldElement
-    Field.modulus = mpz(prime)
-else:
-    print "Not using GMP"
-    Field = IntegerFieldElement
-    Field.modulus = long(prime)
-
-id, players = load_config(args[0])
-
-
+Zp = GF(long(prime))
 
 count = options.count
 print "I am player %d, will compare %d numbers" % (id, count)
@@ -118,7 +102,7 @@ l = 32 # TODO: needs to be taken from the runtime or a config file.
 
 shares = []
 for n in range(2*count//len(players) + 1):
-    input = Field(random.randint(0, 2**l))
+    input = Zp(random.randint(0, 2**l))
     shares.extend(rt.shamir_share(input))
 # We want to measure the time for count comparisons, so we need
 # 2*count input numbers.
@@ -129,47 +113,16 @@ def run_test(_):
     record_start()
 
     bits = []
-    aPrime = []
-    bPrime = []
     while len(shares) > 1:
         a = shares.pop(0)
         b = shares.pop(0)
-        c = rt.greater_thanII(a,b)
-
-        aPrime.append(a)
-        bPrime.append(b)
-        
+        c = greater_than(a,b, Zp)
         #c.addCallback(timestamp)
         bits.append(c)
-
-#         def printVal(x):
-#             print " = %d" % x
-#         aPrint = deferredlist([a])
-#         aPrint.addCallback(printVal)
-
 
     stop = DeferredList(bits)
     stop.addCallback(record_stop)
     stop.addCallback(finish)
-
-
-    allShares = DeferredList(aPrime + bPrime + bits)
-    def printResult(io):
-        for i in range(count):
-            print io[i], " > ", io[count+i], " : ",  io[2*count+i]
-
-    def reconstructAll(shares):
-        results = []
-        for i in range(len(shares)):
-            results.append(rt.open(shares[i]))
-        return results
-
-    allResults = DeferredList(allShares.addCallback(reconstructAll))
-#    allResults.addCallback(printResult)
-    
-    
-
-    
 
     # TODO: it would be nice it the results were checked
     # automatically, but it needs to be done without adding overhead

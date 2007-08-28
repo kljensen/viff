@@ -28,9 +28,9 @@ from twisted.internet.defer import gatherResults, succeed
 from gmpy import mpz
 
 from pysmpc import shamir
-from pysmpc.field import IntegerFieldElement, GMPIntegerFieldElement
+from pysmpc.field import GF
 from pysmpc.runtime import Runtime
-from pysmpc.generate_config import load_config
+from pysmpc.config import load_config
 
 def output(x, format="output: %s"):
     print format % x
@@ -46,7 +46,6 @@ def timestamp():
 parser = OptionParser()
 parser.add_option("-m", "--modulus",
                   help="lower limit for modulus (can be an expression)")
-parser.add_option("--gmp", action="store_true", help="use GMP")
 parser.add_option("-c", "--count", type="int", help="number of bids")
 parser.add_option("-v", "--verbose", action="store_true",
                   help="verbose output after each iteration")
@@ -56,14 +55,13 @@ parser.add_option("-l", "--length", type="int",
                   help="bit length of input numbers")
 
 parser.set_defaults(modulus="30916444023318367583",
-                    gmp=False, verbose=False, length=32, count=4000)
+                    verbose=False, length=32, count=4000)
 
 (options, args) = parser.parse_args()
 
 if len(args) == 0:
     parser.error("you must specify a config file")
 
-id, players = load_config(args[0])
 
 modulus = eval(options.modulus, {}, {})
 
@@ -79,15 +77,9 @@ if str(prime) != options.modulus:
     if prime != modulus:
         print "Adjusted from %d" % modulus
 
-if options.gmp:
-    print "Using GMP"
-    F = GMPIntegerFieldElement
-    F.modulus = mpz(prime)
-else:
-    print "Not using GMP"
-    F = IntegerFieldElement
-    F.modulus = long(prime)
 
+Zp = GF(long(prime))
+id, players = load_config(args[0])
 
 print "I am player %d" % id
 
@@ -112,8 +104,8 @@ S = [random.randint(1, 2**l) for _ in range(options.count)]
 B.sort(reverse=True)
 S.sort()
 
-seller_bids = [shamir.share(F(x), t, n)[id-1][1] for x in S]
-buyer_bids  = [shamir.share(F(x), t, n)[id-1][1] for x in B]
+seller_bids = [shamir.share(Zp(x), t, n)[id-1][1] for x in S]
+buyer_bids  = [shamir.share(Zp(x), t, n)[id-1][1] for x in B]
 
 
 def debug(low, mid, high):
@@ -141,7 +133,7 @@ def branch(result, low, mid, high):
         mid = (low + high)//2
         if options.verbose:
             debug(low, mid, high)
-        result = rt.greater_than(buyer_bids[mid], seller_bids[mid])
+        result = rt.greater_than(buyer_bids[mid], seller_bids[mid], Zp)
         rt.open(result)
         result.addCallback(output, str(B[mid]) + " >= " + str(S[mid]) + ": %s")
         result.addCallback(branch, low, mid, high)

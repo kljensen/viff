@@ -17,45 +17,49 @@
 # Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 # 02110-1301 USA
 
-import operator, sha
+"""Methods for pseudo-random secret sharing."""
+
+import sha
 from math import log, ceil
 from struct import pack
 from binascii import hexlify
 
+from gmpy import numdigits
+
 from pysmpc import shamir
 
 
-def prss(n, t, j, field, prfs, key):
+def prss(n, j, field, prfs, key):
     """Return a pseudo-random secret share for a random number.
 
     The share is for player j based on the pseudo-random functions
     given. The key is used when evaluating the PRFs.
 
     An example with (n,t) = (3,1) and a modulus of 31:
-    >>> from field import IntegerFieldElement
-    >>> IntegerFieldElement.modulus = 31
+    >>> from field import GF
+    >>> Zp = GF(31)
     >>> prfs = {frozenset([1,2]): PRF("a", 31),
     ...         frozenset([1,3]): PRF("b", 31),
     ...         frozenset([2,3]): PRF("c", 31)}
-    >>> prss(3, 1, 1, IntegerFieldElement, prfs, "key")
+    >>> prss(3, 1, Zp, prfs, "key")
     {22}
-    >>> prss(3, 1, 2, IntegerFieldElement, prfs, "key")
+    >>> prss(3, 2, Zp, prfs, "key")
     {20}
-    >>> prss(3, 1, 3, IntegerFieldElement, prfs, "key")
+    >>> prss(3, 3, Zp, prfs, "key")
     {18}
 
     We see that the sharing is consistent because each subset of two
     players will recombine their shares to {29}.
     """
     result = 0
-    all = frozenset(range(1,n+1))
+    all = frozenset(range(1, n+1))
     # The PRFs contain the subsets we need, plus some extra in the
     # case of dealer_keys. That is why we have to check that j is in
     # the subset before using it.
     for subset in prfs.iterkeys():
         if j in subset:
             points = [(field(x), 0) for x in all-subset]
-            points.append((0,1))
+            points.append((0, 1))
             f_in_j = shamir.recombine(points, j)
             result += prfs[subset](key) * f_in_j
 
@@ -63,7 +67,7 @@ def prss(n, t, j, field, prfs, key):
     
 
 
-def generate_subsets(s, size):
+def generate_subsets(orig_set, size):
     """Generates the set of all subsets of a specific size.
 
     Example:
@@ -75,21 +79,52 @@ def generate_subsets(s, size):
     >>> generate_subsets(frozenset('a'), 2)
     frozenset([])
     """
-    if len(s) > size:
+    if len(orig_set) > size:
         result = set()
-        for e in s:
-            result.update(generate_subsets(s - set([e]), size))
+        for element in orig_set:
+            result.update(generate_subsets(orig_set - set([element]), size))
         return frozenset(result)
-    elif len(s) == size:
-        return frozenset([s])
+    elif len(orig_set) == size:
+        return frozenset([orig_set])
     else:
         return frozenset()
 
 
+# Generating 100,000 bytes like this:
+#
+# x = PRF("a", 256)
+# for i in xrange(100000):
+#     sys.stdout.write(chr(x(i)))
+# 
+# and piping them into ent (http://www.fourmilab.ch/random/) gives:
+#    
+# Entropy = 7.998124 bits per byte.
+#
+# Optimum compression would reduce the size
+# of this 100000 byte file by 0 percent.
+#
+# Chi square distribution for 100000 samples is 260.10, and randomly
+# would exceed this value 50.00 percent of the times.
+#
+# Arithmetic mean value of data bytes is 127.6850 (127.5 = random).
+# Monte Carlo value for Pi is 3.156846274 (error 0.49 percent).
+# Serial correlation coefficient is 0.000919 (totally uncorrelated = 0.0).
 class PRF(object):
     """Models a pseudo random function (a PRF).
 
     The numbers are based on a SHA1 hash of the initial key.
+
+    Each PRF is created based on a key (which should be random and
+    secret) and a maximum (which may be public):
+    >>> f = PRF("some random key", 256)
+
+    Calling f return values between zero and the given maximum:
+    >>> f(1)
+    246L
+    >>> f(2)
+    254L
+    >>> f(3)
+    13L
     """
 
     def __init__(self, key, max):
@@ -122,30 +157,37 @@ class PRF(object):
         >>> g = PRF("key", 10000)
         >>> [f(i) for i in range(100)] == [g(i) for i in range(100)]
         False
-
-        Should the max given be too large, an error is raised:
-        >>> prf = PRF("key", 2**161)
-        Traceback (most recent call last):
-            ...
-        ValueError: max cannot be larger than 160 bit
         """
-        # Use log2 to calculate the number of bits in max, then round
-        # up and split it into the number of bytes and bits needed.
-        bit_length = int(ceil(log(max, 2)))
-        if bit_length > sha.digest_size * 8:
-            raise ValueError("max cannot be larger than %d bit" %
-                             (sha.digest_size * 8))
-        
         self.max = max
-        self.bytes = (bit_length // 8) + 1
+
+        # Number of bits needed for a number in the range [0, max-1].
+        bit_length = numdigits(max-1, 2)
+
+        # Number of whole digest blocks needed.
+        blocks = int(ceil(bit_length / 8.0 / sha.digest_size))
+
+        # Number of whole bytes needed.
+        self.bytes = int(ceil(bit_length / 8.0))
+        # Number of bits needed from the final byte.
         self.bits = bit_length % 8
 
-        # Store a sha1 instance already keyed by the key and the
-        # maximum. The maximum is included as well since we want
-        # f("input", 100) and g("input", 1000) to generate different
-        # output.
-        self.sha1 = sha.new(key + str(max))
+        self.sha1s = []
+        for i in range(blocks):
+            # TODO: this construction is completely ad-hoc and not
+            # known to be secure...
 
+            # Initial seed is key + str(max). The maximum is included
+            # since we want PRF("input", 100) and PRF("input", 1000)
+            # to generate different output.
+            seed = key + str(max)
+
+            # The i'th generator is seeded with H^i(key + str(max))
+            # where H^i means repeated hashing i times.
+            for j in range(i):
+                seed = sha.new(seed).digest()
+            self.sha1s.append(sha.new(seed))
+
+ 
     def __call__(self, input):
         """Return a number based on input.
 
@@ -180,18 +222,27 @@ class PRF(object):
         if not isinstance(input, str):
             input = pack("L", hash(input))
 
+        # There is a chance that we generate a number that is too big,
+        # so we must keep trying until we succeed.
         while True:
-            # Copy the already keyed sha1 instance.
-            sha1 = self.sha1.copy()
-            sha1.update(input)
-            # Extract the needed number of bytes plus one to
-            # accommodate for the extra bits needed.
-            digest = sha1.digest()
-            rand_bytes = digest[:self.bytes]
-            # Convert the random bytes to a long (by converting it to
-            # hexadecimal representation first) and shift it to get
-            # rid of the surplus bits.
-            result = long(hexlify(rand_bytes), 16) >> (8 - self.bits)
+            # We collect a digest for each keyed sha1 instance.
+            digests = []
+            for sha1 in self.sha1s:
+                # Must work on a copy of the keyed sha1 instance.
+                copy = sha1.copy()
+                copy.update(input)
+                digests.append(copy.digest())
+
+            digest = ''.join(digests)
+            random_bytes = digest[:self.bytes]
+
+            # Convert the random bytes to a long by converting it to
+            # hexadecimal representation first.
+            result = long(hexlify(random_bytes), 16)
+
+            # Shift to get rid of the surplus bits (if needed).
+            if self.bits:
+                result >>= (8 - self.bits)
 
             if result < self.max:
                 return result

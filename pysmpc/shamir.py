@@ -28,18 +28,14 @@ def share(secret, threshold, num_players):
     """Shamir share secret.
 
     It holds that
-    >>> from field import IntegerFieldElement
-    >>> IntegerFieldElement.modulus = 47
-    >>> secret = IntegerFieldElement(42)
+    >>> from field import GF
+    >>> Zp = GF(47)
+    >>> secret = Zp(42)
     >>> recombine(share(secret, 7, 15)[:8]) == secret
     True
     """
     assert threshold > 0 and threshold < num_players
     
-    # TODO: debugging
-    #from random import Random
-    #rand = Random(0)
-
     coef = [secret]
     for j in range(threshold):
         # TODO: introduce a random() method in FieldElements so that

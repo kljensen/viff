@@ -21,30 +21,39 @@
 
 import sys
 
-from pysmpc.field import GF256
+from pysmpc.field import GF
 from pysmpc.runtime import Runtime
-from pysmpc.config import load_config
-from pysmpc.util import dprint
+from pysmpc.generate_config import load_config
 
 id, players = load_config(sys.argv[1])
-input = GF256(int(sys.argv[2]))
 
-print "I am player %d and will input %s" % (id, input)
+Zp = GF(1031)
+Zq = GF(2039)
+
+base = 1000
+input1 = base - id
+input2 = base + id
+
+print "I am player %d, will share %d and %d " % (id, input1, input2)
 
 rt = Runtime(players, id, 1)
 
-print "-" * 64
-print "Program started"
-print
+a, b, c = rt.shamir_share(Zp(input1))
+x, y, z = rt.shamir_share(Zq(input2))
 
-a, b, c = rt.prss_share(input)
+d = rt.mul(rt.mul(a,b), c)
+w = rt.mul(rt.mul(x,y), z)
 
-rt.open(a)
-rt.open(b)
-rt.open(c)
+rt.open(d)
+rt.open(w)
 
-dprint("### opened a: %s ###", a)
-dprint("### opened b: %s ###", b)
-dprint("### opened c: %s ###", c)
+def check(result, field, expected):
+    if result == expected:
+        print "%s: %s (correct)" % (field, result)
+    else:
+        print "%s: %s (incorrect, expected %d)" % (field, result, expected)
 
-rt.wait_for(a,b,c)
+d.addCallback(check, "Zp", Zp(base-1) * Zp(base-2) * Zp(base-3))
+w.addCallback(check, "Zq", Zq(base+1) * Zq(base+2) * Zq(base+3))
+
+rt.wait_for(d, w)

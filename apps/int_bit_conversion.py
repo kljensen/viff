@@ -21,41 +21,48 @@
 
 import sys, time
 
-from pysmpc.field import IntegerFieldElement, GF256Element
+from pysmpc.field import GF, GF256
 from pysmpc.runtime import Runtime
-from pysmpc.generate_config import load_config
-
-def output(x, format="output: %s"):
-    print (("-"*64) + "\n" + format + "\n" + ("-"*64)) % x
-    return x
+from pysmpc.config import load_config
 
 id, players = load_config(sys.argv[1])
 print "I am player %d" % id
 
 rt = Runtime(players, id, (len(players) -1)//2)
 
-IntegerFieldElement.modulus = 11
+Zp = GF(11)
 
-x, y, z = rt.share_int(IntegerFieldElement(0))
+a, b, c = rt.prss_share(Zp(0))
+x, y, z = rt.prss_share(Zp(1))
 
-x_b = rt.int_to_bit(x)
-#y_b = rt.int_to_bit(y)
-#z_b = rt.int_to_bit(z)
+a_b = rt.int_to_bit(a, Zp)
+b_b = rt.int_to_bit(b, Zp)
+c_b = rt.int_to_bit(c, Zp)
 
-#rt.open(x)
-#rt.open(y)
-#rt.open(z)
+x_b = rt.int_to_bit(x, Zp)
+y_b = rt.int_to_bit(y, Zp)
+z_b = rt.int_to_bit(z, Zp)
+
+rt.open(a_b)
+rt.open(b_b)
+rt.open(c_b)
 
 rt.open(x_b)
-#rt.open(y_b)
-#rt.open(z_b)
+rt.open(y_b)
+rt.open(z_b)
 
-#x.addCallback(output, "x: %s")
-#y.addCallback(output, "y: %s")
-#z.addCallback(output, "z: %s")
+def check(result, variable, expected):
+    if result == expected:
+        print "%s: %s (correct)" % (variable, result)
+    else:
+        print "%s: %s (incorrect, expected %d)" % (variable, result, expected)
 
-x_b.addCallback(output, "x_b: %s")
-#y_b.addCallback(output, "y_b: %s")
-#z_b.addCallback(output, "z_b: %s")
+a_b.addCallback(check, "a_b", GF256(0))
+b_b.addCallback(check, "b_b", GF256(0))
+c_b.addCallback(check, "c_b", GF256(0))
 
-rt.wait_for(x,y,z, x_b)#, y_b, z_b)
+x_b.addCallback(check, "x_b", GF256(1))
+y_b.addCallback(check, "y_b", GF256(1))
+z_b.addCallback(check, "z_b", GF256(1))
+
+rt.wait_for(a_b, b_b, c_b, x_b, y_b, z_b)
