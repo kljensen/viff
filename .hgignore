@@ -12,6 +12,7 @@ profile.data
 *.log
 *.nav
 *.out
+*.pdf
 *.ps
 *.snm
 *.toc
