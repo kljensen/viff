@@ -55,7 +55,10 @@
   %numbers=left,
   %numberstyle=\footnotesize,
   %stepnumber=2,
-  showstringspaces=false
+  showstringspaces=false,
+  frame=single,
+  rulecolor=\color{structure!50},
+  backgroundcolor=\color{structure!15}
 }
 \newcommand{\py}[1]{\lstinline|#1|}
 
@@ -67,14 +70,61 @@
   \titlepage
 \end{frame}
 
-\begin{frame}{Outline}
-  \tableofcontents
-  % You might wish to add the option [pausesections]
+%\begin{frame}{Outline}
+%  \tableofcontents
+%  % You might wish to add the option [pausesections]
+%\end{frame}
+
+
+\section{PySMPC}
+
+\begin{frame}{Design Overview}
+
+  \begin{itemize}
+  \item Written in Python
+  \item Uses the Twisted network library
+  \item Asynchronous design
+  \end{itemize}
+
+\end{frame}
+
+
+\begin{frame}[fragile]{What does it look like?}
+
+\begin{lstlisting}
+import sys
+from pysmpc import runtime, config, util, field
+
+Z31 = field.GF(31)
+
+my_id, conf = config.load_config(sys.argv[1])
+my_input = Z31(int(sys.argv[2]))
+
+rt = runtime.Runtime(players=conf, id=my_id, threshold=1)
+
+x, y, z = rt.shamir_share(input)
+result = rt.mul(rt.add(x, y), z)
+
+rt.open(result)
+util.dprint("Result: %s", result)
+
+rt.wait_for(result)
+\end{lstlisting}
+
+\end{frame}
+
+
+\begin{frame}{Asynchronous Design}
+
+  \begin{itemize}
+  \item Results are sent when ready
+  \item No rounds
+  \end{itemize}
+
 \end{frame}
 
 
 
-\section{PySMPC}
 
 \subsection{Current Status}
 
@@ -108,32 +158,12 @@
 
 \end{frame}
 
+
+
+
+
 \subsection{Demonstration}
 
-\begin{frame}[fragile]{PySMPC Demo}
-
-\begin{lstlisting}
-import sys
-from pysmpc import runtime, config, util, field
-
-Z31 = field.GF(31)
-
-my_id, player_info = config.load_config(sys.argv[1])
-my_input = Z31(int(sys.argv[2]))
-
-rt = runtime.Runtime(players=player_info, id=my_id, threshold=1)
-
-x, y, z = rt.shamir_share(input)
-
-result = rt.mul(rt.add(x, y), z)
-
-rt.open(result)
-util.dprint("Result: %s", result)
-
-rt.wait_for(result)
-\end{lstlisting}
-
-\end{frame}
 
 
 
@@ -150,14 +180,15 @@ def printContents(contents):
     print "The Deferred has called printContents with:"
     print contents
 
-# call getPage, which returns immediately with a Deferred, promising
-# to pass the page contents onto our callbacks when the contents are
-# available
 deferred = getPage("http://www.daimi.au.dk/")
 
-# add a callback to the deferred -- request that it run printContents
-# when the page content has been downloaded
 deferred.addCallback(printContents)
+\end{lstlisting}
+
+Result:
+\begin{lstlisting}[language={}]
+The Deferred has called printContents with:
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 ...
 \end{lstlisting}
 
 \end{frame}
