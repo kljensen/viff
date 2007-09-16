@@ -45,6 +45,18 @@
 % the following command: 
 %\beamerdefaultoverlayspecification{<+->}
 
+\usepackage{listings}
+\lstset{
+  language=Python,
+  basicstyle=\footnotesize,
+  columns=fullflexible,
+  %numbers=left,
+  %numberstyle=\footnotesize,
+  %stepnumber=2,
+  showstringspaces=false
+}
+\newcommand{\py}[1]{\lstinline|#1|}
+
 \begin{document}
 
 \begin{frame}
@@ -57,6 +69,53 @@
 \end{frame}
 
 %\section{Introduction}
+
+\begin{frame}[fragile]{Twisted}{Defer the Work}
+
+\begin{lstlisting}
+from twisted.web.client import getPage
+
+def printContents(contents):
+    print "The Deferred has called printContents with:"
+    print contents
+
+# call getPage, which returns immediately with a Deferred, promising
+# to pass the page contents onto our callbacks when the contents are
+# available
+deferred = getPage("http://www.daimi.au.dk/")
+
+# add a callback to the deferred -- request that it run printContents
+# when the page content has been downloaded
+deferred.addCallback(printContents)
+\end{lstlisting}
+
+\end{frame}
+
+\begin{frame}[fragile]{PySMPC Demo}
+
+\begin{lstlisting}
+import sys
+from pysmpc import runtime, config, util, field
+
+Z31 = field.GF(31)
+
+my_id, player_info = config.load_config(sys.argv[1])
+my_input = Z31(int(sys.argv[2]))
+
+rt = runtime.Runtime(players=player_info, id=my_id, threshold=1)
+
+x, y, z = rt.shamir_share(input)
+
+result = rt.mul(rt.add(x, y), z)
+
+rt.open(result)
+util.dprint("Result: %s", result)
+
+rt.wait_for(result)
+\end{lstlisting}
+
+\end{frame}
+
 
 \end{document}
 
