@@ -7,3 +7,12 @@ syntax: glob
 _trial_temp
 profile.data
 *.prof
+*.aux
+*.dvi
+*.log
+*.nav
+*.out
+*.ps
+*.snm
+*.toc
+*.vrb
