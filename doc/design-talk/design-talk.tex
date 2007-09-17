@@ -12,7 +12,6 @@
 \usepackage[T1]{fontenc}
 %\usepackage{arev}
 
-
 \title[PySMPC]{Python Secure Multi-Party Computation}
 
 \subtitle{High-Level Design Overview}
@@ -34,6 +33,14 @@
 % the following command: 
 %\beamerdefaultoverlayspecification{<+->}
 
+\usepackage{tikz}
+
+\newcommand{\rulecolor}{structure!60}
+\newcommand{\fillcolor}{structure!15}
+
+\tikzstyle{every node}=[circle,fill=\fillcolor,draw=\rulecolor]
+
+
 \usepackage{listings}
 \lstset{
   language=Python,
@@ -41,8 +48,8 @@
   columns=fullflexible,
   showstringspaces=false,
   frame=single,
-  rulecolor=\color{structure!50},
-  backgroundcolor=\color{structure!15}
+  rulecolor=\color{\rulecolor},
+  backgroundcolor=\color{\fillcolor}
 }
 \newcommand{\py}[1]{\lstinline|#1|}
 
@@ -61,15 +68,53 @@
 
 \section{Overview}
 
-\begin{frame}{Features}
+\begin{frame}{PySMPC Features}
 
-  PySMPC offers the following:
   \begin{itemize}
+
   \item API for writing secure multi-party computations
-  \item Efficient asynchronous design
-  \item Simple architecture.
+    \begin{itemize}
+    \item Simple if you already know Python
+    \item A custom language can be added afterwards
+    \end{itemize}
+
+  \item<2-> Efficient asynchronous design
+    \begin{itemize}
+    \item Single-threaded (no locks!)
+    \end{itemize}
+
+  \item<3-> Simple architecture
+    \begin{itemize}
+    \item Few layers of abstraction\dots
+    \item \dots but hopefully sufficiently many
+    \end{itemize}
+
   \end{itemize}
 
+\end{frame}
+
+\begin{frame}{Example}
+
+  \begin{columns}
+
+    \column{0.5\textwidth}
+
+    \centering
+    \begin{tikzpicture}
+      \draw (0,0) + (90:2cm) node {$P_1$} +(210:2cm) node {$P_2$}
+      +(330:2cm) node {$P_3$};
+    \end{tikzpicture}
+
+    \column{0.5\textwidth}
+
+    \begin{itemize}
+    \item Players $X$, $Y$, and $Z$
+    \item Sharing $x$, $y$, and $z$
+    \item Computes $(x+y)\cdot z$
+    \item Opens the result
+    \end{itemize}
+
+  \end{columns}
 \end{frame}
 
 \begin{frame}[fragile]
