@@ -10,7 +10,7 @@
 \usepackage[english]{babel}
 \usepackage[latin1]{inputenc}
 \usepackage[T1]{fontenc}
-\usepackage{arev}
+%\usepackage{arev}
 
 
 \title{PySMPC Design}
@@ -89,7 +89,9 @@
 \end{frame}
 
 
-\begin{frame}[fragile]{What does it look like?}
+\begin{frame}[fragile]
+
+\frametitle{What does it look like?}
 
 \begin{lstlisting}
 import sys
@@ -171,7 +173,9 @@ rt.wait_for(result)
 
 \subsection{Deferreds}
 
-\begin{frame}[fragile]{Deferreds in Twisted}% {Subtitle}
+\begin{frame}[fragile]
+
+\frametitle{Deferreds in Twisted}
 
 \begin{lstlisting}
 from twisted.web.client import getPage
