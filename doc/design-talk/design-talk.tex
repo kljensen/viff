@@ -119,11 +119,30 @@ rt.wait_for(result)
 \begin{frame}{Asynchronous Design}
 
   \begin{itemize}
+  \item Operations wait on their operands
   \item Results are sent when ready
   \item No rounds
   \end{itemize}
+  I call this ``greedy scheduling''.
 
 \end{frame}
+
+\begin{frame}{Greedy Scheduling}
+
+  Advantages:
+  \begin{itemize}
+  \item At least as good as round-based scheduling
+  \item No cost when adding new primitives
+  \end{itemize}
+
+  Disadvantages:
+  \begin{itemize}
+  \item Not yet proven secure\dots
+  \item Somewhat complicated to keep track of operations
+  \end{itemize}
+
+\end{frame}
+
 
 
 
