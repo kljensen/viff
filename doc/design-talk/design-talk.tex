@@ -240,7 +240,11 @@
 
     \begin{tikzpicture}
       \tikzstyle{level 1}=[level distance=10mm]
-      \node {open}
+
+      \draw (-0.25,0) node {$r = (x+y) \cdot z$};
+      \draw (0,-0.5) node[xshift=-0.75pt,rotate=-90] {$\rightsquigarrow$};
+
+      \draw (0,-1) node {open}
         child {node {mul}
           child {node {add}
             child {node {x}}
@@ -252,10 +256,11 @@
     \column{0.7\textwidth}
 
     \begin{itemize}
+    \item Entire tree is scheduled as once
     \item Operations wait on their operands
     \item Results are sent when ready
-    \item No rounds
     \item Result is a form of ``greedy scheduling''
+    \item Implicit synchronization, no rounds
     \end{itemize}
 
   \end{columns}
