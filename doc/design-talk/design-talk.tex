@@ -66,7 +66,7 @@
 %  % You might wish to add the option [pausesections]
 %\end{frame}
 
-\section{Overview}
+\section{Features}
 
 \begin{frame}{PySMPC Features}
 
@@ -82,9 +82,10 @@
     \begin{itemize}
     \item Single-threaded (no locks!)
     \end{itemize}
-
+    
   \item<3-> Simple architecture
     \begin{itemize}
+    \item Small code base (less than 2,000 lines of code)
     \item Few layers of abstraction\dots
     \item \dots but hopefully sufficiently many
     \end{itemize}
@@ -93,7 +94,9 @@
 
 \end{frame}
 
-\begin{frame}{Example}
+\section{Example}
+
+\begin{frame}{Example MPC Calculation}
 
   \begin{columns}
 
@@ -227,21 +230,44 @@
 
 \end{frame}
 
+\section{Scheduling}
 
 \begin{frame}{Asynchronous Design}
-  \begin{itemize}
-  \item Operations wait on their operands
-  \item Results are sent when ready
-  \item No rounds
-  \end{itemize}
-  I call this ``greedy scheduling''.
+
+  \begin{columns}
+
+    \column{0.3\textwidth}
+
+    \begin{tikzpicture}
+      \tikzstyle{level 1}=[level distance=10mm]
+      \node {open}
+        child {node {mul}
+          child {node {add}
+            child {node {x}}
+            child {node {y}}
+          }
+          child {node {z}}};
+    \end{tikzpicture}
+
+    \column{0.7\textwidth}
+
+    \begin{itemize}
+    \item Operations wait on their operands
+    \item Results are sent when ready
+    \item No rounds
+    \item Result is a form of ``greedy scheduling''
+    \end{itemize}
+
+  \end{columns}
+
 \end{frame}
 
 \begin{frame}{Greedy Scheduling}
   Advantages:
   \begin{itemize}
-  \item At least as good as round-based scheduling
+  \item At least as efficient as round-based scheduling
   \item No cost when adding new primitives
+  \item Automatic parallelism
   \end{itemize}
 
   Disadvantages:
@@ -252,14 +278,7 @@
 \end{frame}
 
 
-\subsection{Current Status}
-
-\begin{frame}{Model}
-  \begin{itemize}
-  \item Fixed number of players
-  \item Executes a symmetric protocol
-  \end{itemize}
-\end{frame}
+\section{Current Status}
 
 \begin{frame}{What is Implemented?}
   \begin{itemize}
@@ -271,59 +290,37 @@
   \end{itemize}
 \end{frame}
 
-\begin{frame}{Security Setting}
+
+\begin{frame}{Assumptions}
+  
+  Current primitives assume:
   \begin{itemize}
+  \item Fixed number of players
   \item Passive and static adversary
   \item Threshold adversary structure, $t < \frac n 2$
   \end{itemize}
+
+  
 \end{frame}
 
+\section{Conclusion}
 
-\section{Design}
+\begin{frame}{Conclusion}
 
-\subsection{Deferreds}
+\begin{itemize}
+\item PySMPC offers a light-weight design for doing MPC
+\item Asynchronous design gives automatic paralellism
+\end{itemize}
 
-\begin{frame}[fragile]
+Installation instructions:
+\begin{itemize}
+\item $\sim$mg/simap/pysmpc/INSTALL
+\end{itemize}
 
-\frametitle{Deferreds in Twisted}
 
-\begin{lstlisting}
-from twisted.web.client import getPage
-
-def printContents(contents):
-    print "The Deferred has called printContents with:"
-    print contents
-
-deferred = getPage("http://www.daimi.au.dk/")
-
-deferred.addCallback(printContents)
-\end{lstlisting}
-
-Result:
-\begin{lstlisting}[language={}]
-The Deferred has called printContents with:
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 ...
-\end{lstlisting}
 
 \end{frame}
 
 
-\section{Extensions}
-
-\begin{frame}{Extensions}
-
-  \begin{itemize}
-  \item Active security
-    \begin{itemize}
-    \item Requires error handling
-    \end{itemize}
-
-  \item Full $t = n-1$ threshold
-    \begin{itemize}
-    \item Properly only requires new sharing primitives
-    \end{itemize}
-  \end{itemize}
-
-\end{frame}
 
 \end{document}
