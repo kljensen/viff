@@ -38,7 +38,7 @@
 \newcommand{\rulecolor}{structure!60}
 \newcommand{\fillcolor}{structure!15}
 
-\tikzstyle{every node}=[circle,fill=\fillcolor,draw=\rulecolor]
+\tikzstyle{player}=[circle,fill=\fillcolor,draw=\rulecolor]
 
 
 \usepackage{listings}
@@ -101,17 +101,89 @@
 
     \centering
     \begin{tikzpicture}
-      \draw (0,0) + (90:2cm) node {$P_1$} +(210:2cm) node {$P_2$}
-      +(330:2cm) node {$P_3$};
+      \draw (0,0) + (90:2cm) node[player] (P1) {$P_1$}
+                  +(210:2cm) node[player] (P2) {$P_2$}
+                  +(330:2cm) node[player] (P3) {$P_3$};
+
+      \visible<1>{
+        \draw (P1.north) node[above] {$x$};
+        \draw (P2.south) node[below] {$y$};
+        \draw (P3.south) node[below] {$z$};
+      }
+
+      \visible<2>{
+        \draw[->] (P1) .. controls +(75:1cm) and +(105:1cm) ..
+          node[above,sloped] {$x_1$} (P1);
+        \draw[->] (P1) .. controls +(230:1cm) and +(70:1cm) ..
+          node[above,sloped] {$x_2$} (P2);
+        \draw[->] (P1) .. controls +(-50:1cm) and +(110:1cm) ..
+          node[above,sloped] {$x_3$} (P3);
+
+        \draw[->] (P2) .. controls +(50:1cm) and +(250:1cm) ..
+          node[below,sloped] {$y_1$} (P1);
+        \draw[->] (P2) .. controls +(225:1cm) and +(255:1cm) ..
+          node[below] {$y_2$} (P2);
+        \draw[->] (P2) .. controls +(10:1cm) and +(170:1cm) ..
+          node[above,sloped] {$y_3$} (P3);
+
+        \draw[->] (P3) .. controls +(130:1cm) and +(-70:1cm) ..
+          node[below,sloped] {$z_1$} (P1);
+        \draw[->] (P3) .. controls +(-170:1cm) and +(-10:1cm) ..
+          node[below,sloped] {$z_2$} (P2);
+        \draw[->] (P3) .. controls +(-75:1cm) and +(-45:1cm) ..
+          node[below] {$z_3$} (P3);
+      }
+
+      \visible<3>{
+        \draw (P1.north) node[above] {$x_1$, $y_1$, $z_1$};
+        \draw (P2.south) node[below,xshift=5pt] {$x_2$, $y_2$, $z_2$};
+        \draw (P3.south) node[below,xshift=-5pt] {$x_3$, $y_3$, $z_3$};
+      }
+
+      \visible<4>{
+        \draw[<->,dashed] (P1) -- (P2);
+        \draw[<->,dashed] (P2) -- (P3);
+        \draw[<->,dashed] (P3) -- (P1);
+      }
+
+      \visible<5-6>{
+        \draw (P1.north) node[above] {$r_1$};
+        \draw (P2.south) node[below] {$r_2$};
+        \draw (P3.south) node[below] {$r_3$};
+      }
+
+      \visible<6>{
+        \draw[->] (P1) .. controls +(230:1cm) and +(70:1cm) ..
+          node[above,sloped] {$r_1$} (P2);
+        \draw[->] (P1) .. controls +(-50:1cm) and +(110:1cm) ..
+          node[above,sloped] {$r_1$} (P3);
+
+        \draw[->] (P2) .. controls +(50:1cm) and +(250:1cm) ..
+          node[below,sloped] {$r_2$} (P1);
+        \draw[->] (P2) .. controls +(10:1cm) and +(170:1cm) ..
+          node[above,sloped] {$r_2$} (P3);
+
+        \draw[->] (P3) .. controls +(130:1cm) and +(-70:1cm) ..
+          node[below,sloped] {$r_3$} (P1);
+        \draw[->] (P3) .. controls +(-170:1cm) and +(-10:1cm) ..
+          node[below,sloped] {$r_3$} (P2);
+      }
+
+      \visible<7>{
+        \draw (P1.north) node[above] {$r$};
+        \draw (P2.south) node[below] {$r$};
+        \draw (P3.south) node[below] {$r$};
+      }
+
     \end{tikzpicture}
 
     \column{0.5\textwidth}
 
     \begin{itemize}
-    \item Players $X$, $Y$, and $Z$
-    \item Sharing $x$, $y$, and $z$
-    \item Computes $(x+y)\cdot z$
-    \item Opens the result
+    \item<1-> Players $P_1$, $P_2$, and $P_3$
+    \item<2-> Sharing $x$, $y$, and $z$
+    \item<4-> Computes $r= (x+y)\cdot z$
+    \item<6-> Opens the result $r$
     \end{itemize}
 
   \end{columns}
