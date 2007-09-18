@@ -214,6 +214,20 @@
 
 \end{frame}
 
+\begin{frame}{Example Configuration File}
+
+  \lstdefinelanguage{ini}{
+    morecomment=[l]{\#},
+    moredelim=[s][\textbf]{[}{]},
+    moredelim=[s][\textbf]{[[}{]]},
+    moredelim=[s][\textbf]{[[[}{]]]}
+  }
+
+  \lstinputlisting[language=ini]{sample-config.ini}
+
+\end{frame}
+
+
 \begin{frame}{Asynchronous Design}
   \begin{itemize}
   \item Operations wait on their operands
