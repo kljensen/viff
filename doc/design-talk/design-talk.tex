@@ -189,29 +189,28 @@
   \end{columns}
 \end{frame}
 
-\begin{frame}[fragile]
+\begin{frame}{Example PySMPC Program}
 
-\frametitle{Example PySMPC Program}
+\begin{columns}
+  \column{0.57\textwidth}
 
-\begin{lstlisting}
-import sys
-from pysmpc import runtime, config, util, field
+  \lstinputlisting[linerange={1-5}]{example.py}
+  \vspace{-0.5\baselineskip}
+  \uncover<2->{\lstinputlisting[linerange={7-9}]{example.py}}
+  \vspace{-0.5\baselineskip}
+  \uncover<3->{\lstinputlisting[linerange={11-13}]{example.py}}
+  \vspace{-0.5\baselineskip}
+  \uncover<4->{\lstinputlisting[linerange={15-17}]{example.py}}
 
-Z31 = field.GF(31)
+  \column{0.43\textwidth}
 
-my_id, conf = config.load_config(sys.argv[1])
-my_input = Z31(int(sys.argv[2]))
-
-rt = runtime.Runtime(players=conf, id=my_id, threshold=1)
-
-x, y, z = rt.shamir_share(input)
-result = rt.mul(rt.add(x, y), z)
-
-rt.open(result)
-util.dprint("Result: %s", result)
-
-rt.wait_for(result)
-\end{lstlisting}
+  \begin{itemize}[<+->]
+  \item Import statements
+  \item Load configuration
+  \item Create Runtime, share and calculate
+  \item Open and print result
+  \end{itemize}
+\end{columns}
 
 \end{frame}
 
