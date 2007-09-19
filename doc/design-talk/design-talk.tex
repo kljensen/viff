@@ -10,7 +10,9 @@
 \usepackage[english]{babel}
 \usepackage[latin1]{inputenc}
 \usepackage[T1]{fontenc}
-%\usepackage{arev}
+\usepackage[expert]{lucidabr}
+
+\setbeamerfont{frametitle}{family*=hlcn}
 
 \title[PySMPC]{Python Secure Multi-Party Computation}
 
@@ -77,7 +79,7 @@
   \item API for writing secure multi-party computations
     \begin{itemize}
     \item Simple if you already know Python
-    \item A custom language can be added on top of the API
+    \item A custom language could be added
     \end{itemize}
 
   \item<2-> Efficient asynchronous design
@@ -88,7 +90,7 @@
     
   \item<3-> Simple architecture
     \begin{itemize}
-    \item Small code base (less than 2,000 lines of code)
+    \item Small code base (1,600 lines)
     \item Few layers of abstraction\dots
     \item \dots but hopefully sufficiently many
     \end{itemize}
@@ -128,7 +130,7 @@
         \draw[->] (P2) .. controls +(50:1cm) and +(250:1cm) ..
           node[below,sloped] {$y_1$} (P1);
         \draw[->] (P2) .. controls +(225:1cm) and +(255:1cm) ..
-          node[below] {$y_2$} (P2);
+          node[below,xshift=1pt] {$y_2$} (P2);
         \draw[->] (P2) .. controls +(10:1cm) and +(170:1cm) ..
           node[above,sloped] {$y_3$} (P3);
 
@@ -137,13 +139,13 @@
         \draw[->] (P3) .. controls +(-170:1cm) and +(-10:1cm) ..
           node[below,sloped] {$z_2$} (P2);
         \draw[->] (P3) .. controls +(-75:1cm) and +(-45:1cm) ..
-          node[below] {$z_3$} (P3);
+          node[below,xshift=-1pt] {$z_3$} (P3);
       }
 
       \visible<3>{
         \draw (P1.north) node[above] {$x_1$, $y_1$, $z_1$};
-        \draw (P2.south) node[below,xshift=5pt] {$x_2$, $y_2$, $z_2$};
-        \draw (P3.south) node[below,xshift=-5pt] {$x_3$, $y_3$, $z_3$};
+        \draw (P2.south) node[below,xshift=6pt] {$x_2$, $y_2$, $z_2$};
+        \draw (P3.south) node[below,xshift=-6pt] {$x_3$, $y_3$, $z_3$};
       }
 
       \visible<4>{
@@ -197,24 +199,47 @@
 
 \begin{frame}{Example PySMPC Program}
 
+\mbox{}\vspace{-2\baselineskip}
+
 \begin{columns}
-  \column{0.57\textwidth}
-
+  \column{0.625\textwidth}
   \lstinputlisting[linerange={1-5}]{example.py}
-  \vspace{-0.5\baselineskip}
+  \column{0.375\textwidth}
+  \begin{itemize}
+  \item Import standard and PySMPC modules
+  \end{itemize}
+\end{columns}
+
+\vspace{-0.75\baselineskip}
+
+\begin{columns}
+  \column{0.625\textwidth}
   \uncover<2->{\lstinputlisting[linerange={7-9}]{example.py}}
-  \vspace{-0.5\baselineskip}
+  \column{0.375\textwidth}
+  \begin{itemize}
+  \item<2-> Load command line config
+  \end{itemize}
+\end{columns}
+
+\vspace{-0.75\baselineskip}
+
+\begin{columns}
+  \column{0.625\textwidth}
   \uncover<3->{\lstinputlisting[linerange={11-13}]{example.py}}
-  \vspace{-0.5\baselineskip}
+  \column{0.375\textwidth}
+  \begin{itemize}
+  \item<3-> Create Runtime, do calculation
+  \end{itemize}
+\end{columns}
+
+\vspace{-0.75\baselineskip}
+
+\begin{columns}
+  \column{0.625\textwidth}
   \uncover<4->{\lstinputlisting[linerange={15-17}]{example.py}}
-
-  \column{0.43\textwidth}
-
-  \begin{itemize}[<+->]
-  \item Import statements
-  \item Load configuration
-  \item Create Runtime, share and calculate
-  \item Open and print result
+  \column{0.375\textwidth}
+  \begin{itemize}
+  \item<3-> Open and print result
   \end{itemize}
 \end{columns}
 
