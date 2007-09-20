@@ -5,13 +5,10 @@ There are a number of small and large design changes listed below. In
 addition to those, the source code contains a number of comments
 marked with 'TODO' which document things on a more local level.
 
-* Use SSL as appropriate
-   Some parts of the protocols need to be protected against
-   eavesdropping and should use SSL connections instead of plain TCP.
-
 * Enforce the use of Blum primes
-   The comparison only works with Blum primes, that is, primes that
-   are congruent to 3 modulo 4.
+   Generating a random bit using PRSS only works with Blum primes,
+   that is, primes that are congruent to 3 modulo 4. The comparison
+   uses such bits and thus breaks with non-Blum primes.
 
 * Create unit tests which randomizes network delay
    The current unit test with LoopbackRuntime are strictly sequential
