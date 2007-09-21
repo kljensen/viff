@@ -519,7 +519,7 @@ class Runtime:
         program_counter = inc_pc(program_counter)
         src_shares = self.prss_share(src_field(this_mask), program_counter)
         program_counter = inc_pc(program_counter)
-        dst_shares = self.prss_share(dst_field(this_mask % dst_field.modulus), program_counter)
+        dst_shares = self.prss_share(dst_field(this_mask), program_counter)
 
 
         tmp = reduce(self.add, src_shares, share)
@@ -529,7 +529,7 @@ class Runtime:
         program_counter = inc_pc(program_counter)
         self.open(tmp, program_counter=program_counter)
 
-        tmp.addCallback(lambda i: dst_field(i.value % dst_field.modulus))
+        tmp.addCallback(lambda i: dst_field(i.value))
 
         full_mask = reduce(self.add, dst_shares)
 
