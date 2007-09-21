@@ -424,6 +424,30 @@ class RuntimeTestCase(TestCase):
         return gatherResults([a1, a2, a3, b1, b2, b3, c1, c2, c3,
                               res_ab1, res_ab2, res_ab3])
 
+    def test_greater_thanII(self):
+        a = self.Zp(10)
+        b = self.Zp(20)
+        c = self.Zp(30)
+
+        a1, b1, c1 = self.rt1.shamir_share(a)
+        a2, b2, c2 = self.rt2.shamir_share(b)
+        a3, b3, c3 = self.rt3.shamir_share(c)
+
+        res_ab1 = self.rt1.greater_thanII(a1, b1, self.Zp)
+        res_ab2 = self.rt2.greater_thanII(a2, b2, self.Zp)
+        res_ab3 = self.rt3.greater_thanII(a3, b3, self.Zp)
+
+        self.rt1.open(res_ab1)
+        self.rt2.open(res_ab2)
+        self.rt3.open(res_ab3)
+
+        res_ab1.addCallback(self.assertEquals, self.Zp(False))
+        res_ab2.addCallback(self.assertEquals, self.Zp(False))
+        res_ab3.addCallback(self.assertEquals, self.Zp(False))
+
+        return gatherResults([a1, a2, a3, b1, b2, b3, c1, c2, c3,
+                              res_ab1, res_ab2, res_ab3])
+
 if 'STRESS' in os.environ:
 
     class StressTestCase(TestCase):
