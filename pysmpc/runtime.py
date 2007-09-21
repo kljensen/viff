@@ -646,7 +646,9 @@ class Runtime:
 
 
     #@trace
-    def greater_thanII_preproc(self, field, smallField=None, program_counter=None, l=None, k=None):
+    def greater_thanII_preproc(self, field, smallField=None,
+                               program_counter=None, l=None, k=None):
+        """Preprocessing for greater_thanII."""
         program_counter = self.init_pc(program_counter)
         program_counter = sub_pc(program_counter)
 
@@ -665,8 +667,6 @@ class Runtime:
         assert smallField.modulus > 3 + 3*l, "smallField too small"
 
 
-
-
         # TODO: do not generate all bits, only $l$ of them
         # could perhaps do PRSS over smaller subset?
         r_bitsField = []
@@ -679,14 +679,16 @@ class Runtime:
         for (i,b) in enumerate(r_bitsField):
             program_counter = inc_pc(program_counter)
             r_full = self.add(r_full,
-                              self.mul(b, field(2**i), program_counter=program_counter))
+                              self.mul(b, field(2**i),
+                                       program_counter=program_counter))
 
         r_bitsField = r_bitsField[:l]
         r_modl = field(0)
         for (i,b) in enumerate(r_bitsField):
             program_counter = inc_pc(program_counter)
             r_modl = self.add(r_modl,
-                              self.mul(b, field(2**i), program_counter=program_counter))
+                              self.mul(b, field(2**i),
+                                       program_counter=program_counter))
             
 
         # Transfer bits to smallField
@@ -696,16 +698,20 @@ class Runtime:
             r_bits = []
             for bit in r_bitsField:
                 program_counter = inc_pc(program_counter)
-                r_bits.append(self.convert_bit_share_II(bit, field, smallField, program_counter=program_counter))
+                r_bits.append(self.convert_bit_share_II(bit, field, smallField,
+                                                        program_counter=program_counter))
 
         program_counter = inc_pc(program_counter)
-        s_bit = self.prss_share_random(field, True, program_counter=program_counter)
+        s_bit = self.prss_share_random(field, binary=True,
+                                       program_counter=program_counter)
 
         program_counter = inc_pc(program_counter)
-        s_bitSmallField = self.convert_bit_share_II(s_bit, field, smallField, program_counter=program_counter)
+        s_bitSmallField = self.convert_bit_share_II(s_bit, field, smallField,
+                                                    program_counter=program_counter)
         program_counter = inc_pc(program_counter)
         s_sign = self.add(smallField(1),
-                          self.mul(s_bitSmallField, smallField(smallField.modulus -2), program_counter))
+                          self.mul(s_bitSmallField, smallField(smallField.modulus -2),
+                                   program_counter=program_counter))
 
 
         # m: uniformly random -- should be non-zero, however, this
@@ -734,11 +740,11 @@ class Runtime:
         
 
     #@trace
-    def greater_thanII_online(self, share_a, share_b, preproc, field, program_counter=None, l=None):
+    def greater_thanII_online(self, share_a, share_b, preproc, field,
+                              program_counter=None, l=None):
         """Compute share_a >= share_b.
-        Result is shared
+        Result is shared.
         """
-
         program_counter = self.init_pc(program_counter)
         program_counter = sub_pc(program_counter)
 
@@ -762,7 +768,8 @@ class Runtime:
         ##################################################
         #TODO: assert fields are the same...
         field, smallField, s_bit, s_sign, mask, r_full, r_modl, r_bits = preproc
-        assert l == len(r_bits), "preprocessing does not match online parameters"
+        assert l == len(r_bits), "preprocessing does not match " \
+            "online parameters"
 
         ##################################################
         # Begin online computation
@@ -787,8 +794,8 @@ class Runtime:
                 # sumXORs[i] = \sum_{j=i+1}^{l-1} r_j\oplus c_j
                 program_counter = inc_pc(program_counter)
                 sumXORs[i] = self.add(sumXORs[i+1],
-                                            self.xor_int(r_bits[i], c_bits[i],
-                                                         program_counter = program_counter))
+                                      self.xor_int(r_bits[i], c_bits[i],
+                                                   program_counter=program_counter))
             E_tilde = []
             for i in range(len(r_bits)):
                 ## s + rBit[i] - cBit[i] + 3 * sumXors[i+1];
@@ -796,15 +803,17 @@ class Runtime:
                 e_i = self.add(s_sign,
                                self.sub(r_bits[i], c_bits[i]))
                 e_i = self.add(e_i,
-                               self.mul(smallField(3),sumXORs[i], program_counter=program_counter))
+                               self.mul(smallField(3),sumXORs[i],
+                                        program_counter=program_counter))
                 E_tilde.append(e_i)
             E_tilde.append(mask) # Hack: will mult e_i and mask...
 
             while len(E_tilde) > 1:
                 program_counter = inc_pc(program_counter)
                 # TODO: burde pop() ikke vaere at foretraekke?
-                # NEJ: det tager det nyligt appendede, det virker derfor lineært...
-                # prøv med to lister i stedet, pop(0) er kvadratisk flyt (hvis det sker)
+                # NEJ: det tager det nyligt appendede, det virker
+                # derfor lineært... prøv med to lister i stedet,
+                # pop(0) er kvadratisk flyt (hvis det sker)
                 E_tilde.append(self.mul(E_tilde.pop(0),
                                         E_tilde.pop(0),
                                         program_counter=program_counter))
@@ -848,7 +857,8 @@ class Runtime:
 
 
     #@trace
-    def greater_thanII(self, share_a, share_b, field, program_counter=None, l=None):
+    def greater_thanII(self, share_a, share_b, field,
+                       program_counter=None, l=None):
         """Compute share_a >= share_b.
 
         Both arguments must be of type field. The result is a
@@ -864,9 +874,11 @@ class Runtime:
             l = 32 # bit-length of input numbers
 
         program_counter = inc_pc(program_counter)
-        preproc = self.greater_thanII_preproc(field, l=l, k=k, program_counter = program_counter)
+        preproc = self.greater_thanII_preproc(field, l=l, k=k,
+                                              program_counter=program_counter)
         program_counter = inc_pc(program_counter)
-        return self.greater_thanII_online(share_a, share_b, preproc, field, program_counter=program_counter, l=l)
+        return self.greater_thanII_online(share_a, share_b, preproc, field,
+                                          program_counter=program_counter, l=l)
 
     ########################################################################
     ########################################################################
