@@ -710,7 +710,7 @@ class Runtime:
                                                     program_counter=program_counter)
         program_counter = inc_pc(program_counter)
         s_sign = self.add(smallField(1),
-                          self.mul(s_bitSmallField, smallField(smallField.modulus -2),
+                          self.mul(s_bitSmallField, smallField(-2),
                                    program_counter=program_counter))
 
 
