@@ -810,10 +810,10 @@ class Runtime:
 
             while len(E_tilde) > 1:
                 program_counter = inc_pc(program_counter)
-                # TODO: burde pop() ikke vaere at foretraekke?
-                # NEJ: det tager det nyligt appendede, det virker
-                # derfor lineært... prøv med to lister i stedet,
-                # pop(0) er kvadratisk flyt (hvis det sker)
+                # TODO: pop() ought to be preferred? No: it takes the
+                # just appended and thus works liniarly... try with
+                # two lists instead, pop(0) is quadratic if it moves
+                # elements.
                 E_tilde.append(self.mul(E_tilde.pop(0),
                                         E_tilde.pop(0),
                                         program_counter=program_counter))
