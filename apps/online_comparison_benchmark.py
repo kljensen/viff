@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# Copyright 2007 Martin Geisler
+# Copyright 2007 Martin Geisler and Tomas Toft
 #
 # This file is part of PySMPC
 #
@@ -19,16 +19,20 @@
 # Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 # 02110-1301 USA
 
-import time, signal, random
+import time, signal
 from optparse import OptionParser
 
-from twisted.internet import reactor
+from twisted.internet import reactor, defer
 from twisted.internet.defer import DeferredList, gatherResults
+
+#defer.setDebugging(True)
 
 from gmpy import mpz
 from pysmpc.field import GF
 from pysmpc.runtime import Runtime
 from pysmpc.config import load_config
+from pysmpc.util import rand
+
 
 last_timestamp = time.time()
 start = 0
@@ -67,10 +71,13 @@ parser = OptionParser()
 parser.add_option("-m", "--modulus",
                   help="lower limit for modulus (can be an expression)")
 parser.add_option("-c", "--count", type="int", help="number of comparisons")
+parser.add_option("-l", "--bitlength", type="int",
+                  help="bitlength of numbers to be compared")
+parser.add_option("-k", "--securityparameter", type="int",
+                  help="The security parameter of the individual comparisons")
 
-parser.add_option("-2", "--improved_comparison", action="store_true", help="Use improved comparison")
 
-parser.set_defaults(modulus="30916444023318367583", count=100, improved_comparison=False)
+parser.set_defaults(modulus="30916444023318367583", count=100, bitlength=32, securityparameter=30)
 
 (options, args) = parser.parse_args()
 
@@ -95,75 +102,75 @@ if str(prime) != options.modulus:
 
 Zp = GF(long(prime))
 
+# TODO: better q-prime...must depend on prime
+qprime = 3001
+Zq = GF(long(qprime))
+#Zq = Zp
+
 count = options.count
 print "I am player %d, will compare %d numbers" % (id, count)
 
 rt = Runtime(players, id, (len(players) -1)//2)
-if options.improved_comparison:
-    greater_than = rt.greater_thanII
-    print "Using improved comparison"
-else:
-    greater_than = rt.greater_than
-    print "Using SCET comparison"
+print "Testing online requirements for comparisonII"
 
-l = 32 # TODO: needs to be taken from the runtime or a config file.
+
+l = options.bitlength
+k = options.securityparameter
+assert prime > 2**(l+k)
+
+print "l = %d" % l
+print "k = %d" % k
 
 shares = []
 
-#for n in range(2*count//len(players) + 1):
-for n in range(2*count):
-    input = Zp(random.randint(0, 2**l - 1))
-    if id == 1:
-        print "input %d: %s" % (n,str(input))
+inputs = []
+for n in range(2*count//len(players) + 1):
+    input = Zp(rand.randint(0, 2**l - 1))
+    inputs.append(input)
     shares.extend(rt.shamir_share(input))
 # We want to measure the time for count comparisons, so we need
 # 2*count input numbers.
-#shares = shares[:2*count]
+shares = shares[:2*count]
+
+preproc = []
+pseudoPreproc = []
+for i in range(count):
+    thisPreproc = rt.greater_thanII_preproc(Zp, smallField = Zq, l=l, k=k)
+    preproc.append(thisPreproc)
+    pseudoPreproc += thisPreproc[2:-1]
+    pseudoPreproc += thisPreproc[-1]
+
+    # print status as we go along
+    # TODO: why does this not work?
+    def printDonePreproc(_, i):
+        print "Done preprocessing %d" % i
+        return _
+    tmp = DeferredList(thisPreproc[2:-1])
+    tmp.addCallback(printDonePreproc, i)
 
 def run_test(_):
+    print "Preprocessing done..."
     print "Making %d comparisons" % count
     record_start()
 
     bits = []
-    aPrime = []
-    bPrime = []
-    while len(shares) > 5:
-
+    while len(shares) > 1:
         a = shares.pop(0)
-        shares.pop(0)
-        shares.pop(0)
-
         b = shares.pop(0)
-        shares.pop(0)
-        shares.pop(0)
-
-        c = greater_than(a,b, Zp)
-        #c.addCallback(timestamp)
-#        aPrime.append(a)
-#        bPrime.append(b)
-        rt.open(c)
+        c = rt.greater_thanII_online(a, b, preproc.pop(), Zp, l=l)
         bits.append(c)
-
-
-    def printAll(values):
-        for i in range(count):
-            print "res = %s" % str(values[i])
         
-
     stop = DeferredList(bits)
-    stop.addCallback(printAll)
     stop.addCallback(record_stop)
     stop.addCallback(finish)
-
-
     
     # TODO: it would be nice it the results were checked
     # automatically, but it needs to be done without adding overhead
     # to the benchmark.
 
 
-# We want to wait until all numbers have been shared
-dl = DeferredList(shares)
+# We want to wait until all numbers have been shared and preprocessing has been performed
+dl = gatherResults(shares + pseudoPreproc)
 dl.addCallback(run_test)
     
 print "#### Starting reactor ###"
