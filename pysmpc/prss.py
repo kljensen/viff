@@ -20,7 +20,7 @@
 """Methods for pseudo-random secret sharing."""
 
 import sha
-from math import log, ceil
+from math import ceil
 from struct import pack
 from binascii import hexlify
 
@@ -183,7 +183,7 @@ class PRF(object):
 
             # The i'th generator is seeded with H^i(key + str(max))
             # where H^i means repeated hashing i times.
-            for j in range(i):
+            for _ in range(i):
                 seed = sha.new(seed).digest()
             self.sha1s.append(sha.new(seed))
 

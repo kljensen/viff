@@ -19,7 +19,7 @@
 
 from pysmpc.field import GF, GF256
 
-from twisted.trial.unittest import TestCase, FailTest
+from twisted.trial.unittest import TestCase
 import operator
 
 # This will make Trial run the doctests too, in addition to the tests

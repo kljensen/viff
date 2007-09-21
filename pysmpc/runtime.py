@@ -790,7 +790,7 @@ class Runtime:
                                             self.xor_int(r_bits[i], c_bits[i],
                                                          program_counter = program_counter))
             E_tilde = []
-            for (i,b) in enumerate(r_bits):
+            for i in range(len(r_bits)):
                 ## s + rBit[i] - cBit[i] + 3 * sumXors[i+1];
                 program_counter = inc_pc(program_counter)
                 e_i = self.add(s_sign,

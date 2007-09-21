@@ -17,9 +17,5 @@
 # Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 # 02110-1301 USA
 
-from pysmpc.shamir import share, recombine
-
-from twisted.trial.unittest import TestCase
-
 __doctests__ = ['pysmpc.shamir']
 

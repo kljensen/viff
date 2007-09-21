@@ -27,7 +27,6 @@ from random import Random
 
 from twisted.internet import reactor
 from twisted.internet.defer import Deferred, succeed, gatherResults
-from twisted.internet.protocol import Protocol
 from twisted.trial.unittest import TestCase
 from twisted.protocols.loopback import loopbackAsync
 
@@ -481,7 +480,7 @@ if 'STRESS' in os.environ:
 
             x, y, z = 1, 1, 1
 
-            for i in range(count):
+            for _ in range(count):
                 x = self.rt1.mul(a1, self.rt1.mul(b1, self.rt1.mul(c1, x)))
                 y = self.rt2.mul(a2, self.rt2.mul(b2, self.rt2.mul(c2, y)))
                 z = self.rt3.mul(a3, self.rt3.mul(b3, self.rt3.mul(c3, z)))
@@ -523,7 +522,7 @@ if 'STRESS' in os.environ:
             rand = {1: Random(count + 1), 2: Random(count + 2), 3: Random(count + 3)}
             results = []
 
-            for i in range(count):
+            for _ in range(count):
                 a = rand[1].randint(0, pow(2, l))
                 b = rand[2].randint(0, pow(2, l))
                 c = rand[3].randint(0, pow(2, l))

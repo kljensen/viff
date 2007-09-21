@@ -17,7 +17,7 @@
 # Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 # 02110-1301 USA
 
-from pysmpc.prss import prss, generate_subsets
+from pysmpc.prss import generate_subsets
 
 from twisted.trial.unittest import TestCase
 
