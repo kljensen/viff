@@ -36,44 +36,6 @@ marked with 'TODO' which document things on a more local level.
    CPU. If the latter is the case, then we could consider writing the
    inner loop in C for more speed.
 
-* Remove program counters
-   An idea for this was suggested by Thomas Mølhave: label each share
-   with a tuple containing the labels of the shares that it depend on
-   in addition to the operation done. Consider:
-
-   a, b = rt.share(10)
-   c = rt.mul(a,b)
-
-   Here a and b get labels ('share', 1) and ('share', 2), and c get
-   the label ('mul', ('share', 1), ('share', 2)). If we continue with
-
-   d = rt.add(c,c)
-
-   the label for d would be
-
-   ('add', ('mul', ('share', 1), ('share', 2)),
-           ('mul', ('share', 1), ('share', 2)))
-
-   The labels grow exponentially in the length of dependencies! To
-   counter this, one could hash the labels.
-   
-   Consider this program:
-
-   x = rt.add(a,b)
-   y = rt.add(a,b)
-
-   Here x and y have the same label and are thus indistinguishable
-   when sent over the network. Since x and y have the exact same
-   history, and so represent the same value, this ought to cause no
-   trouble.
-   
-   A bigger problem with this approach seems to be the functions that
-   work with no input: the PRSS functions. They have no input to work
-   on, and so the output have no context to base its history on. They
-   cannot simply use a global counter since the calls might occur in
-   different order among different players -- we are back at the
-   original problem that was solved using the tuple program counters.
-
 * Have an option which will make things run more or less sequentially
    For example: no parallelism would mean that all operations queue up
    and wait on each other, semi-parallelism could mean that different
