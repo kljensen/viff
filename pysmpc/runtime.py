@@ -375,7 +375,7 @@ class Runtime:
         # Shares we calculate from doing PRSS with the other players.
         tmp_shares = {}
 
-        dealer_prfs = self.players[self.id].dealer_prfs(field.modulus)
+        prfs = self.players[self.id].dealer_prfs(field.modulus)
 
         # TODO: Stop calculating shares for all_shares at
         # self.threshold+1 since that is all we need to do the Shamir
@@ -383,9 +383,9 @@ class Runtime:
         for player in self.players:
             # TODO: when player == self.id, the two calls to prss are
             # the same.
-            share = prss(n, player, field, dealer_prfs[self.id], key)
+            share = prss(n, player, field, prfs[self.id], key)
             all_shares.append((field(player), share))
-            tmp_shares[player] = prss(n, self.id, field, dealer_prfs[player], key)
+            tmp_shares[player] = prss(n, self.id, field, prfs[player], key)
 
         # We can now calculate what was shared and derive the
         # correction factor.
@@ -519,22 +519,19 @@ class Runtime:
         def log(x):
             result = 0
             while x > 1:
-                result +=1
+                result += 1
                 x /= 2
             return result+1 # Error for powers of two...
-            
 
-        if k==None:
+        if k is None:
             k = 30
         l = k + log(dst_field.modulus)
         # TODO assert field sizes are OK...
 
-
-
-
         this_mask = rand.randint(0, (2**l) -1)
 
-        # Share large random values in the big field and reduced ones in the small...
+        # Share large random values in the big field and reduced ones
+        # in the small...
         src_shares = self.prss_share(src_field(this_mask))
         dst_shares = self.prss_share(dst_field(this_mask))
 
@@ -646,12 +643,8 @@ class Runtime:
         #   = (y * (X ^ Y)) ^ Y
         return (top, bot)
 
-
-
-        
     ########################################################################
     ########################################################################
-
 
     #@trace
     @increment_pc
@@ -680,14 +673,13 @@ class Runtime:
 
         # TODO: compute r_full from r_modl and top bits, not from scratch
         r_full = field(0)
-        for (i,b) in enumerate(r_bitsField):
+        for i, b in enumerate(r_bitsField):
             r_full = self.add(r_full, self.mul(b, field(2**i)))
 
         r_bitsField = r_bitsField[:l]
         r_modl = field(0)
-        for (i,b) in enumerate(r_bitsField):
+        for i, b in enumerate(r_bitsField):
             r_modl = self.add(r_modl, self.mul(b, field(2**i)))
-            
 
         # Transfer bits to smallField
         if field is smallField:
@@ -712,12 +704,7 @@ class Runtime:
         mask_OK = self.mul(mask, mask_2)
         self.open(mask_OK)
         dprint("Mask_OK: %s", mask_OK)
-        
-
-
         return field, smallField, s_bit, s_sign, mask, r_full, r_modl, r_bits
-        
-        
 
         ##################################################
         # Preprocessing done
@@ -734,11 +721,10 @@ class Runtime:
             l = 32
 
         # increment l as a, b are increased
-        l +=1
+        l += 1
         # a = 2a+1; b= 2b // ensures inputs not equal
         share_a = self.add(self.mul(field(2), share_a), field(1))
         share_b = self.mul(field(2), share_b)
-
         
         ##################################################
         # Unpack preprocessing
@@ -754,10 +740,7 @@ class Runtime:
         # c = 2**l + a - b + r
         z = self.add(self.sub(share_a, share_b), field(2**l))
         c = self.add(r_full, z)
-
-
         self.open(c)
-
 
         self.callback(c, self._finish_greater_thanII,
                       l, field, smallField, s_bit, s_sign, mask, r_full,
@@ -769,9 +752,6 @@ class Runtime:
 #         return result
 
 
-
-
-
     #@trace
     @increment_pc
     def _finish_greater_thanII(self, c, l, field, smallField, s_bit, s_sign,
@@ -780,7 +760,8 @@ class Runtime:
         c_bits = [smallField(c.bit(i)) for i in range(l)]
 
         sumXORs = [0]*l
-        # sumXORs[i] = sumXORs[i+1] + r_bits[i+1] + c_(i+1) - 2*r_bits[i+1]*c_(i+1)
+        # sumXORs[i] = sumXORs[i+1] + r_bits[i+1] + c_(i+1)
+        #                           - 2*r_bits[i+1]*c_(i+1)
         for i in range(l-2, -1, -1):
             # sumXORs[i] = \sum_{j=i+1}^{l-1} r_j\oplus c_j
             sumXORs[i] = self.add(sumXORs[i+1],
@@ -789,7 +770,7 @@ class Runtime:
         for i in range(len(r_bits)):
             ## s + rBit[i] - cBit[i] + 3 * sumXors[i+1];
             e_i = self.add(s_sign, self.sub(r_bits[i], c_bits[i]))
-            e_i = self.add(e_i, self.mul(smallField(3),sumXORs[i]))
+            e_i = self.add(e_i, self.mul(smallField(3), sumXORs[i]))
             E_tilde.append(e_i)
         E_tilde.append(mask) # Hack: will mult e_i and mask...
 
@@ -820,8 +801,6 @@ class Runtime:
         return result
     # END _finish_greater_thanII
     
-
-
     #@trace
     @increment_pc
     def greater_thanII(self, share_a, share_b, field, l=None):
