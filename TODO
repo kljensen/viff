@@ -1,5 +1,6 @@
 
-TODO list for pysmpc.
+PySMPC TODO List
+================
 
 There are a number of small and large design changes listed below. In
 addition to those, the source code contains a number of comments
@@ -48,7 +49,6 @@ marked with 'TODO' which document things on a more local level.
        2   *
           / \
          3   ...
-
 
 * Profile and optimize
    We need to see if the time is spend on network latency or in the
