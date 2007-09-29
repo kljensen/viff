@@ -23,7 +23,7 @@ import time, signal, random
 from optparse import OptionParser
 
 from twisted.internet import reactor
-from twisted.internet.defer import DeferredList, gatherResults
+from twisted.internet.defer import DeferredList
 
 from gmpy import mpz
 from pysmpc.field import GF
@@ -109,58 +109,32 @@ else:
 l = 32 # TODO: needs to be taken from the runtime or a config file.
 
 shares = []
-
-#for n in range(2*count//len(players) + 1):
-for n in range(2*count):
-    input = Zp(random.randint(0, 2**l - 1))
-    if id == 1:
-        print "input %d: %s" % (n,str(input))
+for n in range(2*count//len(players) + 1):
+    input = Zp(random.randint(0, 2**l))
     shares.extend(rt.shamir_share(input))
 # We want to measure the time for count comparisons, so we need
 # 2*count input numbers.
-#shares = shares[:2*count]
+shares = shares[:2*count]
 
 def run_test(_):
     print "Making %d comparisons" % count
     record_start()
 
     bits = []
-    aPrime = []
-    bPrime = []
-    while len(shares) > 5:
-
+    while len(shares) > 1:
         a = shares.pop(0)
-        shares.pop(0)
-        shares.pop(0)
-
         b = shares.pop(0)
-        shares.pop(0)
-        shares.pop(0)
-
         c = greater_than(a,b, Zp)
         #c.addCallback(timestamp)
-#        aPrime.append(a)
-#        bPrime.append(b)
-        rt.open(c)
         bits.append(c)
 
-
-    def printAll(values):
-        for i in range(count):
-            print "res = %s" % str(values[i])
-        
-
     stop = DeferredList(bits)
-    stop.addCallback(printAll)
     stop.addCallback(record_stop)
     stop.addCallback(finish)
 
-
-    
     # TODO: it would be nice it the results were checked
     # automatically, but it needs to be done without adding overhead
     # to the benchmark.
-
 
 # We want to wait until all numbers have been shared
 dl = DeferredList(shares)
