@@ -23,6 +23,12 @@ marked with 'TODO' which document things on a more local level.
    which Runtime instance they belong to and provide __add__, __mul__,
    etc. operations.
 
+* Define a hierarchy for Runtime functionality
+   The Runtime class keeps growing as more and more functionality is
+   put into it. An options would be to split it into a basic Runtime
+   which provides communication and nothing else. More functionality
+   could be provided by mix-in classes.
+
 * Create unit tests which randomizes network delay
    The current unit test with LoopbackRuntime are strictly sequential
    and does not capture the random delays possible with real network
