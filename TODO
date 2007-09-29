@@ -10,6 +10,19 @@ marked with 'TODO' which document things on a more local level.
    that is, primes that are congruent to 3 modulo 4. The comparison
    uses such bits and thus breaks with non-Blum primes.
 
+* Use GMPY per default
+   Make field elements use GMPY unless some option asks them not to.
+
+* Options framework
+   Having a proper framework for options would be cool. Options
+   include use of GMPY, security parameter, modulus, and probably
+   other stuff.
+
+* Have the Runtime return values with overloaded arithmetic operations
+   So instead of Deferreds you would get Shares back. They would know
+   which Runtime instance they belong to and provide __add__, __mul__,
+   etc. operations.
+
 * Create unit tests which randomizes network delay
    The current unit test with LoopbackRuntime are strictly sequential
    and does not capture the random delays possible with real network
