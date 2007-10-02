@@ -567,26 +567,20 @@ class Runtime:
         assert 2**(l+1) + 2**t < field.modulus, "2^(l+1) + 2^t < p must hold"
         assert len(self.players) + 2 < 2**l
 
-        int_bits = []
-        for _ in range(m):
-            int_bits.append(self.prss_share_random(field, True))
-
+        int_bits = [self.prss_share_random(field, True) for _ in range(m)]
         # We must use int_bits without adding callbacks to the bits --
         # having int_b wait on them ensures this.
 
         def bits_to_int(bits):
             """Converts a list of bits to an integer."""
-            return sum([2**i * b for (i, b) in enumerate(bits)])
+            return sum([2**i * b for i, b in enumerate(bits)])
 
         int_b = gatherResults(int_bits)
         int_b.addCallback(bits_to_int)
 
-        bit_bits = []
-        for b in int_bits:
-            # TODO: this changes int_bits! It should be okay since
-            # int_bits is not used any further, but still...
-            bit_bits.append(self.convert_bit_share(b, field, GF256))
-
+        # TODO: this changes int_bits! It should be okay since
+        # int_bits is not used any further, but still...
+        bit_bits = [self.convert_bit_share(b, field, GF256) for b in int_bits]
         # Preprocessing done
 
         a = self.add(self.sub(share_a, share_b), 2**l)
@@ -664,12 +658,9 @@ class Runtime:
         assert field.modulus > 2**(l+2) + 2**(l+k), "Field too small"
         assert smallField.modulus > 3 + 3*l, "smallField too small"
 
-
         # TODO: do not generate all bits, only $l$ of them
         # could perhaps do PRSS over smaller subset?
-        r_bitsField = []
-        for _ in range(l+k):
-            r_bitsField.append(self.prss_share_random(field, True))
+        r_bitsField = [self.prss_share_random(field, True) for _ in range(l+k)]
 
         # TODO: compute r_full from r_modl and top bits, not from scratch
         r_full = field(0)
@@ -685,9 +676,8 @@ class Runtime:
         if field is smallField:
             r_bits = r_bitsField
         else:
-            r_bits = []
-            for bit in r_bitsField:
-                r_bits.append(self.convert_bit_share_II(bit, field, smallField))
+            r_bits = [self.convert_bit_share_II(bit, field, smallField) \
+                      for bit in _r_bitsField]
 
         s_bit = self.prss_share_random(field, binary=True)
 
