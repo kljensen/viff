@@ -677,7 +677,7 @@ class Runtime:
             r_bits = r_bitsField
         else:
             r_bits = [self.convert_bit_share_II(bit, field, smallField) \
-                      for bit in _r_bitsField]
+                      for bit in r_bitsField]
 
         s_bit = self.prss_share_random(field, binary=True)
 
