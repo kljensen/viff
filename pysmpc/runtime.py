@@ -794,11 +794,11 @@ class Runtime:
                 # sumXORs[i] = \sum_{j=i+1}^{l-1} r_j\oplus c_j
                 program_counter = inc_pc(program_counter)
                 sumXORs[i] = self.add(sumXORs[i+1],
-                                      self.xor_int(r_bits[i], c_bits[i],
+                                      self.xor_int(r_bits[i+1], c_bits[i+1],
                                                    program_counter=program_counter))
             E_tilde = []
             for i in range(len(r_bits)):
-                ## s + rBit[i] - cBit[i] + 3 * sumXors[i+1];
+                ## s + rBit[i] - cBit[i] + 3 * sumXors[i];
                 program_counter = inc_pc(program_counter)
                 e_i = self.add(s_sign,
                                self.sub(r_bits[i], c_bits[i]))
