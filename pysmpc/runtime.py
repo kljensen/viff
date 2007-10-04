@@ -137,15 +137,21 @@ class ShareExchangerFactory(ServerFactory, ClientFactory):
         return p
 
  
-#@trace
-def inc_pc(program_counter):
-    """Increment a program counter."""
-    return program_counter[:-1] + (program_counter[-1]+1,)
+def increment_pc(method):
+    """Make method automatically increment the program counter.
 
-#@trace
-def sub_pc(program_counter):
-    """Generate a sub-counter from a program counter."""
-    return program_counter + (1,)
+    The function must be a method.
+    """
+    def inc_pc_wrapper(self, *args, **kwargs):
+        try:
+            self.program_counter[-1] += 1
+            self.program_counter.append(0)
+            #println("Calling %s: %s", method.func_name, self.program_counter)
+            return method(self, *args, **kwargs)
+        finally:
+            self.program_counter.pop()
+    inc_pc_wrapper.func_name = method.func_name
+    return inc_pc_wrapper
 
 
 class Runtime:
@@ -161,7 +167,7 @@ class Runtime:
         self.id = id
         self.threshold = threshold
 
-        self.program_counter = 0
+        self.program_counter = [0]
 
         # Dictionary mapping (program_counter, player_id) to Deferreds
         # yielding shares.
@@ -223,21 +229,43 @@ class Runtime:
         println("Reactor stopped")
 
     #@trace
-    def init_pc(self, program_counter):
-        """Initialize a program counter."""
-        if program_counter is None:
-            self.program_counter += 1
-            program_counter = (self.program_counter,)
-        return program_counter
+    def callback(self, deferred, func, *args, **kwargs):
+        """Schedule a callback on a deferred with the correct PC.
+
+        If a callback depends on the current PC, then use this method
+        to schedule it instead of simply calling addCallback directly.
+        Simple callbacks that are independent of the PC can still be
+        added directly to the deferred as usual.
+
+        Any extra arguments are passed to the callback as with
+        addCallback.
+        """
+        saved_pc = self.program_counter[:]
+        #println("Saved PC: %s for %s", saved_pc, func.func_name)
+
+        #@trace
+        def callback_wrapper(*args, **kwargs):
+            """Wrapper for a callback which ensures a correct PC."""
+            try:
+                current_pc = self.program_counter
+                self.program_counter = saved_pc
+                #println("Callback PC: %s", self.program_counter)
+                return func(*args, **kwargs)
+            finally:
+                self.program_counter = current_pc
+        callback_wrapper.func_name = func.func_name
+
+        #println("Adding %s to %s", func.func_name, deferred)
+        deferred.addCallback(callback_wrapper, *args, **kwargs)
 
     #@trace
-    def open(self, sharing, threshold=None, program_counter=None):
+    @increment_pc
+    def open(self, sharing, threshold=None):
         """Open a share. Returns nothing, the share given is mutated.
 
         Communication cost: n broadcasts.
         """
         assert isinstance(sharing, Deferred)
-        program_counter = self.init_pc(program_counter)
         if threshold is None:
             threshold = self.threshold
 
@@ -246,15 +274,15 @@ class Runtime:
             assert isinstance(share, FieldElement)
             deferreds = []
             for id in self.players:
-                d = self._exchange_shares(program_counter, id, share)
-                d.addCallback(lambda s, id: (s.field(id), s), id)
+                d = self._exchange_shares(id, share)
+                self.callback(d, lambda s, id: (s.field(id), s), id)
                 deferreds.append(d)
 
             # TODO: This list ought to trigger as soon as more than
             # threshold shares has been received.
             return self._recombine(deferreds, threshold)
 
-        sharing.addCallback(broadcast)
+        self.callback(sharing, broadcast)
         # TODO: should open() return a new deferred?
         
     #@trace
@@ -288,7 +316,8 @@ class Runtime:
         return result
 
     #@trace
-    def mul(self, share_a, share_b, program_counter=None):
+    @increment_pc
+    def mul(self, share_a, share_b):
         """Multiplication of shares.
 
         Communication cost: 1 Shamir sharing.
@@ -296,7 +325,6 @@ class Runtime:
         # TODO:  mul accept FieldElements and do quick local
         # multiplication in that case. If two FieldElements are given,
         # return a FieldElement.
-        program_counter = self.init_pc(program_counter)
 
         if not isinstance(share_a, Deferred):
             share_a = defer.succeed(share_a)
@@ -305,12 +333,13 @@ class Runtime:
 
         result = gatherResults([share_a, share_b])
         result.addCallback(lambda (a, b): a * b)
-        result.addCallback(self._shamir_share, sub_pc(program_counter))
-        result.addCallback(self._recombine, threshold=2*self.threshold)
+        self.callback(result, self._shamir_share)
+        self.callback(result, self._recombine, threshold=2*self.threshold)
         return result
     
     #@trace
-    def xor_int(self, share_a, share_b, program_counter=None):
+    @increment_pc
+    def xor_int(self, share_a, share_b):
         """Exclusive-or of integer sharings.
         
         Communication cost: 1 multiplication.
@@ -320,23 +349,25 @@ class Runtime:
         if not isinstance(share_b, Deferred):
             share_b = defer.succeed(share_b)
 
-        program_counter = self.init_pc(program_counter)
-        share_c = self.mul(share_a, share_b, sub_pc(program_counter))
+        share_c = self.mul(share_a, share_b)
         result = gatherResults([share_a, share_b, share_c])
-        result.addCallback(lambda (a, b, c): a + b - 2*c)
+        self.callback(result, lambda (a, b, c): a + b - 2*c)
         return result
 
     xor_bit = add
 
-    def prss_share(self, element, program_counter=None):
+    @increment_pc
+    def prss_share(self, element):
         """PRSS share a field element.
 
         Communication cost: 1 broadcast.
         """
         assert isinstance(element, FieldElement)
-        program_counter = self.init_pc(program_counter)
         field = type(element)
         n = len(self.players)
+
+        # Key used for PRSS.
+        key = tuple(self.program_counter)
 
         # The shares for which we have all the keys.
         all_shares = []
@@ -344,7 +375,7 @@ class Runtime:
         # Shares we calculate from doing PRSS with the other players.
         tmp_shares = {}
 
-        dealer_prfs = self.players[self.id].dealer_prfs(field.modulus)
+        prfs = self.players[self.id].dealer_prfs(field.modulus)
 
         # TODO: Stop calculating shares for all_shares at
         # self.threshold+1 since that is all we need to do the Shamir
@@ -352,11 +383,9 @@ class Runtime:
         for player in self.players:
             # TODO: when player == self.id, the two calls to prss are
             # the same.
-            share = prss(n, player, field, dealer_prfs[self.id],
-                         program_counter)
+            share = prss(n, player, field, prfs[self.id], key)
             all_shares.append((field(player), share))
-            tmp_shares[player] = prss(n, self.id, field, dealer_prfs[player],
-                                      program_counter)
+            tmp_shares[player] = prss(n, self.id, field, prfs[player], key)
 
         # We can now calculate what was shared and derive the
         # correction factor.
@@ -366,14 +395,15 @@ class Runtime:
         result = []
         for player in self.players:
             # TODO: more efficient broadcast?
-            d = self._exchange_shares(program_counter, player, correction)
+            d = self._exchange_shares(player, correction)
             # We have to add our own share to the correction factor
             # received.
             d.addCallback(lambda c, s: s + c, tmp_shares[player])
             result.append(d)
         return result
 
-    def prss_share_random(self, field, binary=False, program_counter=None):
+    @increment_pc
+    def prss_share_random(self, field, binary=False):
         """Generate shares of a uniformly random element from the field given.
 
         If binary is True, a 0/1 element is generated. No player
@@ -381,30 +411,28 @@ class Runtime:
 
         Communication cost: none if binary=False, 1 open otherwise.
         """
-        program_counter = self.init_pc(program_counter)
-
         if field is GF256 and binary:
             modulus = 2
         else:
             modulus = field.modulus
 
+        # Key used for PRSS.
+        prss_key = tuple(self.program_counter)
         prfs = self.players[self.id].prfs(modulus)
-        share = prss(len(self.players), self.id, field, prfs, program_counter)
+        share = prss(len(self.players), self.id, field, prfs, prss_key)
 
         if field is GF256 or not binary:
             return defer.succeed(share)
 
         result = self.mul(share, share)
 
-        program_counter = sub_pc(program_counter)
         # Open the square and compute a square-root
-        self.open(result, 2*self.threshold, program_counter)
+        self.open(result, 2*self.threshold)
 
-        def finish(square, share, binary, program_counter):
+        def finish(square, share, binary):
             if square == 0:
                 # We were unlucky, try again...
-                return self.prss_share_random(field, binary,
-                                              sub_pc(program_counter))
+                return self.prss_share_random(field, binary)
             else:
                 # We can finish the calculation
                 root = square.sqrt()
@@ -413,10 +441,11 @@ class Runtime:
                 two = field(2)
                 return defer.succeed((share/root + 1) / two)
 
-        result.addCallback(finish, share, binary, program_counter)
+        self.callback(result, finish, share, binary)
         return result
 
-    def _shamir_share(self, number, program_counter):
+    @increment_pc
+    def _shamir_share(self, number):
         """Share a FieldElement using Shamir sharing.
 
         Returns a list of (id, share) pairs.
@@ -426,14 +455,15 @@ class Runtime:
         
         result = []
         for other_id, share in shares:
-            d = self._exchange_shares(program_counter, other_id.value, share)
+            d = self._exchange_shares(other_id.value, share)
             d.addCallback(lambda share, id: (id, share), other_id)
             result.append(d)
 
         return result
 
     #@trace
-    def shamir_share(self, number, program_counter=None):
+    @increment_pc
+    def shamir_share(self, number):
         """Share a field element using Shamir sharing.
 
         Returns a list of shares.
@@ -441,27 +471,21 @@ class Runtime:
         Communication cost: n elements transmitted.
         """
         assert isinstance(number, FieldElement)
-        program_counter = self.init_pc(program_counter)
 
         def split(pair):
             pair.addCallback(lambda (_, share): share)
 
-        result = self._shamir_share(number, program_counter)
+        result = self._shamir_share(number)
         map(split, result)
         return result
 
     #@trace
-    def convert_bit_share(self, share, src_field, dst_field,
-                          program_counter=None):
+    @increment_pc
+    def convert_bit_share(self, share, src_field, dst_field):
         """Convert a 0/1 share from src_field into dst_field."""
-        program_counter = self.init_pc(program_counter)
         bit = rand.randint(0, 1)
-
-        program_counter = sub_pc(program_counter)
-        dst_shares = self.prss_share(dst_field(bit), program_counter)
-
-        program_counter = inc_pc(program_counter)
-        src_shares = self.prss_share(src_field(bit), program_counter)
+        dst_shares = self.prss_share(dst_field(bit))
+        src_shares = self.prss_share(src_field(bit))
 
         # TODO: merge xor_int and xor_bit into an xor method and move
         # this decission there.
@@ -476,8 +500,7 @@ class Runtime:
 
         # We open tmp and convert the value into a field element from
         # the dst_field.
-        program_counter = inc_pc(program_counter)
-        self.open(tmp, program_counter=program_counter)
+        self.open(tmp)
         tmp.addCallback(lambda i: dst_field(i.value))
         
         if dst_field is GF256:
@@ -488,46 +511,36 @@ class Runtime:
         return reduce(xor, dst_shares, tmp)
 
     #@trace
-    def convert_bit_share_II(self, share, src_field, dst_field,
-                          program_counter=None, k=None):
+    @increment_pc
+    def convert_bit_share_II(self, share, src_field, dst_field, k=None):
         """Convert a 0/1 share from src_field into dst_field."""
-
-        program_counter = self.init_pc(program_counter)
-        program_counter = sub_pc(program_counter)
-
 
         #TODO: don't do log like this...
         def log(x):
             result = 0
             while x > 1:
-                result +=1
+                result += 1
                 x /= 2
             return result+1 # Error for powers of two...
-            
 
-        if k==None:
+        if k is None:
             k = 30
         l = k + log(dst_field.modulus)
         # TODO assert field sizes are OK...
 
-
-
-
         this_mask = rand.randint(0, (2**l) -1)
 
-        # Share large random values in the big field and reduced ones in the small...
-        program_counter = inc_pc(program_counter)
-        src_shares = self.prss_share(src_field(this_mask), program_counter)
-        program_counter = inc_pc(program_counter)
-        dst_shares = self.prss_share(dst_field(this_mask), program_counter)
+        # Share large random values in the big field and reduced ones
+        # in the small...
+        src_shares = self.prss_share(src_field(this_mask))
+        dst_shares = self.prss_share(dst_field(this_mask))
 
 
         tmp = reduce(self.add, src_shares, share)
 
         # We open tmp and convert the value into a field element from
         # the dst_field.
-        program_counter = inc_pc(program_counter)
-        self.open(tmp, program_counter=program_counter)
+        self.open(tmp)
 
         tmp.addCallback(lambda i: dst_field(i.value))
 
@@ -537,14 +550,13 @@ class Runtime:
 
 
     #@trace
-    def greater_than(self, share_a, share_b, field, program_counter=None):
+    @increment_pc
+    def greater_than(self, share_a, share_b, field):
         """Compute share_a >= share_b.
 
         Both arguments must be from the field given. The result is a
         GF256 share.
         """
-        program_counter = self.init_pc(program_counter)
-
         # TODO: get these from a configuration file or similar
         l = 32 # bit-length of input numbers
         m = l + 2
@@ -555,103 +567,83 @@ class Runtime:
         assert 2**(l+1) + 2**t < field.modulus, "2^(l+1) + 2^t < p must hold"
         assert len(self.players) + 2 < 2**l
 
-        int_bits = []
-        program_counter = sub_pc(program_counter)
-        for _ in range(m):
-            program_counter = inc_pc(program_counter)
-            int_bits.append(self.prss_share_random(field, True,
-                                                   program_counter))
-
+        int_bits = [self.prss_share_random(field, True) for _ in range(m)]
         # We must use int_bits without adding callbacks to the bits --
         # having int_b wait on them ensures this.
 
         def bits_to_int(bits):
             """Converts a list of bits to an integer."""
-            return sum([2**i * b for (i, b) in enumerate(bits)])
+            return sum([2**i * b for i, b in enumerate(bits)])
 
         int_b = gatherResults(int_bits)
         int_b.addCallback(bits_to_int)
 
-        bit_bits = []
-        for b in int_bits:
-            program_counter = inc_pc(program_counter)
-            # TODO: this changes int_bits! It should be okay since
-            # int_bits is not used any further, but still...
-            bit_bits.append(self.convert_bit_share(b, field, GF256,
-                                                   program_counter))
-
+        # TODO: this changes int_bits! It should be okay since
+        # int_bits is not used any further, but still...
+        bit_bits = [self.convert_bit_share(b, field, GF256) for b in int_bits]
         # Preprocessing done
 
         a = self.add(self.sub(share_a, share_b), 2**l)
         T = self.add(self.sub(2**t, int_b), a)
-        program_counter = inc_pc(program_counter)
-        self.open(T, program_counter=program_counter)
-
-        #@trace
-        def calculate(results, program_counter):
-            """Finish the calculation."""
-            T = results[0]
-            bit_bits = results[1:]
-
-            vec = [(GF256(0), GF256(0))]
-
-            # Calculate the vector, using only the first l bits
-            for i, bi in enumerate(bit_bits[:l]):
-                Ti = GF256(T.bit(i))
-                ci = self.xor_bit(bi, Ti)
-                vec.append((ci, Ti))
-
-            #@trace
-            def diamond((top_a, bot_a), (top_b, bot_b), program_counter):
-                """The "diamond-operator".
-
-                Defined by
-
-                (x, X) `diamond` (0, Y) = (0, Y)
-                (x, X) `diamond` (1, Y) = (x, X)
-                """
-                program_counter = sub_pc(program_counter)
-                top = self.mul(top_a, top_b, program_counter)
-                #   = x * y
-                program_counter = inc_pc(program_counter)
-                bot = self.xor_bit(self.mul(top_b, self.xor_bit(bot_a, bot_b),
-                                            program_counter), bot_b)
-                #   = (y * (X ^ Y)) ^ Y
-
-                return (top, bot)
-
-            # Reduce using the diamond operator. We want to do as much
-            # as possible in parallel while being careful not to
-            # switch the order of elements since the diamond operator
-            # is non-commutative.
-            while len(vec) > 1:
-                tmp = []
-                while len(vec) > 1:
-                    program_counter = inc_pc(program_counter)
-                    tmp.append(diamond(vec.pop(0), vec.pop(0), program_counter))
-                if len(vec) == 1:
-                    tmp.append(vec[0])
-                vec = tmp
-
-            return self.xor_bit(GF256(T.bit(l)),
-                                self.xor_bit(bit_bits[l], vec[0][1]))
+        self.open(T)
 
         result = gatherResults([T] + bit_bits)
-        program_counter = inc_pc(program_counter)
-        result.addCallback(calculate, program_counter)
+        self.callback(result, self._finish_greater_than, l)
         return result
-        
-    ########################################################################
-    ########################################################################
-
 
     #@trace
-    def greater_thanII_preproc(self, field, smallField=None,
-                               program_counter=None, l=None, k=None):
-        """Preprocessing for greater_thanII."""
-        program_counter = self.init_pc(program_counter)
-        program_counter = sub_pc(program_counter)
+    @increment_pc
+    def _finish_greater_than(self, results, l):
+        """Finish the calculation."""
+        T = results[0]
+        bit_bits = results[1:]
 
+        vec = [(GF256(0), GF256(0))]
+
+        # Calculate the vector, using only the first l bits
+        for i, bi in enumerate(bit_bits[:l]):
+            Ti = GF256(T.bit(i))
+            ci = self.xor_bit(bi, Ti)
+            vec.append((ci, Ti))
+
+        # Reduce using the diamond operator. We want to do as much
+        # as possible in parallel while being careful not to
+        # switch the order of elements since the diamond operator
+        # is non-commutative.
+        while len(vec) > 1:
+            tmp = []
+            while len(vec) > 1:
+                tmp.append(self._diamond(vec.pop(0), vec.pop(0)))
+            if len(vec) == 1:
+                tmp.append(vec[0])
+            vec = tmp
+
+        return self.xor_bit(GF256(T.bit(l)),
+                            self.xor_bit(bit_bits[l], vec[0][1]))
+
+    #@trace
+    @increment_pc
+    def _diamond(self, (top_a, bot_a), (top_b, bot_b)):
+        """The "diamond-operator".
+
+        Defined by
+
+        (x, X) `diamond` (0, Y) = (0, Y)
+        (x, X) `diamond` (1, Y) = (x, X)
+        """
+        top = self.mul(top_a, top_b)
+        #   = x * y
+        bot = self.xor_bit(self.mul(top_b, self.xor_bit(bot_a, bot_b)), bot_b)
+        #   = (y * (X ^ Y)) ^ Y
+        return (top, bot)
+
+    ########################################################################
+    ########################################################################
+
+    #@trace
+    @increment_pc
+    def greater_thanII_preproc(self, field, smallField=None, l=None, k=None):
+        """Preprocessing for greater_thanII."""
         if smallField is None:
             smallField = field
         if l is None:
@@ -666,73 +658,43 @@ class Runtime:
         assert field.modulus > 2**(l+2) + 2**(l+k), "Field too small"
         assert smallField.modulus > 3 + 3*l, "smallField too small"
 
-
         # TODO: do not generate all bits, only $l$ of them
         # could perhaps do PRSS over smaller subset?
-        r_bitsField = []
-        for _ in range(l+k):
-            program_counter = inc_pc(program_counter)
-            r_bitsField.append(self.prss_share_random(field, True, program_counter))
+        r_bitsField = [self.prss_share_random(field, True) for _ in range(l+k)]
 
         # TODO: compute r_full from r_modl and top bits, not from scratch
         r_full = field(0)
-        for (i,b) in enumerate(r_bitsField):
-            program_counter = inc_pc(program_counter)
-            r_full = self.add(r_full,
-                              self.mul(b, field(2**i),
-                                       program_counter=program_counter))
+        for i, b in enumerate(r_bitsField):
+            r_full = self.add(r_full, self.mul(b, field(2**i)))
 
         r_bitsField = r_bitsField[:l]
         r_modl = field(0)
-        for (i,b) in enumerate(r_bitsField):
-            program_counter = inc_pc(program_counter)
-            r_modl = self.add(r_modl,
-                              self.mul(b, field(2**i),
-                                       program_counter=program_counter))
-            
+        for i, b in enumerate(r_bitsField):
+            r_modl = self.add(r_modl, self.mul(b, field(2**i)))
 
         # Transfer bits to smallField
         if field is smallField:
             r_bits = r_bitsField
         else:
-            r_bits = []
-            for bit in r_bitsField:
-                program_counter = inc_pc(program_counter)
-                r_bits.append(self.convert_bit_share_II(bit, field, smallField,
-                                                        program_counter=program_counter))
+            r_bits = [self.convert_bit_share_II(bit, field, smallField) \
+                      for bit in r_bitsField]
 
-        program_counter = inc_pc(program_counter)
-        s_bit = self.prss_share_random(field, binary=True,
-                                       program_counter=program_counter)
+        s_bit = self.prss_share_random(field, binary=True)
 
-        program_counter = inc_pc(program_counter)
-        s_bitSmallField = self.convert_bit_share_II(s_bit, field, smallField,
-                                                    program_counter=program_counter)
-        program_counter = inc_pc(program_counter)
+        s_bitSmallField = self.convert_bit_share_II(s_bit, field, smallField)
         s_sign = self.add(smallField(1),
-                          self.mul(s_bitSmallField, smallField(-2),
-                                   program_counter=program_counter))
+                          self.mul(s_bitSmallField, smallField(-2)))
 
 
         # m: uniformly random -- should be non-zero, however, this
         # happens with negligible probability
         # TODO: small field, no longer negligible probability of zero -- update
-        program_counter = inc_pc(program_counter)
-        mask = self.prss_share_random(smallField, False, program_counter)
-
-        program_counter = inc_pc(program_counter)
-        mask_2 = self.prss_share_random(smallField, False, program_counter)
-        program_counter = inc_pc(program_counter)
-        mask_OK = self.mul(mask, mask_2, program_counter = program_counter)
-        program_counter = inc_pc(program_counter)
-        self.open(mask_OK, program_counter=program_counter)
+        mask = self.prss_share_random(smallField, False)
+        mask_2 = self.prss_share_random(smallField, False)
+        mask_OK = self.mul(mask, mask_2)
+        self.open(mask_OK)
         dprint("Mask_OK: %s", mask_OK)
-        
-
-
         return field, smallField, s_bit, s_sign, mask, r_full, r_modl, r_bits
-        
-        
 
         ##################################################
         # Preprocessing done
@@ -740,28 +702,19 @@ class Runtime:
         
 
     #@trace
-    def greater_thanII_online(self, share_a, share_b, preproc, field,
-                              program_counter=None, l=None):
+    @increment_pc
+    def greater_thanII_online(self, share_a, share_b, preproc, field, l=None):
         """Compute share_a >= share_b.
         Result is shared.
         """
-        program_counter = self.init_pc(program_counter)
-        program_counter = sub_pc(program_counter)
-
         if l == None:
             l = 32
 
         # increment l as a, b are increased
-        l +=1
+        l += 1
         # a = 2a+1; b= 2b // ensures inputs not equal
-        program_counter = inc_pc(program_counter)
-        share_a = self.add(self.mul(field(2),
-                                    share_a,
-                                    program_counter=program_counter),
-                           field(1))
-        program_counter = inc_pc(program_counter)
-        share_b = self.mul(field(2), share_b, program_counter=program_counter)
-
+        share_a = self.add(self.mul(field(2), share_a), field(1))
+        share_b = self.mul(field(2), share_b)
         
         ##################################################
         # Unpack preprocessing
@@ -777,72 +730,11 @@ class Runtime:
         # c = 2**l + a - b + r
         z = self.add(self.sub(share_a, share_b), field(2**l))
         c = self.add(r_full, z)
+        self.open(c)
 
-
-        program_counter = inc_pc(program_counter)
-        self.open(c, program_counter=program_counter)
-
-
-        #@trace
-        def calculate(c, program_counter):
-            """Finish the calculation."""
-            c_bits = [smallField(c.bit(i)) for i in range(l)]
-
-            sumXORs = [0]*l
-            # sumXORs[i] = sumXORs[i+1] + r_bits[i+1] + c_(i+1) - 2*r_bits[i+1]*c_(i+1)
-            for i in range(l-2, -1, -1):
-                # sumXORs[i] = \sum_{j=i+1}^{l-1} r_j\oplus c_j
-                program_counter = inc_pc(program_counter)
-                sumXORs[i] = self.add(sumXORs[i+1],
-                                      self.xor_int(r_bits[i+1], c_bits[i+1],
-                                                   program_counter=program_counter))
-            E_tilde = []
-            for i in range(len(r_bits)):
-                ## s + rBit[i] - cBit[i] + 3 * sumXors[i];
-                program_counter = inc_pc(program_counter)
-                e_i = self.add(s_sign,
-                               self.sub(r_bits[i], c_bits[i]))
-                e_i = self.add(e_i,
-                               self.mul(smallField(3),sumXORs[i],
-                                        program_counter=program_counter))
-                E_tilde.append(e_i)
-            E_tilde.append(mask) # Hack: will mult e_i and mask...
-
-            while len(E_tilde) > 1:
-                program_counter = inc_pc(program_counter)
-                # TODO: pop() ought to be preferred? No: it takes the
-                # just appended and thus works liniarly... try with
-                # two lists instead, pop(0) is quadratic if it moves
-                # elements.
-                E_tilde.append(self.mul(E_tilde.pop(0),
-                                        E_tilde.pop(0),
-                                        program_counter=program_counter))
-
-            program_counter = inc_pc(program_counter)
-            self.open(E_tilde[0], program_counter=program_counter)
-            E_tilde[0].addCallback(lambda bit: field(bit.value != 0))
-            non_zero = E_tilde[0]
-
-
-            # UF == underflow
-            program_counter = inc_pc(program_counter)
-            UF = self.xor_int(non_zero, s_bit, program_counter=program_counter)
-
-            # conclude the computation -- compute final bit and map to 0/1
-            # return  2^(-l) * (z - (c%2**l - r%2**l + UF*2**l))
-            #
-            c_mod2l = field(c.value % 2**l)
-            program_counter = inc_pc(program_counter)
-            result = self.add(self.sub(c_mod2l, r_modl),
-                              self.mul(UF, field(2**l), program_counter))
-            result = self.sub(z, result)
-            program_counter = inc_pc(program_counter)
-            result = self.mul(result, ~(field(2**l)), program_counter)
-            return result
-        # END calculate
-
-        program_counter = inc_pc(program_counter)                                    
-        c.addCallback(calculate, program_counter)
+        self.callback(c, self._finish_greater_thanII,
+                      l, field, smallField, s_bit, s_sign, mask, r_full,
+                      r_modl, r_bits, z)
         return c
 #         result = gatherResults([c])
 #         program_counter = inc_pc(program_counter)
@@ -850,41 +742,76 @@ class Runtime:
 #         return result
 
 
-
-
-    
-
-
-
     #@trace
-    def greater_thanII(self, share_a, share_b, field,
-                       program_counter=None, l=None):
+    @increment_pc
+    def _finish_greater_thanII(self, c, l, field, smallField, s_bit, s_sign,
+                               mask, r_full, r_modl, r_bits, z):
+        """Finish the calculation."""
+        c_bits = [smallField(c.bit(i)) for i in range(l)]
+
+        sumXORs = [0]*l
+        # sumXORs[i] = sumXORs[i+1] + r_bits[i+1] + c_(i+1)
+        #                           - 2*r_bits[i+1]*c_(i+1)
+        for i in range(l-2, -1, -1):
+            # sumXORs[i] = \sum_{j=i+1}^{l-1} r_j\oplus c_j
+            sumXORs[i] = self.add(sumXORs[i+1],
+                                  self.xor_int(r_bits[i+1], c_bits[i+1]))
+        E_tilde = []
+        for i in range(len(r_bits)):
+            ## s + rBit[i] - cBit[i] + 3 * sumXors[i];
+            e_i = self.add(s_sign, self.sub(r_bits[i], c_bits[i]))
+            e_i = self.add(e_i, self.mul(smallField(3), sumXORs[i]))
+            E_tilde.append(e_i)
+        E_tilde.append(mask) # Hack: will mult e_i and mask...
+
+        while len(E_tilde) > 1:
+            # TODO: pop() ought to be preferred? No: it takes the
+            # just appended and thus works liniarly... try with
+            # two lists instead, pop(0) is quadratic if it moves
+            # elements.
+            E_tilde.append(self.mul(E_tilde.pop(0),
+                                    E_tilde.pop(0)))
+
+        self.open(E_tilde[0])
+        E_tilde[0].addCallback(lambda bit: field(bit.value != 0))
+        non_zero = E_tilde[0]
+
+
+        # UF == underflow
+        UF = self.xor_int(non_zero, s_bit)
+
+        # conclude the computation -- compute final bit and map to 0/1
+        # return  2^(-l) * (z - (c%2**l - r%2**l + UF*2**l))
+        #
+        c_mod2l = field(c.value % 2**l)
+        result = self.add(self.sub(c_mod2l, r_modl),
+                          self.mul(UF, field(2**l)))
+        result = self.sub(z, result)
+        result = self.mul(result, ~(field(2**l)))
+        return result
+    # END _finish_greater_thanII
+    
+    #@trace
+    @increment_pc
+    def greater_thanII(self, share_a, share_b, field, l=None):
         """Compute share_a >= share_b.
 
         Both arguments must be of type field. The result is a
         field share.
         """
-
-        program_counter = self.init_pc(program_counter)
-        program_counter = sub_pc(program_counter)
-
         # TODO: get these from a configuration file or similar
         k = 30 # security parameter
         if l is None:
             l = 32 # bit-length of input numbers
 
-        program_counter = inc_pc(program_counter)
-        preproc = self.greater_thanII_preproc(field, l=l, k=k,
-                                              program_counter=program_counter)
-        program_counter = inc_pc(program_counter)
-        return self.greater_thanII_online(share_a, share_b, preproc, field,
-                                          program_counter=program_counter, l=l)
+        preproc = self.greater_thanII_preproc(field, l=l, k=k)
+        return self.greater_thanII_online(share_a, share_b, preproc, field, l=l)
 
     ########################################################################
     ########################################################################
 
     #@trace
-    def _exchange_shares(self, program_counter, id, share):
+    def _exchange_shares(self, id, share):
         """Exchange shares with another player.
 
         We send the player our share and record a Deferred which will
@@ -892,20 +819,23 @@ class Runtime:
         """
         assert isinstance(share, FieldElement)
         #println("exchange_shares sending: program_counter=%s, id=%d, share=%s",
-        #        program_counter, id, share)
+        #        self.program_counter, id, share)
 
         if id == self.id:
             return defer.succeed(share)
         else:
-            key = (program_counter, id)
+            # Convert self.program_cunter to a hashable value in order
+            # to use it as a key in self.incoming_shares.
+            pc = tuple(self.program_counter)
+            key = (pc, id)
             if key not in self.incoming_shares:
                 self.incoming_shares[key] = Deferred()
 
             # Send the share to the other side
-            self.protocols[id].addCallback(ShareExchanger.sendShare,
-                                           program_counter, share)
+            self.protocols[id].addCallback(ShareExchanger.sendShare, pc, share)
             return self.incoming_shares[key]
 
+    @increment_pc
     def _recombine(self, shares, threshold):
         """Shamir recombine a list of deferred (id,share) pairs."""
         assert len(shares) > threshold

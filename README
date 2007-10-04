@@ -3,15 +3,17 @@ PySMPC: Python Secure Multi-Party Computation
 =============================================
 
 This is a general framework for doing secure multi-party computations.
-The aim is to offer a secure, fast basic for writing SMPC protocols.
+The aim is to offer a secure, fast basis for writing SMPC protocols.
 
-Please see the INSTALL file for installation instructions.
+Please see the INSTALL file for installation instructions. PySMPC is
+licensed under the GNU General Public License, please see the file
+COPYING for details.
 
 
 Current Status
 --------------
 
-The framework offers the following:
+The PySMPC API currently offers the following features:
 
 * arithmetic with shares from Zp or GF(2^8).
 * secret sharing based on Shamir and PRSS.

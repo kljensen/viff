@@ -1,5 +1,6 @@
 
-TODO list for pysmpc.
+PySMPC TODO List
+================
 
 There are a number of small and large design changes listed below. In
 addition to those, the source code contains a number of comments
@@ -9,6 +10,25 @@ marked with 'TODO' which document things on a more local level.
    Generating a random bit using PRSS only works with Blum primes,
    that is, primes that are congruent to 3 modulo 4. The comparison
    uses such bits and thus breaks with non-Blum primes.
+
+* Use GMPY per default
+   Make field elements use GMPY unless some option asks them not to.
+
+* Options framework
+   Having a proper framework for options would be cool. Options
+   include use of GMPY, security parameter, modulus, and probably
+   other stuff.
+
+* Have the Runtime return values with overloaded arithmetic operations
+   So instead of Deferreds you would get Shares back. They would know
+   which Runtime instance they belong to and provide __add__, __mul__,
+   etc. operations.
+
+* Define a hierarchy for Runtime functionality
+   The Runtime class keeps growing as more and more functionality is
+   put into it. An options would be to split it into a basic Runtime
+   which provides communication and nothing else. More functionality
+   could be provided by mix-in classes.
 
 * Create unit tests which randomizes network delay
    The current unit test with LoopbackRuntime are strictly sequential
@@ -30,49 +50,10 @@ marked with 'TODO' which document things on a more local level.
           / \
          3   ...
 
-
 * Profile and optimize
    We need to see if the time is spend on network latency or in the
    CPU. If the latter is the case, then we could consider writing the
    inner loop in C for more speed.
-
-* Remove program counters
-   An idea for this was suggested by Thomas Mølhave: label each share
-   with a tuple containing the labels of the shares that it depend on
-   in addition to the operation done. Consider:
-
-   a, b = rt.share(10)
-   c = rt.mul(a,b)
-
-   Here a and b get labels ('share', 1) and ('share', 2), and c get
-   the label ('mul', ('share', 1), ('share', 2)). If we continue with
-
-   d = rt.add(c,c)
-
-   the label for d would be
-
-   ('add', ('mul', ('share', 1), ('share', 2)),
-           ('mul', ('share', 1), ('share', 2)))
-
-   The labels grow exponentially in the length of dependencies! To
-   counter this, one could hash the labels.
-   
-   Consider this program:
-
-   x = rt.add(a,b)
-   y = rt.add(a,b)
-
-   Here x and y have the same label and are thus indistinguishable
-   when sent over the network. Since x and y have the exact same
-   history, and so represent the same value, this ought to cause no
-   trouble.
-   
-   A bigger problem with this approach seems to be the functions that
-   work with no input: the PRSS functions. They have no input to work
-   on, and so the output have no context to base its history on. They
-   cannot simply use a global counter since the calls might occur in
-   different order among different players -- we are back at the
-   original problem that was solved using the tuple program counters.
 
 * Have an option which will make things run more or less sequentially
    For example: no parallelism would mean that all operations queue up

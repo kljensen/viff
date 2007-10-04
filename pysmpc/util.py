@@ -47,6 +47,37 @@ def deprecation(message):
     """Issue a deprecation warning."""
     warnings.warn(message, DeprecationWarning, stacklevel=3)
 
+
+def dlift(func):
+    """Lift a function to handle deferred arguments.
+
+    Use this as a decorator. The decorated function accepts the same
+    arguments as the original function, but arguments for the lifted
+    function can be Deferreds. The return value of the lifted function
+    will always be a Deferred.
+
+    Keyword arguments are not lifted.
+    """
+    def lifted(*args, **kwargs):
+        """Lifted wrapper function."""
+        deferred_args = []
+        for arg in args:
+            if not isinstance(arg, Deferred):
+                arg = succeed(arg)
+            deferred_args.append(arg)
+
+        # One might opt to lift any keyword arguments too, but it has
+        # been left out for now since it is somewhat complicated with
+        # multiple DeferredLists waiting on each other.
+
+        results = gatherResults(deferred_args)
+        results.addCallback(lambda results: func(*results, **kwargs))
+        return results
+
+    lifted.func_name = func.func_name
+    return lifted
+        
+@dlift
 def dprint(fmt, *args):
     """Deferred print which waits on Deferreds.
 
@@ -54,14 +85,4 @@ def dprint(fmt, *args):
     Deferreds given in args. When all Deferreds are ready, the print
     is done.
     """
-    def output(args, fmt):
-        print fmt % tuple(args)
-
-    deferreds = []
-    for arg in args:
-        if not isinstance(arg, Deferred):
-            arg = succeed(arg)
-        deferreds.append(arg)
-
-    args = gatherResults(deferreds)
-    args.addCallback(output, fmt)
+    print fmt % tuple(args)

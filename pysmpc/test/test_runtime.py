@@ -204,7 +204,7 @@ class RuntimeTestCase(TestCase):
             return [x[1] for x in sequence]
 
         results = []
-        for a, b in (0,0), (0,1), (1,0), (1,1):
+        for a, b in (0, 0), (0, 1), (1, 0), (1, 1):
             int_a = self.Zp(a)
             int_b = self.Zp(b)
 
@@ -495,7 +495,7 @@ if 'STRESS' in os.environ:
             y.addCallback(self.assertEquals, result)
             z.addCallback(self.assertEquals, result)
 
-            return gatherResults([x,y,z])
+            return gatherResults([x, y, z])
 
         def test_mul_100(self):
             return self._mul_stress_test(100)
@@ -519,7 +519,9 @@ if 'STRESS' in os.environ:
             l = 7
 
             # Random generators
-            rand = {1: Random(count + 1), 2: Random(count + 2), 3: Random(count + 3)}
+            rand = {1: Random(count + 1),
+                    2: Random(count + 2),
+                    3: Random(count + 3)}
             results = []
 
             for _ in range(count):

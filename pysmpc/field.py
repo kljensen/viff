@@ -277,9 +277,12 @@ def GF(modulus):
             No attempt is made the to return the positive square
             root.
             """
-            # TODO: If the modulus is a Blum prime (congruent to 3
-            # mod 4), then there will be no reminder in the
-            # division. But what if it is not a Blum prime?
+            assert self.modulus % 4 == 3, "Cannot conpute square " \
+                   "root of %s with modulus %s" % (self, self.modulus)
+
+            # Because we assert that the modulus is a Blum prime
+            # (congruent to 3 mod 4), there will be no reminder in the
+            # division below.
             root = pow(self.value, (self.modulus+1)//4, self.modulus)
             return GFElement(root)
 
