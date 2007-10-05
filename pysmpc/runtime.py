@@ -40,11 +40,9 @@ from twisted.protocols.basic import Int16StringReceiver
 class ShareExchanger(Int16StringReceiver):
     """Send and receive shares."""
 
-    #@trace
     def __init__(self, id):
         self.id = id
         
-    #@trace
     def stringReceived(self, string):
         program_counter, modulus, value = marshal.loads(string)
 
@@ -60,7 +58,6 @@ class ShareExchanger(Int16StringReceiver):
         # TODO: marshal.loads can raise EOFError, ValueError, and
         # TypeError. They should be handled somehow.
 
-    #@trace
     def sendShare(self, program_counter, share):
         """Send a share."""
         #println("Sending to id=%d: program_counter=%s, share=%s",
@@ -80,7 +77,6 @@ class ShareExchanger(Int16StringReceiver):
 class ShareExchangerFactory(ServerFactory, ClientFactory):
     """Factory for creating ShareExchanger protocols."""
 
-    #@trace
     def __init__(self, incoming_shares, port_player_mapping, protocols):
         println("ShareExchangerFactory: %s", port_player_mapping)
 
@@ -88,7 +84,6 @@ class ShareExchangerFactory(ServerFactory, ClientFactory):
         self.port_player_mapping = port_player_mapping
         self.protocols = protocols
 
-    #@trace
     def buildProtocol(self, addr):
         """Build and return a new protocol for communicating with addr."""
         port = addr.port - (addr.port % 100)
@@ -130,7 +125,6 @@ class Runtime:
     class and use it for all calculations.
     """
 
-    #@trace
     def __init__(self, players, id, threshold):
         self.players = players
         self.id = id
@@ -197,7 +191,6 @@ class Runtime:
         reactor.run()
         println("Reactor stopped")
 
-    #@trace
     def callback(self, deferred, func, *args, **kwargs):
         """Schedule a callback on a deferred with the correct PC.
 
@@ -212,7 +205,6 @@ class Runtime:
         saved_pc = self.program_counter[:]
         #println("Saved PC: %s for %s", saved_pc, func.func_name)
 
-        #@trace
         def callback_wrapper(*args, **kwargs):
             """Wrapper for a callback which ensures a correct PC."""
             try:
@@ -227,7 +219,6 @@ class Runtime:
         #println("Adding %s to %s", func.func_name, deferred)
         deferred.addCallback(callback_wrapper, *args, **kwargs)
 
-    #@trace
     @increment_pc
     def open(self, sharing, threshold=None):
         """Open a share using the threshold given or the runtime
@@ -258,7 +249,6 @@ class Runtime:
         self.callback(result, broadcast)
         return result
         
-    #@trace
     def add(self, share_a, share_b):
         """Addition of shares.
 
@@ -273,7 +263,6 @@ class Runtime:
         result.addCallback(lambda (a, b): a + b)
         return result
 
-    #@trace
     def sub(self, share_a, share_b):
         """Subtraction of shares.
 
@@ -288,7 +277,6 @@ class Runtime:
         result.addCallback(lambda (a, b): a - b)
         return result
 
-    #@trace
     @increment_pc
     def mul(self, share_a, share_b):
         """Multiplication of shares.
@@ -310,7 +298,6 @@ class Runtime:
         self.callback(result, self._recombine, threshold=2*self.threshold)
         return result
     
-    #@trace
     @increment_pc
     def xor_int(self, share_a, share_b):
         """Exclusive-or of integer sharings.
@@ -432,7 +419,6 @@ class Runtime:
 
         return result
 
-    #@trace
     @increment_pc
     def shamir_share(self, number):
         """Share a field element using Shamir sharing.
@@ -450,7 +436,6 @@ class Runtime:
         map(split, result)
         return result
 
-    #@trace
     @increment_pc
     def convert_bit_share(self, share, src_field, dst_field):
         """Convert a 0/1 share from src_field into dst_field."""
@@ -480,7 +465,6 @@ class Runtime:
 
         return reduce(xor, dst_shares, tmp)
 
-    #@trace
     @increment_pc
     def convert_bit_share_II(self, share, src_field, dst_field, k=None):
         """Convert a 0/1 share from src_field into dst_field."""
@@ -519,7 +503,6 @@ class Runtime:
         return self.sub(tmp, full_mask)
 
 
-    #@trace
     @increment_pc
     def greater_than(self, share_a, share_b, field):
         """Compute share_a >= share_b.
@@ -560,7 +543,6 @@ class Runtime:
         self.callback(result, self._finish_greater_than, l)
         return result
 
-    #@trace
     @increment_pc
     def _finish_greater_than(self, results, l):
         """Finish the calculation."""
@@ -590,7 +572,6 @@ class Runtime:
         return self.xor_bit(GF256(T.bit(l)),
                             self.xor_bit(bit_bits[l], vec[0][1]))
 
-    #@trace
     @increment_pc
     def _diamond(self, (top_a, bot_a), (top_b, bot_b)):
         """The "diamond-operator".
@@ -609,7 +590,6 @@ class Runtime:
     ########################################################################
     ########################################################################
 
-    #@trace
     @increment_pc
     def greater_thanII_preproc(self, field, smallField=None, l=None, k=None):
         """Preprocessing for greater_thanII."""
@@ -669,7 +649,6 @@ class Runtime:
         ##################################################
         
 
-    #@trace
     @increment_pc
     def greater_thanII_online(self, share_a, share_b, preproc, field, l=None):
         """Compute share_a >= share_b.
@@ -709,7 +688,6 @@ class Runtime:
 #         return result
 
 
-    #@trace
     @increment_pc
     def _finish_greater_thanII(self, c, l, field, smallField, s_bit, s_sign,
                                mask, r_full, r_modl, r_bits, z):
@@ -758,7 +736,6 @@ class Runtime:
         return result
     # END _finish_greater_thanII
     
-    #@trace
     @increment_pc
     def greater_thanII(self, share_a, share_b, field, l=None):
         """Compute share_a >= share_b.
@@ -777,7 +754,6 @@ class Runtime:
     ########################################################################
     ########################################################################
 
-    #@trace
     def _exchange_shares(self, id, share):
         """Exchange shares with another player.
 
