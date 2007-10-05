@@ -57,6 +57,25 @@ def dlift(func):
     will always be a Deferred.
 
     Keyword arguments are not lifted.
+
+    As an example, here is how to define a lazy addition and
+    multiplication which works for integers (deferred or not):
+
+    >>> @dlift
+    ... def add(a, b):
+    ...     return a + b
+    ...
+    >>> @dlift
+    ... def mul(a, b):
+    ...     return a * b
+    ...
+    >>> x = Deferred()
+    >>> y = Deferred()
+    >>> z = mul(add(x, 10), y)
+    >>> x.callback(5)
+    >>> y.callback(10)
+    >>> z                                         # doctest: +ELLIPSIS
+    <DeferredList at 0x...  current result: 150>
     """
     def lifted(*args, **kwargs):
         """Lifted wrapper function."""
@@ -84,6 +103,15 @@ def dprint(fmt, *args):
     Works like this print statement, except that dprint waits on any
     Deferreds given in args. When all Deferreds are ready, the print
     is done.
+
+    >>> x = Deferred()
+    >>> y = (1, 2, 3)
+    >>> z = Deferred()
+    >>> dprint("x: %d, y: %s, z: %s", x, y, z) # doctest: +ELLIPSIS
+    <DeferredList at 0x...>
+    >>> x.callback(10)
+    >>> z.callback("Hello World")
+    x: 10, y: (1, 2, 3), z: Hello World
     """
     print fmt % tuple(args)
 
