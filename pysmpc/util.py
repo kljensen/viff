@@ -145,6 +145,37 @@ def clone_deferred(original):
     clone = Deferred()
     original.addCallback(split_result)
     return clone
+
+_indent = 0
+_trace_counters = {}
+
+def trace(func):
+    """Trace function entry and exit."""
+    def wrapper(*args, **kwargs):
+        """
+        Wrapper.
+        """
+        global _indent
+        count = _trace_counters.setdefault(func.func_name, 1)
+        try:
+            print "%s-> Entering: %s (%d)" % ("  " * _indent,
+                                              func.func_name, count)
+            _indent += 1
+            _trace_counters[func.func_name] += 1
+            return func(*args, **kwargs)
+        finally:
+            _indent -= 1
+            print "%s<- Exiting:  %s (%d)" % ("  " * _indent,
+                                              func.func_name, count)
+    return wrapper
+
+def println(format="", *args):
+    """Print a line indented according to the stack depth."""
+    if len(args) > 0:
+        format = format % args
+
+    print "%s %s" % ("  " * _indent, format)
+
     
 if __name__ == "__main__":
     import doctest

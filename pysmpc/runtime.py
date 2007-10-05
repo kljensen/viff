@@ -29,43 +29,12 @@ import socket
 from pysmpc import shamir
 from pysmpc.prss import prss
 from pysmpc.field import GF, GF256, FieldElement
-from pysmpc.util import rand, dprint, clone_deferred
+from pysmpc.util import rand, dprint, println, clone_deferred
 
 from twisted.internet import defer, reactor
 from twisted.internet.defer import Deferred, DeferredList, gatherResults
 from twisted.internet.protocol import ClientFactory, ServerFactory
 from twisted.protocols.basic import Int16StringReceiver
-
-
-_indent = 0
-_trace_counters = {}
-
-def trace(func):
-    """Trace function entry and exit."""
-    def wrapper(*args, **kwargs):
-        """
-        Wrapper.
-        """
-        global _indent
-        count = _trace_counters.setdefault(func.func_name, 1)
-        try:
-            print "%s-> Entering: %s (%d)" % ("  " * _indent,
-                                              func.func_name, count)
-            _indent += 1
-            _trace_counters[func.func_name] += 1
-            return func(*args, **kwargs)
-        finally:
-            _indent -= 1
-            print "%s<- Exiting:  %s (%d)" % ("  " * _indent,
-                                              func.func_name, count)
-    return wrapper
-
-def println(format="", *args):
-    """Print a line indented according to the stack depth."""
-    if len(args) > 0:
-        format = format % args
-
-    print "%s %s" % ("  " * _indent, format)
 
 
 class ShareExchanger(Int16StringReceiver):
