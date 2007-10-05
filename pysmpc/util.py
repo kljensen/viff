@@ -86,3 +86,20 @@ def dprint(fmt, *args):
     is done.
     """
     print fmt % tuple(args)
+
+
+def clone_deferred(original):
+    """Clone a Deferred.
+
+    The returned clone will fire with the same result as the original
+    Deferred, but will otherwise be independant.
+
+    It is an error to call callback on the clone as it will result in
+    an AlreadyCalledError when the original Deferred is triggered.
+    """
+    def split_result(result):
+        clone.callback(result)
+        return result
+    clone = Deferred()
+    original.addCallback(split_result)
+    return clone
