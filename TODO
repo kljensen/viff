@@ -6,11 +6,6 @@ There are a number of small and large design changes listed below. In
 addition to those, the source code contains a number of comments
 marked with 'TODO' which document things on a more local level.
 
-* Enforce the use of Blum primes
-   Generating a random bit using PRSS only works with Blum primes,
-   that is, primes that are congruent to 3 modulo 4. The comparison
-   uses such bits and thus breaks with non-Blum primes.
-
 * Use GMPY per default
    Make field elements use GMPY unless some option asks them not to.
 
