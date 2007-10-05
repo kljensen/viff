@@ -692,7 +692,7 @@ class Runtime:
         mask = self.prss_share_random(smallField, False)
         mask_2 = self.prss_share_random(smallField, False)
         mask_OK = self.open(self.mul(mask, mask_2))
-        dprint("Mask_OK: %s", mask_OK)
+        #dprint("Mask_OK: %s", mask_OK)
         return field, smallField, s_bit, s_sign, mask, r_full, r_modl, r_bits
 
         ##################################################
