@@ -96,6 +96,20 @@ def clone_deferred(original):
 
     It is an error to call callback on the clone as it will result in
     an AlreadyCalledError when the original Deferred is triggered.
+
+    >>> x = Deferred()
+    >>> x.addCallback(lambda result: result * 10) # doctest: +ELLIPSIS
+    <Deferred at 0x...>
+    >>> y = clone_deferred(x)
+    >>> y.addCallback(lambda result: result + 1)  # doctest: +ELLIPSIS
+    <Deferred at 0x...>
+    >>> x.addCallback(lambda result: result + 2)  # doctest: +ELLIPSIS
+    <Deferred at 0x...>
+    >>> x.callback(1)
+    >>> x                                         # doctest: +ELLIPSIS
+    <Deferred at 0x...  current result: 12>
+    >>> y                                         # doctest: +ELLIPSIS
+    <Deferred at 0x...  current result: 11>
     """
     def split_result(result):
         clone.callback(result)
@@ -103,3 +117,7 @@ def clone_deferred(original):
     clone = Deferred()
     original.addCallback(split_result)
     return clone
+    
+if __name__ == "__main__":
+    import doctest
+    doctest.testmod()
