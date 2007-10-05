@@ -489,7 +489,6 @@ class Runtime:
         src_shares = self.prss_share(src_field(this_mask))
         dst_shares = self.prss_share(dst_field(this_mask))
 
-
         tmp = reduce(self.add, src_shares, share)
 
         # We open tmp and convert the value into a field element from
@@ -501,7 +500,6 @@ class Runtime:
         full_mask = reduce(self.add, dst_shares)
 
         return self.sub(tmp, full_mask)
-
 
     @increment_pc
     def greater_than(self, share_a, share_b, field):
@@ -634,7 +632,6 @@ class Runtime:
         s_sign = self.add(smallField(1),
                           self.mul(s_bitSmallField, smallField(-2)))
 
-
         # m: uniformly random -- should be non-zero, however, this
         # happens with negligible probability
         # TODO: small field, no longer negligible probability of zero -- update
@@ -687,7 +684,6 @@ class Runtime:
 #         result.addCallback(calculate, program_counter)
 #         return result
 
-
     @increment_pc
     def _finish_greater_thanII(self, c, l, field, smallField, s_bit, s_sign,
                                mask, r_full, r_modl, r_bits, z):
@@ -720,7 +716,6 @@ class Runtime:
         E_tilde[0] = self.open(E_tilde[0])
         E_tilde[0].addCallback(lambda bit: field(bit.value != 0))
         non_zero = E_tilde[0]
-
 
         # UF == underflow
         UF = self.xor_int(non_zero, s_bit)

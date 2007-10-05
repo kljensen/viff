@@ -62,7 +62,6 @@ def finish(*x):
 # shut the reactor down cleanly if killed.
 signal.signal(2, finish)
 
-
 parser = OptionParser()
 parser.add_option("-m", "--modulus",
                   help="lower limit for modulus (can be an expression)")

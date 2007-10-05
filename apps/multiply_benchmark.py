@@ -97,7 +97,6 @@ def finish(*x):
 # try to shutdown the runtime cleanly if killed.
 signal.signal(2, finish)
 
-
 shares = []
 for n in range(count//len(players) + 1):
     shares.extend(rt.shamir_share(input))

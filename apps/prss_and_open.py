@@ -40,5 +40,3 @@ result = gatherResults(elements)
 dprint("bits: %s", result)
 
 rt.wait_for(result)
-
-

@@ -65,8 +65,6 @@ def prss(n, j, field, prfs, key):
 
     return result
     
-
-
 def generate_subsets(orig_set, size):
     """Generates the set of all subsets of a specific size.
 
@@ -88,7 +86,6 @@ def generate_subsets(orig_set, size):
         return frozenset([orig_set])
     else:
         return frozenset()
-
 
 # Generating 100,000 bytes like this:
 #

@@ -105,7 +105,6 @@ def load_config(source):
 
     return owner_id, players
 
-
 def generate_configs(n, t, addresses=None, prefix=None):
     players = frozenset(range(1, n+1))
     max_unqualified_subsets = generate_subsets(players, n-t)
