@@ -44,10 +44,6 @@ while len(shares) > 1:
     b = shares.pop(0)
     shares.append(rt.xor_bit(a,b))
 
-xor = shares[0]
-
-rt.open(xor)
-
+xor = rt.open(shares[0])
 dprint("Result: %s", xor)
-    
 rt.wait_for(xor)

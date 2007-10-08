@@ -55,8 +55,7 @@ print "I am player %d, will compare %d numbers" % (id, len(inputs))
 
 for input in inputs:
     x, y, z = rt.shamir_share(Zp(input[id]))
-    bit = rt.greater_than(x, y, Zp)
-    rt.open(bit)
+    bit = rt.open(rt.greater_than(x, y, Zp))
     bit.addCallback(lambda b: b == GF256(1))
     bit.addCallback(lambda b, x, y: "%3d >= %3d: %-5s (%s)" % (x, y, b, b == (x >= y)),
                     input[1], input[2])

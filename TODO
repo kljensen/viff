@@ -62,11 +62,6 @@ marked with 'TODO' which document things on a more local level.
    parallelism would run with no restrictions except those imposed by
    the program itself.
 
-* Define and document a semantics for operations on deferred shares
-   Variables containing deferred shares should be immutable.
-   Operations like add and mul already obey this: add(x,y) does not
-   change x and y. The open method changes its argument.
-
 * Allow players to be started in any order
    At the moment one must start players in descending order, 3-2-1,
    but it would be nice if they could be started in any order. Player

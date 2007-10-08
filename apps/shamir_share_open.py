@@ -40,9 +40,9 @@ print
 
 a, b, c = rt.shamir_share(input)
 
-rt.open(a)
-rt.open(b)
-rt.open(c)
+a = rt.open(a)
+b = rt.open(b)
+c = rt.open(c)
 
 dprint("### opened a: %s ###", a)
 dprint("### opened b: %s ###", b)

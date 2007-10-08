@@ -133,8 +133,7 @@ def branch(result, low, mid, high):
         mid = (low + high)//2
         if options.verbose:
             debug(low, mid, high)
-        result = rt.greater_than(buyer_bids[mid], seller_bids[mid], Zp)
-        rt.open(result)
+        result = rt.open(rt.greater_than(buyer_bids[mid], seller_bids[mid], Zp))
         result.addCallback(output, str(B[mid]) + " >= " + str(S[mid]) + ": %s")
         result.addCallback(branch, low, mid, high)
         return result

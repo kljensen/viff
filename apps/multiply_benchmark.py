@@ -118,14 +118,14 @@ def run_test(_):
     product = shares[0]
     product.addCallback(record_stop)
 
-    rt.open(product)
+    result = rt.open(product)
     def check(result, expected):
         if result.value == expected:
             print "Result: %s (correct)" % result
         else:
             print "Result: %s (incorrect, expected %d)" % (result, expected)
-    product.addCallback(check, pow(42, count, Zp.modulus))
-    product.addCallback(finish)
+    result.addCallback(check, pow(42, count, Zp.modulus))
+    result.addCallback(finish)
 
 # We want to wait until all numbers have been shared
 dl = DeferredList(shares)

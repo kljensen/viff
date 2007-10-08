@@ -41,11 +41,8 @@ rt = Runtime(players, id, 1)
 a, b, c = rt.shamir_share(Zp(input1))
 x, y, z = rt.shamir_share(Zq(input2))
 
-d = rt.mul(rt.mul(a,b), c)
-w = rt.mul(rt.mul(x,y), z)
-
-rt.open(d)
-rt.open(w)
+d = rt.open(rt.mul(rt.mul(a,b), c))
+w = rt.open(rt.mul(rt.mul(x,y), z))
 
 def check(result, field, expected):
     if result == expected:

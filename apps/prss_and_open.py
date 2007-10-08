@@ -35,13 +35,7 @@ Z31 = GF(31)
 
 rt = Runtime(players, id, (len(players) -1)//2)
 
-elements = []
-
-for _ in range(10):
-    x = rt.prss_share_random(Z31)
-    rt.open(x)
-    elements.append(x)
-
+elements = [rt.open(rt.prss_share_random(Z31)) for _ in range(10)]
 result = gatherResults(elements)
 dprint("bits: %s", result)
 

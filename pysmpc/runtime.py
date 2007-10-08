@@ -29,7 +29,7 @@ import socket
 from pysmpc import shamir
 from pysmpc.prss import prss
 from pysmpc.field import GF, GF256, FieldElement
-from pysmpc.util import rand, dprint
+from pysmpc.util import rand, dprint, clone_deferred
 
 from twisted.internet import defer, reactor
 from twisted.internet.defer import Deferred, DeferredList, gatherResults
@@ -261,9 +261,12 @@ class Runtime:
     #@trace
     @increment_pc
     def open(self, sharing, threshold=None):
-        """Open a share. Returns nothing, the share given is mutated.
+        """Open a share using the threshold given or the runtime
+        default if threshold is None. Returns a new Deferred which
+        will contain the opened value.
 
-        Communication cost: n broadcasts.
+        Communication cost: 1 broadcast (for each player, n broadcasts
+        in total).
         """
         assert isinstance(sharing, Deferred)
         if threshold is None:
@@ -282,8 +285,9 @@ class Runtime:
             # threshold shares has been received.
             return self._recombine(deferreds, threshold)
 
-        self.callback(sharing, broadcast)
-        # TODO: should open() return a new deferred?
+        result = clone_deferred(sharing)
+        self.callback(result, broadcast)
+        return result
         
     #@trace
     def add(self, share_a, share_b):
@@ -424,10 +428,8 @@ class Runtime:
         if field is GF256 or not binary:
             return defer.succeed(share)
 
-        result = self.mul(share, share)
-
         # Open the square and compute a square-root
-        self.open(result, 2*self.threshold)
+        result = self.open(self.mul(share, share), 2*self.threshold)
 
         def finish(square, share, binary):
             if square == 0:
@@ -494,13 +496,12 @@ class Runtime:
         else:
             xor = self.xor_int
         
-        # TODO: Using a parallel reduce here seems to be slower than
+        # TODO: Using a parallel reduce below seems to be slower than
         # using the built-in reduce.
-        tmp = reduce(xor, src_shares, share)
 
         # We open tmp and convert the value into a field element from
         # the dst_field.
-        self.open(tmp)
+        tmp = self.open(reduce(xor, src_shares, share))
         tmp.addCallback(lambda i: dst_field(i.value))
         
         if dst_field is GF256:
@@ -540,7 +541,7 @@ class Runtime:
 
         # We open tmp and convert the value into a field element from
         # the dst_field.
-        self.open(tmp)
+        tmp = self.open(tmp)
 
         tmp.addCallback(lambda i: dst_field(i.value))
 
@@ -584,8 +585,7 @@ class Runtime:
         # Preprocessing done
 
         a = self.add(self.sub(share_a, share_b), 2**l)
-        T = self.add(self.sub(2**t, int_b), a)
-        self.open(T)
+        T = self.open(self.add(self.sub(2**t, int_b), a))
 
         result = gatherResults([T] + bit_bits)
         self.callback(result, self._finish_greater_than, l)
@@ -691,8 +691,7 @@ class Runtime:
         # TODO: small field, no longer negligible probability of zero -- update
         mask = self.prss_share_random(smallField, False)
         mask_2 = self.prss_share_random(smallField, False)
-        mask_OK = self.mul(mask, mask_2)
-        self.open(mask_OK)
+        mask_OK = self.open(self.mul(mask, mask_2))
         dprint("Mask_OK: %s", mask_OK)
         return field, smallField, s_bit, s_sign, mask, r_full, r_modl, r_bits
 
@@ -729,8 +728,7 @@ class Runtime:
         ##################################################
         # c = 2**l + a - b + r
         z = self.add(self.sub(share_a, share_b), field(2**l))
-        c = self.add(r_full, z)
-        self.open(c)
+        c = self.open(self.add(r_full, z))
 
         self.callback(c, self._finish_greater_thanII,
                       l, field, smallField, s_bit, s_sign, mask, r_full,
@@ -772,7 +770,7 @@ class Runtime:
             E_tilde.append(self.mul(E_tilde.pop(0),
                                     E_tilde.pop(0)))
 
-        self.open(E_tilde[0])
+        E_tilde[0] = self.open(E_tilde[0])
         E_tilde[0].addCallback(lambda bit: field(bit.value != 0))
         non_zero = E_tilde[0]
 

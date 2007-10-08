@@ -35,21 +35,13 @@ Zp = GF(11)
 a, b, c = rt.prss_share(Zp(0))
 x, y, z = rt.prss_share(Zp(1))
 
-a_b = rt.int_to_bit(a, Zp)
-b_b = rt.int_to_bit(b, Zp)
-c_b = rt.int_to_bit(c, Zp)
-
-x_b = rt.int_to_bit(x, Zp)
-y_b = rt.int_to_bit(y, Zp)
-z_b = rt.int_to_bit(z, Zp)
-
-rt.open(a_b)
-rt.open(b_b)
-rt.open(c_b)
-
-rt.open(x_b)
-rt.open(y_b)
-rt.open(z_b)
+a_b = rt.open(rt.int_to_bit(a, Zp))
+b_b = rt.open(rt.int_to_bit(b, Zp))
+c_b = rt.open(rt.int_to_bit(c, Zp))
+                                      
+x_b = rt.open(rt.int_to_bit(x, Zp))
+y_b = rt.open(rt.int_to_bit(y, Zp))
+z_b = rt.open(rt.int_to_bit(z, Zp))
 
 def check(result, variable, expected):
     if result == expected:

@@ -99,7 +99,6 @@ class RuntimeTestCase(TestCase):
         """
         Shamir share a value and open it.
         """
-        
         input = self.Zp(42)
         a, b, c = shamir.share(input, 1, 3)
 
@@ -107,15 +106,15 @@ class RuntimeTestCase(TestCase):
         b = succeed(b[1])
         c = succeed(c[1])
 
-        self.rt1.open(a)
-        self.rt2.open(b)
-        self.rt3.open(c)
+        open_a = self.rt1.open(a)
+        open_b = self.rt2.open(b)
+        open_c = self.rt3.open(c)
 
-        a.addCallback(self.assertEquals, input)
-        b.addCallback(self.assertEquals, input)
-        c.addCallback(self.assertEquals, input)
+        open_a.addCallback(self.assertEquals, input)
+        open_b.addCallback(self.assertEquals, input)
+        open_c.addCallback(self.assertEquals, input)
 
-        return gatherResults([a, b, c])
+        return gatherResults([open_a, open_b, open_c])
 
     def test_open_deferred(self):
         """
@@ -129,9 +128,9 @@ class RuntimeTestCase(TestCase):
         b = succeed(shares[1][1])
         c = Deferred()
 
-        self.rt1.open(a)
-        self.rt2.open(b)
-        self.rt3.open(c)
+        a = self.rt1.open(a)
+        b = self.rt2.open(b)
+        c = self.rt3.open(c)
 
         a.addCallback(self.assertEquals, input)
         b.addCallback(self.assertEquals, input)
@@ -144,6 +143,45 @@ class RuntimeTestCase(TestCase):
         c.callback(shares[2][1])
 
         return gatherResults([a, b, c])
+
+    def test_open_no_mutate(self):
+        """
+        Shamir share a value and open it twice.
+        """
+        input = self.Zp(42)
+        share_a, share_b, share_c = shamir.share(input, 1, 3)
+
+        a = succeed(share_a[1])
+        b = succeed(share_b[1])
+        c = succeed(share_c[1])
+
+        # Open once
+        open_a1 = self.rt1.open(a)
+        open_b1 = self.rt2.open(b)
+        open_c1 = self.rt3.open(c)
+
+        # Test that a, b, and c remain unchanged
+        a.addCallback(self.assertEquals, share_a[1])
+        b.addCallback(self.assertEquals, share_b[1])
+        c.addCallback(self.assertEquals, share_c[1])
+
+        # Open twice
+        open_a2 = self.rt1.open(a)
+        open_b2 = self.rt2.open(b)
+        open_c2 = self.rt3.open(c)
+
+        # Test that we got the expected value in both openings
+        open_a1.addCallback(self.assertEquals, input)
+        open_b1.addCallback(self.assertEquals, input)
+        open_c1.addCallback(self.assertEquals, input)
+
+        open_a2.addCallback(self.assertEquals, input)
+        open_b2.addCallback(self.assertEquals, input)
+        open_c2.addCallback(self.assertEquals, input)
+
+        return gatherResults([a, b, c,
+                              open_a1, open_b1, open_c1,
+                              open_a2, open_b2, open_c2])
 
     # TODO: factor out common code from test_add* and test_sub*.
 
@@ -263,17 +301,17 @@ class RuntimeTestCase(TestCase):
         c_shares = gatherResults([c1, c2, c3])
         c_shares.addCallback(check_recombine, c)
 
-        self.rt1.open(a1)
-        self.rt2.open(a2)
-        self.rt3.open(a3)
+        a1 = self.rt1.open(a1)
+        a2 = self.rt2.open(a2)
+        a3 = self.rt3.open(a3)
 
-        self.rt1.open(b1)
-        self.rt2.open(b2)
-        self.rt3.open(b3)
+        b1 = self.rt1.open(b1)
+        b2 = self.rt2.open(b2)
+        b3 = self.rt3.open(b3)
 
-        self.rt1.open(c1)
-        self.rt2.open(c2)
-        self.rt3.open(c3)
+        c1 = self.rt1.open(c1)
+        c2 = self.rt2.open(c2)
+        c3 = self.rt3.open(c3)
 
         a1.addCallback(self.assertEquals, a)
         a2.addCallback(self.assertEquals, a)
@@ -412,9 +450,9 @@ class RuntimeTestCase(TestCase):
         res_ab2 = self.rt2.greater_than(a2, b2, self.Zp)
         res_ab3 = self.rt3.greater_than(a3, b3, self.Zp)
 
-        self.rt1.open(res_ab1)
-        self.rt2.open(res_ab2)
-        self.rt3.open(res_ab3)
+        res_ab1 = self.rt1.open(res_ab1)
+        res_ab2 = self.rt2.open(res_ab2)
+        res_ab3 = self.rt3.open(res_ab3)
 
         res_ab1.addCallback(self.assertEquals, GF256(False))
         res_ab2.addCallback(self.assertEquals, GF256(False))
@@ -436,9 +474,9 @@ class RuntimeTestCase(TestCase):
         res_ab2 = self.rt2.greater_thanII(a2, b2, self.Zp)
         res_ab3 = self.rt3.greater_thanII(a3, b3, self.Zp)
 
-        self.rt1.open(res_ab1)
-        self.rt2.open(res_ab2)
-        self.rt3.open(res_ab3)
+        res_ab1 = self.rt1.open(res_ab1)
+        res_ab2 = self.rt2.open(res_ab2)
+        res_ab3 = self.rt3.open(res_ab3)
 
         res_ab1.addCallback(self.assertEquals, self.Zp(False))
         res_ab2.addCallback(self.assertEquals, self.Zp(False))
@@ -485,9 +523,9 @@ if 'STRESS' in os.environ:
                 y = self.rt2.mul(a2, self.rt2.mul(b2, self.rt2.mul(c2, y)))
                 z = self.rt3.mul(a3, self.rt3.mul(b3, self.rt3.mul(c3, z)))
 
-            self.rt1.open(x)
-            self.rt2.open(y)
-            self.rt3.open(z)
+            x = self.rt1.open(x)
+            y = self.rt2.open(y)
+            z = self.rt3.open(z)
 
             result = self.Zp((a * b * c)**count)
 
