@@ -1,8 +1,8 @@
 import sys
-from pysmpc.field import GF
-from pysmpc.config import load_config
-from pysmpc.runtime import Runtime
-from pysmpc.util import dprint
+from viff.field import GF
+from viff.config import load_config
+from viff.runtime import Runtime
+from viff.util import dprint
 
 Z31 = GF(31)
 my_id, conf = load_config(sys.argv[1])
