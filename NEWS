@@ -1,0 +1,17 @@
+
+NEWS file for VIFF
+==================
+
+This file summarizes the changes between each release.
+
+
+Version 0.1, released on October 16th 2007
+------------------------------------------
+
+First public release.
+
+Implements basic functionality including addition, multiplication,
+exclusive-or, and comparison of shares. Shares can be made using
+Shamir sharing or PRSS.
+
+Includes a suite of unit tests example programs.
