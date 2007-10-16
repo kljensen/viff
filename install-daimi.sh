@@ -20,11 +20,11 @@
 # 02110-1301 USA
 
 PROFILE_DIR=$HOME/.daimi-setup/bash/bashrc.d
-RC=$PROFILE_DIR/pysmpc.rc
+RC=$PROFILE_DIR/viff.rc
 
 MG_PYTHONPATH=/users/mg/opt/lib/python2.4/site-packages
 MG_PATH=/users/mg/opt/bin
-MG_PYSMPC=/users/mg/simap/pysmpc
+MG_VIFF=/users/mg/simap/viff
 
 if [ ! -d $PROFILE_DIR ]; then
     echo "$PROFILE_DIR not found."
@@ -68,7 +68,7 @@ if [ -f $RC ]; then
     source $RC
 fi
 
-DEFAULT=~/pysmpc
+DEFAULT=~/viff
 
 echo
 echo "VIFF will now be checked out from Martin's repository."
@@ -79,7 +79,7 @@ if [ -z "$CHECKOUT" ]; then
     CHECKOUT=$DEFAULT
 fi
 
-hg clone $MG_PYSMPC $CHECKOUT
+hg clone $MG_VIFF $CHECKOUT
 
 echo "Adding $CHECKOUT to your PYTHONPATH"
 echo "# PYTHONPATH setup for VIFF checkout" >> $RC

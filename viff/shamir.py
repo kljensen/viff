@@ -22,7 +22,7 @@ Shamir sharing and recombination.
 """
 
 import operator
-from pysmpc.util import rand
+from viff.util import rand
     
 def share(secret, threshold, num_players):
     """Shamir share secret.

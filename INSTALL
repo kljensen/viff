@@ -23,7 +23,7 @@ Installing on DAIMI
 
 On DAIMI you can simply run the install-daimi.sh script:
 
-  % sh ~mg/simap/pysmpc/install-daimi.sh
+  % sh ~mg/simap/viff/install-daimi.sh
 
 It will attempt to configure the environment for you. If that fails,
 please manually append the directory
@@ -37,18 +37,18 @@ to your PYTHONPATH environmental variable and append
 to your PATH environmental variable. You can now checkout the source
 with the command
 
-  % hg clone ~mg/simap/pysmpc
+  % hg clone ~mg/simap/viff
 
-That will create a directory called pysmpc. Please append that
+That will create a directory called viff. Please append that
 directory to PYTHONPATH as well.
 
 If running Bash simply put these three lines
 
-  PYTHONPATH=/path/to/pysmpc/checkout
+  PYTHONPATH=/path/to/viff/checkout
   PYTHONPATH=$PYTHONPATH:~mg/opt/lib/python2.4/site-packages
   export PYTHONPATH
 
-into a new file called pysmpc.rc under ~/.daimi-setup/bash/bashrc.d/.
+into a new file called viff.rc under ~/.daimi-setup/bash/bashrc.d/.
 
 
 Installing Elsewhere
@@ -82,4 +82,4 @@ to their ~/.bash_profile file, creating it if it is not already there.
 To run VIFF you must configure your Python path correctly by setting
 the PYTHONPATH environment variable. In Bash shells this is done by
 
-  % export PYTHONPATH=$PYTHONPATH:/path/to/pysmpc/checkout
+  % export PYTHONPATH=$PYTHONPATH:/path/to/viff/checkout

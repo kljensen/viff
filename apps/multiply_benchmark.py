@@ -26,9 +26,9 @@ from twisted.internet import reactor
 from twisted.internet.defer import DeferredList
 
 from gmpy import mpz
-from pysmpc.field import GF
-from pysmpc.runtime import Runtime
-from pysmpc.config import load_config
+from viff.field import GF
+from viff.runtime import Runtime
+from viff.config import load_config
 
 last_timestamp = time.time()
 start = 0

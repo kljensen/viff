@@ -22,7 +22,7 @@
 from __future__ import division
 from optparse import OptionParser
 
-from pysmpc.config import generate_configs
+from viff.config import generate_configs
 
 parser = OptionParser()
 parser.add_option("-p", "--prefix",

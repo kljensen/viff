@@ -23,10 +23,10 @@ import sys, time
 
 from twisted.internet.defer import gatherResults
 
-from pysmpc.field import GF
-from pysmpc.runtime import Runtime
-from pysmpc.config import load_config
-from pysmpc.util import dprint
+from viff.field import GF
+from viff.runtime import Runtime
+from viff.config import load_config
+from viff.util import dprint
 
 id, players = load_config(sys.argv[1])
 print "I am player %d" % id

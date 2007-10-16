@@ -27,10 +27,10 @@ from twisted.internet.defer import gatherResults, succeed
 
 from gmpy import mpz
 
-from pysmpc import shamir
-from pysmpc.field import GF
-from pysmpc.runtime import Runtime
-from pysmpc.config import load_config
+from viff import shamir
+from viff.field import GF
+from viff.runtime import Runtime
+from viff.config import load_config
 
 def output(x, format="output: %s"):
     print format % x

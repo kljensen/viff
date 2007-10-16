@@ -17,11 +17,11 @@
 # Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 # 02110-1301 USA
 
-from pysmpc.prss import generate_subsets
+from viff.prss import generate_subsets
 
 from twisted.trial.unittest import TestCase
 
-__doctests__ = ['pysmpc.prss']
+__doctests__ = ['viff.prss']
 
 class PRSSTestCase(TestCase):
 

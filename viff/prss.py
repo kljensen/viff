@@ -26,7 +26,7 @@ from binascii import hexlify
 
 from gmpy import numdigits
 
-from pysmpc import shamir
+from viff import shamir
 
 
 def prss(n, j, field, prfs, key):

@@ -30,10 +30,10 @@ from twisted.internet.defer import Deferred, succeed, gatherResults
 from twisted.trial.unittest import TestCase
 from twisted.protocols.loopback import loopbackAsync
 
-from pysmpc.field import GF, GF256
-from pysmpc.runtime import Runtime, ShareExchanger
-from pysmpc.config import generate_configs, load_config
-from pysmpc import shamir
+from viff.field import GF, GF256
+from viff.runtime import Runtime, ShareExchanger
+from viff.config import generate_configs, load_config
+from viff import shamir
 
 
 class LoopbackRuntime(Runtime):

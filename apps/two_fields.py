@@ -21,9 +21,9 @@
 
 import sys
 
-from pysmpc.field import GF
-from pysmpc.runtime import Runtime
-from pysmpc.generate_config import load_config
+from viff.field import GF
+from viff.runtime import Runtime
+from viff.generate_config import load_config
 
 id, players = load_config(sys.argv[1])
 

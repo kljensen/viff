@@ -28,10 +28,10 @@ from twisted.internet.defer import DeferredList, gatherResults
 #defer.setDebugging(True)
 
 from gmpy import mpz
-from pysmpc.field import GF
-from pysmpc.runtime import Runtime
-from pysmpc.config import load_config
-from pysmpc.util import rand
+from viff.field import GF
+from viff.runtime import Runtime
+from viff.config import load_config
+from viff.util import rand
 
 
 last_timestamp = time.time()

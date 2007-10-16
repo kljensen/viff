@@ -21,8 +21,8 @@
 
 import sys
 
-from pysmpc import shamir
-from pysmpc.field import GF, GF256
+from viff import shamir
+from viff.field import GF, GF256
 
 if sys.argv[1].find(":") == -1:
     F = GF(int(sys.argv.pop(1)))

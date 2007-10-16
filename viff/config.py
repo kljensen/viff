@@ -19,8 +19,8 @@
 
 from configobj import ConfigObj
 
-from pysmpc.prss import generate_subsets, PRF
-from pysmpc.util import rand
+from viff.prss import generate_subsets, PRF
+from viff.util import rand
 
 class Player:
     """Wrapper for information about a player in the protocol."""

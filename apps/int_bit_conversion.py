@@ -21,9 +21,9 @@
 
 import sys, time
 
-from pysmpc.field import GF, GF256
-from pysmpc.runtime import Runtime
-from pysmpc.config import load_config
+from viff.field import GF, GF256
+from viff.runtime import Runtime
+from viff.config import load_config
 
 id, players = load_config(sys.argv[1])
 print "I am player %d" % id

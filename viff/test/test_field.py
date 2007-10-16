@@ -17,14 +17,14 @@
 # Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 # 02110-1301 USA
 
-from pysmpc.field import GF, GF256
+from viff.field import GF, GF256
 
 from twisted.trial.unittest import TestCase
 import operator
 
 # This will make Trial run the doctests too, in addition to the tests
 # defined below.
-__doctests__ = ['pysmpc.field']
+__doctests__ = ['viff.field']
 
 
 class GFpElementTestCase(TestCase):

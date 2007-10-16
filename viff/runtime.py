@@ -26,10 +26,10 @@ and running the calculations.
 import marshal
 import socket
 
-from pysmpc import shamir
-from pysmpc.prss import prss
-from pysmpc.field import GF, GF256, FieldElement
-from pysmpc.util import rand, dprint, println, clone_deferred
+from viff import shamir
+from viff.prss import prss
+from viff.field import GF, GF256, FieldElement
+from viff.util import rand, dprint, println, clone_deferred
 
 from twisted.internet import defer, reactor
 from twisted.internet.defer import Deferred, DeferredList, gatherResults
