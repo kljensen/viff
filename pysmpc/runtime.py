@@ -17,7 +17,7 @@
 # Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 # 02110-1301 USA
 
-"""PySMPC runtime.
+"""VIFF runtime.
 
 The runtime is responsible for sharing inputs, handling communication,
 and running the calculations.
@@ -119,7 +119,7 @@ def increment_pc(method):
 
 
 class Runtime:
-    """The PySMPC runtime.
+    """The VIFF runtime.
 
     Each party in the protocol must instantiate an object from this
     class and use it for all calculations.

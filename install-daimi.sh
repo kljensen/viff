@@ -45,12 +45,12 @@ else
     echo " not found."
 
     echo "  Adjusting PATH to fix this."
-    echo "# PATH setup for PySMPC" >> $RC
+    echo "# PATH setup for VIFF" >> $RC
     echo "PATH=\$PATH:$MG_PATH" >> $RC
     echo >> $RC
 fi
 
-echo -n "* Checking for PySMPC dependencies (Twisted, ConfigObj, GMPY):"
+echo -n "* Checking for VIFF dependencies (Twisted, ConfigObj, GMPY):"
 if python -c 'import twisted, configobj, gmpy' 2> /dev/null; then
     echo " found."
 else
@@ -58,7 +58,7 @@ else
 
     echo "  Adjusting PYTHONPATH to fix this."
 
-    echo "# PYTHONPATH setup for PySMPC dependencies" >> $RC
+    echo "# PYTHONPATH setup for VIFF dependencies" >> $RC
     echo "PYTHONPATH=\$PYTHONPATH:$MG_PYTHONPATH" >> $RC
     echo "export PYTHONPATH" >> $RC
     echo >> $RC
@@ -71,7 +71,7 @@ fi
 DEFAULT=~/pysmpc
 
 echo
-echo "PySMPC will now be checked out from Martin's repository."
+echo "VIFF will now be checked out from Martin's repository."
 echo "Where should the files be placed?"
 read -p "Press ENTER to accept the default. [$DEFAULT] " CHECKOUT
 
@@ -82,7 +82,7 @@ fi
 hg clone $MG_PYSMPC $CHECKOUT
 
 echo "Adding $CHECKOUT to your PYTHONPATH"
-echo "# PYTHONPATH setup for PySMPC checkout" >> $RC
+echo "# PYTHONPATH setup for VIFF checkout" >> $RC
 echo "PYTHONPATH=\$PYTHONPATH:$CHECKOUT" >> $RC
 echo "export PYTHONPATH" >> $RC
 echo >> $RC

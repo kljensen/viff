@@ -121,7 +121,7 @@ def generate_configs(n, t, addresses=None, prefix=None):
     for p in players:
         config = ConfigObj(indent_type='  ')
         config.filename = "%s-%d.ini" % (prefix, p)
-        config.initial_comment = ['PySMPC config file for Player %d' % p]
+        config.initial_comment = ['VIFF config file for Player %d' % p]
         config.final_comment = ['', 'End of config', '']
         configs[p] = config
 

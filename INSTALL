@@ -1,8 +1,8 @@
 
-Installation Instructions for PySMPC
-====================================
+Installation Instructions for VIFF
+==================================
 
-PySMPC is written in Python and maintained using the revision control
+VIFF is written in Python and maintained using the revision control
 system Mercurial. It uses the Twisted framework for asynchronious
 communication, ConfigObj for configuration files, and GMPY for fast
 bignum arithmetic.
@@ -13,7 +13,7 @@ bignum arithmetic.
   * ConfigObj: http://voidspace.org.uk/python/configobj.html
   * GMPY:      http://gmpy.sourceforge.net/
 
-PySMPC has been tested with the following versions: Python 2.4.3,
+VIFF has been tested with the following versions: Python 2.4.3,
 Mercurial 0.9.4, Twisted 2.5.0, ConfigObj 4.4.0, and GMPY 1.0alpha.
 Things might work with earlier versions, we do not know yet.
 
@@ -79,7 +79,7 @@ Bash uses can normally do this by adding
 
 to their ~/.bash_profile file, creating it if it is not already there.
 
-To run PySMPC you must configure your Python path correctly by setting
+To run VIFF you must configure your Python path correctly by setting
 the PYTHONPATH environment variable. In Bash shells this is done by
 
   % export PYTHONPATH=$PYTHONPATH:/path/to/pysmpc/checkout
