@@ -58,12 +58,12 @@ Assuming that Python is already installed, one can easily install the
 other dependencies (without being root) by downloading and unpacking
 them and then execute
 
-  python setup.py install --prefix=$HOME/opt
+  python setup.py install --home=$HOME/opt
 
 That will install everything under the given prefix. With the above
-command run using Python2.4 the Python modules are installed into
+command the Python modules are installed into
 
-  $HOME/opt/lib/python2.4/site-packages
+  $HOME/opt/lib/python
 
 and some programs are installed into
 
@@ -74,7 +74,7 @@ variable and the latter to the PATH environmental variable.
 
 Bash uses can normally do this by adding
 
-  export PYTHONPATH=$PYTHONPATH:$HOME/opt/lib/python2.4/site-packages
+  export PYTHONPATH=$PYTHONPATH:$HOME/opt/lib/python
   export PATH=$PATH:$HOME/opt/bin
 
 to their ~/.bash_profile file, creating it if it is not already there.
