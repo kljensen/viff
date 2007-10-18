@@ -15,48 +15,20 @@ bignum arithmetic.
 
 VIFF has been tested with the following versions: Python 2.4.3,
 Mercurial 0.9.4, Twisted 2.5.0, ConfigObj 4.4.0, and GMPY 1.0alpha.
-Things might work with earlier versions, we do not know yet.
+Things might work with earlier versions, we do not know yet. Please
+report back if you find that VIFF works with earlier versions than the
+ones listed here.
 
 
-Installing on DAIMI
--------------------
+Installing VIFF
+---------------
 
-On DAIMI you can simply run the install-daimi.sh script:
+First install the dependencies, preferably by using the package system
+for your platform.
 
-  % sh ~mg/simap/viff/install-daimi.sh
-
-It will attempt to configure the environment for you. If that fails,
-please manually append the directory
-
-  ~mg/opt/lib/python2.4/site-packages
-
-to your PYTHONPATH environmental variable and append
-
-  ~mg/opt/bin
-
-to your PATH environmental variable. You can now checkout the source
-with the command
-
-  % hg clone ~mg/simap/viff
-
-That will create a directory called viff. Please append that
-directory to PYTHONPATH as well.
-
-If running Bash simply put these three lines
-
-  PYTHONPATH=/path/to/viff/checkout
-  PYTHONPATH=$PYTHONPATH:~mg/opt/lib/python2.4/site-packages
-  export PYTHONPATH
-
-into a new file called viff.rc under ~/.daimi-setup/bash/bashrc.d/.
-
-
-Installing Elsewhere
---------------------
-
-Assuming that Python is already installed, one can easily install the
-other dependencies (without being root) by downloading and unpacking
-them and then execute
+If you do not have permission to install the dependencies site-wide,
+then (assuming that Python is already installed) one can easily
+install them by downloading and unpacking them and then execute
 
   python setup.py install --prefix=$HOME/opt
 
