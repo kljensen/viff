@@ -2,7 +2,10 @@
 NEWS file for VIFF
 ==================
 
-This file summarizes the changes between each release.
+This file summarizes the changes between each release. Many more
+detailes can be found in the commit messages:
+
+  http://hg.viff.dk/viff/log/
 
 
 Version 0.1, released on October 16th 2007
