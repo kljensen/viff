@@ -2,31 +2,67 @@
 VIFF TODO List
 ==============
 
-There are a number of small and large design changes listed below. In
+There are a number of small and large wanted features listed below. In
 addition to those, the source code contains a number of comments
-marked with 'TODO' which document things on a more local level.
+marked with 'TODO' which document things on a more local level. The
+features have been roughly divided into design, infrastructure,
+benchmarking, and website features.
 
-* Logo!
-   VIFF should have a logo -- we need a picture of a small cute dog
-   saying "viff!" :-) Vector graphics would be preferable.
+Design
+------
 
-* Mailinglists
-   A viff-devel list has been created for general discussion on the
-   development of VIFF. It will be put online just as soon as Gmane
-   picks it up.
+* Define a hierarchy for Runtime functionality
+   The Runtime class keeps growing as more and more functionality is
+   put into it. An options would be to split it into a basic Runtime
+   which provides communication and nothing else. More functionality
+   could be provided by mix-in classes.
 
-* Bug tracker
-   It might be convenient to have a place where users can submit bugs.
-   But until there is a real demand, the mailinglist can be used.
+* Support preprocessing
+   With the use of deferreds, some amount of preprocessing is already
+   being done before the protocol begins proper. But this kind of
+   preprocessing does nothing for the double auction case where the
+   program branches during execution.
 
-* Wiki
-   Writing the webpages in a Wiki would be nice.
+   So a general mechanism is needed by which one can preprocess a
+   given number of multiplications, comparisons, etc.
 
-* API documentation
-   The current API documentation should be available online.
+   A possible design could be one in which this is done dynamically:
+   when a protocol is executed, preprocessed stuff is taken from a
+   pool as needed. If the pool runs dry, then more stuff is generated
+   online. At the end of a run, the program will know how much stuff
+   was needed -- this information can then be dumped to a file.
 
-* Use GMPY per default
-   Make field elements use GMPY unless some option asks them not to.
+   A separate preprocessing script can read this information from the
+   file and produce another file with a pickled pool of preprocessed
+   stuff.
+
+* Lazy Shamir resharing
+   After multiplying two shares, the result is a correct share of the
+   product, but a share from a polynomial of degree 2t. We therefore
+   normally reshare to get a polynomial of degree t.
+
+   But for doing addition these degree 2t shares are fine, so we could
+   wait with the resharing until it is surely needed.
+ 
+   Let [a]_t denote a share of a using a degree t polynomial and let
+   [a]_2t -> [a]_t denote a resharing going from degree 2t to t.
+
+   We could then calculate
+
+     sum([a_i]_t * [b_i]_t) = sum([a_i b_i]_2t)
+                            = [sum(a_i b_i)]_2t -> [sum(a_i b_i)]_t
+
+   using only one resharing at the end, saving network traffic. There
+   does not seem to be many places where we do stuff like that,
+   though. So the overhead of keeping track of when resharing is
+   needed might be too big for this to be an improvement.
+
+Infrastructure
+---------------
+
+* Use a logging module
+   Use a better technique for debug output than scattering print
+   statements around the source code.
 
 * Options framework
    Having a proper framework for options would be cool. Options
@@ -38,16 +74,41 @@ marked with 'TODO' which document things on a more local level.
    which Runtime instance they belong to and provide __add__, __mul__,
    etc. operations.
 
-* Define a hierarchy for Runtime functionality
-   The Runtime class keeps growing as more and more functionality is
-   put into it. An options would be to split it into a basic Runtime
-   which provides communication and nothing else. More functionality
-   could be provided by mix-in classes.
-
 * Create unit tests which randomizes network delay
    The current unit test with LoopbackRuntime are strictly sequential
    and does not capture the random delays possible with real network
    traffic.
+
+* Allow players to be started in any order
+   At the moment one must start players in descending order, 3-2-1,
+   but it would be nice if they could be started in any order. Player
+   1 would still try and connect to player 2 and 3, but if they cannot
+   be reached, then player 1 should retry a bit later.
+
+* More robust handling of port allocation
+   Players should check if the wanted port number is free, and if not,
+   then retry after a timeout. Ports can be occupied if a player is
+   killed, for then the ports normally end up in the TIME_WAIT state
+   for 60 seconds.
+
+* Rework port number magic
+   Instead of requiring each player to use the correct port number for
+   outgoing connections, we could let player 1 act as a coordinator.
+   This one player would be required to listen on a well-known port,
+   but the other players would not -- they simply listen to some port
+   chosen by the OS and announce that to player 1, which in turn let
+   the other players know.
+
+   When everybody has been informed of everybody elses presence, the
+   protocol execution can begin as normal with pair-wise connections
+   between the players. So the coordinator is only used in a setup
+   phase and wont become a bottleneck later.
+
+Benchmarking
+------------
+
+* Use GMPY per default
+   Make field elements use GMPY unless some option asks them not to.
 
 * Benchmark Python vs. GMPY on different key sizes
    Initial tests seems to indicate that the network is the
@@ -76,71 +137,24 @@ marked with 'TODO' which document things on a more local level.
    parallelism would run with no restrictions except those imposed by
    the program itself.
 
-* Allow players to be started in any order
-   At the moment one must start players in descending order, 3-2-1,
-   but it would be nice if they could be started in any order. Player
-   1 would still try and connect to player 2 and 3, but if they cannot
-   be reached, then player 1 should retry a bit later.
+Website
+-------
 
-* More robust handling of port allocation
-   Players should check if the wanted port number is free, and if not,
-   then retry after a timeout. Ports can be occupied if a player is
-   killed, for then the ports normally end up in the TIME_WAIT state
-   for 60 seconds.
+* Logo!
+   VIFF should have a logo -- we need a picture of a small cute dog
+   saying "viff!" :-) Vector graphics would be preferable.
 
-* Rework port number magic
-   Instead of requiring each player to use the correct port number for
-   outgoing connections, we could let player 1 act as a coordinator.
-   This one player would be required to listen on a well-known port,
-   but the other players would not -- they simply listen to some port
-   chosen by the OS and announce that to player 1, which in turn let
-   the other players know.
+* Mailinglists
+   A viff-devel list has been created for general discussion on the
+   development of VIFF. It will be put online just as soon as Gmane
+   picks it up.
 
-   When everybody has been informed of everybody elses presence, the
-   protocol execution can begin as normal with pair-wise connections
-   between the players. So the coordinator is only used in a setup
-   phase and wont become a bottleneck later.
+* Bug tracker
+   It might be convenient to have a place where users can submit bugs.
+   But until there is a real demand, the mailinglist can be used.
 
-* Support preprocessing
-   With the use of deferreds, some amount of preprocessing is already
-   being done before the protocol begins proper. But this kind of
-   preprocessing does nothing for the double auction case where the
-   program branches during execution.
+* Wiki
+   Writing the webpages in a Wiki would be nice.
 
-   So a general mechanism is needed by which one can preprocess a
-   given number of multiplications, comparisons, etc.
-
-   A possible design could be one in which this is done dynamically:
-   when a protocol is executed, preprocessed stuff is taken from a
-   pool as needed. If the pool runs dry, then more stuff is generated
-   online. At the end of a run, the program will know how much stuff
-   was needed -- this information can then be dumped to a file.
-
-   A separate preprocessing script can read this information from the
-   file and produce another file with a pickled pool of preprocessed
-   stuff.
-
-* Use a logging module
-   Use a better technique for debug output than scattering print
-   statements around the source code.
-
-* Lazy Shamir resharing
-   After multiplying two shares, the result is a correct share of the
-   product, but a share from a polynomial of degree 2t. We therefore
-   normally reshare to get a polynomial of degree t.
-
-   But for doing addition these degree 2t shares are fine, so we could
-   wait with the resharing until it is surely needed.
- 
-   Let [a]_t denote a share of a using a degree t polynomial and let
-   [a]_2t -> [a]_t denote a resharing going from degree 2t to t.
-
-   We could then calculate
-
-     sum([a_i]_t * [b_i]_t) = sum([a_i b_i]_2t)
-                            = [sum(a_i b_i)]_2t -> [sum(a_i b_i)]_t
-
-   using only one resharing at the end, saving network traffic. There
-   does not seem to be many places where we do stuff like that,
-   though. So the overhead of keeping track of when resharing is
-   needed might be too big for this to be an improvement.
+* API documentation
+   The current API documentation should be available online.
