@@ -6,6 +6,25 @@ There are a number of small and large design changes listed below. In
 addition to those, the source code contains a number of comments
 marked with 'TODO' which document things on a more local level.
 
+* Logo!
+   VIFF should have a logo -- we need a picture of a small cute dog
+   saying "viff!" :-) Vector graphics would be preferable.
+
+* Mailinglists
+   A viff-devel list has been created for general discussion on the
+   development of VIFF. It will be put online just as soon as Gmane
+   picks it up.
+
+* Bug tracker
+   It might be convenient to have a place where users can submit bugs.
+   But until there is a real demand, the mailinglist can be used.
+
+* Wiki
+   Writing the webpages in a Wiki would be nice.
+
+* API documentation
+   The current API documentation should be available online.
+
 * Use GMPY per default
    Make field elements use GMPY unless some option asks them not to.
 
