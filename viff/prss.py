@@ -51,6 +51,11 @@ def prss(n, j, field, prfs, key):
 
     We see that the sharing is consistent because each subset of two
     players will recombine their shares to {29}.
+
+    @param n: number of players
+    @param j: id of dealing player
+    @param field: field to use
+    @param prfs: mapping from subsets of players to L{PRF} instances
     """
     result = 0
     all = frozenset(range(1, n+1))
