@@ -17,3 +17,7 @@ profile.data
 *.snm
 *.toc
 *.vrb
+doc/api/*.html
+doc/api/*.{gif,png}
+doc/api/api-objects.txt
+doc/api/epydoc.{css,js}
