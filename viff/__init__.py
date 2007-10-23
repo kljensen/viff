@@ -16,3 +16,18 @@
 # along with VIFF in the file COPYING; if not, write to the Free
 # Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 # 02110-1301 USA
+
+"""
+B{VIFF}: Virtual Ideal Functionality Framework, a Python framework for
+writing secure-multi-party computations (SMPC).
+
+The main functionality of VIFF is in the L{Runtime} class, so please
+start there. Also, be sure to checkout the example applications
+distributed in the C{apps} directory.
+
+@author: U{Martin Geisler <mg@daimi.au.dk>}
+@author: U{Tomas Toft <tomas@daimi.au.dk>}
+@version: 0.1
+@license: GNU GPL
+@see: U{http://viff.dk/}
+"""
