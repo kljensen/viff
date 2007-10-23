@@ -35,6 +35,10 @@ that an operation starts as soon as the operands are ready.
 
 The TODO file lists a number of ideas for future work.
 
+Should you encounter a bug or have problems with VIFF, then please
+start by downloading the latest version on http://viff.dk/. If that
+does not help, then contact Martin Geisler <mg@daimi.au.dk> for help.
+
 
 Example Applications
 --------------------
