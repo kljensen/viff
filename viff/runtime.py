@@ -19,8 +19,12 @@
 
 """VIFF runtime.
 
-The runtime is responsible for sharing inputs, handling communication,
-and running the calculations.
+This is where the virtual ideal functionality is hiding! The runtime
+is responsible for sharing inputs, handling communication, and running
+the calculations.
+
+Each player participating in the protocol will instantiate a
+L{Runtime} object and use it for the calculations.
 """
 
 import marshal
@@ -126,6 +130,16 @@ class Runtime:
     """
 
     def __init__(self, players, id, threshold):
+        """Initialize runtime.
+
+        The runtime is initialized based on the player configuration
+        given, the id, and the threshold.
+
+        @param players: player configuration, see L{config.load_config}
+        @type players: mapping from id to L{Player} instances
+        @param id: id of this player
+        @param threshold: threshold for the protocol run
+        """
         self.players = players
         self.id = id
         self.threshold = threshold
@@ -144,6 +158,7 @@ class Runtime:
         self.connect()
 
     def connect(self):
+        """Connects this runtime to the others."""
         # Resolving the hostname into an IP address is a blocking
         # operation, but this is acceptable since it is only done when
         # the runtime is initialized.
@@ -185,6 +200,9 @@ class Runtime:
         """Start the runtime and wait for the variables given.
 
         The runtime is shut down when all variables are calculated.
+
+        @param vars: variables to wait for.
+        @type  vars: list of L{Deferred}s
         """
         dl = DeferredList(vars)
         dl.addCallback(lambda _: self.shutdown())
