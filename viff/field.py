@@ -75,7 +75,6 @@ class GF256(FieldElement):
     def __add__(self, other):
         """Add this and another GF256.
 
-        For example:
         >>> GF256(0x01) + GF256(0x01)
         [0]
         >>> GF256(0x01) + GF256(0x02)
@@ -83,6 +82,7 @@ class GF256(FieldElement):
 
         Adding integers works too, the other operand is coerced into a
         GF256 element automatically:
+
         >>> GF256(0x01) + 1
         [0]
         """

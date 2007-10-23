@@ -27,7 +27,8 @@ from viff.util import rand
 def share(secret, threshold, num_players):
     """Shamir share secret.
 
-    It holds that
+    It holds that sharing and recombination cancels each other:
+
     >>> from field import GF
     >>> Zp = GF(47)
     >>> secret = Zp(42)

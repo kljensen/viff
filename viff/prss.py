@@ -36,6 +36,7 @@ def prss(n, j, field, prfs, key):
     given. The key is used when evaluating the PRFs.
 
     An example with (n,t) = (3,1) and a modulus of 31:
+
     >>> from field import GF
     >>> Zp = GF(31)
     >>> prfs = {frozenset([1,2]): PRF("a", 31),
@@ -68,12 +69,12 @@ def prss(n, j, field, prfs, key):
 def generate_subsets(orig_set, size):
     """Generates the set of all subsets of a specific size.
 
-    Example:
     >>> generate_subsets(frozenset('abc'), 2)
     frozenset([frozenset(['c', 'b']), frozenset(['a', 'c']), frozenset(['a', 'b'])])
 
     Generating subsets larger than the initial set return the empty
     set:
+
     >>> generate_subsets(frozenset('a'), 2)
     frozenset([])
     """
@@ -113,9 +114,11 @@ class PRF(object):
 
     Each PRF is created based on a key (which should be random and
     secret) and a maximum (which may be public):
+
     >>> f = PRF("some random key", 256)
 
     Calling f return values between zero and the given maximum:
+
     >>> f(1)
     246L
     >>> f(2)
@@ -132,24 +135,30 @@ class PRF(object):
         included and max excluded.
         
         To make a PRF what generates numbers less than 1000 do:
+
         >>> f = PRF("key", 1000)
 
         The PRF can be evaluated by calling it on some input:
+
         >>> f("input")
         327L
 
         Creating another PRF with the same key gives identical results
         since f and g are deterministic functions, depending only on
         the key:
+
         >>> g = PRF("key", 1000)
         >>> g("input")
         327L
-        
+
+        We can test that f and g behave the same on many inputs:
+
         >>> [f(i) for i in range(100)] == [g(i) for i in range(100)]
         True
 
         Both the key and the max is used when the PRF is keyed. This
         means that
+
         >>> f = PRF("key", 1000)
         >>> g = PRF("key", 10000)
         >>> [f(i) for i in range(100)] == [g(i) for i in range(100)]
@@ -194,21 +203,23 @@ class PRF(object):
         be given if one wants to evaluate the PRF on more that 2**32
         different values.
 
-        Example:
         >>> prf = PRF("key", 1000)
         >>> prf(1), prf(2), prf(3)
         (714L, 80L, 617L)
         
         Since prf is a function we can of course evaluate the same
         input to get the same output:
+
         >>> prf(1)
         714L
 
         The prf can take arbitrary input:
+
         >>> prf(("input", 123))
         474L
 
         but it must be hashable:
+
         >>> prf(["input", 123])
         Traceback (most recent call last):
             ...
