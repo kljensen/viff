@@ -24,7 +24,6 @@ import random
 import warnings
 from twisted.internet.defer import Deferred, succeed, gatherResults
 
-
 _seed = os.environ.get('SEED')
 
 if _seed is None:
@@ -32,6 +31,13 @@ if _seed is None:
     # chosen.
     _seed = random.randint(0, 10000)
     print 'Seeding random generator with random seed %d' % _seed
+    #: Random number generator used by all VIFF code.
+    #:
+    #: The generator is by default initialized with a random seed,
+    #: unless the environmental variable C{SEED} is set to a value, in
+    #: which case that value is used instead. If C{SEED} is defined,
+    #: but empty, then no seed is used and a protocol cannot be
+    #: reproduced exactly.
     rand = random.Random(_seed)
 elif _seed == '':
     # If it is set, but set to the empty string (SEED=), then no seed
