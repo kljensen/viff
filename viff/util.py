@@ -118,7 +118,7 @@ def clone_deferred(original):
     """Clone a Deferred.
 
     The returned clone will fire with the same result as the original
-    Deferred, but will otherwise be independant.
+    Deferred, but will otherwise be independent.
 
     It is an error to call callback on the clone as it will result in
     an AlreadyCalledError when the original Deferred is triggered.

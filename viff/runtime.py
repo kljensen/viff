@@ -462,7 +462,7 @@ class Runtime:
         src_shares = self.prss_share(src_field(bit))
 
         # TODO: merge xor_int and xor_bit into an xor method and move
-        # this decission there.
+        # this decision there.
         if src_field is GF256:
             xor = self.xor_bit
         else:
@@ -725,7 +725,7 @@ class Runtime:
 
         while len(E_tilde) > 1:
             # TODO: pop() ought to be preferred? No: it takes the
-            # just appended and thus works liniarly... try with
+            # just appended and thus works linearly... try with
             # two lists instead, pop(0) is quadratic if it moves
             # elements.
             E_tilde.append(self.mul(E_tilde.pop(0),
@@ -780,7 +780,7 @@ class Runtime:
         if id == self.id:
             return defer.succeed(share)
         else:
-            # Convert self.program_cunter to a hashable value in order
+            # Convert self.program_counter to a hashable value in order
             # to use it as a key in self.incoming_shares.
             pc = tuple(self.program_counter)
             key = (pc, id)
