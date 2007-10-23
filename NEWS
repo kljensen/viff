@@ -8,8 +8,14 @@ detailes can be found in the commit messages:
   http://hg.viff.dk/viff/log/
 
 
-Version 0.1, released on October 16th 2007
-------------------------------------------
+Changes since the last version
+------------------------------
+
+Added API documentation and updated the installation instructions.
+
+
+Version 0.1, released on 2007-10-16
+-----------------------------------
 
 First public release.
 
