@@ -155,7 +155,7 @@ _field_cache = {256: GF256}
 def GF(modulus):
     """Generate a Galois (finite) field with the given modulus.
 
-    The modulus must be a Blum prime.
+    The modulus must be a prime:
 
     >>> Z23 = GF(23) # works
     >>> Z10 = GF(10) # not a prime
@@ -163,27 +163,28 @@ def GF(modulus):
         ...
     ValueError: 10 is not a prime
 
-    #>>> Z17 = GF(17) # not a Blum prime
-    #Traceback (most recent call last):
-    #    ...
-    #ValueError: 17 is not a Blum prime
-
     A modulus of 256 is special since it returns the GF(2^8) field
     even though 256 is no prime:
 
     >>> GF256 = GF(256)
     >>> print GF256(1)
     [1]
+
+    Please note, that if you wish to calculate square roots, the
+    modulus must be a Blum prime (congruent to 3 mod 4):
+
+    >>> Z17 = GF(17) # 17 % 4 == 1, so 17 is no Blum prime
+    >>> x = Z17(10)
+    >>> x.sqrt()
+    Traceback (most recent call last):
+        ...
+    AssertionError: Cannot compute square root of {10} with modulus 17
     """
     if modulus in _field_cache:
         return _field_cache[modulus]
 
     if not mpz(modulus).is_prime():
         raise ValueError, "%d is not a prime" % modulus
-
-    # TODO: to Blum or not to Blum, that is the question...
-    #if not modulus % 4 == 3:
-    #    raise ValueError, "%d is not a Blum prime" % modulus
 
     # Define a new class representing the field. This class will be
     # returned at the end of the function.
@@ -274,10 +275,12 @@ def GF(modulus):
         def sqrt(self):
             """Square root.
 
-            No attempt is made the to return the positive square
-            root.
+            No attempt is made the to return the positive square root.
+
+            Computing square roots is only possible when the modulus
+            is a Blum prime (congruent to 3 mod 4).
             """
-            assert self.modulus % 4 == 3, "Cannot conpute square " \
+            assert self.modulus % 4 == 3, "Cannot compute square " \
                    "root of %s with modulus %s" % (self, self.modulus)
 
             # Because we assert that the modulus is a Blum prime
