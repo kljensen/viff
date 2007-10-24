@@ -21,3 +21,4 @@ doc/api/*.html
 doc/api/*.{gif,png}
 doc/api/api-objects.txt
 doc/api/epydoc.{css,js}
+dist
