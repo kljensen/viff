@@ -8,6 +8,7 @@ marked with 'TODO' which document things on a more local level. The
 features have been roughly divided into design, infrastructure,
 benchmarking, and website features.
 
+
 Design
 ------
 
@@ -154,3 +155,11 @@ Website
 
 * API documentation
    The current API documentation should be available online.
+
+Miscellaneous
+-------------
+
+* References to papers
+   We need references to the original papers. There should at least be
+   references in the source code itself, but maybe also in a separate
+   file. A new Epydoc field might help?
