@@ -37,7 +37,13 @@ The TODO file lists a number of ideas for future work.
 
 Should you encounter a bug or have problems with VIFF, then please
 start by downloading the latest version on http://viff.dk/. If that
-does not help, then contact Martin Geisler <mg@daimi.au.dk> for help.
+does not help, then ask for help on the VIFF mailing list at
+
+  viff-devel@viff.dk
+
+You can subscribe to the list at
+
+  http://lists.viff.dk/listinfo.cgi/viff-devel-viff.dk
 
 
 Example Applications
