@@ -17,6 +17,22 @@ setup(name='viff',
       description='Virtual Ideal Functionality Framework',
       long_description="""\
 VIFF is a framework for doing secure multi-party computations (SMPC).
+Features include:
+
+* secret sharing based on standard Shamir and pseudo-random secret
+  sharing (PRSS).
+
+* arithmetic with shares from Zp or GF(2^8): addition, multiplication,
+  exclusive-or.
+
+* two comparison protocols which compare secret shared Zp inputs, with
+  secret GF(2^8) or Zp output.
+
+* computations with any number of players for which an honest majority
+  can be found.
+
+All operations are automatically scheduled to run in parallel meaning
+that an operation starts as soon as the operands are ready.
 """,
       license=viff.__license__,
       packages=['viff', 'viff.test'])
