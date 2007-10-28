@@ -35,4 +35,19 @@ All operations are automatically scheduled to run in parallel meaning
 that an operation starts as soon as the operands are ready.
 """,
       license=viff.__license__,
-      packages=['viff', 'viff.test'])
+      packages=['viff', 'viff.test'],
+      classifiers=[
+        'Development Status :: 3 - Alpha',
+        'Environment :: Console',
+        'Intended Audience :: Developers',
+        'Intended Audience :: Information Technology',
+        'Intended Audience :: Science/Research',
+        'License :: OSI Approved :: GNU General Public License (GPL)',
+        'Operating System :: OS Independent',
+        'Programming Language :: Python',
+        'Topic :: Communications',
+        'Topic :: Security :: Cryptography',
+        'Topic :: Software Development :: Libraries :: Application Frameworks',
+        'Topic :: Software Development :: Libraries :: Python Modules'
+        ]
+      )
