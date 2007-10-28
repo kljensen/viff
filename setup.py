@@ -14,10 +14,10 @@ setup(name='viff',
       author='Martin Geisler',
       author_email='mg@daimi.au.dk',
       url='http://viff.dk/',
-      description='Virtual Ideal Functionality Framework',
+      description='An SMPC framework',
       long_description="""\
-VIFF is a framework for doing secure multi-party computations (SMPC).
-Features include:
+The Virtual Ideal Functionality Framework is a framework for doing
+secure multi-party computations (SMPC). Features include:
 
 * secret sharing based on standard Shamir and pseudo-random secret
   sharing (PRSS).
