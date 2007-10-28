@@ -20,11 +20,11 @@ report back if you find that VIFF works with earlier versions than the
 ones listed here.
 
 
-Installing VIFF
----------------
+Installing VIFF Dependencies
+----------------------------
 
-First install the dependencies, preferably by using the package system
-for your platform.
+Before installing VIFF, you will want to install the dependencies,
+preferably by using the package system for your platform.
 
 If you do not have permission to install the dependencies site-wide,
 then (assuming that Python is already installed) one can easily
@@ -51,7 +51,9 @@ Bash uses can normally do this by adding
 
 to their ~/.bash_profile file, creating it if it is not already there.
 
-To run VIFF you must configure your Python path correctly by setting
-the PYTHONPATH environment variable. In Bash shells this is done by
 
-  % export PYTHONPATH=$PYTHONPATH:/path/to/viff/checkout
+Installing VIFF
+---------------
+
+VIFF is installed using setup.py just like the dependencies as
+described above. Please mail viff-devel@viff.dk if you need any help.
