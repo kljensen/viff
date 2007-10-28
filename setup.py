@@ -7,8 +7,10 @@
 
 from distutils.core import setup
 
+import viff
+
 setup(name='viff',
-      version='0.1.1',
+      version=viff.__version__,
       author='Martin Geisler',
       author_email='mg@daimi.au.dk',
       url='http://viff.dk/',
@@ -16,5 +18,5 @@ setup(name='viff',
       long_description="""\
 VIFF is a framework for doing secure multi-party computations (SMPC).
 """,
-      license='GNU GPL',
+      license=viff.__license__,
       packages=['viff', 'viff.test'])
