@@ -1,13 +1,9 @@
-include .hg_archival.txt NEWS INSTALL TODO COPYING
-recursive-include apps *.py *.glade *.gladep
-
 include doc/design-talk/design-talk.pdf
-include doc/design-talk/design-talk.tex
-include doc/design-talk/example.py
-include doc/design-talk/sample-config.ini
 
 include doc/api/*.html
 include doc/api/*.gif
 include doc/api/*.png
 include doc/api/epydoc.*
 include doc/api/api-objects.txt
+
+exclude MANIFEST.in
