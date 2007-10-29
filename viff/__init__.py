@@ -27,7 +27,8 @@ distributed in the C{apps} directory.
 
 @author: U{Martin Geisler <mg@daimi.au.dk>}
 @author: U{Tomas Toft <tomas@daimi.au.dk>}
-@version: 0.1.1
-@license: GNU GPL
 @see: U{http://viff.dk/}
 """
+
+__version__ = '0.1.1'
+__license__ = 'GNU GPL'
