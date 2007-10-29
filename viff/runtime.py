@@ -697,10 +697,6 @@ class Runtime:
                       l, field, smallField, s_bit, s_sign, mask, r_full,
                       r_modl, r_bits, z)
         return c
-#         result = gatherResults([c])
-#         program_counter = inc_pc(program_counter)
-#         result.addCallback(calculate, program_counter)
-#         return result
 
     @increment_pc
     def _finish_greater_thanII(self, c, l, field, smallField, s_bit, s_sign,
