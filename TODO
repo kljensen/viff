@@ -148,6 +148,10 @@ Website
 * Wiki
    Writing the webpages in a Wiki would be nice.
 
+* BuildBot
+   BuildBot can automate builds and display a status page with the
+   results form running the test suite.
+
 Miscellaneous
 -------------
 
