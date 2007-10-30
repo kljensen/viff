@@ -55,8 +55,14 @@ secure multi-party computations (SMPC). Features include:
 All operations are automatically scheduled to run in parallel meaning
 that an operation starts as soon as the operands are ready.
 """,
+      keywords=[
+        'cryptography', 'multi-party computation', 'MPC', 'SMPC',
+        'secure comparison', 'ideal functionality',
+        'Shamir', 'pseudo-random secret sharing', 'PRSS'
+        ],
       license=viff.__license__,
       packages=['viff', 'viff.test'],
+      platforms=['any'],
       classifiers=[
         'Development Status :: 3 - Alpha',
         'Environment :: Console',
