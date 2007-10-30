@@ -35,7 +35,7 @@ setup(name='viff',
       author='Martin Geisler',
       author_email='mg@daimi.au.dk',
       url='http://viff.dk/',
-      description='An SMPC framework',
+      description='A framework for secure multi-party computation (SMPC)',
       long_description="""\
 The Virtual Ideal Functionality Framework is a framework for doing
 secure multi-party computations (SMPC). Features include:
