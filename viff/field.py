@@ -17,10 +17,15 @@
 # Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 # 02110-1301 USA
 
-"""Modeling of fields.
+"""Modeling of Galois (finite) fields.
 
-The GF function creates Galois fields (finite fields) whereas the
-GF256 class models elements from the GF(2^8) field.
+The GF function creates classes which implements Galois (finite)
+fields of prime order whereas the GF256 class implements the the
+GF(2^8) field with characteristic 2.
+
+All fields work the same: instantiate an object from a field to get
+hold of an element of that field. Elements implement the normal
+arithmetic one would expect: addition, multiplication, etc.
 """
 
 from gmpy import mpz
