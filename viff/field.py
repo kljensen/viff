@@ -26,6 +26,33 @@ GF(2^8) field with characteristic 2.
 All fields work the same: instantiate an object from a field to get
 hold of an element of that field. Elements implement the normal
 arithmetic one would expect: addition, multiplication, etc.
+
+Defining a field:
+
+>>> Zp = GF(19)
+
+Defining field elements:
+
+>>> x = Zp(10)
+>>> y = Zp(15)
+
+Addition and subtraction (with modulo reduction):
+
+>>> x + y
+{6}
+>>> x - y
+{14}
+
+Exponentiation:
+
+>>> x**3
+{12}
+
+Square roots can be found for elements based on GF fields with a Blum
+prime modulus (see L{GF} for more information):
+
+>>> x.sqrt() 
+{3}
 """
 
 from gmpy import mpz
