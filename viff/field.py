@@ -53,6 +53,15 @@ prime modulus (see L{GF} for more information):
 
 >>> x.sqrt() 
 {3}
+
+Field elements from different fields cannot be mixed:
+
+>>> Zq = GF(17)
+>>> z = Zq(2)
+>>> x + z
+Traceback (most recent call last):
+    ...
+AssertionError: Fields must be identical
 """
 
 from gmpy import mpz
@@ -230,7 +239,7 @@ def GF(modulus):
                 # We can do a quick test using 'is' here since
                 # there will only be one class representing this
                 # field.
-                assert self.field is other.field
+                assert self.field is other.field, "Fields must be identical"
                 return GFElement(self.value + other.value)
             except AttributeError:
                 return GFElement(self.value + other)
@@ -240,7 +249,7 @@ def GF(modulus):
         def __sub__(self, other):
             """Subtraction."""
             try:
-                assert self.field is other.field
+                assert self.field is other.field, "Fields must be identical"
                 return GFElement(self.value - other.value)
             except AttributeError:
                 return GFElement(self.value - other)
@@ -252,7 +261,7 @@ def GF(modulus):
         def __mul__(self, other):
             """Multiplication."""
             try:
-                assert self.field is other.field
+                assert self.field is other.field, "Fields must be identical"
                 return GFElement(self.value * other.value)
             except AttributeError:
                 return GFElement(self.value * other)
@@ -295,7 +304,7 @@ def GF(modulus):
         def __div__(self, other):
             """Division."""
             try:
-                assert self.field is other.field
+                assert self.field is other.field, "Fields must be identical"
                 return self * ~other
             except AttributeError:
                 return self * ~GFElement(other)
@@ -339,7 +348,7 @@ def GF(modulus):
         def __eq__(self, other):
             """Equality test."""
             try:
-                assert self.field is other.field
+                assert self.field is other.field, "Fields must be identical"
                 return self.value == other.value
             except AttributeError:
                 return self.value == other
@@ -347,7 +356,7 @@ def GF(modulus):
         def __cmp__(self, other):
             """Comparison."""
             try:
-                assert self.field is other.field
+                assert self.field is other.field, "Fields must be identical"
                 return cmp(self.value, other.value)
             except AttributeError:
                 return cmp(self.value, other)
