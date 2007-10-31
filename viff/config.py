@@ -17,6 +17,20 @@
 # Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 # 02110-1301 USA
 
+"""Functions for loading and saving player configurations.
+
+Each player participating in a protocol execution must know some
+information about the other players, namely their hostname and port
+number. The player also needs to know something about itself, namely
+the keys used for pseudo-random secret sharing (PRSS).
+
+The L{Player} class encapsulates this information. Generating a player
+configuration is done using the L{generate_configs} function. The
+C{apps/generate_config_files.py} script uses that function to generate
+a player config and save it in a number of .ini files. Such a .ini
+file can be loaded with the L{load_config} function.
+"""
+
 from configobj import ConfigObj
 
 from viff.prss import generate_subsets, PRF
