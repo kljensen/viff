@@ -49,6 +49,30 @@ no attacks can occur in the ideal world, no attacks can occur in the
 real world as well. Such a multi-party computation (MPC) is called a
 secure multi-party computation (SMPC).
 
+Security Assumptions
+--------------------
+
+Please note that like all cryptographic systems, VIFF is only secure
+as long as certain assumptions are fulfilled. These assumptions
+include:
+
+  - The adversary can only corrupt up to a certain threshold of the
+    total number of players. The threshold will normally be 1/3 of the
+    players, so for three players, at most one player may be
+    corrupted.
+
+  - The adversary is computationally bounded. The protocols used by
+    VIFF rely on certain computational hardness assumptions, and
+    therefore only polynomial time adversaries are allowed.
+
+  - The adversary is static. Being static means that the adversary
+    only monitors the network traffic, but still follows the protocol.
+    We plan to add support for active (Byzantine) adversaries in a
+    future version.
+
+The precise assumptions for each protocol will eventually be included
+in the documentation for the corresponding method, but this has not
+yet been done.
 
 Architecture
 ============
