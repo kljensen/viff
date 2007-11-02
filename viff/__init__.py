@@ -55,8 +55,8 @@ Architecture
 
 VIFF consists of several modules. The L{runtime} module contains the
 L{Runtime} class, in which the main functionality is implemented. The
-L{field} module contains implementations of finite fields --- there
-are the value you do calculations on using the runtime. Other modules
+L{field} module contains implementations of finite fields --- these
+are the values you do calculations on using the runtime. Other modules
 provide support functions.
 
 Layers
@@ -70,9 +70,10 @@ Shares can be either L{field.GF} or L{GF256} elements or C{Deferred}s
 yielding such elements. The result values from methods in the runtime
 is normally deferred field elements.
 
-Field elements contain the concrete value on which we do calculations.
-This is just normal Python (long) integers. The value is wrapped in an
-object that will keep track of doing modulo reductions as appropriate.
+A field element contain the concrete value on which we do
+calculations. This is just a normal Python (long) integer. The value
+is wrapped in an object that will keep track of doing modulo
+reductions as appropriate.
 
 So in a nutshell, VIFF has these layers:
 
