@@ -11,8 +11,8 @@ details can be found in the commit messages:
 Version ?, not yet released
 ---------------------------
 
-Released using a Distutils setup.py script. Added VIFF to the Python
-Package Index (PyPI).
+Updated API documentation. Released using a Distutils setup.py script.
+Added VIFF to the Python Package Index (PyPI).
 
 
 Version 0.1.1, released on 2007-10-23
