@@ -17,8 +17,10 @@
 # Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 # 02110-1301 USA
 
-"""
-Shamir sharing and recombination.
+"""Shamir sharing and recombination.
+
+Based on the paper "How to share a secret" by Adi Shamir in
+I{Communications of the ACM} B{22} (11): 612-613.
 """
 
 import operator
@@ -34,6 +36,19 @@ def share(secret, threshold, num_players):
     >>> secret = Zp(42)
     >>> recombine(share(secret, 7, 15)[:8]) == secret
     True
+
+    @param secret: the secret to be shared
+    @type secret: a field element
+
+    @param threshold: maximum number of shares that reveal nothing
+    about the secret.
+    @type threshold: integer
+
+    @param num_players: number of players
+    @type num_players: integer
+
+    @return: shares, one for each player
+    @returntype: C{list} of (player id, share) pairs
     """
     assert threshold > 0 and threshold < num_players
     
@@ -65,13 +80,20 @@ def share(secret, threshold, num_players):
 
     return shares
 
-# Cached recombination vectors.
+#: Cached recombination vectors.
+#:
+#: The recombination vector used by L{recombine} depends only on the
+#: recombination point and the player ids of the shares, and so they
+#: are cached for efficiency.
 _recombination_vectors = {}
 
 def recombine(shares, x_recomb=0):
     """Recombines list of (xi, yi) pairs.
 
     Recombination is done in the optional point x.
+
+    @param shares: M{threshold+1} shares
+    @type shares: C{list} of (player id, share) pairs.
     """
     xs = [x_i for (x_i, _) in shares]
     ys = [y_i for (_, y_i) in shares]
