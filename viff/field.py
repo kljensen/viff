@@ -70,14 +70,27 @@ class FieldElement(object):
     """Common base class for elements."""
 
 
+#: Logarithm table.
+#:
+#: Maps a value M{x} to M{log3(x)}. See L{_generate_tables}.
 _log_table = {}
+#: Exponentiation table.
+#:
+#: Maps a value M{y} to M{3^y}. See L{_generate_tables}.
 _exp_table = {}
+#: Inversion table.
+#:
+#: Maps a value M{x} to M{x^-1}. See L{_generate_tables}.
 _inv_table = {}
 
 def _generate_tables():
-    """Generate tables with logarithms, exponentials and inverses.
+    """Generate tables with logarithms, antilogarithms (exponentials)
+    and inverses.
 
-    Code adapted from http://www.samiam.org/galois.html.
+    This updates the L{_log_table}, L{_exp_table}, and L{_inv_table}
+    fields. The generator used is 0x03.
+
+    Code adapted from U{http://www.samiam.org/galois.html}.
     """
     a = 1
     for c in range(255):
@@ -105,16 +118,28 @@ _generate_tables()
 class GF256(FieldElement):
     """Models an element of the GF(2^8) field."""
 
-    modulus = 256
+    modulus = 256 #: GF(2^8) modulus, always 256.
 
     def __init__(self, value):
+        """Initialize new element.
+
+        The value given is modulo reduced so the following holds:
+
+        >>> GF256(1) == GF256(257)
+        True
+        """
         self.value = value % self.modulus
 
     def field(self, value):
+        """Return a field element with the given value.
+
+        Provided to make the construction of new elements easy in a
+        polymorphic context.
+        """
         return GF256(value)
 
     def __add__(self, other):
-        """Add this and another GF256.
+        """Add this and another GF256 element.
 
         >>> GF256(0x01) + GF256(0x01)
         [0]
@@ -131,8 +156,15 @@ class GF256(FieldElement):
             other = other.value
         return GF256(self.value ^ other)
 
+    #: Add this and another GF256 element (reflected argument version).
     __radd__ = __add__
+
+    #: Subtract this and another GF256 element.
+    #:
+    #: Addition is its own inverse in GF(2^8) and so this is the same
+    #: as L{__add__}.
     __sub__ = __add__
+    #: Subtract this and another GF256 element (reflected argument version).
     __rsub__ = __sub__
 
     def __mul__(self, other):
@@ -153,24 +185,43 @@ class GF256(FieldElement):
             log_product = (_log_table[self.value] + _log_table[other]) % 255
             return GF256(_exp_table[log_product])
 
+
+    #: Multiply this and another GF256 element (reflected argument version).
     __rmul__ = __mul__
 
     def __pow__(self, exponent):
+        """Exponentiation."""
         result = GF256(1)
         for _ in range(exponent):
             result *= self
         return result
 
     def __div__(self, other):
+        """Division.
+        
+        @param other: right-hand side.
+        @type other: GF256 element
+        """
         return self * ~other
 
     def __rdiv__(self, other):
+        """Division (reflected argument version).
+
+        @param other: the left-hand side.
+        @type other: integer
+        """
         return GF256(other) / self
 
     def __neg__(self):
+        """Negation."""
         return self
 
     def __invert__(self):
+        """Invertion.
+
+        @raise ZeroDivisionError: if trying to inverse the zero
+        element.
+        """
         if self.value == 0:
             raise ZeroDivisionError, "Cannot invert zero"
         return GF256(_inv_table[self.value])
@@ -183,14 +234,23 @@ class GF256(FieldElement):
         return "[%d]" % self.value
 
     def __eq__(self, other):
+        """Equality testing.
+
+        Testing for equality with integers works as expected:
+
+        >>> GF256(10) == 10
+        True
+        """
         if isinstance(other, GF256):
             other = other.value
         return self.value == other
 
 
-# Calls to GF with identical modulus must return the same class
-# (field), so we cache them here. The cache is seeded with the
-# GF256 class which is always defined.
+#: Cached fields.
+#:
+#: Calls to GF with identical modulus must return the same class
+#: (field), so we cache them here. The cache is seeded with the
+#: GF256 class which is always defined.
 _field_cache = {256: GF256}
 
 def GF(modulus):
