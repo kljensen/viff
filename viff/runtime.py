@@ -42,12 +42,34 @@ from twisted.protocols.basic import Int16StringReceiver
 
 
 class ShareExchanger(Int16StringReceiver):
-    """Send and receive shares."""
+    """Send and receive shares.
+
+    All players are connected by pair-wise connections and this
+    Twisted protocol is one such connection. It is used to send and
+    receive shares from one other player.
+
+    The C{marshal} module is used for converting the data to bytes for
+    the network and to convert back again to structured data.
+    """
 
     def __init__(self, id):
+        """Initialize the protocol.
+
+        @param id: the id of the peer."""
         self.id = id
         
     def stringReceived(self, string):
+        """Called when a share is received.
+
+        The string received is unmarshalled into the program counter,
+        the field modulus and the field value. The field element is
+        reconstructed and the appropriate Deferred in the
+        L{ShareExchangerFactory.incoming_shares} is triggered.
+
+        @param string: bytes from the network.
+        @type string: C{(program_counter, modulus, value)} in
+        marshalled form
+        """
         program_counter, modulus, value = marshal.loads(string)
 
         share = GF(modulus)(value)
@@ -63,7 +85,17 @@ class ShareExchanger(Int16StringReceiver):
         # TypeError. They should be handled somehow.
 
     def sendShare(self, program_counter, share):
-        """Send a share."""
+        """Send a share.
+
+        The program counter and the share are marshalled and sent to
+        the peer.
+
+        @param program_counter: the program counter associated with
+        the share.
+
+        @return: C{self} so that C{sendShare} can be used as a
+        callback.
+        """
         #println("Sending to id=%d: program_counter=%s, share=%s",
         #        self.id, program_counter, share)
 
@@ -82,10 +114,24 @@ class ShareExchangerFactory(ServerFactory, ClientFactory):
     """Factory for creating ShareExchanger protocols."""
 
     def __init__(self, incoming_shares, port_player_mapping, protocols):
+        """Initialize the factory.
+
+        @param incoming_shares: incoming shares waiting for network
+        input, see L{Runtime.incoming_shares}.
+        @type incoming_shares: mapping from C{(program_counter, id)}
+        pairs to Deferreds yielding shares
+        """
         println("ShareExchangerFactory: %s", port_player_mapping)
 
+        #: Incoming shares. Reference to L{Runtime.incoming_shares}.
         self.incoming_shares = incoming_shares
+
+        #: Mapping from C{(ip, port)} tuples to player IDs. Used to
+        #: identify peers when they connect.
         self.port_player_mapping = port_player_mapping
+
+        #: List of deferred protocols. These deferreds will be
+        #: triggered when peers connect.
         self.protocols = protocols
 
     def buildProtocol(self, addr):
@@ -108,7 +154,11 @@ class ShareExchangerFactory(ServerFactory, ClientFactory):
 def increment_pc(method):
     """Make method automatically increment the program counter.
 
-    The function must be a method.
+    Adding this decorator to a L{Runtime} method will ensure that the
+    program counter is incremented correctly when entering the method.
+
+    @param method: the method.
+    @type method: a method of L{Runtime}
     """
     def inc_pc_wrapper(self, *args, **kwargs):
         try:
@@ -140,17 +190,85 @@ class Runtime:
         @param id: id of this player
         @param threshold: threshold for the protocol run
         """
+        #: Player configuration.
         self.players = players
+        #: ID of this player.
         self.id = id
+        #: Shamir secret sharing threshold.
         self.threshold = threshold
 
+        #: Current program counter.
+        #:
+        #: Whenever a share is sent over the network, it must be
+        #: uniquely identified so that the receiving player known what
+        #: operation the share is a result of. This is done by
+        #: associating a X{program counter} with each operation.
+        #:
+        #: Keeping the program counter synchronized between all
+        #: players ought to be easy, but because of the asynchronous
+        #: nature of network protocols, all players might not reach
+        #: the same parts of the program at the same time.
+        #:
+        #: Consider two players M{A} and M{B} who are both waiting on
+        #: the variables C{a} and C{b}. Callbacks have been added to
+        #: C{a} and C{b}, and the question is what program counter the
+        #: callbacks should use when sending data out over the
+        #: network.
+        #:
+        #: Let M{A} receive input for C{a} and then for C{b} a little
+        #: later, and let M{B} receive the inputs in reversed order so
+        #: that the input for C{b} arrives first. The goal is to keep
+        #: the program counters synchronized so that program counter
+        #: M{x} refers to the same operation on all players. Because
+        #: the inputs arrive in different order at different players,
+        #: incrementing a simple global counter is not enough.
+        #:
+        #: Instead, a I{tree} is made, which follows the tree of
+        #: execution. At the top level the program counter starts at
+        #: C{[0]}. At the next operation it becomes C{[1]}, and so on.
+        #: If a callback is scheduled (see L{callback}) at program
+        #: counter C{[x, y, z]}, any calls it makes will be numbered
+        #: C{[x, y, z, 1]}, then C{[x, y, z, 2]}, and so on.
+        #:
+        #: Maintaining such a tree of program counters ensures that
+        #: different parts of the program execution never reuses the
+        #: same program counter for different variables.
+        #:
+        #: The L{increment_pc} decorator is responsible for
+        #: dynamically building the tree as the execution unfolds and
+        #: L{callback} is responsible for scheduling callbacks with
+        #: the correct program counter.
+        #:
+        #: @type: C{list} of integers
         self.program_counter = [0]
 
-        # Dictionary mapping (program_counter, player_id) to Deferreds
-        # yielding shares.
+        #: Future shares still waiting on input.
+        #:
+        #: Shares from other players are put here, either as an empty
+        #: Deferred if we are waiting on input from the player, or as
+        #: a succeeded Deferred if input is received from the other
+        #: player before we are ready to use it.
+        #:
+        #: When we have a share to exchange with another player,
+        #: L{_exchange_shares} is used. If we are ahead of the other
+        #: player, it sets up a Deferred waiting for the players
+        #: input. It is L{ShareExchanger.stringReceived} that triggers
+        #: this deferred when the input eventually arrives. If the
+        #: other player has already sent us its input, then
+        #: L{ShareExchanger.stringReceived} has set up a succeeded
+        #: Deferred which L{_exchange_shares} can simply return.
+        #:
+        #: @type: C{dict} from C{(program_counter, player_id)} to
+        #: deferred shares.
         self.incoming_shares = {}
 
-        # List of Deferreds yielding protocols
+        #: Connections to the other players.
+        #:
+        #: These Deferreds will yield L{ShareExchanger} objects when
+        #: other players make connections to us, and when we
+        #: L{connect} to them.
+        #:
+        #: @type: C{list} of deferred L{ShareExchanger} objects.
         self.protocols = dict((id, Deferred())
                               for id, p in players.iteritems())
         self.protocols[self.id].callback("Unused")
@@ -158,7 +276,15 @@ class Runtime:
         self.connect()
 
     def connect(self):
-        """Connects this runtime to the others."""
+        """Connects this runtime to the others.
+
+        Each player has pair-wise connections to all other players.
+        With M{n} players a total of M{n * (n-1)/2 = (n²-n)/2}
+        connections are made.
+
+        When the connections are made, the deferred L{ShareExchanger}
+        objects in L{Runtime.protocols} are triggered.
+        """
         # Resolving the hostname into an IP address is a blocking
         # operation, but this is acceptable since it is only done when
         # the runtime is initialized.
@@ -210,15 +336,22 @@ class Runtime:
         println("Reactor stopped")
 
     def callback(self, deferred, func, *args, **kwargs):
-        """Schedule a callback on a deferred with the correct PC.
+        """Schedule a callback on a deferred with the correct program
+        counter.
 
-        If a callback depends on the current PC, then use this method
-        to schedule it instead of simply calling addCallback directly.
-        Simple callbacks that are independent of the PC can still be
-        added directly to the deferred as usual.
+        If a callback depends on the current program counter, then use
+        this method to schedule it instead of simply calling
+        addCallback directly. Simple callbacks that are independent of
+        the program counter can still be added directly to the
+        Deferred as usual.
 
         Any extra arguments are passed to the callback as with
         addCallback.
+
+        @param deferred: the Deferred.
+        @param func: the callback.
+        @param args: extra arguments.
+        @param kwargs: extra keyword arguments.
         """
         saved_pc = self.program_counter[:]
         #println("Saved PC: %s for %s", saved_pc, func.func_name)
