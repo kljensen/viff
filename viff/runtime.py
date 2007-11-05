@@ -280,7 +280,7 @@ class Runtime:
         """Connects this runtime to the others.
 
         Each player has pair-wise connections to all other players.
-        With M{n} players a total of M{n * (n-1)/2 = (n²-n)/2}
+        With M{n} players a total of M{n * (n-1)/2 = (n^2-n)/2}
         connections are made.
 
         When the connections are made, the deferred L{ShareExchanger}
