@@ -37,17 +37,17 @@ def share(secret, threshold, num_players):
     >>> recombine(share(secret, 7, 15)[:8]) == secret
     True
 
-    @param secret: the secret to be shared
+    @param secret: the secret to be shared.
     @type secret: a field element
 
     @param threshold: maximum number of shares that reveal nothing
     about the secret.
     @type threshold: integer
 
-    @param num_players: number of players
+    @param num_players: number of players.
     @type num_players: integer
 
-    @return: shares, one for each player
+    @return: shares, one for each player.
     @returntype: C{list} of (player id, share) pairs
     """
     assert threshold > 0 and threshold < num_players
@@ -83,17 +83,17 @@ def share(secret, threshold, num_players):
 #: Cached recombination vectors.
 #:
 #: The recombination vector used by L{recombine} depends only on the
-#: recombination point and the player ids of the shares, and so they
-#: are cached for efficiency.
+#: recombination point and the player IDs of the shares, and so it can
+#: be cached for efficiency.
 _recombination_vectors = {}
 
 def recombine(shares, x_recomb=0):
     """Recombines list of (xi, yi) pairs.
 
-    Recombination is done in the optional point x.
+    Recombination is done in the optional point M{x}.
 
-    @param shares: M{threshold+1} shares
-    @type shares: C{list} of (player id, share) pairs.
+    @param shares: M{threshold+1} shares.
+    @type shares: C{list} of (player id, share) pairs
     """
     xs = [x_i for (x_i, _) in shares]
     ys = [y_i for (_, y_i) in shares]

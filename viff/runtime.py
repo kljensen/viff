@@ -55,7 +55,8 @@ class ShareExchanger(Int16StringReceiver):
     def __init__(self, id):
         """Initialize the protocol.
 
-        @param id: the id of the peer."""
+        @param id: the id of the peer.
+        """
         self.id = id
         
     def stringReceived(self, string):
@@ -185,10 +186,10 @@ class Runtime:
         The runtime is initialized based on the player configuration
         given, the id, and the threshold.
 
-        @param players: player configuration, see L{config.load_config}
+        @param players: player configuration, see L{config.load_config}.
         @type players: mapping from id to L{Player} instances
-        @param id: id of this player
-        @param threshold: threshold for the protocol run
+        @param id: id of this player.
+        @param threshold: threshold for the protocol run.
         """
         #: Player configuration.
         self.players = players
@@ -239,7 +240,7 @@ class Runtime:
         #: L{callback} is responsible for scheduling callbacks with
         #: the correct program counter.
         #:
-        #: @type: C{list} of integers
+        #: @type: C{list} of integers.
         self.program_counter = [0]
 
         #: Future shares still waiting on input.
