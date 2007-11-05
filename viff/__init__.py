@@ -18,8 +18,10 @@
 # 02110-1301 USA
 
 """
-B{VIFF}: Virtual Ideal Functionality Framework, a Python framework for
-writing secure-multi-party computations (SMPC).
+Virtual Ideal Functionality Framework.
+
+VIFF is a Python framework for writing multi-party computations (MPC)
+in an easy, efficient, and secure way.
 
 Overview
 ========
