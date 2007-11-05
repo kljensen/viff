@@ -466,6 +466,9 @@ class Runtime:
         self.callback(result, lambda (a, b, c): a + b - 2*c)
         return result
 
+    #: Exclusive-or of GF256 sharings.
+    #:
+    #: Communication cost: none.
     xor_bit = add
 
     @increment_pc
