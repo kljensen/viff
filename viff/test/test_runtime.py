@@ -31,69 +31,16 @@ from twisted.trial.unittest import TestCase
 from twisted.protocols.loopback import loopbackAsync
 
 from viff.field import GF, GF256
-from viff.runtime import Runtime, ShareExchanger
+from viff.runtime import Runtime
 from viff.config import generate_configs, load_config
 from viff import shamir
 
-
-class LoopbackRuntime(Runtime):
-
-    def __init__(self, players, id, threshold, connections, runtimes):
-        self.connections = connections
-        self.runtimes = runtimes
-        self.real_protocols = {}
-        Runtime.__init__(self, players, id, threshold)
-
-    def connect(self):
-        for id in self.players:
-            # There is no connection back to ourselves
-            if id != self.id:
-                protocol = ShareExchanger(id)
-                # The ShareExchanger protocol uses its factory for
-                # accessing the incoming_shares dictionary, which
-                # actually comes from the runtime. So self is an okay
-                # factory here. TODO: Remove the factory?
-                protocol.factory = self
-                # TODO: is there any need to schedule this instead of
-                # simply executing the callback directly? Or assign a
-                # defer.succeed(protocol) to self.protocols[id].
-                reactor.callLater(0, self.protocols[id].callback, protocol)
-                self.real_protocols[id] = protocol
-
-                if id > self.id:
-                    # Make a "connection" to the other player. We are
-                    # the client (because we initiate the connection)
-                    # and the other player is the server.
-                    client = protocol
-                    server = self.runtimes[id].real_protocols[self.id]
-                    key = (self.id, id)
-                    self.connections[key] = loopbackAsync(server, client)
-
+from viff.test.util import RuntimeTestCase
 
 # TODO: find a way to specify the program for each player once and run
 # it several times.
 
-class RuntimeTestCase(TestCase):
-    
-    def setUp(self):
-        # Our standard 65 bit Blum prime 
-        self.Zp = GF(30916444023318367583)
-
-        configs = generate_configs(3, 1)
-        connections = {}
-        runtimes = {}
-
-        id, players = load_config(configs[3])
-        self.rt3 = LoopbackRuntime(players, id, 1, connections, runtimes)
-        runtimes[3] = self.rt3
-
-        id, players = load_config(configs[2])
-        self.rt2 = LoopbackRuntime(players, id, 1, connections, runtimes)
-        runtimes[2] = self.rt2
-
-        id, players = load_config(configs[1])
-        self.rt1 = LoopbackRuntime(players, id, 1, connections, runtimes)
-        runtimes[1] = self.rt1
+class RuntimeTest(RuntimeTestCase):
 
     def test_open(self):
         """
@@ -487,27 +434,7 @@ class RuntimeTestCase(TestCase):
 
 if 'STRESS' in os.environ:
 
-    class StressTestCase(TestCase):
-
-        def setUp(self):
-            # 65 bit prime
-            self.Zp = GF(30916444023318367583)
-
-            configs = generate_configs(3, 1)
-            connections = {}
-            runtimes = {}
-
-            id, players = load_config(configs[3])
-            self.rt3 = LoopbackRuntime(players, id, 1, connections, runtimes)
-            runtimes[3] = self.rt3
-
-            id, players = load_config(configs[2])
-            self.rt2 = LoopbackRuntime(players, id, 1, connections, runtimes)
-            runtimes[2] = self.rt2
-
-            id, players = load_config(configs[1])
-            self.rt1 = LoopbackRuntime(players, id, 1, connections, runtimes)
-            runtimes[1] = self.rt1
+    class StressTest(RuntimeTestCase):
 
         def _mul_stress_test(self, count):
             a, b, c = 17, 42, 111
