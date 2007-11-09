@@ -79,3 +79,12 @@ that an operation starts as soon as the operands are ready.
         ],
       cmdclass={'sdist': hg_sdist}
       )
+
+# When releasing VIFF, notify these sites:
+#
+# * http://viff.dk/
+# * viff-devel@viff.dk
+# * http://freshmeat.net/projects/viff/
+# * http://pypi.python.org/pypi/viff/
+# * http://www.icewalkers.com/Linux/Software/532160/VIFF.html
+# * http://www.hotscripts.com/Detailed/74748.html
