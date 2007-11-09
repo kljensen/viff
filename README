@@ -6,8 +6,8 @@ This is a general framework for doing secure multi-party computations.
 The aim is to offer a secure, fast basis for writing SMPC protocols.
 Please see the INSTALL file for installation instructions.
 
-VIFF is licensed under the GNU General Public License, please see the
-file COPYING for details.
+VIFF is Free Software licensed under the GNU General Public License
+(GPL) version 2 or later. Please see the file COPYING for details.
 
 
 Current Status
