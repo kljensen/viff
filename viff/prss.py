@@ -1,4 +1,4 @@
-# -*- coding: latin-1 -*-
+# Necessary because of the 'å' in 'Damgård': -*- coding: latin-1 -*-
 #
 # Copyright 2007 Martin Geisler
 #
