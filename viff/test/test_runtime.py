@@ -21,12 +21,12 @@ import os
 from random import Random
 
 from twisted.internet import reactor
-from twisted.internet.defer import Deferred, succeed, gatherResults
+from twisted.internet.defer import gatherResults
 from twisted.trial.unittest import TestCase
 from twisted.protocols.loopback import loopbackAsync
 
 from viff.field import GF, GF256
-from viff.runtime import Runtime
+from viff.runtime import Runtime, Share
 from viff.config import generate_configs, load_config
 from viff import shamir
 
@@ -44,13 +44,17 @@ class RuntimeTest(RuntimeTestCase):
         input = self.Zp(42)
         a, b, c = shamir.share(input, 1, 3)
 
-        a = succeed(a[1])
-        b = succeed(b[1])
-        c = succeed(c[1])
+        a = Share(self.rt1, a[1])
+        b = Share(self.rt2, b[1])
+        c = Share(self.rt3, c[1])
 
         open_a = self.rt1.open(a)
         open_b = self.rt2.open(b)
         open_c = self.rt3.open(c)
+
+        self.assertTrue(isinstance(open_a, Share))
+        self.assertTrue(isinstance(open_b, Share))
+        self.assertTrue(isinstance(open_c, Share))
 
         open_a.addCallback(self.assertEquals, input)
         open_b.addCallback(self.assertEquals, input)
@@ -66,9 +70,9 @@ class RuntimeTest(RuntimeTestCase):
         input = self.Zp(42)
         shares = shamir.share(input, 1, 3)
         
-        a = Deferred()
-        b = succeed(shares[1][1])
-        c = Deferred()
+        a = Share(self.rt1)
+        b = Share(self.rt2, shares[1][1])
+        c = Share(self.rt3)
 
         a = self.rt1.open(a)
         b = self.rt2.open(b)
@@ -93,9 +97,9 @@ class RuntimeTest(RuntimeTestCase):
         input = self.Zp(42)
         share_a, share_b, share_c = shamir.share(input, 1, 3)
 
-        a = succeed(share_a[1])
-        b = succeed(share_b[1])
-        c = succeed(share_c[1])
+        a = Share(self.rt1, share_a[1])
+        b = Share(self.rt2, share_b[1])
+        c = Share(self.rt3, share_c[1])
 
         # Open once
         open_a1 = self.rt1.open(a)
@@ -128,96 +132,119 @@ class RuntimeTest(RuntimeTestCase):
     # TODO: factor out common code from test_add* and test_sub*.
 
     def test_add(self):
-        share_a = Deferred()
-        share_b = succeed(self.Zp(200))
-        share_c = self.rt1.add(share_a, share_b)
+        share_a = Share(self.rt1)
+        share_b = Share(self.rt1, self.Zp(200))
+
+        share_c = share_a + share_b
+        self.assertTrue(isinstance(share_c, Share),
+                        "Type should be Share, but is %s" % share_c.__class__)
 
         share_c.addCallback(self.assertEquals, self.Zp(300))
+
         share_a.callback(self.Zp(100))
         return share_c
 
     def test_add_coerce(self):
-        share_a = Deferred()
+        share_a = Share(self.rt1)
         share_b = self.Zp(200)
-        share_c = self.rt1.add(share_a, share_b)
+        share_c = share_a + share_b
 
         share_c.addCallback(self.assertEquals, self.Zp(300))
         share_a.callback(self.Zp(100))
         return share_c
 
     def test_sub(self):
-        share_a = succeed(self.Zp(200))
-        share_b = Deferred()
-        share_c = self.rt1.sub(share_a, share_b)
+        share_a = Share(self.rt1)
+        share_b = Share(self.rt1, self.Zp(200))
 
-        share_c.addCallback(self.assertEquals, self.Zp(100))
-        share_b.callback(self.Zp(100))
+        share_c = share_a - share_b
+        self.assertTrue(isinstance(share_c, Share),
+                        "Type should be Share, but is %s" % share_c.__class__)
+
+        share_c.addCallback(self.assertEquals, self.Zp(300))
+        share_a.callback(self.Zp(500))
         return share_c
 
     def test_sub_coerce(self):
-        share_a = self.Zp(200)
-        share_b = Deferred()
-        share_c = self.rt1.sub(share_a, share_b)
+        share_a = Share(self.rt1)
+        share_b = self.Zp(200)
+        share_c = share_a - share_b
 
-        share_c.addCallback(self.assertEquals, self.Zp(100))
-        share_b.callback(self.Zp(100))
+        share_c.addCallback(self.assertEquals, self.Zp(300))
+        share_a.callback(self.Zp(500))
         return share_c
 
     def test_mul(self):
-        shares_a = shamir.share(self.Zp(20), 1, 3)
-        shares_b = shamir.share(self.Zp(30), 1, 3)
-
-        res1 = self.rt1.mul(shares_a[0][1], shares_b[0][1])
-        res2 = self.rt1.mul(shares_a[1][1], shares_b[1][1])
-        res3 = self.rt1.mul(shares_a[2][1], shares_b[2][1])
-
+        def second(sequence):
+            return [x[1] for x in sequence]
+        
         def recombine(shares):
             ids = map(self.Zp, range(1, len(shares) + 1))
             return shamir.recombine(zip(ids, shares))
 
-        res = gatherResults([res1, res2, res3])
+        a1, a2, a3 = second(shamir.share(self.Zp(20), 1, 3))
+        b1, b2, b3 = second(shamir.share(self.Zp(30), 1, 3))
+
+        a1 = Share(self.rt1, a1)
+        b1 = Share(self.rt1, b1)
+
+        a2 = Share(self.rt2, a2)
+        b2 = Share(self.rt2, b2)
+
+        a3 = Share(self.rt3, a3)
+        b3 = Share(self.rt3, b3)
+
+        c1 = a1 * b1
+        c2 = a2 * b2
+        c3 = a3 * b3
+
+        self.assertTrue(isinstance(c1, Share),
+                        "Type should be Share, but is %s" % c1.__class__)
+        self.assertTrue(isinstance(c2, Share),
+                        "Type should be Share, but is %s" % c2.__class__)
+        self.assertTrue(isinstance(c3, Share),
+                        "Type should be Share, but is %s" % c3.__class__)
+
+        res = gatherResults([c1, c2, c3])
         res.addCallback(recombine)
         res.addCallback(self.assertEquals, self.Zp(600))
+        return res
 
     def test_xor(self):
         def second(sequence):
             return [x[1] for x in sequence]
 
+        def recombine(shares, field):
+            ids = map(field, range(1, len(shares) + 1))
+            return shamir.recombine(zip(ids, shares))
+
         results = []
-        for a, b in (0, 0), (0, 1), (1, 0), (1, 1):
-            int_a = self.Zp(a)
-            int_b = self.Zp(b)
+        for field in self.Zp, GF256:
+            for a, b in (0, 0), (0, 1), (1, 0), (1, 1):
+                a1, a2, a3 = second(shamir.share(field(a), 1, 3))
+                b1, b2, b3 = second(shamir.share(field(b), 1, 3))
 
-            bit_a = GF256(a)
-            bit_b = GF256(b)
-        
-            int_a_shares = second(shamir.share(int_a, 1, 3))
-            int_b_shares = second(shamir.share(int_b, 1, 3))
-
-            bit_a_shares = second(shamir.share(bit_a, 1, 3))
-            bit_b_shares = second(shamir.share(bit_b, 1, 3))
-
-            def recombine(shares, field):
-                ids = map(field, range(1, len(shares) + 1))
-                return shamir.recombine(zip(ids, shares))
-
-            int_res1 = self.rt1.xor_int(int_a_shares[0], int_b_shares[0])
-            int_res2 = self.rt2.xor_int(int_a_shares[1], int_b_shares[1])
-            int_res3 = self.rt3.xor_int(int_a_shares[2], int_b_shares[2])
+                a1 = Share(self.rt1, a1)
+                b1 = Share(self.rt1, b1)
+                a2 = Share(self.rt2, a2)
+                b2 = Share(self.rt2, b2)
+                a3 = Share(self.rt3, a3)
+                b3 = Share(self.rt3, b3)
+                
+                if field is self.Zp:
+                    res1 = self.rt1.xor_int(a1, b1)
+                    res2 = self.rt2.xor_int(a2, b2)
+                    res3 = self.rt3.xor_int(a3, b3)
+                else:
+                    res1 = self.rt1.xor_bit(a1, b1)
+                    res2 = self.rt2.xor_bit(a2, b2)
+                    res3 = self.rt3.xor_bit(a3, b3)
             
-            int_res = gatherResults([int_res1, int_res2, int_res3])
-            int_res.addCallback(recombine, self.Zp)
-            int_res.addCallback(self.assertEquals, self.Zp(a ^ b))
+                res = gatherResults([res1, res2, res3])
+                res.addCallback(recombine, field)
+                res.addCallback(self.assertEquals, field(a ^ b))
 
-            bit_res1 = self.rt1.xor_bit(bit_a_shares[0], bit_b_shares[0])
-            bit_res2 = self.rt2.xor_bit(bit_a_shares[1], bit_b_shares[1])
-            bit_res3 = self.rt3.xor_bit(bit_a_shares[2], bit_b_shares[2])
-
-            bit_res = gatherResults([bit_res1, bit_res2, bit_res3])
-            bit_res.addCallback(recombine, GF256)
-            bit_res.addCallback(self.assertEquals, GF256(a ^ b))
-
-            results.extend([int_res, bit_res])
+                results.append(res)
 
         return gatherResults(results)
 
@@ -229,6 +256,14 @@ class RuntimeTest(RuntimeTestCase):
         a1, b1, c1 = self.rt1.shamir_share(a)
         a2, b2, c2 = self.rt2.shamir_share(b)
         a3, b3, c3 = self.rt3.shamir_share(c)
+
+        # Check a cross-section of the shares for correct type
+        self.assertTrue(isinstance(a1, Share),
+                        "Type should be Share, but is %s" % a1.__class__)
+        self.assertTrue(isinstance(b2, Share),
+                        "Type should be Share, but is %s" % b2.__class__)
+        self.assertTrue(isinstance(c3, Share),
+                        "Type should be Share, but is %s" % c3.__class__)
 
         def check_recombine(shares, value):
             ids = map(self.Zp, range(1, len(shares) + 1))
@@ -279,6 +314,14 @@ class RuntimeTest(RuntimeTestCase):
         a2, b2, c2 = self.rt2.prss_share(b)
         a3, b3, c3 = self.rt3.prss_share(c)
         
+        # Check a cross-section of the shares for correct type
+        self.assertTrue(isinstance(a1, Share),
+                        "Type should be Share, but is %s" % a1.__class__)
+        self.assertTrue(isinstance(b2, Share),
+                        "Type should be Share, but is %s" % b2.__class__)
+        self.assertTrue(isinstance(c3, Share),
+                        "Type should be Share, but is %s" % c3.__class__)
+
         def check_recombine(shares, value):
             ids = map(self.Zp, range(1, len(shares) + 1))
             self.assertEquals(shamir.recombine(zip(ids, shares)), value)
@@ -302,6 +345,14 @@ class RuntimeTest(RuntimeTestCase):
         a2, b2, c2 = self.rt2.prss_share(b)
         a3, b3, c3 = self.rt3.prss_share(c)
         
+        # Check a cross-section of the shares for correct type
+        self.assertTrue(isinstance(a1, Share),
+                        "Type should be Share, but is %s" % a1.__class__)
+        self.assertTrue(isinstance(b2, Share),
+                        "Type should be Share, but is %s" % b2.__class__)
+        self.assertTrue(isinstance(c3, Share),
+                        "Type should be Share, but is %s" % c3.__class__)
+
         def check_recombine(shares, value):
             ids = map(GF256, range(1, len(shares) + 1))
             self.assertEquals(shamir.recombine(zip(ids, shares)), value)
@@ -327,6 +378,13 @@ class RuntimeTest(RuntimeTestCase):
         a1 = self.rt1.prss_share_random(field=GF256, binary=True)
         a2 = self.rt2.prss_share_random(field=GF256, binary=True) 
         a3 = self.rt3.prss_share_random(field=GF256, binary=True)
+
+        self.assertTrue(isinstance(a1, Share),
+                        "Type should be Share, but is %s" % a1.__class__)
+        self.assertTrue(isinstance(a2, Share),
+                        "Type should be Share, but is %s" % a2.__class__)
+        self.assertTrue(isinstance(a3, Share),
+                        "Type should be Share, but is %s" % a3.__class__)
         
         def check_binary_recombine(shares):
             ids = map(GF256, range(1, len(shares) + 1))
@@ -441,9 +499,9 @@ if 'STRESS' in os.environ:
             x, y, z = 1, 1, 1
 
             for _ in range(count):
-                x = self.rt1.mul(a1, self.rt1.mul(b1, self.rt1.mul(c1, x)))
-                y = self.rt2.mul(a2, self.rt2.mul(b2, self.rt2.mul(c2, y)))
-                z = self.rt3.mul(a3, self.rt3.mul(b3, self.rt3.mul(c3, z)))
+                x = a1 * b1 * c1 * x
+                y = a2 * b2 * c2 * y
+                z = a3 * b3 * c3 * z
 
             x = self.rt1.open(x)
             y = self.rt2.open(y)

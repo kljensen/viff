@@ -37,7 +37,7 @@ class LoopbackRuntime(Runtime):
         for id in self.players:
             # There is no connection back to ourselves
             if id != self.id:
-                protocol = ShareExchanger(id)
+                protocol = ShareExchanger(id, self)
                 # The ShareExchanger protocol uses its factory for
                 # accessing the incoming_shares dictionary, which
                 # actually comes from the runtime. So self is an okay
