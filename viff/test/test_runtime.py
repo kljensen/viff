@@ -521,9 +521,9 @@ if 'STRESS' in os.environ:
                             self.rt3.greater_than(c3, b3, self.Zp)]
 
                 # Open all results
-                map(self.rt1.open, results1)
-                map(self.rt2.open, results2)
-                map(self.rt3.open, results3)
+                results1 = map(self.rt1.open, results1)
+                results2 = map(self.rt2.open, results2)
+                results3 = map(self.rt3.open, results3)
 
                 expected = map(GF256, [a >= b, b >= a,
                                        a >= c, c >= a,
