@@ -110,7 +110,7 @@ def run_test(_):
     while len(shares) > 1:
         a = shares.pop(0)
         b = shares.pop(0)
-        c = rt.mul(a,b)
+        c = a * b
         #c.addCallback(timestamp)
         shares.append(c)
 
