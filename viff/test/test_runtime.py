@@ -17,11 +17,6 @@
 # Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 # 02110-1301 USA
 
-# Extra debugging support which shows where each lingering deferred
-# was created.
-import twisted.internet.base
-twisted.internet.base.DelayedCall.debug = True
-
 import os
 from random import Random
 
