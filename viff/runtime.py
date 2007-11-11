@@ -597,10 +597,7 @@ class Runtime:
         if not isinstance(share_b, Share):
             share_b = Share(self, share_b)
 
-        share_c = self.mul(share_a, share_b)
-        result = gather_shares([share_a, share_b, share_c])
-        self.callback(result, lambda (a, b, c): a + b - 2*c)
-        return result
+        return share_a + share_b - 2 * share_a * share_b
 
     #: Exclusive-or of GF256 sharings.
     #:
@@ -790,7 +787,7 @@ class Runtime:
 
         full_mask = reduce(self.add, dst_shares)
 
-        return self.sub(tmp, full_mask)
+        return tmp - full_mask
 
     @increment_pc
     def greater_than(self, share_a, share_b, field):
@@ -825,8 +822,8 @@ class Runtime:
         bit_bits = [self.convert_bit_share(b, field, GF256) for b in int_bits]
         # Preprocessing done
 
-        a = self.add(self.sub(share_a, share_b), 2**l)
-        T = self.open(self.add(self.sub(2**t, int_b), a))
+        a = share_a - share_b + 2**l
+        T = self.open(2**t - int_b + a)
 
         result = gather_shares([T] + bit_bits)
         self.callback(result, self._finish_greater_than, l)
@@ -870,10 +867,8 @@ class Runtime:
         (x, X) `diamond` (0, Y) = (0, Y)
         (x, X) `diamond` (1, Y) = (x, X)
         """
-        top = self.mul(top_a, top_b)
-        #   = x * y
-        bot = self.xor_bit(self.mul(top_b, self.xor_bit(bot_a, bot_b)), bot_b)
-        #   = (y * (X ^ Y)) ^ Y
+        top = top_a * top_b
+        bot = self.xor_bit(top_b * self.xor_bit(bot_a, bot_b), bot_b)
         return (top, bot)
 
     ########################################################################
@@ -903,12 +898,12 @@ class Runtime:
         # TODO: compute r_full from r_modl and top bits, not from scratch
         r_full = field(0)
         for i, b in enumerate(r_bitsField):
-            r_full = self.add(r_full, self.mul(b, field(2**i)))
+            r_full = r_full + b * field(2**i)
 
         r_bitsField = r_bitsField[:l]
         r_modl = field(0)
         for i, b in enumerate(r_bitsField):
-            r_modl = self.add(r_modl, self.mul(b, field(2**i)))
+            r_modl = r_modl + b * field(2**i)
 
         # Transfer bits to smallField
         if field is smallField:
@@ -920,15 +915,14 @@ class Runtime:
         s_bit = self.prss_share_random(field, binary=True)
 
         s_bitSmallField = self.convert_bit_share_II(s_bit, field, smallField)
-        s_sign = self.add(smallField(1),
-                          self.mul(s_bitSmallField, smallField(-2)))
+        s_sign = 1 + s_bitSmallField * smallField(-2)
 
         # m: uniformly random -- should be non-zero, however, this
         # happens with negligible probability
         # TODO: small field, no longer negligible probability of zero -- update
         mask = self.prss_share_random(smallField, False)
         mask_2 = self.prss_share_random(smallField, False)
-        mask_OK = self.open(self.mul(mask, mask_2))
+        mask_OK = self.open(mask * mask_2)
         #dprint("Mask_OK: %s", mask_OK)
         return field, smallField, s_bit, s_sign, mask, r_full, r_modl, r_bits
 
@@ -948,8 +942,8 @@ class Runtime:
         # increment l as a, b are increased
         l += 1
         # a = 2a+1; b= 2b // ensures inputs not equal
-        share_a = self.add(self.mul(field(2), share_a), field(1))
-        share_b = self.mul(field(2), share_b)
+        share_a = field(2) * share_a + field(1)
+        share_b = field(2) * share_b
         
         ##################################################
         # Unpack preprocessing
@@ -963,8 +957,8 @@ class Runtime:
         # Begin online computation
         ##################################################
         # c = 2**l + a - b + r
-        z = self.add(self.sub(share_a, share_b), field(2**l))
-        c = self.open(self.add(r_full, z))
+        z = share_a - share_b + field(2**l)
+        c = self.open(r_full + z)
 
         self.callback(c, self._finish_greater_thanII,
                       l, field, smallField, s_bit, s_sign, mask, r_full,
@@ -982,13 +976,12 @@ class Runtime:
         #                           - 2*r_bits[i+1]*c_(i+1)
         for i in range(l-2, -1, -1):
             # sumXORs[i] = \sum_{j=i+1}^{l-1} r_j\oplus c_j
-            sumXORs[i] = self.add(sumXORs[i+1],
-                                  self.xor_int(r_bits[i+1], c_bits[i+1]))
+            sumXORs[i] = sumXORs[i+1] + self.xor_int(r_bits[i+1], c_bits[i+1])
         E_tilde = []
         for i in range(len(r_bits)):
             ## s + rBit[i] - cBit[i] + 3 * sumXors[i];
-            e_i = self.add(s_sign, self.sub(r_bits[i], c_bits[i]))
-            e_i = self.add(e_i, self.mul(smallField(3), sumXORs[i]))
+            e_i = s_sign + (r_bits[i] - c_bits[i])
+            e_i = e_i + smallField(3) * sumXORs[i]
             E_tilde.append(e_i)
         E_tilde.append(mask) # Hack: will mult e_i and mask...
 
@@ -997,8 +990,7 @@ class Runtime:
             # just appended and thus works linearly... try with
             # two lists instead, pop(0) is quadratic if it moves
             # elements.
-            E_tilde.append(self.mul(E_tilde.pop(0),
-                                    E_tilde.pop(0)))
+            E_tilde.append(E_tilde.pop(0) * E_tilde.pop(0))
 
         E_tilde[0] = self.open(E_tilde[0])
         E_tilde[0].addCallback(lambda bit: field(bit.value != 0))
@@ -1011,10 +1003,9 @@ class Runtime:
         # return  2^(-l) * (z - (c%2**l - r%2**l + UF*2**l))
         #
         c_mod2l = field(c.value % 2**l)
-        result = self.add(self.sub(c_mod2l, r_modl),
-                          self.mul(UF, field(2**l)))
-        result = self.sub(z, result)
-        result = self.mul(result, ~(field(2**l)))
+        result = (c_mod2l - r_modl) + UF * field(2**l)
+        result = z - result
+        result = result * ~(field(2**l))
         return result
     # END _finish_greater_thanII
     
