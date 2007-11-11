@@ -25,6 +25,11 @@ the calculations.
 
 Each player participating in the protocol will instantiate a
 L{Runtime} object and use it for the calculations.
+
+The Runtime returns L{Share} objects for most operations, and these
+can be added, subtracted, and multiplied as normal thanks to
+overloaded arithmetic operators. The runtime will take care of
+scheduling things correctly behind the scenes.
 """
 
 import marshal
@@ -304,7 +309,11 @@ class Runtime:
     """The VIFF runtime.
 
     Each party in the protocol must instantiate an object from this
-    class and use it for all calculations.
+    class. The runtime is used for sharing values (L{shamir_share} or
+    L{prss_share}) into L{Share} object and opening such shares
+    (L{open}) again. Calculations on shares is normally done through
+    overloaded arithmetic operations, but it is also possible to call
+    L{add}, L{mul}, etc. directly if one prefers.
     """
 
     def __init__(self, players, id, threshold):
