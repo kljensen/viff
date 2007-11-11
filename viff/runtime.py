@@ -42,28 +42,51 @@ from twisted.protocols.basic import Int16StringReceiver
 
 
 class Share(Deferred):
+    """A shared number.
+
+    The L{Runtime} operates on shares, represented by this class.
+    Shares are asynchronous in the sense that they promise to attain a
+    value at some point in the future.
+
+    Shares overload the arithmetic operations so that C{x = a + b}
+    will create a new share C{x}, which will eventually contain the
+    sum of C{a} and C{b}. Each share is associated with a L{Runtime}
+    and the arithmetic operations simply call back to that runtime.
+    """
+
     def __init__(self, runtime, value=None):
+        """Initialize a share.
+
+        @param runtime: The L{Runtime} to use.
+        @param value: The initial value of the share (if know).
+        """
         Deferred.__init__(self)
         self.runtime = runtime
         if value is not None:
             self.callback(value)
 
     def __add__(self, other):
+        """Addition."""
         return self.runtime.add(self, other)
 
     def __radd__(self, other):
+        """Addition (reflected argument version)."""
         return self.runtime.add(other, self)
 
     def __sub__(self, other):
+        """Subtraction."""
         return self.runtime.sub(self, other)
 
     def __rsub__(self, other):
+        """Subtraction (reflected argument version)."""
         return self.runtime.sub(other, self)
 
     def __mul__(self, other):
+        """Multiplication."""
         return self.runtime.mul(self, other)
 
     def __rmul__(self, other):
+        """Multiplication (reflected argument version)."""
         return self.runtime.mul(other, self)
 
     # TODO: The xor implementation below does not work, and it is not
@@ -72,6 +95,7 @@ class Share(Deferred):
     # xor_int and xor_bit for now.
     #
     #def __xor__(self, other):
+    #    """Exclusive-or."""
     #    def run_correct_xor(shares):
     #        if isinstance(shares[0], GF256) or isinstance(shares[1], GF256):
     #            return self.runtime.xor_bit(shares[0], shares[1])
@@ -83,6 +107,11 @@ class Share(Deferred):
     #    return shares
 
     def clone(self):
+        """Clone a share.
+
+        Works like L{util.clone_deferred} except that it returns a new
+        Share instead of a Deferred.
+        """
         def split_result(result):
             clone.callback(result)
             return result
@@ -91,8 +120,12 @@ class Share(Deferred):
         return clone
 
 
-# Roughly based on defer.DeferredList
 class ShareList(Share):
+    """Create a share that waits on a number of other shares.
+
+    Roughly modelled after the Twisted C{DeferredList} class.
+    """
+
     def __init__(self, shares, threshold=None):
         assert len(shares) > 0, "Cannot create empty ShareList"
         assert threshold is None or 0 < threshold <= len(shares), \
@@ -121,6 +154,10 @@ class ShareList(Share):
 
 # Roughly based on defer.gatherResults
 def gather_shares(shares):
+    """Gather shares.
+
+    Roughly modelled after the Twisted C{gatherResults} function.
+    """
     def filter_results(results):
         return [share for (success, share) in results]
     share_list = ShareList(shares)
