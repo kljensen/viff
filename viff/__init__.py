@@ -80,9 +80,9 @@ Architecture
 ============
 
 VIFF consists of several modules. The L{runtime} module contains the
-L{Runtime} class, in which the main functionality is implemented. The
-L{field} module contains implementations of finite fields --- these
-are the values you do calculations on using the runtime. Other modules
+L{Runtime} and L{Share} classes, in which the main functionality is
+implemented. The L{field} module contains implementations of finite
+fields --- these are the values inside the shares. Other modules
 provide support functions.
 
 Layers
@@ -90,11 +90,14 @@ Layers
 
 The main functionality in VIFF is implemented in the L{Runtime} class.
 This class offers methods to do addition, multiplication, etc. These
-methods operate on what we call I{shares}.
+methods operate on L{Share} instances.
 
-Shares can be either L{field.GF} or L{GF256} elements or C{Deferred}s
-yielding such elements. The result values from methods in the runtime
-is normally deferred field elements.
+Shares hold either L{field.GF} or L{GF256} elements and are created
+from the C{shamir_share} or C{prss_share} Runtime methods. Shares
+overload the standard arithmetic operators, so you can write C{a + b -
+c * d} with four shares, and it will be translated correctly into the
+appropriate method calls on the Runtime instance associated with the
+shares.
 
 A field element contain the concrete value on which we do
 calculations. This is just a normal Python (long) integer. The value
@@ -104,13 +107,9 @@ reductions as appropriate.
 So in a nutshell, VIFF has these layers:
 
   - Top-level layer for application programs: There you manipulate
-    Python integers (for example as inputs to C{shamir_share} or
-    C{prss_share}) or shares.
+    Python integers or L{Share} instances.
 
-  - Runtime layer: The runtime deals with Python integers or shares,
-    but these are normally changed into field elements as soon as
-    possible by attaching a callbacks to any C{Deferred}s and then
-    working directly on the field elements in the callback.
+  - Runtime layer: The runtime deals with Python integers or shares.
 
   - Field elements: Deals with arithmetic over Python integers, but
     with modulo reductions as needed.
