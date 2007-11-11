@@ -54,14 +54,18 @@ prime modulus (see L{GF} for more information):
 >>> x.sqrt() 
 {3}
 
-Field elements from different fields cannot be mixed:
+Field elements from different fields cannot be mixed, you will get a
+type error if you try:
 
 >>> Zq = GF(17)
 >>> z = Zq(2)
 >>> x + z
 Traceback (most recent call last):
     ...
-AssertionError: Fields must be identical
+TypeError: unsupported operand type(s) for +: 'GFElement' and 'GFElement'
+
+The reason for the slightly confusing error message is that C{x} and
+C{z} are instances of two I{different} classes called C{GFElement}.
 """
 
 from gmpy import mpz
