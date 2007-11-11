@@ -684,8 +684,7 @@ class Runtime:
                 root = square.sqrt()
                 # When the root is computed, we divide the share and
                 # convert the resulting -1/1 share into a 0/1 share.
-                two = field(2)
-                return Share(self, (share/root + 1) / two)
+                return Share(self, (share/root + 1) / 2)
 
         self.callback(result, finish, share, binary)
         return result
@@ -896,14 +895,14 @@ class Runtime:
         r_bitsField = [self.prss_share_random(field, True) for _ in range(l+k)]
 
         # TODO: compute r_full from r_modl and top bits, not from scratch
-        r_full = field(0)
+        r_full = 0
         for i, b in enumerate(r_bitsField):
-            r_full = r_full + b * field(2**i)
+            r_full = r_full + b * 2**i
 
         r_bitsField = r_bitsField[:l]
-        r_modl = field(0)
+        r_modl = 0
         for i, b in enumerate(r_bitsField):
-            r_modl = r_modl + b * field(2**i)
+            r_modl = r_modl + b * 2**i
 
         # Transfer bits to smallField
         if field is smallField:
@@ -915,7 +914,7 @@ class Runtime:
         s_bit = self.prss_share_random(field, binary=True)
 
         s_bitSmallField = self.convert_bit_share_II(s_bit, field, smallField)
-        s_sign = 1 + s_bitSmallField * smallField(-2)
+        s_sign = 1 + s_bitSmallField * -2
 
         # m: uniformly random -- should be non-zero, however, this
         # happens with negligible probability
@@ -942,8 +941,8 @@ class Runtime:
         # increment l as a, b are increased
         l += 1
         # a = 2a+1; b= 2b // ensures inputs not equal
-        share_a = field(2) * share_a + field(1)
-        share_b = field(2) * share_b
+        share_a = 2 * share_a + 1
+        share_b = 2 * share_b
         
         ##################################################
         # Unpack preprocessing
@@ -957,7 +956,7 @@ class Runtime:
         # Begin online computation
         ##################################################
         # c = 2**l + a - b + r
-        z = share_a - share_b + field(2**l)
+        z = share_a - share_b + 2**l
         c = self.open(r_full + z)
 
         self.callback(c, self._finish_greater_thanII,
@@ -981,7 +980,7 @@ class Runtime:
         for i in range(len(r_bits)):
             ## s + rBit[i] - cBit[i] + 3 * sumXors[i];
             e_i = s_sign + (r_bits[i] - c_bits[i])
-            e_i = e_i + smallField(3) * sumXORs[i]
+            e_i = e_i + 3 * sumXORs[i]
             E_tilde.append(e_i)
         E_tilde.append(mask) # Hack: will mult e_i and mask...
 
@@ -1002,11 +1001,9 @@ class Runtime:
         # conclude the computation -- compute final bit and map to 0/1
         # return  2^(-l) * (z - (c%2**l - r%2**l + UF*2**l))
         #
-        c_mod2l = field(c.value % 2**l)
-        result = (c_mod2l - r_modl) + UF * field(2**l)
-        result = z - result
-        result = result * ~(field(2**l))
-        return result
+        c_mod2l = c.value % 2**l
+        result = (c_mod2l - r_modl) + UF * 2**l
+        return (z - result) * ~field(2**l)
     # END _finish_greater_thanII
     
     @increment_pc
