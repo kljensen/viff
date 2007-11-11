@@ -25,6 +25,11 @@ the calculations.
 
 Each player participating in the protocol will instantiate a
 L{Runtime} object and use it for the calculations.
+
+The Runtime returns L{Share} objects for most operations, and these
+can be added, subtracted, and multiplied as normal thanks to
+overloaded arithmetic operators. The runtime will take care of
+scheduling things correctly behind the scenes.
 """
 
 import marshal
@@ -41,6 +46,130 @@ from twisted.internet.protocol import ClientFactory, ServerFactory
 from twisted.protocols.basic import Int16StringReceiver
 
 
+class Share(Deferred):
+    """A shared number.
+
+    The L{Runtime} operates on shares, represented by this class.
+    Shares are asynchronous in the sense that they promise to attain a
+    value at some point in the future.
+
+    Shares overload the arithmetic operations so that C{x = a + b}
+    will create a new share C{x}, which will eventually contain the
+    sum of C{a} and C{b}. Each share is associated with a L{Runtime}
+    and the arithmetic operations simply call back to that runtime.
+    """
+
+    def __init__(self, runtime, value=None):
+        """Initialize a share.
+
+        @param runtime: The L{Runtime} to use.
+        @param value: The initial value of the share (if know).
+        """
+        Deferred.__init__(self)
+        self.runtime = runtime
+        if value is not None:
+            self.callback(value)
+
+    def __add__(self, other):
+        """Addition."""
+        return self.runtime.add(self, other)
+
+    def __radd__(self, other):
+        """Addition (reflected argument version)."""
+        return self.runtime.add(other, self)
+
+    def __sub__(self, other):
+        """Subtraction."""
+        return self.runtime.sub(self, other)
+
+    def __rsub__(self, other):
+        """Subtraction (reflected argument version)."""
+        return self.runtime.sub(other, self)
+
+    def __mul__(self, other):
+        """Multiplication."""
+        return self.runtime.mul(self, other)
+
+    def __rmul__(self, other):
+        """Multiplication (reflected argument version)."""
+        return self.runtime.mul(other, self)
+
+    # TODO: The xor implementation below does not work, and it is not
+    # really a good idea either. Instead there should be a single xor
+    # method in Runtime or two classes of Shares. So keep using
+    # xor_int and xor_bit for now.
+    #
+    #def __xor__(self, other):
+    #    """Exclusive-or."""
+    #    def run_correct_xor(shares):
+    #        if isinstance(shares[0], GF256) or isinstance(shares[1], GF256):
+    #            return self.runtime.xor_bit(shares[0], shares[1])
+    #        else:
+    #            return self.runtime.xor_int(shares[0], shares[1])
+    #
+    #    shares = gather_shares([self, other])
+    #    shares.addCallback(run_correct_xor)
+    #    return shares
+
+    def clone(self):
+        """Clone a share.
+
+        Works like L{util.clone_deferred} except that it returns a new
+        Share instead of a Deferred.
+        """
+        def split_result(result):
+            clone.callback(result)
+            return result
+        clone = Share(self.runtime)
+        self.addCallback(split_result)
+        return clone
+
+
+class ShareList(Share):
+    """Create a share that waits on a number of other shares.
+
+    Roughly modelled after the Twisted C{DeferredList} class.
+    """
+
+    def __init__(self, shares, threshold=None):
+        assert len(shares) > 0, "Cannot create empty ShareList"
+        assert threshold is None or 0 < threshold <= len(shares), \
+            "Threshold out of range"
+
+        Share.__init__(self, shares[0].runtime)
+
+        self.results = [None] * len(shares)
+        if threshold is None:
+            self.missing_shares = len(shares)
+        else:
+            self.missing_shares = threshold
+
+        for index, share in enumerate(shares):
+            share.addCallbacks(self._callback_fired, self._callback_fired,
+                               callbackArgs=(index, True),
+                               errbackArgs=(index, False))
+
+    def _callback_fired(self, result, index, success):
+         self.results[index] = (success, result)
+         self.missing_shares -= 1
+         if not self.called and self.missing_shares == 0:
+             self.callback(self.results)
+         return result
+
+
+# Roughly based on defer.gatherResults
+def gather_shares(shares):
+    """Gather shares.
+
+    Roughly modelled after the Twisted C{gatherResults} function.
+    """
+    def filter_results(results):
+        return [share for (success, share) in results]
+    share_list = ShareList(shares)
+    share_list.addCallback(filter_results)
+    return share_list
+
+
 class ShareExchanger(Int16StringReceiver):
     """Send and receive shares.
 
@@ -52,12 +181,13 @@ class ShareExchanger(Int16StringReceiver):
     the network and to convert back again to structured data.
     """
 
-    def __init__(self, id):
+    def __init__(self, id, runtime):
         """Initialize the protocol.
 
         @param id: the id of the peer.
         """
         self.id = id
+        self.runtime = runtime
         
     def stringReceived(self, string):
         """Called when a share is received.
@@ -80,7 +210,7 @@ class ShareExchanger(Int16StringReceiver):
         try:
             reactor.callLater(0, shares.pop(key).callback, share)
         except KeyError:
-            shares[key] = defer.succeed(share)
+            shares[key] = Share(self.runtime, share)
 
         # TODO: marshal.loads can raise EOFError, ValueError, and
         # TypeError. They should be handled somehow.
@@ -114,7 +244,7 @@ class ShareExchanger(Int16StringReceiver):
 class ShareExchangerFactory(ServerFactory, ClientFactory):
     """Factory for creating ShareExchanger protocols."""
 
-    def __init__(self, incoming_shares, port_player_mapping, protocols):
+    def __init__(self, runtime, incoming_shares, port_player_mapping, protocols):
         """Initialize the factory.
 
         @param incoming_shares: incoming shares waiting for network
@@ -123,6 +253,8 @@ class ShareExchangerFactory(ServerFactory, ClientFactory):
         pairs to Deferreds yielding shares
         """
         println("ShareExchangerFactory: %s", port_player_mapping)
+
+        self.runtime = runtime
 
         #: Incoming shares. Reference to L{Runtime.incoming_shares}.
         self.incoming_shares = incoming_shares
@@ -145,7 +277,7 @@ class ShareExchangerFactory(ServerFactory, ClientFactory):
         id = self.port_player_mapping[(ip, port)]
         println("Peer id: %s", id)
         
-        p = ShareExchanger(id)
+        p = ShareExchanger(id, self.runtime)
         p.factory = self
 
         reactor.callLater(0, self.protocols[id].callback, p)
@@ -177,7 +309,11 @@ class Runtime:
     """The VIFF runtime.
 
     Each party in the protocol must instantiate an object from this
-    class and use it for all calculations.
+    class. The runtime is used for sharing values (L{shamir_share} or
+    L{prss_share}) into L{Share} object and opening such shares
+    (L{open}) again. Calculations on shares is normally done through
+    overloaded arithmetic operations, but it is also possible to call
+    L{add}, L{mul}, etc. directly if one prefers.
     """
 
     def __init__(self, players, id, threshold):
@@ -280,7 +416,7 @@ class Runtime:
         """Connects this runtime to the others.
 
         Each player has pair-wise connections to all other players.
-        With M{n} players a total of M{n * (n-1)/2 = (n²-n)/2}
+        With M{n} players a total of M{n * (n-1)/2 = (n^2-n)/2}
         connections are made.
 
         When the connections are made, the deferred L{ShareExchanger}
@@ -296,8 +432,8 @@ class Runtime:
         for ip, (id, p) in zip(ip_addresses, self.players.iteritems()):
             mapping[(ip, p.port)] = id
 
-        factory = ShareExchangerFactory(self.incoming_shares, mapping,
-                                        self.protocols)
+        factory = ShareExchangerFactory(self, self.incoming_shares,
+                                        mapping, self.protocols)
         reactor.listenTCP(self.players[self.id].port, factory)
 
         for id, player in self.players.iteritems():
@@ -380,7 +516,7 @@ class Runtime:
         Communication cost: 1 broadcast (for each player, n broadcasts
         in total).
         """
-        assert isinstance(sharing, Deferred)
+        assert isinstance(sharing, Share)
         if threshold is None:
             threshold = self.threshold
 
@@ -397,7 +533,7 @@ class Runtime:
             # threshold shares has been received.
             return self._recombine(deferreds, threshold)
 
-        result = clone_deferred(sharing)
+        result = sharing.clone()
         self.callback(result, broadcast)
         return result
         
@@ -406,12 +542,12 @@ class Runtime:
 
         Communication cost: none.
         """
-        if not isinstance(share_a, Deferred):
-            share_a = defer.succeed(share_a)
-        if not isinstance(share_b, Deferred):
-            share_b = defer.succeed(share_b)
+        if not isinstance(share_a, Share):
+            share_a = Share(self, share_a)
+        if not isinstance(share_b, Share):
+            share_b = Share(self, share_b)
 
-        result = gatherResults([share_a, share_b])
+        result = gather_shares([share_a, share_b])
         result.addCallback(lambda (a, b): a + b)
         return result
 
@@ -420,12 +556,12 @@ class Runtime:
 
         Communication cost: none.
         """
-        if not isinstance(share_a, Deferred):
-            share_a = defer.succeed(share_a)
-        if not isinstance(share_b, Deferred):
-            share_b = defer.succeed(share_b)
+        if not isinstance(share_a, Share):
+            share_a = Share(self, share_a)
+        if not isinstance(share_b, Share):
+            share_b = Share(self, share_b)
 
-        result = gatherResults([share_a, share_b])
+        result = gather_shares([share_a, share_b])
         result.addCallback(lambda (a, b): a - b)
         return result
 
@@ -439,12 +575,12 @@ class Runtime:
         # multiplication in that case. If two FieldElements are given,
         # return a FieldElement.
 
-        if not isinstance(share_a, Deferred):
-            share_a = defer.succeed(share_a)
-        if not isinstance(share_b, Deferred):
-            share_b = defer.succeed(share_b)
+        if not isinstance(share_a, Share):
+            share_a = Share(self, share_a)
+        if not isinstance(share_b, Share):
+            share_b = Share(self, share_b)
 
-        result = gatherResults([share_a, share_b])
+        result = gather_shares([share_a, share_b])
         result.addCallback(lambda (a, b): a * b)
         self.callback(result, self._shamir_share)
         self.callback(result, self._recombine, threshold=2*self.threshold)
@@ -456,16 +592,16 @@ class Runtime:
         
         Communication cost: 1 multiplication.
         """
-        if not isinstance(share_a, Deferred):
-            share_a = defer.succeed(share_a)
-        if not isinstance(share_b, Deferred):
-            share_b = defer.succeed(share_b)
+        if not isinstance(share_a, Share):
+            share_a = Share(self, share_a)
+        if not isinstance(share_b, Share):
+            share_b = Share(self, share_b)
 
-        share_c = self.mul(share_a, share_b)
-        result = gatherResults([share_a, share_b, share_c])
-        self.callback(result, lambda (a, b, c): a + b - 2*c)
-        return result
+        return share_a + share_b - 2 * share_a * share_b
 
+    #: Exclusive-or of GF256 sharings.
+    #:
+    #: Communication cost: none.
     xor_bit = add
 
     @increment_pc
@@ -534,7 +670,7 @@ class Runtime:
         share = prss(len(self.players), self.id, field, prfs, prss_key)
 
         if field is GF256 or not binary:
-            return defer.succeed(share)
+            return Share(self, share)
 
         # Open the square and compute a square-root
         result = self.open(self.mul(share, share), 2*self.threshold)
@@ -548,8 +684,7 @@ class Runtime:
                 root = square.sqrt()
                 # When the root is computed, we divide the share and
                 # convert the resulting -1/1 share into a 0/1 share.
-                two = field(2)
-                return defer.succeed((share/root + 1) / two)
+                return Share(self, (share/root + 1) / 2)
 
         self.callback(result, finish, share, binary)
         return result
@@ -651,7 +786,7 @@ class Runtime:
 
         full_mask = reduce(self.add, dst_shares)
 
-        return self.sub(tmp, full_mask)
+        return tmp - full_mask
 
     @increment_pc
     def greater_than(self, share_a, share_b, field):
@@ -678,7 +813,7 @@ class Runtime:
             """Converts a list of bits to an integer."""
             return sum([2**i * b for i, b in enumerate(bits)])
 
-        int_b = gatherResults(int_bits)
+        int_b = gather_shares(int_bits)
         int_b.addCallback(bits_to_int)
 
         # TODO: this changes int_bits! It should be okay since
@@ -686,10 +821,10 @@ class Runtime:
         bit_bits = [self.convert_bit_share(b, field, GF256) for b in int_bits]
         # Preprocessing done
 
-        a = self.add(self.sub(share_a, share_b), 2**l)
-        T = self.open(self.add(self.sub(2**t, int_b), a))
+        a = share_a - share_b + 2**l
+        T = self.open(2**t - int_b + a)
 
-        result = gatherResults([T] + bit_bits)
+        result = gather_shares([T] + bit_bits)
         self.callback(result, self._finish_greater_than, l)
         return result
 
@@ -731,10 +866,8 @@ class Runtime:
         (x, X) `diamond` (0, Y) = (0, Y)
         (x, X) `diamond` (1, Y) = (x, X)
         """
-        top = self.mul(top_a, top_b)
-        #   = x * y
-        bot = self.xor_bit(self.mul(top_b, self.xor_bit(bot_a, bot_b)), bot_b)
-        #   = (y * (X ^ Y)) ^ Y
+        top = top_a * top_b
+        bot = self.xor_bit(top_b * self.xor_bit(bot_a, bot_b), bot_b)
         return (top, bot)
 
     ########################################################################
@@ -762,14 +895,14 @@ class Runtime:
         r_bitsField = [self.prss_share_random(field, True) for _ in range(l+k)]
 
         # TODO: compute r_full from r_modl and top bits, not from scratch
-        r_full = field(0)
+        r_full = 0
         for i, b in enumerate(r_bitsField):
-            r_full = self.add(r_full, self.mul(b, field(2**i)))
+            r_full = r_full + b * 2**i
 
         r_bitsField = r_bitsField[:l]
-        r_modl = field(0)
+        r_modl = 0
         for i, b in enumerate(r_bitsField):
-            r_modl = self.add(r_modl, self.mul(b, field(2**i)))
+            r_modl = r_modl + b * 2**i
 
         # Transfer bits to smallField
         if field is smallField:
@@ -781,15 +914,14 @@ class Runtime:
         s_bit = self.prss_share_random(field, binary=True)
 
         s_bitSmallField = self.convert_bit_share_II(s_bit, field, smallField)
-        s_sign = self.add(smallField(1),
-                          self.mul(s_bitSmallField, smallField(-2)))
+        s_sign = 1 + s_bitSmallField * -2
 
         # m: uniformly random -- should be non-zero, however, this
         # happens with negligible probability
         # TODO: small field, no longer negligible probability of zero -- update
         mask = self.prss_share_random(smallField, False)
         mask_2 = self.prss_share_random(smallField, False)
-        mask_OK = self.open(self.mul(mask, mask_2))
+        mask_OK = self.open(mask * mask_2)
         #dprint("Mask_OK: %s", mask_OK)
         return field, smallField, s_bit, s_sign, mask, r_full, r_modl, r_bits
 
@@ -809,8 +941,8 @@ class Runtime:
         # increment l as a, b are increased
         l += 1
         # a = 2a+1; b= 2b // ensures inputs not equal
-        share_a = self.add(self.mul(field(2), share_a), field(1))
-        share_b = self.mul(field(2), share_b)
+        share_a = 2 * share_a + 1
+        share_b = 2 * share_b
         
         ##################################################
         # Unpack preprocessing
@@ -824,8 +956,8 @@ class Runtime:
         # Begin online computation
         ##################################################
         # c = 2**l + a - b + r
-        z = self.add(self.sub(share_a, share_b), field(2**l))
-        c = self.open(self.add(r_full, z))
+        z = share_a - share_b + 2**l
+        c = self.open(r_full + z)
 
         self.callback(c, self._finish_greater_thanII,
                       l, field, smallField, s_bit, s_sign, mask, r_full,
@@ -843,13 +975,12 @@ class Runtime:
         #                           - 2*r_bits[i+1]*c_(i+1)
         for i in range(l-2, -1, -1):
             # sumXORs[i] = \sum_{j=i+1}^{l-1} r_j\oplus c_j
-            sumXORs[i] = self.add(sumXORs[i+1],
-                                  self.xor_int(r_bits[i+1], c_bits[i+1]))
+            sumXORs[i] = sumXORs[i+1] + self.xor_int(r_bits[i+1], c_bits[i+1])
         E_tilde = []
         for i in range(len(r_bits)):
             ## s + rBit[i] - cBit[i] + 3 * sumXors[i];
-            e_i = self.add(s_sign, self.sub(r_bits[i], c_bits[i]))
-            e_i = self.add(e_i, self.mul(smallField(3), sumXORs[i]))
+            e_i = s_sign + (r_bits[i] - c_bits[i])
+            e_i = e_i + 3 * sumXORs[i]
             E_tilde.append(e_i)
         E_tilde.append(mask) # Hack: will mult e_i and mask...
 
@@ -858,8 +989,7 @@ class Runtime:
             # just appended and thus works linearly... try with
             # two lists instead, pop(0) is quadratic if it moves
             # elements.
-            E_tilde.append(self.mul(E_tilde.pop(0),
-                                    E_tilde.pop(0)))
+            E_tilde.append(E_tilde.pop(0) * E_tilde.pop(0))
 
         E_tilde[0] = self.open(E_tilde[0])
         E_tilde[0].addCallback(lambda bit: field(bit.value != 0))
@@ -871,12 +1001,9 @@ class Runtime:
         # conclude the computation -- compute final bit and map to 0/1
         # return  2^(-l) * (z - (c%2**l - r%2**l + UF*2**l))
         #
-        c_mod2l = field(c.value % 2**l)
-        result = self.add(self.sub(c_mod2l, r_modl),
-                          self.mul(UF, field(2**l)))
-        result = self.sub(z, result)
-        result = self.mul(result, ~(field(2**l)))
-        return result
+        c_mod2l = c.value % 2**l
+        result = (c_mod2l - r_modl) + UF * 2**l
+        return (z - result) * ~field(2**l)
     # END _finish_greater_thanII
     
     @increment_pc
@@ -908,14 +1035,14 @@ class Runtime:
         #        self.program_counter, id, share)
 
         if id == self.id:
-            return defer.succeed(share)
+            return Share(self, share)
         else:
             # Convert self.program_counter to a hashable value in order
             # to use it as a key in self.incoming_shares.
             pc = tuple(self.program_counter)
             key = (pc, id)
             if key not in self.incoming_shares:
-                self.incoming_shares[key] = Deferred()
+                self.incoming_shares[key] = Share(self)
 
             # Send the share to the other side
             self.protocols[id].addCallback(ShareExchanger.sendShare, pc, share)

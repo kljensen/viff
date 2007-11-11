@@ -152,6 +152,12 @@ class GF256(FieldElement):
         >>> GF256(0x01) + 1
         [0]
         """
+        if not isinstance(other, (GF256, int, long)):
+            # This occurs with code like 'a + b' where b is a Share.
+            # In that case we must return NotImplemented to signal
+            # that b.__radd__(a) should be run instead. The Share will
+            # then schedule things correctly.
+            return NotImplemented
         if isinstance(other, GF256):
             other = other.value
         return GF256(self.value ^ other)
@@ -177,6 +183,8 @@ class GF256(FieldElement):
         >>> GF256(16) * GF256(32)
         [54]
         """
+        if not isinstance(other, (GF256, int, long)):
+            return NotImplemented
         if isinstance(other, GF256):
             other = other.value
         if self.value == 0 or other == 0:
@@ -295,6 +303,8 @@ def GF(modulus):
 
         def __add__(self, other):
             """Addition."""
+            if not isinstance(other, (GFElement, int, long)):
+                return NotImplemented
             try:
                 # We can do a quick test using 'is' here since
                 # there will only be one class representing this
@@ -308,6 +318,8 @@ def GF(modulus):
 
         def __sub__(self, other):
             """Subtraction."""
+            if not isinstance(other, (GFElement, int, long)):
+                return NotImplemented
             try:
                 assert self.field is other.field, "Fields must be identical"
                 return GFElement(self.value - other.value)
@@ -320,6 +332,8 @@ def GF(modulus):
 
         def __mul__(self, other):
             """Multiplication."""
+            if not isinstance(other, (GFElement, int, long)):
+                return NotImplemented
             try:
                 assert self.field is other.field, "Fields must be identical"
                 return GFElement(self.value * other.value)

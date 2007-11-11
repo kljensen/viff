@@ -75,6 +75,7 @@
 
   \item API for writing secure multi-party computations
     \begin{itemize}
+    \item Easy to use: \py{a + b + c} instead of \py{add(add(a, b), c}
     \item Simple if you already know Python
     \item A custom language could be added
     \end{itemize}
@@ -87,7 +88,7 @@
     
   \item<3-> Simple architecture
     \begin{itemize}
-    \item Small code base (1,600 lines)
+    \item Small code base (2,500 lines)
     \item Few layers of abstraction\dots
     \item \dots but hopefully sufficiently many
     \end{itemize}
@@ -270,8 +271,8 @@
       \draw (0,-0.5) node[xshift=-0.75pt,rotate=-90] {$\rightsquigarrow$};
 
       \draw (0,-1) node {open}
-        child {node {mul}
-          child {node {add}
+        child {node {\py{*}}
+          child {node {\py{+}}
             child {node {x}}
             child {node {y}}
           }
