@@ -2,13 +2,11 @@
 Installation Instructions for VIFF
 ==================================
 
-VIFF is written in Python and maintained using the revision control
-system Mercurial. It uses the Twisted framework for asynchronous
-communication, ConfigObj for configuration files, and GMPY for fast
-bignum arithmetic.
+VIFF is written in Python and uses the Twisted framework for
+asynchronous communication, ConfigObj for configuration files, and
+GMPY for fast bignum arithmetic.
 
   * Python:    http://python.org/
-  * Mercurial: http://www.selenic.com/mercurial/
   * Twisted:   http://twistedmatrix.com/
   * ConfigObj: http://voidspace.org.uk/python/configobj.html
   * GMPY:      http://gmpy.sourceforge.net/
