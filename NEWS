@@ -13,8 +13,7 @@ Version ?, not yet released
 
 Implemented overloaded arithmetic operators, so 'w = x + y * z' now
 adds and multiplies the three shares as expected. Updated API
-documentation. Released using a Distutils setup.py script. Added VIFF
-to the Python Package Index (PyPI).
+documentation. Released using a Distutils setup.py script.
 
 
 Version 0.1.1, released on 2007-10-23
