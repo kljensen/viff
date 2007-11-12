@@ -70,11 +70,6 @@ Infrastructure
    include use of GMPY, security parameter, modulus, and probably
    other stuff.
 
-* Have the Runtime return values with overloaded arithmetic operations
-   So instead of Deferreds you would get Shares back. They would know
-   which Runtime instance they belong to and provide __add__, __mul__,
-   etc. operations.
-
 * Create unit tests which randomizes network delay
    The current unit test with LoopbackRuntime are strictly sequential
    and does not capture the random delays possible with real network
