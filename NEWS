@@ -11,8 +11,10 @@ details can be found in the commit messages:
 Version ?, not yet released
 ---------------------------
 
-Updated API documentation. Released using a Distutils setup.py script.
-Added VIFF to the Python Package Index (PyPI).
+Implemented overloaded arithmetic operators, so 'w = x + y * z' now
+adds and multiplies the three shares as expected. Updated API
+documentation. Released using a Distutils setup.py script. Added VIFF
+to the Python Package Index (PyPI).
 
 
 Version 0.1.1, released on 2007-10-23
