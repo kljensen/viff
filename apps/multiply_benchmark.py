@@ -57,8 +57,10 @@ def timestamp(x):
 parser = OptionParser()
 parser.add_option("-m", "--modulus",
                   help="lower limit for modulus (can be an expression)")
-parser.add_option("-i", "--input", type="int", help="input number")
-parser.add_option("-c", "--count", type="int", help="number of multiplications")
+parser.add_option("-i", "--input", type="int",
+                  help="input number")
+parser.add_option("-c", "--count", type="int",
+                  help="number of multiplications")
 
 parser.set_defaults(modulus="30916444023318367583", input=42, count=100)
 

@@ -46,7 +46,8 @@ def timestamp():
 parser = OptionParser()
 parser.add_option("-m", "--modulus",
                   help="lower limit for modulus (can be an expression)")
-parser.add_option("-c", "--count", type="int", help="number of bids")
+parser.add_option("-c", "--count", type="int",
+                  help="number of bids")
 parser.add_option("-v", "--verbose", action="store_true",
                   help="verbose output after each iteration")
 parser.add_option("-q", "--quiet", action="store_false",

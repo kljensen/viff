@@ -69,13 +69,17 @@ signal.signal(2, finish)
 parser = OptionParser()
 parser.add_option("-m", "--modulus",
                   help="lower limit for modulus (can be an expression)")
-parser.add_option("-c", "--count", type="int", help="number of comparisons")
+parser.add_option("-c", "--count", type="int",
+                  help="number of comparisons")
 parser.add_option("-l", "--bitlength", type="int",
                   help="bitlength of numbers to be compared")
 parser.add_option("-k", "--securityparameter", type="int",
                   help="The security parameter of the individual comparisons")
 
-parser.set_defaults(modulus="30916444023318367583", count=100, bitlength=32, securityparameter=30)
+parser.set_defaults(modulus="30916444023318367583",
+                    count=100,
+                    bitlength=32,
+                    securityparameter=30)
 
 (options, args) = parser.parse_args()
 
