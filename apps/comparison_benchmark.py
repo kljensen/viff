@@ -19,6 +19,21 @@
 # Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 # 02110-1301 USA
 
+# This example benchmarks parallel comparisons. To do x comparisons
+# the players simply does:
+#
+# * Share 2x random numbers.
+#
+# * When all all shares have arrived, starts the clock.
+#
+# * Do x comparisons.
+#
+# * Stop the clock and report the time taken.
+#
+# This means that the time reported excludes the time used for the
+# initial sharing of input values and the time it would take to
+# reconstruct the output value.
+
 import time, signal, random
 from optparse import OptionParser
 

@@ -19,6 +19,38 @@
 # Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 # 02110-1301 USA
 
+# This example benchmarks multiplications. All input numbers are
+# multiplied in parallel down to a single number. This builds a
+# multiplication tree like this for calculating a * b * c * d * e * f:
+#
+#          *
+#         / \
+#        /   \
+#       *     \
+#      / \     \
+#     /   \     \
+#    *     *     *
+#   / \   / \   / \
+#  a   b c   d e   f
+#
+# So the multiplications do not run entirely in parallel: within a
+# layer the multiplications run in parallel, but each layer has to
+# wait on the layers below it.
+#
+# To multiply x numbers the players:
+#
+# * Share x random numbers.
+#
+# * Wait until all shares have arrived, then start the clock.
+#
+# * Multiply in the tree-like fashion.
+#
+# * Stop the clock and report the time taken.
+#
+# This means that the time reported excludes the time used for the
+# initial sharing of input values and the time it would take to
+# reconstruct the output value.
+
 import time, signal
 from optparse import OptionParser
 
