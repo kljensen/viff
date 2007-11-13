@@ -69,7 +69,7 @@ parser.add_option("-c", "--count", type="int", help="number of comparisons")
 
 parser.add_option("-2", "--improved_comparison", action="store_true", help="Use improved comparison")
 
-parser.set_defaults(modulus="30916444023318367583", count=100, improved_comparison=False)
+parser.set_defaults(modulus="30916444023318367583", count=10, improved_comparison=False)
 
 (options, args) = parser.parse_args()
 
