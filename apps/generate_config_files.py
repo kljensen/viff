@@ -19,6 +19,40 @@
 # Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 # 02110-1301 USA
 
+# This application is used to generate player configuration files. As
+# an example, consider three players on hostnames foo, bar, and baz
+# and that can be contacted on port number 5000. Generating
+# configuration files for them is done by:
+#
+# % ./generate_config_files.py foo:5000 bar:5000 baz:5000
+#
+# If the players are on the same host (localhost), then use different
+# port numbers for each player.
+#
+# Each player has his own configuration file. The players are numbered
+# in the order listed, so the Player 1 is on the host foo and has the
+# configuration file player-1.ini. Similarly for Player 2 and 3.
+#
+# Each file contains information about the other two players and keys
+# used for pseudo-random secret sharing (PRSS). Because of the key
+# material, the files should be distributed securely to the players.
+#
+# All example applications load a configuration file specified by a
+# command line argument. For example, running the comparison benchmark
+# is done like this:
+#
+# On host baz:
+# % ./comparison_benchmark.py player-3.ini
+#
+# On host bar:
+# % ./comparison_benchmark.py player-2.ini
+#
+# On host foo:
+# % ./comparison_benchmark.py player-1.ini
+#
+# It is currently necessary to start the players in reverse order
+# (highest numbered first).
+
 from __future__ import division
 from optparse import OptionParser
 
