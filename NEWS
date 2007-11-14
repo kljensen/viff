@@ -31,4 +31,4 @@ Implements basic functionality including addition, multiplication,
 exclusive-or, and comparison of shares. Shares can be made using
 Shamir sharing or PRSS.
 
-Includes a suite of unit tests example programs.
+Includes a suite of unit tests and example programs.
