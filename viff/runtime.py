@@ -132,6 +132,13 @@ class ShareList(Share):
     """
 
     def __init__(self, shares, threshold=None):
+        """Initialize a share list.
+
+        @param shares: non-empty list of L{Share} objects.
+        @param threshold: number of shares to wait for. This is either
+        a number such that C{0 < threshold <= len(shares)} or C{None}
+        if all shares should be waited for.
+        """
         assert len(shares) > 0, "Cannot create empty ShareList"
         assert threshold is None or 0 < threshold <= len(shares), \
             "Threshold out of range"
