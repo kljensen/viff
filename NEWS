@@ -8,8 +8,8 @@ details can be found in the commit messages:
   http://hg.viff.dk/viff/log/
 
 
-Version 0.2, not yet released
------------------------------
+Version 0.2, released on 2007-11-14
+-----------------------------------
 
 Implemented overloaded arithmetic operators, so 'w = x + y * z' now
 adds and multiplies the three shares as expected. Updated API
