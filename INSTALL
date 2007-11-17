@@ -39,8 +39,8 @@ and some programs are installed into
 
   $HOME/opt/bin
 
-You should add the first directory to the PYTHONPATH environmental
-variable and the latter to the PATH environmental variable.
+You should add the first directory to the PYTHONPATH environment
+variable and the latter to the PATH environment variable.
 
 Bash uses can normally do this by adding
 
