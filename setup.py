@@ -74,7 +74,7 @@ All operations are automatically scheduled to run in parallel meaning
 that an operation starts as soon as the operands are ready.
 """,
       keywords=[
-        'cryptography', 'multi-party computation', 'MPC', 'SMPC',
+        'crypto', 'cryptography', 'multi-party computation', 'MPC', 'SMPC',
         'secure comparison', 'ideal functionality',
         'Shamir', 'pseudo-random secret sharing', 'PRSS'
         ],
