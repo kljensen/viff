@@ -11,7 +11,7 @@ GMPY for fast bignum arithmetic.
   * ConfigObj: http://voidspace.org.uk/python/configobj.html
   * GMPY:      http://gmpy.sourceforge.net/
 
-VIFF has been tested with the following versions: Python 2.4.3,
+VIFF has been tested with the following versions: Python 2.4.1,
 Mercurial 0.9.4, Twisted 2.5.0, ConfigObj 4.4.0, and GMPY 1.0alpha.
 Things might work with earlier versions, we do not know yet. Please
 report back if you find that VIFF works with earlier versions than the
