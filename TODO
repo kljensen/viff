@@ -61,6 +61,19 @@ Design
 Infrastructure
 ---------------
 
+* Replace the marshal moduls
+   The documentation for the marshal module says that:
+
+     Warning: The marshal module is not intended to be secure against
+     erroneous or maliciously constructed data. Never unmarshal data
+     received from an untrusted or unauthenticated source.
+
+   So when we start dealing with active adversaries, we should replace
+   it with something that is secure, probably something that uses the
+   struct module. See this discussion for more details:
+
+     http://thread.gmane.org/gmane.comp.cryptography.viff.devel/19
+
 * Use a logging module
    Use a better technique for debug output than scattering print
    statements around the source code.
