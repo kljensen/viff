@@ -827,8 +827,7 @@ class Runtime:
         Both arguments must be from the field given. The result is a
         GF256 share.
         """
-        # TODO: get these from a configuration file or similar
-        l = 32 # bit-length of input numbers
+        l = self.options.bit_length
         m = l + 2
         t = m + 1
 
@@ -1045,10 +1044,9 @@ class Runtime:
         Both arguments must be of type field. The result is a
         field share.
         """
-        # TODO: get these from a configuration file or similar
-        k = 30 # security parameter
+        k = self.options.security_parameter
         if l is None:
-            l = 32 # bit-length of input numbers
+            l = self.options.bit_length
 
         preproc = self.greater_thanII_preproc(field, l=l, k=k)
         return self.greater_thanII_online(share_a, share_b, preproc, field, l=l)
