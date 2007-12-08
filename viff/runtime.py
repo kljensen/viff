@@ -329,10 +329,12 @@ class Runtime:
         group = OptionGroup(parser, "VIFF Runtime Options")
         parser.add_option_group(group)
 
-        group.add_option("-l", "--bit-length", type="int",
-                         help="Bit length of input numbers")
-        group.add_option("-k", "--security-parameter", type="int",
-                         help="Security parameter")
+        group.add_option("-l", "--bit-length", type="int", metavar="L",
+                         help=("Maximum bit length of input numbers for "
+                               "comparisons."))
+        group.add_option("-k", "--security-parameter", type="int", metavar="K",
+                         help=("Security parameter. Comparisons will leak "
+                               "information with probability 2**-K."))
 
         parser.set_defaults(bit_length=32,
                             security_parameter=30)
