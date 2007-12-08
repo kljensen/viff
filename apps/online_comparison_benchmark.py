@@ -71,15 +71,12 @@ parser.add_option("-m", "--modulus",
                   help="lower limit for modulus (can be an expression)")
 parser.add_option("-c", "--count", type="int",
                   help="number of comparisons")
-parser.add_option("-l", "--bitlength", type="int",
-                  help="bitlength of numbers to be compared")
-parser.add_option("-k", "--securityparameter", type="int",
-                  help="The security parameter of the individual comparisons")
 
 parser.set_defaults(modulus="30916444023318367583",
-                    count=100,
-                    bitlength=32,
-                    securityparameter=30)
+                    count=100)
+
+# Add standard VIFF options.
+Runtime.add_options(parser)
 
 (options, args) = parser.parse_args()
 
@@ -112,12 +109,12 @@ Zq = GF(long(qprime))
 count = options.count
 print "I am player %d, will compare %d numbers" % (id, count)
 
-rt = Runtime(players, id, (len(players) -1)//2)
+rt = Runtime(players, id, (len(players) -1)//2, options)
 print "Testing online requirements for comparisonII"
 
 
-l = options.bitlength
-k = options.securityparameter
+l = rt.options.bit_length
+k = rt.options.security_parameter
 assert prime > 2**(l+k)
 
 print "l = %d" % l

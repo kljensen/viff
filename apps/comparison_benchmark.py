@@ -89,6 +89,9 @@ parser.set_defaults(modulus="30916444023318367583",
                     count=10,
                     improved_comparison=False)
 
+# Add standard VIFF options.
+Runtime.add_options(parser)
+
 (options, args) = parser.parse_args()
 
 if len(args) == 0:
@@ -115,7 +118,7 @@ Zp = GF(long(prime))
 count = options.count
 print "I am player %d, will compare %d numbers" % (id, count)
 
-rt = Runtime(players, id, (len(players) -1)//2)
+rt = Runtime(players, id, (len(players) -1)//2, options)
 if options.improved_comparison:
     greater_than = rt.greater_thanII
     print "Using improved comparison"
@@ -123,11 +126,9 @@ else:
     greater_than = rt.greater_than
     print "Using SCET comparison"
 
-l = 32 # TODO: needs to be taken from the runtime or a config file.
-
 shares = []
 for n in range(2*count//len(players) + 1):
-    input = Zp(random.randint(0, 2**l))
+    input = Zp(random.randint(0, 2**rt.options.bit_length))
     shares.extend(rt.shamir_share(input))
 # We want to measure the time for count comparisons, so we need
 # 2*count input numbers.

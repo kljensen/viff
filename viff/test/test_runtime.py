@@ -532,10 +532,6 @@ if 'STRESS' in os.environ:
             """
             This test repeatedly shares and compares random inputs.
             """
-
-            # TODO: this must match the l used in Runtime.greater_than.
-            l = 7
-
             # Random generators
             rand = {1: Random(count + 1),
                     2: Random(count + 2),
@@ -543,9 +539,9 @@ if 'STRESS' in os.environ:
             results = []
 
             for _ in range(count):
-                a = rand[1].randint(0, pow(2, l))
-                b = rand[2].randint(0, pow(2, l))
-                c = rand[3].randint(0, pow(2, l))
+                a = rand[1].randint(0, pow(2, self.rt1.options.bit_length))
+                b = rand[2].randint(0, pow(2, self.rt2.options.bit_length))
+                c = rand[3].randint(0, pow(2, self.rt3.options.bit_length))
 
                 a1, b1, c1 = self.rt1.shamir_share(self.Zp(a))
                 a2, b2, c2 = self.rt2.shamir_share(self.Zp(b))

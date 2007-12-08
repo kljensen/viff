@@ -96,6 +96,9 @@ parser.add_option("-c", "--count", type="int",
 
 parser.set_defaults(modulus="30916444023318367583", input=42, count=100)
 
+# Add standard VIFF options.
+Runtime.add_options(parser)
+
 (options, args) = parser.parse_args()
 
 if len(args) == 0:
@@ -121,7 +124,7 @@ input = Zp(options.input)
 count = options.count
 print "I am player %d, will multiply %d numbers" % (id, count)
 
-rt = Runtime(players, id, (len(players) -1)//2)
+rt = Runtime(players, id, (len(players) -1)//2, options)
 
 def finish(*x):
     rt.shutdown()
