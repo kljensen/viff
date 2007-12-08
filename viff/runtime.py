@@ -785,7 +785,7 @@ class Runtime:
         return reduce(xor, dst_shares, tmp)
 
     @increment_pc
-    def convert_bit_share_II(self, share, src_field, dst_field, k=None):
+    def convert_bit_share_II(self, share, src_field, dst_field):
         """Convert a 0/1 share from src_field into dst_field."""
 
         #TODO: don't do log like this...
@@ -796,9 +796,7 @@ class Runtime:
                 x /= 2
             return result+1 # Error for powers of two...
 
-        if k is None:
-            k = 30
-        l = k + log(dst_field.modulus)
+        l = self.options.security_parameter + log(dst_field.modulus)
         # TODO assert field sizes are OK...
 
         this_mask = rand.randint(0, (2**l) -1)
@@ -905,17 +903,14 @@ class Runtime:
     ########################################################################
 
     @increment_pc
-    def greater_thanII_preproc(self, field, smallField=None, l=None, k=None):
+    def greater_thanII_preproc(self, field, smallField=None):
         """Preprocessing for greater_thanII."""
         if smallField is None:
             smallField = field
-        if l is None:
-            l = 32
-        if k is None:
-            k = 30
-        # l++ for technical reasons
-        # need an extra bit to avoid troubles with equal inputs
-        l += 1
+
+        # Need an extra bit to avoid troubles with equal inputs
+        l = self.options.bit_length + 1
+        k = self.options.security_parameter
 
         # TODO: verify asserts are correct...
         assert field.modulus > 2**(l+2) + 2**(l+k), "Field too small"
@@ -954,6 +949,7 @@ class Runtime:
         mask_2 = self.prss_share_random(smallField, False)
         mask_OK = self.open(mask * mask_2)
         #dprint("Mask_OK: %s", mask_OK)
+
         return field, smallField, s_bit, s_sign, mask, r_full, r_modl, r_bits
 
         ##################################################
@@ -962,15 +958,12 @@ class Runtime:
         
 
     @increment_pc
-    def greater_thanII_online(self, share_a, share_b, preproc, field, l=None):
+    def greater_thanII_online(self, share_a, share_b, preproc, field):
         """Compute share_a >= share_b.
         Result is shared.
         """
-        if l == None:
-            l = 32
-
         # increment l as a, b are increased
-        l += 1
+        l = self.options.bit_length + 1
         # a = 2a+1; b= 2b // ensures inputs not equal
         share_a = 2 * share_a + 1
         share_b = 2 * share_b
@@ -991,14 +984,16 @@ class Runtime:
         c = self.open(r_full + z)
 
         self.callback(c, self._finish_greater_thanII,
-                      l, field, smallField, s_bit, s_sign, mask, r_full,
+                      field, smallField, s_bit, s_sign, mask, r_full,
                       r_modl, r_bits, z)
         return c
 
     @increment_pc
-    def _finish_greater_thanII(self, c, l, field, smallField, s_bit, s_sign,
+    def _finish_greater_thanII(self, c, field, smallField, s_bit, s_sign,
                                mask, r_full, r_modl, r_bits, z):
         """Finish the calculation."""
+        # increment l as a, b are increased
+        l = self.options.bit_length + 1
         c_bits = [smallField(c.bit(i)) for i in range(l)]
 
         sumXORs = [0]*l
@@ -1038,18 +1033,14 @@ class Runtime:
     # END _finish_greater_thanII
     
     @increment_pc
-    def greater_thanII(self, share_a, share_b, field, l=None):
+    def greater_thanII(self, share_a, share_b, field):
         """Compute share_a >= share_b.
 
         Both arguments must be of type field. The result is a
         field share.
         """
-        k = self.options.security_parameter
-        if l is None:
-            l = self.options.bit_length
-
-        preproc = self.greater_thanII_preproc(field, l=l, k=k)
-        return self.greater_thanII_online(share_a, share_b, preproc, field, l=l)
+        preproc = self.greater_thanII_preproc(field)
+        return self.greater_thanII_online(share_a, share_b, preproc, field)
 
     ########################################################################
     ########################################################################

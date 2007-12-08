@@ -134,7 +134,7 @@ shares = shares[:2*count]
 preproc = []
 pseudoPreproc = []
 for i in range(count):
-    thisPreproc = rt.greater_thanII_preproc(Zp, smallField = Zq, l=l, k=k)
+    thisPreproc = rt.greater_thanII_preproc(Zp, smallField = Zq)
     preproc.append(thisPreproc)
     pseudoPreproc += thisPreproc[2:-1]
     pseudoPreproc += thisPreproc[-1]
@@ -156,7 +156,7 @@ def run_test(_):
     while len(shares) > 1:
         a = shares.pop(0)
         b = shares.pop(0)
-        c = rt.greater_thanII_online(a, b, preproc.pop(), Zp, l=l)
+        c = rt.greater_thanII_online(a, b, preproc.pop(), Zp)
         bits.append(c)
         
     stop = DeferredList(bits)
