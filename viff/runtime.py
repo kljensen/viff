@@ -34,6 +34,7 @@ scheduling things correctly behind the scenes.
 
 import marshal
 import socket
+from optparse import OptionParser, OptionGroup
 
 from viff import shamir
 from viff.prss import prss
@@ -323,7 +324,20 @@ class Runtime:
     L{add}, L{mul}, etc. directly if one prefers.
     """
 
-    def __init__(self, players, id, threshold):
+    @staticmethod
+    def add_options(parser):
+        group = OptionGroup(parser, "VIFF Runtime Options")
+        parser.add_option_group(group)
+
+        group.add_option("-l", "--bit-length", type="int",
+                         help="Bit length of input numbers")
+        group.add_option("-k", "--security-parameter", type="int",
+                         help="Security parameter")
+
+        parser.set_defaults(bit_length=32,
+                            security_parameter=30)
+
+    def __init__(self, players, id, threshold, options=None):
         """Initialize runtime.
 
         The runtime is initialized based on the player configuration
@@ -340,6 +354,13 @@ class Runtime:
         self.id = id
         #: Shamir secret sharing threshold.
         self.threshold = threshold
+
+        if options is None:
+            parser = OptionParser()
+            self.add_options(parser)
+            self.options = parser.get_default_values()
+        else:
+            self.options = options
 
         #: Current program counter.
         #:
