@@ -82,11 +82,6 @@ Infrastructure
    Use a better technique for debug output than scattering print
    statements around the source code.
 
-* Options framework
-   Having a proper framework for options would be cool. Options
-   include use of GMPY, security parameter, modulus, and probably
-   other stuff.
-
 * Create unit tests which randomizes network delay
    The current unit test with LoopbackRuntime are strictly sequential
    and does not capture the random delays possible with real network
