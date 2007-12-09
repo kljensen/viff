@@ -14,7 +14,7 @@ Design
 
 * Define a hierarchy for Runtime functionality
    The Runtime class keeps growing as more and more functionality is
-   put into it. An options would be to split it into a basic Runtime
+   put into it. An option would be to split it into a basic Runtime
    which provides communication and nothing else. More functionality
    could be provided by mix-in classes.
 
@@ -65,7 +65,7 @@ Infrastructure
    There is currently no error handling in VIFF. Twisted has support
    for defining error callbacks which we should use.
 
-* Replace the marshal moduls
+* Replace the marshal module
    The documentation for the marshal module says that:
 
      Warning: The marshal module is not intended to be secure against
@@ -150,12 +150,12 @@ Website
 
 * Bug tracker
    It might be convenient to have a place where users can submit bugs.
-   But until there is a real demand, the mailinglist can be used.
+   But until there is a real demand, the mailing list can be used.
 
 * Wiki
-   Writing the webpages in a Wiki would be nice.
+   Writing the web pages in a wiki would be nice.
 
-* BuildBot
+* BuildBot status page
    BuildBot can automate builds and display a status page with the
    results form running the test suite.
 
@@ -166,3 +166,5 @@ Miscellaneous
    We need references to the original papers. There should at least be
    references in the source code itself, but maybe also in a separate
    file. A new Epydoc field might help?
+   
+ LocalWords:  VIFF TODO Shamir GMPY wiki BuildBot Epydoc
