@@ -189,13 +189,12 @@ class ShareExchanger(Int16StringReceiver):
     the network and to convert back again to structured data.
     """
 
-    def __init__(self, id, runtime):
-        """Initialize the protocol.
+    def __init__(self):
+        self.peer_id = None
 
-        @param id: the id of the peer.
-        """
-        self.id = id
-        self.runtime = runtime
+    def connectionMade(self):
+        #print "Transport:", self.transport
+        self.sendString(str(self.factory.runtime.id))
         
     def stringReceived(self, string):
         """Called when a share is received.
@@ -209,19 +208,27 @@ class ShareExchanger(Int16StringReceiver):
         @type string: C{(program_counter, modulus, value)} in
         marshalled form
         """
-        program_counter, modulus, value = marshal.loads(string)
+        if self.peer_id is None:
+            # TODO: Handle ValueError if the string cannot be decoded.
+            self.peer_id = int(string)
+            self.factory.identify_peer(self)
+        else:
+            program_counter, modulus, value = marshal.loads(string)
 
-        share = GF(modulus)(value)
-        key = (program_counter, self.id)
+            field_element = GF(modulus)(value)
+            # TODO: The incoming_shares mapping could also be stored
+            # in self, and so self.peer_id would not be needed.
+            key = (program_counter, self.peer_id)
+            shares = self.factory.runtime.incoming_shares
 
-        shares = self.factory.incoming_shares
-        try:
-            reactor.callLater(0, shares.pop(key).callback, share)
-        except KeyError:
-            shares[key] = Share(self.runtime, share)
+            try:
+                share = shares.pop(key)
+                share.callback(field_element)
+            except KeyError:
+                shares[key] = Share(self.factory.runtime, field_element)
 
-        # TODO: marshal.loads can raise EOFError, ValueError, and
-        # TypeError. They should be handled somehow.
+            # TODO: marshal.loads can raise EOFError, ValueError, and
+            # TypeError. They should be handled somehow.
 
     def sendShare(self, program_counter, share):
         """Send a share.
@@ -240,58 +247,50 @@ class ShareExchanger(Int16StringReceiver):
 
         data = (program_counter, share.modulus, share.value)
         self.sendString(marshal.dumps(data))
-        return self
 
     def loseConnection(self):
         """Disconnect this protocol instance."""
         self.transport.loseConnection()
-        # TODO: this ought to be the last callback and so it might not
-        # be necessary to pass self on?
-        return self
+
 
 class ShareExchangerFactory(ServerFactory, ClientFactory):
     """Factory for creating ShareExchanger protocols."""
 
-    def __init__(self, runtime, incoming_shares, port_player_mapping, protocols):
-        """Initialize the factory.
+    protocol = ShareExchanger
 
-        @param incoming_shares: incoming shares waiting for network
-        input, see L{Runtime.incoming_shares}.
-        @type incoming_shares: mapping from C{(program_counter, id)}
-        pairs to Deferreds yielding shares
-        """
-        println("ShareExchangerFactory: %s", port_player_mapping)
-
+    def __init__(self, runtime, players, needed_protocols, protocols_ready):
+        """Initialize the factory."""
         self.runtime = runtime
+        self.players = players
+        self.needed_protocols = needed_protocols
+        self.protocols_ready = protocols_ready
 
-        #: Incoming shares. Reference to L{Runtime.incoming_shares}.
-        self.incoming_shares = incoming_shares
+    def identify_peer(self, protocol):
+        self.runtime.add_player(self.players[protocol.peer_id], protocol)
+        self.needed_protocols -= 1
+        if self.needed_protocols == 0:
+            self.protocols_ready.callback(self.runtime)        
 
-        #: Mapping from C{(ip, port)} tuples to player IDs. Used to
-        #: identify peers when they connect.
-        self.port_player_mapping = port_player_mapping
+def create_runtime(id, players, threshold, options=None):
+    # This will yield a Runtime when all protocols are connected.
+    result = Deferred()
 
-        #: List of deferred protocols. These deferreds will be
-        #: triggered when peers connect.
-        self.protocols = protocols
+    # Create a runtime that knows about no other players than itself.
+    # It will eventually be returned in result when the factory has
+    # determined that all needed protocols are ready.
+    runtime = Runtime(players[id], threshold, options)
+    needed_protocols = len(players) - 1
 
-    def buildProtocol(self, addr):
-        """Build and return a new protocol for communicating with addr."""
-        port = addr.port - (addr.port % 100)
-        # Resolving the hostname into an IP address is a blocking
-        # operation, but this is acceptable since buildProtocol is
-        # only called when the runtime is initialized.
-        ip = socket.gethostbyname(addr.host)
-        id = self.port_player_mapping[(ip, port)]
-        println("Peer id: %s", id)
-        
-        p = ShareExchanger(id, self.runtime)
-        p.factory = self
+    factory = ShareExchangerFactory(runtime, players, needed_protocols, result)
 
-        reactor.callLater(0, self.protocols[id].callback, p)
-        return p
+    reactor.listenTCP(players[id].port, factory)
+    for peer_id, player in players.iteritems():
+        if peer_id > id:
+            println("Will connect to %s", player)
+            reactor.connectTCP(player.host, player.port, factory)
 
- 
+    return result
+
 def increment_pc(method):
     """Make method automatically increment the program counter.
 
@@ -339,7 +338,7 @@ class Runtime:
         parser.set_defaults(bit_length=32,
                             security_parameter=30)
 
-    def __init__(self, players, id, threshold, options=None):
+    def __init__(self, player, threshold, options=None):
         """Initialize runtime.
 
         The runtime is initialized based on the player configuration
@@ -350,10 +349,8 @@ class Runtime:
         @param id: id of this player.
         @param threshold: threshold for the protocol run.
         """
-        #: Player configuration.
-        self.players = players
         #: ID of this player.
-        self.id = id
+        self.id = player.id
         #: Shamir secret sharing threshold.
         self.threshold = threshold
 
@@ -436,46 +433,18 @@ class Runtime:
         #: L{connect} to them.
         #:
         #: @type: C{list} of deferred L{ShareExchanger} objects.
-        self.protocols = dict((id, Deferred())
-                              for id, p in players.iteritems())
-        self.protocols[self.id].callback("Unused")
-        # Now try connecting...
-        self.connect()
+        self.protocols = {}
 
-    def connect(self):
-        """Connects this runtime to the others.
+        self.players = {}
+        # Add ourselves, but with no protocol since we wont be
+        # communicating with ourselves.
+        self.add_player(player, None)
 
-        Each player has pair-wise connections to all other players.
-        With M{n} players a total of M{n * (n-1)/2 = (n^2-n)/2}
-        connections are made.
-
-        When the connections are made, the deferred L{ShareExchanger}
-        objects in L{Runtime.protocols} are triggered.
-        """
-        # Resolving the hostname into an IP address is a blocking
-        # operation, but this is acceptable since it is only done when
-        # the runtime is initialized.
-        ip_addresses = [socket.gethostbyname(p.host)
-                        for p in self.players.values()]
-
-        mapping = dict()
-        for ip, (id, p) in zip(ip_addresses, self.players.iteritems()):
-            mapping[(ip, p.port)] = id
-
-        factory = ShareExchangerFactory(self, self.incoming_shares,
-                                        mapping, self.protocols)
-        reactor.listenTCP(self.players[self.id].port, factory)
-
-        for id, player in self.players.iteritems():
-            if id > self.id:
-                bind_port = self.players[self.id].port + id
-                println("Will connect to %s from port %d", player, bind_port)
-                reactor.connectTCP(player.host, player.port, factory,
-                                   bindAddress=(self.players[self.id].host,
-                                                bind_port))
-
-        println("Initialized Runtime with %d players, threshold %d",
-                len(self.players), self.threshold)
+    def add_player(self, player, protocol):
+        self.players[player.id] = player
+        # There is no protocol for ourselves, so we wont add that:
+        if protocol is not None:
+            self.protocols[player.id] = protocol
 
     def shutdown(self):
         """Shutdown the runtime.
@@ -485,12 +454,11 @@ class Runtime:
         """
         println("Initiating shutdown sequence.")
         for protocol in self.protocols.itervalues():
-            protocol.addCallback(lambda p: p.loseConnection())
-        println("Waiting 1 second")
-        reactor.callLater(1, reactor.stop)
+            protocol.loseConnection()
+        reactor.stop()
 
     def wait_for(self, *vars):
-        """Start the runtime and wait for the variables given.
+        """Make the runtime wait for the variables given.
 
         The runtime is shut down when all variables are calculated.
 
@@ -499,8 +467,6 @@ class Runtime:
         """
         dl = DeferredList(vars)
         dl.addCallback(lambda _: self.shutdown())
-        reactor.run()
-        println("Reactor stopped")
 
     def callback(self, deferred, func, *args, **kwargs):
         """Schedule a callback on a deferred with the correct program
@@ -1068,7 +1034,7 @@ class Runtime:
                 self.incoming_shares[key] = Share(self)
 
             # Send the share to the other side
-            self.protocols[id].addCallback(ShareExchanger.sendShare, pc, share)
+            self.protocols[id].sendShare(pc, share)
             return self.incoming_shares[key]
 
     @increment_pc
