@@ -59,7 +59,7 @@ from twisted.internet.defer import DeferredList
 
 from gmpy import mpz
 from viff.field import GF
-from viff.runtime import Runtime
+from viff.runtime import Runtime, create_runtime
 from viff.config import load_config
 
 last_timestamp = time.time()
@@ -124,48 +124,47 @@ input = Zp(options.input)
 count = options.count
 print "I am player %d, will multiply %d numbers" % (id, count)
 
-rt = Runtime(players, id, (len(players) -1)//2, options)
+def protocol(rt):
+    shares = []
+    for n in range(count//len(players) + 1):
+        shares.extend(rt.shamir_share(input))
 
-def finish(*x):
-    rt.shutdown()
-    print "Stopped reactor"
+    def run_test(_):
+        print "Multiplying %d numbers" % count
+        record_start()
 
-# To avoid having leaving the ports in boring TIME_WAIT state, we must
-# try to shutdown the runtime cleanly if killed.
-signal.signal(2, finish)
+        while len(shares) > 1:
+            a = shares.pop(0)
+            b = shares.pop(0)
+            c = a * b
+            #c.addCallback(timestamp)
+            shares.append(c)
 
-shares = []
-for n in range(count//len(players) + 1):
-    shares.extend(rt.shamir_share(input))
+        product = shares[0]
+        product.addCallback(record_stop)
 
-shares = shares[:count]
+        result = rt.open(product)
+        result.addCallback(check, pow(42, count, Zp.modulus))
 
-def run_test(_):
-    print "Multiplying %d numbers" % count
-    record_start()
+        def check(result, expected):
+            if result.value == expected:
+                print "Result: %s (correct)" % result
+            else:
+                print "Result: %s (incorrect, expected %d)" % (result, expected)
 
-    while len(shares) > 1:
-        a = shares.pop(0)
-        b = shares.pop(0)
-        c = a * b
-        #c.addCallback(timestamp)
-        shares.append(c)
+        def finish(_):
+            rt.shutdown()
+            print "Stopped reactor"
 
-    product = shares[0]
-    product.addCallback(record_stop)
+        result.addCallback(finish)
 
-    result = rt.open(product)
-    def check(result, expected):
-        if result.value == expected:
-            print "Result: %s (correct)" % result
-        else:
-            print "Result: %s (incorrect, expected %d)" % (result, expected)
-    result.addCallback(check, pow(42, count, Zp.modulus))
-    result.addCallback(finish)
+    shares = shares[:count]
+    # We want to wait until all numbers have been shared
+    dl = DeferredList(shares)
+    dl.addCallback(run_test)
 
-# We want to wait until all numbers have been shared
-dl = DeferredList(shares)
-dl.addCallback(run_test)
-    
+pre_runtime = create_runtime(id, players, (len(players) -1)//2, options)
+pre_runtime.addCallback(protocol)
+
 print "#### Starting reactor ###"
 reactor.run()

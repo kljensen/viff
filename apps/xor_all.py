@@ -21,8 +21,10 @@
 
 import sys
 
+from twisted.internet import reactor
+
 from viff.field import GF256
-from viff.runtime import Runtime
+from viff.runtime import create_runtime
 from viff.config import load_config
 from viff.util import dprint
 
@@ -31,19 +33,23 @@ input = GF256(int(sys.argv[2]))
 
 print "I am player %d and will input %s" % (id, input)
 
-rt = Runtime(players, id, 1)
+def protocol(rt):
+    print "-" * 64
+    print "Program started"
+    print
 
-print "-" * 64
-print "Program started"
-print
+    shares = rt.prss_share(input)
 
-shares = rt.prss_share(input)
+    while len(shares) > 1:
+        a = shares.pop(0)
+        b = shares.pop(0)
+        shares.append(rt.xor_bit(a,b))
 
-while len(shares) > 1:
-    a = shares.pop(0)
-    b = shares.pop(0)
-    shares.append(rt.xor_bit(a,b))
+    xor = rt.open(shares[0])
+    dprint("Result: %s", xor)
+    rt.wait_for(xor)
 
-xor = rt.open(shares[0])
-dprint("Result: %s", xor)
-rt.wait_for(xor)
+pre_runtime = create_runtime(id, players, 1)
+pre_runtime.addCallback(protocol)
+
+reactor.run()

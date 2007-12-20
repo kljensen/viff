@@ -29,7 +29,7 @@ from twisted.internet.defer import DeferredList, gatherResults
 
 from gmpy import mpz
 from viff.field import GF
-from viff.runtime import Runtime
+from viff.runtime import Runtime, create_runtime
 from viff.config import load_config
 from viff.util import rand
 
@@ -109,68 +109,69 @@ Zq = GF(long(qprime))
 count = options.count
 print "I am player %d, will compare %d numbers" % (id, count)
 
-rt = Runtime(players, id, (len(players) -1)//2, options)
-print "Testing online requirements for comparisonII"
+def protocol(rt):
+    print "Testing online requirements for comparisonII"
+    l = rt.options.bit_length
+    k = rt.options.security_parameter
+    assert prime > 2**(l+k)
+
+    print "l = %d" % l
+    print "k = %d" % k
+
+    shares = []
+    inputs = []
+    for n in range(2*count//len(players) + 1):
+        input = Zp(rand.randint(0, 2**l - 1))
+        inputs.append(input)
+        shares.extend(rt.shamir_share(input))
+    # We want to measure the time for count comparisons, so we need
+    # 2*count input numbers.
+    shares = shares[:2*count]
+
+    preproc = []
+    pseudoPreproc = []
+    for i in range(count):
+        thisPreproc = rt.greater_thanII_preproc(Zp, smallField = Zq)
+        preproc.append(thisPreproc)
+        pseudoPreproc += thisPreproc[2:-1]
+        pseudoPreproc += thisPreproc[-1]
+
+        # print status as we go along
+        # TODO: why does this not work?
+        def printDonePreproc(_, i):
+            print "Done preprocessing %d" % i
+            return _
+        tmp = DeferredList(thisPreproc[2:-1])
+        tmp.addCallback(printDonePreproc, i)
+
+    def run_test(_):
+        print "Preprocessing done..."
+        print "Making %d comparisons" % count
+        record_start()
+
+        bits = []
+        while len(shares) > 1:
+            a = shares.pop(0)
+            b = shares.pop(0)
+            c = rt.greater_thanII_online(a, b, preproc.pop(), Zp)
+            bits.append(c)
+
+        stop = DeferredList(bits)
+        stop.addCallback(record_stop)
+        stop.addCallback(finish)
+
+        # TODO: it would be nice it the results were checked
+        # automatically, but it needs to be done without adding
+        # overhead to the benchmark.
 
 
-l = rt.options.bit_length
-k = rt.options.security_parameter
-assert prime > 2**(l+k)
+    # We want to wait until all numbers have been shared and
+    # preprocessing has been performed
+    dl = gatherResults(shares + pseudoPreproc)
+    dl.addCallback(run_test)
 
-print "l = %d" % l
-print "k = %d" % k
-
-shares = []
-
-inputs = []
-for n in range(2*count//len(players) + 1):
-    input = Zp(rand.randint(0, 2**l - 1))
-    inputs.append(input)
-    shares.extend(rt.shamir_share(input))
-# We want to measure the time for count comparisons, so we need
-# 2*count input numbers.
-shares = shares[:2*count]
-
-preproc = []
-pseudoPreproc = []
-for i in range(count):
-    thisPreproc = rt.greater_thanII_preproc(Zp, smallField = Zq)
-    preproc.append(thisPreproc)
-    pseudoPreproc += thisPreproc[2:-1]
-    pseudoPreproc += thisPreproc[-1]
-
-    # print status as we go along
-    # TODO: why does this not work?
-    def printDonePreproc(_, i):
-        print "Done preprocessing %d" % i
-        return _
-    tmp = DeferredList(thisPreproc[2:-1])
-    tmp.addCallback(printDonePreproc, i)
-
-def run_test(_):
-    print "Preprocessing done..."
-    print "Making %d comparisons" % count
-    record_start()
-
-    bits = []
-    while len(shares) > 1:
-        a = shares.pop(0)
-        b = shares.pop(0)
-        c = rt.greater_thanII_online(a, b, preproc.pop(), Zp)
-        bits.append(c)
-        
-    stop = DeferredList(bits)
-    stop.addCallback(record_stop)
-    stop.addCallback(finish)
-    
-    # TODO: it would be nice it the results were checked
-    # automatically, but it needs to be done without adding overhead
-    # to the benchmark.
-
-
-# We want to wait until all numbers have been shared and preprocessing has been performed
-dl = gatherResults(shares + pseudoPreproc)
-dl.addCallback(run_test)
+pre_runtime = create_runtime(id, players, (len(players) -1)//2, options)
+pre_runtime.addCallback(protocol)
     
 print "#### Starting reactor ###"
 reactor.run()

@@ -21,40 +21,47 @@
 
 import sys, time
 
+from twisted.internet import reactor
+
 from viff.field import GF, GF256
-from viff.runtime import Runtime
+from viff.runtime import create_runtime
 from viff.config import load_config
 
 id, players = load_config(sys.argv[1])
 print "I am player %d" % id
 
-rt = Runtime(players, id, (len(players) -1)//2)
+def protocol(rt):
+    print "Starting protocol"
+    Zp = GF(11)
+    a, b, c = rt.prss_share(Zp(0))
+    x, y, z = rt.prss_share(Zp(1))
 
-Zp = GF(11)
+    a_b = rt.open(rt.convert_bit_share(a, Zp, GF256))
+    b_b = rt.open(rt.convert_bit_share(b, Zp, GF256))
+    c_b = rt.open(rt.convert_bit_share(c, Zp, GF256))
 
-a, b, c = rt.prss_share(Zp(0))
-x, y, z = rt.prss_share(Zp(1))
+    x_b = rt.open(rt.convert_bit_share(x, Zp, GF256))
+    y_b = rt.open(rt.convert_bit_share(y, Zp, GF256))
+    z_b = rt.open(rt.convert_bit_share(z, Zp, GF256))
 
-a_b = rt.open(rt.int_to_bit(a, Zp))
-b_b = rt.open(rt.int_to_bit(b, Zp))
-c_b = rt.open(rt.int_to_bit(c, Zp))
-                                      
-x_b = rt.open(rt.int_to_bit(x, Zp))
-y_b = rt.open(rt.int_to_bit(y, Zp))
-z_b = rt.open(rt.int_to_bit(z, Zp))
+    def check(result, variable, expected):
+        if result == expected:
+            print "%s: %s (correct)" % (variable, result)
+        else:
+            print "%s: %s (incorrect, expected %d)" \
+                % (variable, result, expected)
 
-def check(result, variable, expected):
-    if result == expected:
-        print "%s: %s (correct)" % (variable, result)
-    else:
-        print "%s: %s (incorrect, expected %d)" % (variable, result, expected)
+    a_b.addCallback(check, "a_b", GF256(0))
+    b_b.addCallback(check, "b_b", GF256(0))
+    c_b.addCallback(check, "c_b", GF256(0))
 
-a_b.addCallback(check, "a_b", GF256(0))
-b_b.addCallback(check, "b_b", GF256(0))
-c_b.addCallback(check, "c_b", GF256(0))
+    x_b.addCallback(check, "x_b", GF256(1))
+    y_b.addCallback(check, "y_b", GF256(1))
+    z_b.addCallback(check, "z_b", GF256(1))
 
-x_b.addCallback(check, "x_b", GF256(1))
-y_b.addCallback(check, "y_b", GF256(1))
-z_b.addCallback(check, "z_b", GF256(1))
+    rt.wait_for(a_b, b_b, c_b, x_b, y_b, z_b)
 
-rt.wait_for(a_b, b_b, c_b, x_b, y_b, z_b)
+pre_runtime = create_runtime(id, players, (len(players) -1)//2)
+pre_runtime.addCallback(protocol)
+
+reactor.run()

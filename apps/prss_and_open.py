@@ -21,10 +21,11 @@
 
 import sys, time
 
+from twisted.internet import reactor
 from twisted.internet.defer import gatherResults
 
 from viff.field import GF
-from viff.runtime import Runtime
+from viff.runtime import create_runtime 
 from viff.config import load_config
 from viff.util import dprint
 
@@ -33,10 +34,14 @@ print "I am player %d" % id
 
 Z31 = GF(31)
 
-rt = Runtime(players, id, (len(players) -1)//2)
+def protocol(rt):
+    elements = [rt.open(rt.prss_share_random(Z31)) for _ in range(10)]
+    result = gatherResults(elements)
+    dprint("bits: %s", result)
 
-elements = [rt.open(rt.prss_share_random(Z31)) for _ in range(10)]
-result = gatherResults(elements)
-dprint("bits: %s", result)
+    rt.wait_for(result)
 
-rt.wait_for(result)
+pre_runtime = create_runtime(id, players, (len(players) -1)//2)
+pre_runtime.addCallback(protocol)
+
+reactor.run()

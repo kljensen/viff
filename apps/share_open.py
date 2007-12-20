@@ -21,8 +21,10 @@
 
 import sys
 
+from twisted.internet import reactor
+
 from viff.field import GF256
-from viff.runtime import Runtime
+from viff.runtime import create_runtime
 from viff.config import load_config
 from viff.util import dprint
 
@@ -31,20 +33,25 @@ input = GF256(int(sys.argv[2]))
 
 print "I am player %d and will input %s" % (id, input)
 
-rt = Runtime(players, id, 1)
+def protocol(runtime):
+    print "-" * 64
+    print "Program started"
+    print
 
-print "-" * 64
-print "Program started"
-print
+    a, b, c = runtime.prss_share(input)
 
-a, b, c = rt.prss_share(input)
+    a = runtime.open(a)
+    b = runtime.open(b)
+    c = runtime.open(c)
 
-a = rt.open(a)
-b = rt.open(b)
-c = rt.open(c)
+    dprint("### opened a: %s ###", a)
+    dprint("### opened b: %s ###", b)
+    dprint("### opened c: %s ###", c)
 
-dprint("### opened a: %s ###", a)
-dprint("### opened b: %s ###", b)
-dprint("### opened c: %s ###", c)
+    runtime.wait_for(a,b,c)
 
-rt.wait_for(a,b,c)
+pre_runtime = create_runtime(id, players, 1)
+pre_runtime.addCallback(protocol)
+
+print "#### Starting reactor ###"
+reactor.run()

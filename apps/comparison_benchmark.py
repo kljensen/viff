@@ -42,7 +42,7 @@ from twisted.internet.defer import DeferredList
 
 from gmpy import mpz
 from viff.field import GF
-from viff.runtime import Runtime
+from viff.runtime import Runtime, create_runtime
 from viff.config import load_config
 
 last_timestamp = time.time()
@@ -118,45 +118,48 @@ Zp = GF(long(prime))
 count = options.count
 print "I am player %d, will compare %d numbers" % (id, count)
 
-rt = Runtime(players, id, (len(players) -1)//2, options)
-if options.improved_comparison:
-    greater_than = rt.greater_thanII
-    print "Using improved comparison"
-else:
-    greater_than = rt.greater_than
-    print "Using SCET comparison"
+def protocol(rt):
+    def run_test(_):
+        print "Making %d comparisons" % count
+        record_start()
 
-shares = []
-for n in range(2*count//len(players) + 1):
-    input = Zp(random.randint(0, 2**rt.options.bit_length))
-    shares.extend(rt.shamir_share(input))
-# We want to measure the time for count comparisons, so we need
-# 2*count input numbers.
-shares = shares[:2*count]
+        bits = []
+        while len(shares) > 1:
+            a = shares.pop(0)
+            b = shares.pop(0)
+            c = greater_than(a,b, Zp)
+            #c.addCallback(timestamp)
+            bits.append(c)
 
-def run_test(_):
-    print "Making %d comparisons" % count
-    record_start()
+        stop = DeferredList(bits)
+        stop.addCallback(record_stop)
+        stop.addCallback(finish)
 
-    bits = []
-    while len(shares) > 1:
-        a = shares.pop(0)
-        b = shares.pop(0)
-        c = greater_than(a,b, Zp)
-        #c.addCallback(timestamp)
-        bits.append(c)
+        # TODO: it would be nice it the results were checked
+        # automatically, but it needs to be done without adding overhead
+        # to the benchmark.
 
-    stop = DeferredList(bits)
-    stop.addCallback(record_stop)
-    stop.addCallback(finish)
+    if options.improved_comparison:
+        greater_than = rt.greater_thanII
+        print "Using improved comparison"
+    else:
+        greater_than = rt.greater_than
+        print "Using SCET comparison"
 
-    # TODO: it would be nice it the results were checked
-    # automatically, but it needs to be done without adding overhead
-    # to the benchmark.
+    shares = []
+    for n in range(2*count//len(players) + 1):
+        input = Zp(random.randint(0, 2**rt.options.bit_length))
+        shares.extend(rt.shamir_share(input))
+    # We want to measure the time for count comparisons, so we need
+    # 2*count input numbers.
+    shares = shares[:2*count]
 
-# We want to wait until all numbers have been shared
-dl = DeferredList(shares)
-dl.addCallback(run_test)
+    # We want to wait until all numbers have been shared
+    dl = DeferredList(shares)
+    dl.addCallback(run_test)
+
+pre_runtime = create_runtime(id, players, (len(players) -1)//2, options)
+pre_runtime.addCallback(protocol)
     
 print "#### Starting reactor ###"
 reactor.run()
