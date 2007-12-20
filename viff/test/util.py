@@ -18,46 +18,57 @@
 # 02110-1301 USA
 
 from twisted.internet import reactor
+from twisted.internet.defer import Deferred, DeferredList, gatherResults
 from twisted.trial.unittest import TestCase
 from twisted.protocols.loopback import loopbackAsync
 
-from viff.runtime import Runtime, ShareExchanger
+from viff.runtime import Runtime, ShareExchanger, ShareExchangerFactory
 from viff.field import GF
 from viff.config import generate_configs, load_config
 
-class LoopbackRuntime(Runtime):
+def protocol(method):
+    def wrapper(self):
+        def cb_method(runtime):
+            return method(self, runtime)
 
-    def __init__(self, players, id, threshold, connections, runtimes):
-        self.connections = connections
-        self.runtimes = runtimes
-        self.real_protocols = {}
-        Runtime.__init__(self, players, id, threshold)
+        self.rt1.addCallback(cb_method)
+        self.rt2.addCallback(cb_method)
+        self.rt3.addCallback(cb_method)
+        return gatherResults([self.rt1, self.rt2, self.rt3])
+    wrapper.func_name = method.func_name
+    return wrapper
 
-    def connect(self):
-        for id in self.players:
-            # There is no connection back to ourselves
-            if id != self.id:
-                protocol = ShareExchanger(id, self)
-                # The ShareExchanger protocol uses its factory for
-                # accessing the incoming_shares dictionary, which
-                # actually comes from the runtime. So self is an okay
-                # factory here. TODO: Remove the factory?
-                protocol.factory = self
-                # TODO: is there any need to schedule this instead of
-                # simply executing the callback directly? Or assign a
-                # defer.succeed(protocol) to self.protocols[id].
-                reactor.callLater(0, self.protocols[id].callback, protocol)
-                self.real_protocols[id] = protocol
+def create_loopback_runtime(id, players, threshold, protocols):
+    # This will yield a Runtime when all protocols are connected.
+    result = Deferred()
 
-                if id > self.id:
-                    # Make a "connection" to the other player. We are
-                    # the client (because we initiate the connection)
-                    # and the other player is the server.
-                    client = protocol
-                    server = self.runtimes[id].real_protocols[self.id]
-                    key = (self.id, id)
-                    self.connections[key] = loopbackAsync(server, client)
+    # Create a runtime that knows about no other players than itself.
+    # It will eventually be returned in result when the factory has
+    # determined that all needed protocols are ready.
+    runtime = Runtime(players[id], threshold)
+    needed_protocols = len(players) - 1
+    factory = ShareExchangerFactory(runtime, players, needed_protocols, result)
 
+    for peer_id in players:
+        if peer_id != id:
+            protocol = ShareExchanger()
+            protocol.factory = factory
+
+            # Keys for when we are the client and when we are the server.
+            client_key = (id, peer_id)
+            server_key = (peer_id, id)
+            # Store a protocol used when we are the server.
+            protocols[server_key] = protocol
+
+            if peer_id > id:
+                # Make a "connection" to the other player. We are
+                # the client (because we initiate the connection)
+                # and the other player is the server.
+                client = protocols[client_key]
+                server = protocols[server_key]
+                loopbackAsync(server, client)
+
+    return result
 
 class RuntimeTestCase(TestCase):
     
@@ -66,17 +77,13 @@ class RuntimeTestCase(TestCase):
         self.Zp = GF(30916444023318367583)
 
         configs = generate_configs(3, 1)
-        connections = {}
-        runtimes = {}
+        protocols = {}
 
         id, players = load_config(configs[3])
-        self.rt3 = LoopbackRuntime(players, id, 1, connections, runtimes)
-        runtimes[3] = self.rt3
+        self.rt3 = create_loopback_runtime(id, players, 1, protocols)
 
         id, players = load_config(configs[2])
-        self.rt2 = LoopbackRuntime(players, id, 1, connections, runtimes)
-        runtimes[2] = self.rt2
+        self.rt2 = create_loopback_runtime(id, players, 1, protocols)
 
         id, players = load_config(configs[1])
-        self.rt1 = LoopbackRuntime(players, id, 1, connections, runtimes)
-        runtimes[1] = self.rt1
+        self.rt1 = create_loopback_runtime(id, players, 1, protocols)
