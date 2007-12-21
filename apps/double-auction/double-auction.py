@@ -19,6 +19,24 @@
 # Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 # 02110-1301 USA
 
+# Double auction test. The double auction is implemented as described
+# in "Secure Integer Computation with Applications in Economics", a
+# PhD Progrees Report by Tomas Toft.
+#
+# The double auction finds the market clearing price in an auction
+# where sellers can specify how much they want to sell at a given unit
+# price, and where buyers specify how much they want to buy. The sell
+# bids increase (since you want to sell more if the price per item
+# increases) whereas the buy bids are decreasing.
+#
+# TODO: This implementation cheats by not distributing the sell and
+# buy bids. This was originally simpler to program it that way.
+#
+# TODO: Note also, that the players must be run with the same seed.
+# This is necessary to obtain consistent shares. This restriction will
+# be removed when the shares are distributed correctly as per the
+# previous TODO item.
+
 import sys, time, random
 from optparse import OptionParser
 
