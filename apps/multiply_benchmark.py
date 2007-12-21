@@ -130,6 +130,17 @@ def protocol(rt):
         shares.extend(rt.shamir_share(input))
 
     def run_test(_):
+        def check(result, expected):
+            if result.value == expected:
+                print "Result: %s (correct)" % result
+            else:
+                print "Result: %s (incorrect, expected %d)" \
+                      % (result, expected)
+
+        def finish(_):
+            rt.shutdown()
+            print "Stopped reactor"
+
         print "Multiplying %d numbers" % count
         record_start()
 
@@ -145,17 +156,6 @@ def protocol(rt):
 
         result = rt.open(product)
         result.addCallback(check, pow(42, count, Zp.modulus))
-
-        def check(result, expected):
-            if result.value == expected:
-                print "Result: %s (correct)" % result
-            else:
-                print "Result: %s (incorrect, expected %d)" % (result, expected)
-
-        def finish(_):
-            rt.shutdown()
-            print "Stopped reactor"
-
         result.addCallback(finish)
 
     shares = shares[:count]
