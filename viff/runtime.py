@@ -195,6 +195,11 @@ class ShareExchanger(Int16StringReceiver):
     def connectionMade(self):
         #print "Transport:", self.transport
         self.sendString(str(self.factory.runtime.id))
+        try:
+            self.peer_cert = self.transport.socket.peer_certificate
+        except AttributeError:
+            print "No certificate in session"
+            self.peer_cert = None
         
     def stringReceived(self, string):
         """Called when a share is received.
@@ -211,6 +216,19 @@ class ShareExchanger(Int16StringReceiver):
         if self.peer_id is None:
             # TODO: Handle ValueError if the string cannot be decoded.
             self.peer_id = int(string)
+            if self.peer_cert:
+                # The player ID are stored in the serial number of the
+                # certificate -- this makes it easy to check that the
+                # player is who he claims to be.
+                if self.peer_cert.serial_number != self.peer_id:
+                    print "Peer %s claims to be %d, aborting!" \
+                        % (self.peer_cert.subject, self.peer_id)
+                    self.transport.loseConnection()
+                else:
+                    print "Validated connection from Player", self.peer_id
+            else:
+                print "No certificate, trusting Player", self.peer_id
+
             self.factory.identify_peer(self)
         else:
             program_counter, modulus, value = marshal.loads(string)
@@ -283,11 +301,34 @@ def create_runtime(id, players, threshold, options=None):
 
     factory = ShareExchangerFactory(runtime, players, needed_protocols, result)
 
-    reactor.listenTCP(players[id].port, factory)
+    if options and options.tls:
+        print "Using TLS"
+        try:
+            from gnutls.interfaces.twisted import X509Credentials
+            from gnutls.crypto import X509Certificate, X509PrivateKey
+        except ImportError:
+            # TODO: Return a failed Deferred instead.
+            print "Could not import Python GNUTLS module, aborting!"
+            return
+
+        # TODO: Make the file names configurable.
+        cert = X509Certificate(open('player-%d.cert' % id).read())
+        key = X509PrivateKey(open('player-%d.key' % id).read())
+        ca = X509Certificate(open('ca.cert').read())
+        cred = X509Credentials(cert, key, [ca])
+        cred.verify_peer = True
+        reactor.listenTLS(players[id].port, factory, cred)
+    else:
+        print "Not using TLS"
+        reactor.listenTCP(players[id].port, factory)
+
     for peer_id, player in players.iteritems():
         if peer_id > id:
             println("Will connect to %s", player)
-            reactor.connectTCP(player.host, player.port, factory)
+            if options and options.tls:
+                reactor.connectTLS(player.host, player.port, factory, cred)
+            else:                
+                reactor.connectTCP(player.host, player.port, factory)
 
     return result
 
@@ -334,9 +375,15 @@ class Runtime:
         group.add_option("-k", "--security-parameter", type="int", metavar="K",
                          help=("Security parameter. Comparisons will leak "
                                "information with probability 2**-K."))
+        group.add_option("--no-tls", action="store_false", dest="tls",
+                         help="Disable the use secure TLS connections.")
+        group.add_option("--tls", action="store_true",
+                         help=("Enable the use secure TLS connections "
+                               "(if the GNUTLS bindings are available)."))
 
         parser.set_defaults(bit_length=32,
-                            security_parameter=30)
+                            security_parameter=30,
+                            tls=True)
 
     def __init__(self, player, threshold, options=None):
         """Initialize runtime.

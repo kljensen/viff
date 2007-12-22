@@ -1,7 +1,8 @@
 syntax: glob
 *.pyc
 *~
-*-[1-9].ini
+*-[1-9].{ini,cert,key}
+ca.{cert,key}
 *.bak
 *.orig
 _trial_temp
