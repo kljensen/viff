@@ -8,6 +8,15 @@ details can be found in the commit messages:
   http://hg.viff.dk/viff/log/
 
 
+Version 0.3, not yet released
+-----------------------------
+
+Secure communication between the players were implemented using TLS.
+An included Makefile can generate the needed certificates. The network
+layer was completely reimplemented, this breaks compatibility with
+programs written for VIFF version 0.2 or earlier.
+
+
 Version 0.2, released on 2007-11-14
 -----------------------------------
 
