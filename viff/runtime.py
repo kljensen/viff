@@ -198,7 +198,7 @@ class ShareExchanger(Int16StringReceiver):
         try:
             self.peer_cert = self.transport.socket.peer_certificate
         except AttributeError:
-            print "No certificate in session"
+            #print "No certificate in session"
             self.peer_cert = None
         
     def stringReceived(self, string):
@@ -224,10 +224,6 @@ class ShareExchanger(Int16StringReceiver):
                     print "Peer %s claims to be %d, aborting!" \
                         % (self.peer_cert.subject, self.peer_id)
                     self.transport.loseConnection()
-                else:
-                    print "Validated connection from Player", self.peer_id
-            else:
-                print "No certificate, trusting Player", self.peer_id
 
             self.factory.identify_peer(self)
         else:
