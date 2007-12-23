@@ -579,6 +579,14 @@ class Runtime:
         result = sharing.clone()
         self.callback(result, broadcast)
         return result
+
+    @increment_pc
+    def synchronize(self):
+        shares = [self._exchange_shares(player, GF256(0))
+                  for player in self.players]
+        result = gather_shares(shares)
+        result.addCallback(lambda _: None)
+        return result
         
     def add(self, share_a, share_b):
         """Addition of shares.
