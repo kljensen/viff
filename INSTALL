@@ -24,7 +24,14 @@ Installing VIFF Dependencies
 ----------------------------
 
 Before installing VIFF, you will want to install the dependencies,
-preferably by using the package system for your platform.
+preferably by using the package system for your platform. On Debian
+Lenny (unstable) you can install them all by the command
+
+  aptitude install python-twisted-core python-gnutls \
+                   python-configobj python-gmpy
+
+If you know how to install using other package managers, please let us
+know at viff-devel@viff.dk.
 
 If you do not have permission to install the dependencies site-wide,
 then (assuming that Python is already installed) one can easily
