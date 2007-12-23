@@ -18,8 +18,7 @@ concept". While not being done, VIFF is nevertheless quite usable and
 currently offers the following features:
 
 * secret sharing based on standard Shamir and pseudo-random secret
-  sharing (PRSS). Please note that shares are sent in the clear over
-  standard TCP connections. We will use SSL as needed in the future.
+  sharing (PRSS).
 
 * arithmetic with shares from Zp or GF(2^8): addition, multiplication,
   exclusive-or.
@@ -29,6 +28,8 @@ currently offers the following features:
 
 * computations with any number of players for which an honest majority
   can be found.
+
+* optional support for encrypted TLS connections between the players.
 
 All operations are automatically scheduled to run in parallel meaning
 that an operation starts as soon as the operands are ready.
