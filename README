@@ -50,8 +50,8 @@ You can subscribe to the list at
 Example Applications
 --------------------
 
-The apps directory contains a number of example apps. They require
-player configuration files to be generated in advance, use
+The apps directory contains a number of example applications. They
+require player configuration files to be generated in advance, use
 apps/generate-config-files.py for that. Run apps/generate-certificates
 to generate certificates for TLS communication. Then execute three
 players, starting with player 3, then 2, and finally 1.
