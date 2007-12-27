@@ -207,7 +207,7 @@ class ShareExchanger(Int16StringReceiver):
         The string received is unmarshalled into the program counter,
         the field modulus and the field value. The field element is
         reconstructed and the appropriate Deferred in the
-        L{ShareExchangerFactory.incoming_shares} is triggered.
+        L{Runtime.incoming_shares} is triggered.
 
         @param string: bytes from the network.
         @type string: C{(program_counter, modulus, value)} in
@@ -384,13 +384,8 @@ class Runtime:
     def __init__(self, player, threshold, options=None):
         """Initialize runtime.
 
-        The runtime is initialized based on the player configuration
-        given, the id, and the threshold.
-
-        @param players: player configuration, see L{config.load_config}.
-        @type players: mapping from id to L{Player} instances
-        @param id: id of this player.
-        @param threshold: threshold for the protocol run.
+        Initialized a runtime owned by the given, the threshold, and
+        optionally a set of options.
         """
         #: ID of this player.
         self.id = player.id
@@ -471,11 +466,7 @@ class Runtime:
 
         #: Connections to the other players.
         #:
-        #: These Deferreds will yield L{ShareExchanger} objects when
-        #: other players make connections to us, and when we
-        #: L{connect} to them.
-        #:
-        #: @type: C{list} of deferred L{ShareExchanger} objects.
+        #: @type: C{dict} from Player ID to L{ShareExchanger} objects.
         self.protocols = {}
 
         self.players = {}
