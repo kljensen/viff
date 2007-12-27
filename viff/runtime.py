@@ -286,6 +286,36 @@ class ShareExchangerFactory(ServerFactory, ClientFactory):
             self.protocols_ready.callback(self.runtime)        
 
 def create_runtime(id, players, threshold, options=None):
+    """Create a L{Runtime} and connect to the other players.
+
+    This function should be used in normal programs instead of
+    instantiating the Runtime directly. This function makes sure that
+    the Runtime is correctly connected to the other players.
+
+    The return value is a Deferred which will trigger when the runtime
+    is ready. Add your protocol as a callback on this Deferred using
+    code like this::
+
+        def protocol(runtime):
+            a, b, c = runtime.prss_share(input)
+
+            a = runtime.open(a)
+            b = runtime.open(b)
+            c = runtime.open(c)
+        
+            dprint("Opened a: %s", a)
+            dprint("Opened b: %s", b)
+            dprint("Opened c: %s", c)
+        
+            runtime.wait_for(a,b,c)
+        
+        pre_runtime = create_runtime(id, players, 1)
+        pre_runtime.addCallback(protocol)
+
+    This is the general template which VIFF programs should follow.
+    Please see the example applications for more examples.
+    
+    """
     # This will yield a Runtime when all protocols are connected.
     result = Deferred()
 
@@ -352,12 +382,18 @@ def increment_pc(method):
 class Runtime:
     """The VIFF runtime.
 
-    Each party in the protocol must instantiate an object from this
-    class. The runtime is used for sharing values (L{shamir_share} or
+    The runtime is used for sharing values (L{shamir_share} or
     L{prss_share}) into L{Share} object and opening such shares
     (L{open}) again. Calculations on shares is normally done through
     overloaded arithmetic operations, but it is also possible to call
     L{add}, L{mul}, etc. directly if one prefers.
+
+    Each player in the protocol uses a Runtime object. To create in
+    instance and connect it correctly with the other players, please
+    use the L{create_runtime} function instead of instantiating a
+    Runtime directly. The L{create_runtime} function will take care of
+    setting up network connections and return a Deferred which
+    triggers with the Runtime object when it is ready.
     """
 
     @staticmethod
@@ -385,7 +421,10 @@ class Runtime:
         """Initialize runtime.
 
         Initialized a runtime owned by the given, the threshold, and
-        optionally a set of options.
+        optionally a set of options. The runtime has no network
+        connections and knows of no other players -- the
+        L{create_runtime} function should be used instead to create a
+        usable runtime.
         """
         #: ID of this player.
         self.id = player.id
