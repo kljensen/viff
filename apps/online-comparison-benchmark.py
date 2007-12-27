@@ -27,11 +27,10 @@ from twisted.internet.defer import DeferredList, gatherResults
 
 #defer.setDebugging(True)
 
-from gmpy import mpz
 from viff.field import GF
 from viff.runtime import Runtime, create_runtime
 from viff.config import load_config
-from viff.util import rand
+from viff.util import rand, find_prime
 
 
 last_timestamp = time.time()
@@ -85,21 +84,7 @@ if len(args) == 0:
 
 id, players = load_config(args[0])
 
-modulus = eval(options.modulus, {}, {})
-
-if modulus < 0:
-    parser.error("modulus is negative: %d" % modulus)
-
-prime = mpz(modulus-1).next_prime()
-while prime % 4 != 3:
-    prime = prime.next_prime()
-
-if str(prime) != options.modulus:
-    print "Using %s as modulus" % prime
-    if prime != modulus:
-        print "Adjusted from %d" % modulus
-
-Zp = GF(long(prime))
+Zp = GF(find_prime(options.modulus, blum=True))
 
 # TODO: better q-prime...must depend on prime
 qprime = 3001

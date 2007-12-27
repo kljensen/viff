@@ -60,10 +60,10 @@ from optparse import OptionParser
 
 from twisted.internet import reactor
 
-from gmpy import mpz
 from viff.field import GF
 from viff.runtime import Runtime, create_runtime, gather_shares
 from viff.config import load_config
+from viff.util import find_prime
 
 last_timestamp = time.time()
 start = 0
@@ -107,19 +107,7 @@ if len(args) == 0:
 
 id, players = load_config(args[0])
 
-modulus = eval(options.modulus, {}, {})
-
-if modulus < 0:
-    parser.error("modulus is negative: %d" % modulus)
-
-prime = long(mpz(modulus-1).next_prime())
-
-if str(prime) != options.modulus:
-    print "Using %d as modulus" % prime
-    if prime != modulus:
-        print "Adjusted from %d" % modulus
-
-Zp = GF(prime)
+Zp = GF(find_prime(options.modulus))
 count = options.count
 print "I am player %d, will %s %d numbers" % (id, options.operation, count)
 

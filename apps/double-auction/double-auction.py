@@ -43,12 +43,11 @@ from optparse import OptionParser
 from twisted.internet import reactor
 from twisted.internet.defer import gatherResults, succeed
 
-from gmpy import mpz
-
 from viff import shamir
 from viff.field import GF
 from viff.runtime import Runtime, create_runtime
 from viff.config import load_config
+from viff.util import find_prime
 
 def output(x, format="output: %s"):
     print format % x
@@ -82,23 +81,7 @@ Runtime.add_options(parser)
 if len(args) == 0:
     parser.error("you must specify a config file")
 
-
-modulus = eval(options.modulus, {}, {})
-
-if modulus < 0:
-    parser.error("modulus is negative: %d" % modulus)
-
-prime = mpz(modulus-1).next_prime()
-while prime % 4 == 1:
-    prime = prime.next_prime()
-
-if str(prime) != options.modulus:
-    print "Using %d as modulus" % prime
-    if prime != modulus:
-        print "Adjusted from %d" % modulus
-
-
-Zp = GF(long(prime))
+Zp = GF(find_prime(option.modulus, blum=True))
 id, players = load_config(args[0])
 
 print "I am player %d" % id

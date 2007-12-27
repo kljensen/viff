@@ -30,6 +30,7 @@ import os
 import random
 import warnings
 from twisted.internet.defer import Deferred, succeed, gatherResults
+from gmpy import mpz
 
 #: Seed for L{rand}.
 _seed = os.environ.get('SEED')
@@ -198,6 +199,46 @@ def println(format="", *args):
 
     print "%s %s" % ("  " * _indent, format)
 
+def find_prime(lower_bound, blum=False):
+    """Find a prime above a lower bound.
+
+    If a prime is given as the lower bound, then this prime is
+    returned:
+
+    >> find_prime(37)
+    37L
+
+    The bound can be a Python expression as a string. This makes it
+    easy for users to specify command line arguments that generates
+    primes of a particular bit length:
+
+    >>> find_prime("2**100") # 100 bit prime
+    1267650600228229401496703205653L
+
+    Blum primes (a prime p such that p % 4 == 3) can be found as well:
+
+    >>> find_prime(10)
+    11L
+    >>> find_prime(10, blum=True)
+    13L
+
+    If the bound is negative, 2 (the smallest prime) is returned:
+
+    >>> find_prime(-100)
+    2L
+    """
+    lower_bound = eval(str(lower_bound), {}, {})
+    if lower_bound < 0:
+        prime = mpz(2)
+    else:
+        prime = mpz(lower_bound - 1).next_prime()
+
+    if blum:
+        while prime % 4 == 3:
+            prime = prime.next_prime()
+
+    return long(prime)
+    
     
 if __name__ == "__main__":
     import doctest
