@@ -8,8 +8,8 @@ details can be found in the commit messages:
   http://hg.viff.dk/viff/log/
 
 
-Version 0.3, not yet released
------------------------------
+Version 0.3, released on 2007-12-27
+-----------------------------------
 
 Secure communication between the players were implemented using TLS.
 An included Makefile can generate the needed certificates. The network
