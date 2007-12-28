@@ -257,6 +257,22 @@ class GF256(FieldElement):
             other = other.value
         return self.value == other
 
+    def __nonzero__(self):
+        """Truth value testing.
+
+        Returns False if this element is zero, True otherwise. This
+        allows GF256 elements to be used directly in Boolean formula:
+
+        >>> bool(GF256(0))
+        False
+        >>> bool(GF256(1))
+        True
+        >>> x = GF256(1)
+        >>> not x
+        False
+        """
+        return self.value != 0
+
 
 #: Cached fields.
 #:
@@ -442,6 +458,23 @@ def GF(modulus):
         def __hash__(self):
             """Hash value."""
             return hash((self.field, self.value))
+
+        def __nonzero__(self):
+            """Truth value testing.
+
+            Returns False if this element is zero, True otherwise.
+            This allows GF elements to be used directly in Boolean
+            formula:
+
+            >>> bool(GF256(0))
+            False
+            >>> bool(GF256(1))
+            True
+            >>> x = GF256(1)
+            >>> not x
+            False
+            """
+            return self.value != 0
 
     GFElement.modulus = modulus
     GFElement.field = GFElement

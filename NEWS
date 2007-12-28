@@ -8,6 +8,12 @@ details can be found in the commit messages:
   http://hg.viff.dk/viff/log/
 
 
+Version ?, not yet released
+---------------------------
+
+Field elements now behave correctly in Boolean expressions.
+
+
 Version 0.3, released on 2007-12-27
 -----------------------------------
 
