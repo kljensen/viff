@@ -6,7 +6,7 @@
 
 # Copyright 2007 Martin Geisler
 #
-# This file is part of VIFF
+# This file is part of VIFF, the Virtual Ideal Functionality Framework.
 #
 # VIFF is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
