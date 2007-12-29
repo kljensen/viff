@@ -127,7 +127,15 @@ class Benchmark:
     def sync_test(self, _):
         print "Synchronizing test start."
         sync = self.rt.synchronize()
-        sync.addCallback(self.run_test)
+        sync.addCallback(self.countdown, 3)
+
+    def countdown(self, _, seconds):
+        if seconds > 0:
+            print "Starting test in %d" % seconds
+            reactor.callLater(1, self.countdown, None, seconds - 1)
+        else:
+            print "Starting test now"
+            self.run_test(None)
 
     def run_test(self, _):
         raise NotImplemented("Override this abstract method in a sub class.")
