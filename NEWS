@@ -13,7 +13,8 @@ Version ?, not yet released
 
 The behavior of field elements in Boolean expressions has been fixed.
 This means that "GF256(0) and GF256(1)" now returns GF256(0) instead
-of GF256(1).
+of GF256(1). Added the classic Yao millionaires example which started
+this field of research.
 
 
 Version 0.3, released on 2007-12-27
