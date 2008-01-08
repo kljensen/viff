@@ -11,7 +11,9 @@ details can be found in the commit messages:
 Version ?, not yet released
 ---------------------------
 
-Field elements now behave correctly in Boolean expressions.
+The behavior of field elements in Boolean expressions has been fixed.
+This means that "GF256(0) and GF256(1)" now returns GF256(0) instead
+of GF256(1).
 
 
 Version 0.3, released on 2007-12-27
