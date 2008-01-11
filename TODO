@@ -122,6 +122,11 @@ Benchmarking
    Initial tests seems to indicate that the network is the
    bottle-neck, but this should be systematically checked.
 
+* Benchmark constant round multiplication
+   The constant round multiplication protocol of Bar-Ilan and Beaver
+   from PODC 1989 should be implemented and tested against a standard
+   logarithmic round protocol.
+
 * Profile and optimize
    We need to see if the time is spend on network latency or in the
    CPU. If the latter is the case, then we could consider writing the
