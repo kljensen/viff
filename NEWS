@@ -11,7 +11,9 @@ details can be found in the commit messages:
 Version ?, not yet released
 ---------------------------
 
-Field elements now behave correctly in Boolean expressions.
+Field elements now behave correctly in Boolean expressions. A modern
+implementation of the classic Yao millionaires example from 1982 has
+been added.
 
 
 Version 0.3, released on 2007-12-27
