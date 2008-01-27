@@ -1,4 +1,4 @@
-# Copyright 2007 Martin Geisler
+# Copyright 2007, 2008 Martin Geisler
 #
 # This file is part of VIFF, the Virtual Ideal Functionality Framework.
 #
@@ -59,9 +59,9 @@ as long as certain assumptions are fulfilled. These assumptions
 include:
 
   - The adversary can only corrupt up to a certain threshold of the
-    total number of players. The threshold will normally be 1/3 of the
+    total number of players. The threshold will normally be 1/2 of the
     players, so for three players, at most one player may be
-    corrupted.
+    corrupted (there must be an honest majority).
 
   - The adversary is computationally bounded. The protocols used by
     VIFF rely on certain computational hardness assumptions, and
