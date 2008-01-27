@@ -67,7 +67,7 @@ include:
     VIFF rely on certain computational hardness assumptions, and
     therefore only polynomial time adversaries are allowed.
 
-  - The adversary is static. Being static means that the adversary
+  - The adversary is passive. Being passive means that the adversary
     only monitors the network traffic, but still follows the protocol.
     We plan to add support for active (Byzantine) adversaries in a
     future version.
