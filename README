@@ -2,12 +2,17 @@
 VIFF: Virtual Ideal Functionality Framework
 ===========================================
 
-This is a general framework for doing secure multi-party computations.
-The aim is to offer a secure, fast basis for writing SMPC protocols.
-Please see the INSTALL file for installation instructions.
+VIFF is a general framework for doing secure multi-party computations.
+In a secure multi-party computation several parties jointly compute an
+agreed function without leaking any information on their inputs. This
+could be an election where the correct tally is computed *without*
+revealing any information on the individual votes. In a protocol with
+n players, the confidentiality of the inputs is ensured when up to n/2
+of the players are corrupted.
 
 VIFF is Free Software licensed under the GNU General Public License
 (GPL) version 2 or later. Please see the file COPYING for details.
+Please see the INSTALL file for installation instructions.
 
 
 Current Status
