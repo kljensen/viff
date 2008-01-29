@@ -38,17 +38,17 @@
 # material, the files should be distributed securely to the players.
 #
 # All example applications load a configuration file specified by a
-# command line argument. For example, running the comparison benchmark
-# is done like this:
+# command line argument. For example, running the VIFF benchmark is
+# done like this:
 #
 # On host baz:
-# % ./comparison_benchmark.py player-3.ini
+# % ./benchmark.py player-3.ini
 #
 # On host bar:
-# % ./comparison_benchmark.py player-2.ini
+# % ./benchmark.py player-2.ini
 #
 # On host foo:
-# % ./comparison_benchmark.py player-1.ini
+# % ./benchmark.py player-1.ini
 #
 # It is currently necessary to start the players in reverse order
 # (highest numbered first).
