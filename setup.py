@@ -4,7 +4,7 @@
 # For a local install into ~/opt, use:  python setup.py --home=~/opt
 # For more options, use:                python setup.py --help
 
-# Copyright 2007 Martin Geisler
+# Copyright 2007, 2008 Martin Geisler
 #
 # This file is part of VIFF, the Virtual Ideal Functionality Framework.
 #
@@ -106,3 +106,5 @@ that an operation starts as soon as the operands are ready.
 # * http://pypi.python.org/pypi/viff/
 # * http://www.icewalkers.com/Linux/Software/532160/VIFF.html
 # * http://www.hotscripts.com/Detailed/74748.html
+# * http://sourcewell.berlios.de/
+# * python-announce-list@python.org
