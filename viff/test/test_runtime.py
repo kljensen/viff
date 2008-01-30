@@ -227,10 +227,10 @@ class RuntimeTest(RuntimeTestCase):
         # fields.
         results = []
         for value in 0, 1:
-            share = Share(runtime, self.Zp(0))
+            share = Share(runtime, self.Zp(value))
             converted = runtime.convert_bit_share(share, self.Zp, GF256)
             opened = runtime.open(converted)
-            opened.addCallback(self.assertEquals, GF256(0))
+            opened.addCallback(self.assertEquals, GF256(value))
             results.append(opened)
         return gatherResults(results)
 

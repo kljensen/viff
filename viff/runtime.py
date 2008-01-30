@@ -171,7 +171,7 @@ def gather_shares(shares):
     Roughly modelled after the Twisted C{gatherResults} function.
     """
     def filter_results(results):
-        return [share for (success, share) in results]
+        return [share for (_, share) in results]
     share_list = ShareList(shares)
     share_list.addCallback(filter_results)
     return share_list
@@ -994,8 +994,8 @@ class Runtime:
         # happens with negligible probability
         # TODO: small field, no longer negligible probability of zero -- update
         mask = self.prss_share_random(smallField, False)
-        mask_2 = self.prss_share_random(smallField, False)
-        mask_OK = self.open(mask * mask_2)
+        #mask_2 = self.prss_share_random(smallField, False)
+        #mask_OK = self.open(mask * mask_2)
         #dprint("Mask_OK: %s", mask_OK)
 
         return field, smallField, s_bit, s_sign, mask, r_full, r_modl, r_bits
@@ -1032,13 +1032,13 @@ class Runtime:
         c = self.open(r_full + z)
 
         self.callback(c, self._finish_greater_thanII,
-                      field, smallField, s_bit, s_sign, mask, r_full,
+                      field, smallField, s_bit, s_sign, mask,
                       r_modl, r_bits, z)
         return c
 
     @increment_pc
     def _finish_greater_thanII(self, c, field, smallField, s_bit, s_sign,
-                               mask, r_full, r_modl, r_bits, z):
+                               mask, r_modl, r_bits, z):
         """Finish the calculation."""
         # increment l as a, b are increased
         l = self.options.bit_length + 1
