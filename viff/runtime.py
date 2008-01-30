@@ -1,4 +1,4 @@
-# Copyright 2007 Martin Geisler
+# Copyright 2007, 2008 Martin Geisler
 #
 # This file is part of VIFF, the Virtual Ideal Functionality Framework.
 #
@@ -158,11 +158,11 @@ class ShareList(Share):
                                errbackArgs=(index, False))
 
     def _callback_fired(self, result, index, success):
-         self.results[index] = (success, result)
-         self.missing_shares -= 1
-         if not self.called and self.missing_shares == 0:
-             self.callback(self.results)
-         return result
+        self.results[index] = (success, result)
+        self.missing_shares -= 1
+        if not self.called and self.missing_shares == 0:
+            self.callback(self.results)
+        return result
 
 
 # Roughly based on defer.gatherResults
