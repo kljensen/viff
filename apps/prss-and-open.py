@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# Copyright 2007 Martin Geisler
+# Copyright 2007, 2008 Martin Geisler
 #
 # This file is part of VIFF, the Virtual Ideal Functionality Framework.
 #
@@ -19,7 +19,7 @@
 # Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 # 02110-1301 USA
 
-import sys, time
+import sys
 
 from twisted.internet import reactor
 from twisted.internet.defer import gatherResults

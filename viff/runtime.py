@@ -33,15 +33,14 @@ scheduling things correctly behind the scenes.
 """
 
 import marshal
-import socket
 from optparse import OptionParser, OptionGroup
 
 from viff import shamir
 from viff.prss import prss
 from viff.field import GF, GF256, FieldElement
-from viff.util import rand, dprint, println, clone_deferred
+from viff.util import rand, println
 
-from twisted.internet import defer, reactor
+from twisted.internet import reactor
 from twisted.internet.defer import Deferred, DeferredList, gatherResults
 from twisted.internet.protocol import ClientFactory, ServerFactory
 from twisted.protocols.basic import Int16StringReceiver

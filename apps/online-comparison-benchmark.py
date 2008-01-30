@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
-# Copyright 2007 Martin Geisler and Tomas Toft
+# Copyright 2007, 2008 Martin Geisler
+# Copyright 2007 Tomas Toft
 #
 # This file is part of VIFF, the Virtual Ideal Functionality Framework.
 #
@@ -22,9 +23,10 @@
 import time, signal
 from optparse import OptionParser
 
-from twisted.internet import reactor, defer
+from twisted.internet import reactor
 from twisted.internet.defer import DeferredList, gatherResults
 
+#from twisted.internet import defer
 #defer.setDebugging(True)
 
 from viff.field import GF

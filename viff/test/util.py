@@ -1,4 +1,4 @@
-# Copyright 2007 Martin Geisler
+# Copyright 2007, 2008 Martin Geisler
 #
 # This file is part of VIFF, the Virtual Ideal Functionality Framework.
 #
@@ -17,8 +17,7 @@
 # Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 # 02110-1301 USA
 
-from twisted.internet import reactor
-from twisted.internet.defer import Deferred, DeferredList, gatherResults
+from twisted.internet.defer import Deferred, gatherResults
 from twisted.trial.unittest import TestCase
 from twisted.protocols.loopback import loopbackAsync
 

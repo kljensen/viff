@@ -1,4 +1,4 @@
-# Copyright 2007 Martin Geisler
+# Copyright 2007, 2008 Martin Geisler
 #
 # This file is part of VIFF, the Virtual Ideal Functionality Framework.
 #
@@ -20,15 +20,10 @@
 import os
 from random import Random
 
-from twisted.internet import reactor
 from twisted.internet.defer import gatherResults
-from twisted.trial.unittest import TestCase
-from twisted.protocols.loopback import loopbackAsync
 
-from viff.field import GF, GF256
-from viff.runtime import Runtime, Share
-from viff.config import generate_configs, load_config
-from viff import shamir
+from viff.field import GF256
+from viff.runtime import Share
 
 from viff.test.util import RuntimeTestCase, protocol
 
