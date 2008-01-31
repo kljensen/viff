@@ -144,7 +144,9 @@ Website
    But until there is a real demand, the mailing list can be used.
 
 * Wiki
-   Writing the web pages in a wiki would be nice.
+   Writing the web pages in a wiki would be nice. A wiki like ikiwiki
+   (http://ikiwiki.info/) would be especially nice since it allows you
+   to store the pages in Mercurial and then edit pages offline.
 
 * BuildBot status page
    BuildBot can automate builds and display a status page with the
