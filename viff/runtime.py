@@ -1103,27 +1103,32 @@ class Runtime:
         if id == self.id:
             return Share(self, field_element)
         else:
-            def unpack_data(data):
-                return GF(data[0])(data[1])
-
-            # Convert self.program_counter to a hashable value in order
-            # to use it as a key in self.incoming_shares.
+            share = self._expect_share(id)
             pc = tuple(self.program_counter)
-            key = (pc, id)
-
-            if key not in self.incoming_data:
-                # We have not yet received data from the other side.
-                share = Share(self)
-                self.incoming_data[key] = share            
-            else:
-                # We have already received the data from the other side.
-                share = Share(self, self.incoming_data[key])
-                del self.incoming_data[key]
-            share.addCallback(unpack_data)
-
-            # Send the field_element to the other side
             self.protocols[id].sendShare(pc, field_element)
             return share
+
+    def _expect_share(self, peer_id):
+        # TODO: specify the modulus as an argument to the method. This
+        # will save us from sending it back and forth over the net.
+        share = Share(self)
+        share.addCallback(lambda (modulus, value): GF(modulus)(value))
+        self._expect_data(peer_id, share)
+        return share
+
+    def _expect_data(self, peer_id, deferred):
+        # Convert self.program_counter to a hashable value in order
+        # to use it as a key in self.incoming_data.
+        pc = tuple(self.program_counter)
+        key = (pc, peer_id)
+
+        data = self.incoming_data.pop(key, None)
+        if data is None:
+            # We have not yet received data from the other side.
+            self.incoming_data[key] = deferred
+        else:
+            # We have already received the data from the other side.
+            deferred.callback(data)
 
     @increment_pc
     def _recombine(self, shares, threshold):
