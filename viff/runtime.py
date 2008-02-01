@@ -204,12 +204,11 @@ class ShareExchanger(Int16StringReceiver):
         """Called when a share is received.
 
         The string received is unmarshalled into the program counter,
-        the field modulus and the field value. The field element is
-        reconstructed and the appropriate Deferred in the
-        L{Runtime.incoming_shares} is triggered.
+        and a data part. The data is passed the appropriate Deferred
+        in the L{Runtime.incoming_data}.
 
         @param string: bytes from the network.
-        @type string: C{(program_counter, modulus, value)} in
+        @type string: C{(program_counter, data)} in
         marshalled form
         """
         if self.peer_id is None:
@@ -226,19 +225,17 @@ class ShareExchanger(Int16StringReceiver):
 
             self.factory.identify_peer(self)
         else:
-            program_counter, modulus, value = marshal.loads(string)
-
-            field_element = GF(modulus)(value)
-            # TODO: The incoming_shares mapping could also be stored
+            program_counter, data = marshal.loads(string)
+            # TODO: The incoming_data mapping could also be stored
             # in self, and so self.peer_id would not be needed.
             key = (program_counter, self.peer_id)
-            shares = self.factory.runtime.incoming_shares
+            incoming_data = self.factory.runtime.incoming_data
 
             try:
-                share = shares.pop(key)
-                share.callback(field_element)
+                deferred = incoming_data.pop(key)
+                deferred.callback(data)
             except KeyError:
-                shares[key] = Share(self.factory.runtime, field_element)
+                incoming_data[key] = data
 
             # TODO: marshal.loads can raise EOFError, ValueError, and
             # TypeError. They should be handled somehow.
@@ -258,7 +255,7 @@ class ShareExchanger(Int16StringReceiver):
         #println("Sending to id=%d: program_counter=%s, share=%s",
         #        self.id, program_counter, share)
 
-        data = (program_counter, share.modulus, share.value)
+        data = (program_counter, (share.modulus, share.value))
         self.sendString(marshal.dumps(data))
 
     def loseConnection(self):
@@ -482,7 +479,7 @@ class Runtime:
         #: @type: C{list} of integers.
         self.program_counter = [0]
 
-        #: Future shares still waiting on input.
+        #: Data expected to be received in the future.
         #:
         #: Shares from other players are put here, either as an empty
         #: Deferred if we are waiting on input from the player, or as
@@ -499,8 +496,8 @@ class Runtime:
         #: Deferred which L{_exchange_shares} can simply return.
         #:
         #: @type: C{dict} from C{(program_counter, player_id)} to
-        #: deferred shares.
-        self.incoming_shares = {}
+        #: deferred data.
+        self.incoming_data = {}
 
         #: Connections to the other players.
         #:
@@ -1093,29 +1090,40 @@ class Runtime:
     ########################################################################
     ########################################################################
 
-    def _exchange_shares(self, id, share):
+    def _exchange_shares(self, id, field_element):
         """Exchange shares with another player.
 
         We send the player our share and record a Deferred which will
         trigger when the share from the other side arrives.
         """
-        assert isinstance(share, FieldElement)
+        assert isinstance(field_element, FieldElement)
         #println("exchange_shares sending: program_counter=%s, id=%d, share=%s",
         #        self.program_counter, id, share)
 
         if id == self.id:
-            return Share(self, share)
+            return Share(self, field_element)
         else:
+            def unpack_data(data):
+                return GF(data[0])(data[1])
+
             # Convert self.program_counter to a hashable value in order
             # to use it as a key in self.incoming_shares.
             pc = tuple(self.program_counter)
             key = (pc, id)
-            if key not in self.incoming_shares:
-                self.incoming_shares[key] = Share(self)
 
-            # Send the share to the other side
-            self.protocols[id].sendShare(pc, share)
-            return self.incoming_shares[key]
+            if key not in self.incoming_data:
+                # We have not yet received data from the other side.
+                share = Share(self)
+                self.incoming_data[key] = share            
+            else:
+                # We have already received the data from the other side.
+                share = Share(self, self.incoming_data[key])
+                del self.incoming_data[key]
+            share.addCallback(unpack_data)
+
+            # Send the field_element to the other side
+            self.protocols[id].sendShare(pc, field_element)
+            return share
 
     @increment_pc
     def _recombine(self, shares, threshold):
