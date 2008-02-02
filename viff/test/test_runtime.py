@@ -155,6 +155,39 @@ class RuntimeTest(RuntimeTestCase):
         return gatherResults([opened_a, opened_b, opened_c])
 
     @protocol
+    def test_shamir_share_asymmetric(self, runtime):
+        """Test asymmetric Shamir sharing."""
+        # Share a single input -- the result should be a Share and not
+        # a singleton list.
+        if runtime.id == 2:
+            b = runtime.shamir_share(self.Zp(42 + runtime.id), [2])
+        else:
+            b = runtime.shamir_share(None, [2])
+
+        # Share two inputs, but do it in "backwards" order.
+        if runtime.id == 1 or runtime.id == 3:
+            c, a = runtime.shamir_share(self.Zp(42 + runtime.id), [3, 1])
+        else:
+            c, a = runtime.shamir_share(None, [3, 1])
+
+        self.assertTrue(isinstance(a, Share),
+                        "Type should be Share, but is %s" % a.__class__)
+        self.assertTrue(isinstance(b, Share),
+                        "Type should be Share, but is %s" % b.__class__)
+        self.assertTrue(isinstance(c, Share),
+                        "Type should be Share, but is %s" % c.__class__)
+
+        opened_a = runtime.open(a)
+        opened_b = runtime.open(b)
+        opened_c = runtime.open(c)
+
+        opened_a.addCallback(self.assertEquals, 42 + 1)
+        opened_b.addCallback(self.assertEquals, 42 + 2)
+        opened_c.addCallback(self.assertEquals, 42 + 3)
+
+        return gatherResults([opened_a, opened_b, opened_c])
+
+    @protocol
     def test_prss_share_int(self, runtime):
         a, b, c = runtime.prss_share(self.Zp(42 + runtime.id))
         
