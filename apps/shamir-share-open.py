@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# Copyright 2007 Martin Geisler
+# Copyright 2007, 2008 Martin Geisler
 #
 # This file is part of VIFF, the Virtual Ideal Functionality Framework.
 #
@@ -39,7 +39,7 @@ def protocol(rt):
     print "Program started"
     print
 
-    a, b, c = rt.shamir_share(input)
+    a, b, c = rt.shamir_share(input, [1, 2, 3])
 
     a = rt.open(a)
     b = rt.open(b)

@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# Copyright 2007 Martin Geisler
+# Copyright 2007, 2008 Martin Geisler
 #
 # This file is part of VIFF, the Virtual Ideal Functionality Framework.
 #
@@ -64,7 +64,7 @@ class Protocol:
 
         # We must secret share our input with the other parties. They
         # will do the same and we end up with three variables
-        m1, m2, m3 = runtime.shamir_share(Zp(self.millions))
+        m1, m2, m3 = runtime.shamir_share(Zp(self.millions), [1, 2, 3])
 
         # Now that everybody has secret shared their inputs we can
         # compare them. We compare the worth of the first millionaire

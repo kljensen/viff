@@ -795,21 +795,34 @@ class Runtime:
         return result
 
     @increment_pc
-    def shamir_share(self, number):
+    def shamir_share(self, number, inputters):
         """Share a field element using Shamir sharing.
 
         Returns a list of shares.
 
         Communication cost: n elements transmitted.
         """
-        assert isinstance(number, FieldElement)
+        assert number is None or isinstance(number, FieldElement)
+        assert number is None or self.id in inputters
 
-        def split(pair):
-            pair.addCallback(lambda (_, share): share)
+        results = []
+        for peer_id in inputters:
+            if peer_id == self.id:
+                pc = tuple(self.program_counter)
+                shares = shamir.share(number, self.threshold, len(self.players))
+                for other_id, share in shares:
+                    if other_id.value == self.id:
+                        results.append(Share(self, share))
+                    else:
+                        self.protocols[other_id.value].sendShare(pc, share)
+            else:
+                results.append(self._expect_share(peer_id))
 
-        result = self._shamir_share(number)
-        map(split, result)
-        return result
+        # Unpack a singleton list.
+        if len(results) == 1:
+            return results[0]
+        else:
+            return results
 
     @increment_pc
     def convert_bit_share(self, share, src_field, dst_field):

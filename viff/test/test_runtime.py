@@ -135,7 +135,7 @@ class RuntimeTest(RuntimeTestCase):
 
     @protocol
     def test_shamir_share(self, runtime):
-        a, b, c = runtime.shamir_share(self.Zp(42 + runtime.id))
+        a, b, c = runtime.shamir_share(self.Zp(42 + runtime.id), [1, 2, 3])
 
         self.assertTrue(isinstance(a, Share),
                         "Type should be Share, but is %s" % a.__class__)
@@ -263,7 +263,7 @@ if 'STRESS' in os.environ:
     class StressTest(RuntimeTestCase):
 
         def _mul_stress_test(self, runtime, count):
-            a, b, c = runtime.shamir_share(self.Zp(42 + runtime.id))
+            a, b, c = runtime.shamir_share(self.Zp(42 + runtime.id), [1, 2, 3])
 
             product = 1
 
@@ -306,7 +306,8 @@ if 'STRESS' in os.environ:
                 inputs = {1: rand.randint(0, max),
                           2: rand.randint(0, max),
                           3: rand.randint(0, max)}
-                a, b, c = runtime.shamir_share(self.Zp(inputs[runtime.id]))
+                a, b, c = runtime.shamir_share(self.Zp(inputs[runtime.id]),
+                                               [1, 2, 3])
 
                 result_shares = [runtime.greater_than(a, b, self.Zp),
                                  runtime.greater_than(b, a, self.Zp),
