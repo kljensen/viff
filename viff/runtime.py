@@ -528,10 +528,14 @@ class Runtime:
         All connections are closed and the runtime cannot be used
         again after this has been called.
         """
-        println("Initiating shutdown sequence.")
-        for protocol in self.protocols.itervalues():
-            protocol.loseConnection()
-        reactor.stop()
+        def stop(_):
+            println("Initiating shutdown sequence.")
+            for protocol in self.protocols.itervalues():
+                protocol.loseConnection()
+            reactor.stop()
+
+        sync = self.synchronize()
+        sync.addCallback(stop)
 
     def wait_for(self, *vars):
         """Make the runtime wait for the variables given.
