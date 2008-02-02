@@ -408,10 +408,13 @@ class Runtime:
         group.add_option("--tls", action="store_true",
                          help=("Enable the use secure TLS connections "
                                "(if the GNUTLS bindings are available)."))
+        group.add_option("--deferred-debug", action="store_true",
+                         help="Enable extra debug out for deferreds.")
 
         parser.set_defaults(bit_length=32,
                             security_parameter=30,
-                            tls=True)
+                            tls=True,
+                            deferred_debug=False)
 
     def __init__(self, player, threshold, options=None):
         """Initialize runtime.
@@ -433,6 +436,10 @@ class Runtime:
             self.options = parser.get_default_values()
         else:
             self.options = options
+
+        if self.options.deferred_debug:
+            from twisted.internet import defer
+            defer.setDebugging(True)
 
         #: Current program counter.
         #:
