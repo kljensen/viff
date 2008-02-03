@@ -4,7 +4,7 @@
 # For a local install into ~/opt, use:  python setup.py --home=~/opt
 # For more options, use:                python setup.py --help
 
-# Copyright 2007, 2008 Martin Geisler
+# Copyright 2007, 2008 VIFF Development Team.
 #
 # This file is part of VIFF, the Virtual Ideal Functionality Framework.
 #
@@ -50,8 +50,8 @@ class hg_sdist(sdist):
 
 setup(name='viff',
       version=viff.__version__,
-      author='Martin Geisler',
-      author_email='mg@daimi.au.dk',
+      author='VIFF Development Team',
+      author_email='viff-devel@viff.dk',
       url='http://viff.dk/',
       description='A framework for secure multi-party computation (SMPC)',
       long_description="""\

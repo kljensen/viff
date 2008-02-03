@@ -1,4 +1,4 @@
-# Copyright 2007, 2008 Martin Geisler
+# Copyright 2007, 2008 VIFF Development Team.
 #
 # This file is part of VIFF, the Virtual Ideal Functionality Framework.
 #
@@ -122,8 +122,7 @@ As explained above, the main functionality in VIFF is the L{Runtime}
 class, so please start there. Also, be sure to checkout the example
 applications distributed in the C{apps} directory.
 
-@author: U{Martin Geisler <mg@daimi.au.dk>}
-@author: U{Tomas Toft <tomas@daimi.au.dk>}
+@authors: U{VIFF Development Team <mailto:viff-devel@viff.dk>}
 @see: U{http://viff.dk/}
 """
 

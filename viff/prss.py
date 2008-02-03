@@ -1,6 +1,6 @@
 # Necessary because of the 'å' in 'Damgård': -*- coding: latin-1 -*-
 #
-# Copyright 2007 Martin Geisler
+# Copyright 2007, 2008 VIFF Development Team.
 #
 # This file is part of VIFF, the Virtual Ideal Functionality Framework.
 #
