@@ -93,7 +93,8 @@ def prss(n, j, field, prfs, key):
             result += prfs[subset](key) * f_in_j
 
     return result
-    
+
+
 def generate_subsets(orig_set, size):
     """Generates the set of all subsets of a specific size.
 
@@ -121,9 +122,9 @@ def generate_subsets(orig_set, size):
 # x = PRF("a", 256)
 # for i in xrange(100000):
 #     sys.stdout.write(chr(x(i)))
-# 
+#
 # and piping them into ent (http://www.fourmilab.ch/random/) gives:
-#    
+#
 # Entropy = 7.998124 bits per byte.
 #
 # Optimum compression would reduce the size
@@ -161,7 +162,7 @@ class PRF(object):
         The key must be a string whereas the max must be a number.
         Output value will be in the range zero to max, with zero
         included and max excluded.
-        
+
         To make a PRF what generates numbers less than 1000 do:
 
         >>> f = PRF("key", 1000)
@@ -221,7 +222,7 @@ class PRF(object):
                 seed = sha.new(seed).digest()
             self.sha1s.append(sha.new(seed))
 
- 
+
     def __call__(self, input):
         """Return a number based on input.
 
@@ -234,7 +235,7 @@ class PRF(object):
         >>> prf = PRF("key", 1000)
         >>> prf(1), prf(2), prf(3)
         (714L, 80L, 617L)
-        
+
         Since prf is a function we can of course evaluate the same
         input to get the same output:
 
@@ -254,7 +255,7 @@ class PRF(object):
         TypeError: list objects are unhashable
         """
         # We can only feed str data to sha1 instance, so we must
-        # convert the input. 
+        # convert the input.
         if not isinstance(input, str):
             input = pack("L", hash(input))
 

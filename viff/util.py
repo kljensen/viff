@@ -109,7 +109,8 @@ def dlift(func):
 
     lifted.func_name = func.func_name
     return lifted
-        
+
+
 @dlift
 def dprint(fmt, *args):
     """Deferred print which waits on Deferreds.
@@ -128,6 +129,7 @@ def dprint(fmt, *args):
     x: 10, y: (1, 2, 3), z: Hello World
     """
     print fmt % tuple(args)
+
 
 def clone_deferred(original):
     """Clone a Deferred.
@@ -164,6 +166,7 @@ _indent = 0
 #: Traced function call count.
 _trace_counters = {}
 
+
 def trace(func):
     """Trace function entry and exit.
 
@@ -189,6 +192,7 @@ def trace(func):
                                               func.func_name, count)
     return wrapper
 
+
 def println(format="", *args):
     """Print a line indented according to the stack depth.
 
@@ -198,6 +202,7 @@ def println(format="", *args):
         format = format % args
 
     print "%s %s" % ("  " * _indent, format)
+
 
 def find_prime(lower_bound, blum=False):
     """Find a prime above a lower bound.
@@ -238,8 +243,8 @@ def find_prime(lower_bound, blum=False):
             prime = prime.next_prime()
 
     return long(prime)
-    
-    
+
+
 if __name__ == "__main__":
     import doctest
     doctest.testmod()

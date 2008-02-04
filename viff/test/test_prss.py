@@ -38,6 +38,7 @@ class PRSSTestCase(TestCase):
 
         def binom(n, k):
             """Binomial coefficient."""
+
             def fac(n):
                 """Factorial."""
                 if n > 1:

@@ -85,6 +85,7 @@ class Player:
         """Simple string representation of the player."""
         return "<Player %d: %s:%d>" % (self.id, self.host, self.port)
 
+
 def load_config(source):
     """Load a player configuration file.
 
@@ -98,6 +99,7 @@ def load_config(source):
     @return: owner ID and a mapping of player IDs to players.
     @returntype: C{int}, C{dict} from C{int} to L{Player} instances.
     """
+
     def s_unstr(str):
         """Convert a string to a subset ID."""
         return frozenset(map(int, str.split()))
@@ -109,7 +111,7 @@ def load_config(source):
     def d_unstr(str):
         """Convert a string to a dealer ID."""
         return int(str[7:])
-    
+
     if isinstance(source, ConfigObj):
         config = source
     else:
@@ -144,6 +146,7 @@ def load_config(source):
 
     return owner_id, players
 
+
 def generate_configs(n, t, addresses=None, prefix=None):
     """Generate player configurations.
 
@@ -157,7 +160,7 @@ def generate_configs(n, t, addresses=None, prefix=None):
 
     @return: mapping from player id to player configuration.
     @returntype: C{dict} from C{int} to C{ConfigObj}.
-    """    
+    """
     players = frozenset(range(1, n+1))
     max_unqualified_subsets = generate_subsets(players, n-t)
 

@@ -51,7 +51,7 @@ Exponentiation:
 Square roots can be found for elements based on GF fields with a Blum
 prime modulus (see L{GF} for more information):
 
->>> x.sqrt() 
+>>> x.sqrt()
 {3}
 
 Field elements from different fields cannot be mixed, you will get a
@@ -86,6 +86,7 @@ _exp_table = {}
 #:
 #: Maps a value M{x} to M{x^-1}. See L{_generate_tables}.
 _inv_table = {}
+
 
 def _generate_tables():
     """Generate tables with logarithms, antilogarithms (exponentials)
@@ -210,7 +211,7 @@ class GF256(FieldElement):
 
     def __div__(self, other):
         """Division.
-        
+
         @param other: right-hand side.
         @type other: GF256 element
         """
@@ -235,7 +236,7 @@ class GF256(FieldElement):
         element.
         """
         if self.value == 0:
-            raise ZeroDivisionError, "Cannot invert zero"
+            raise ZeroDivisionError("Cannot invert zero")
         return GF256(_inv_table[self.value])
 
     def __repr__(self):
@@ -281,6 +282,7 @@ class GF256(FieldElement):
 #: GF256 class which is always defined.
 _field_cache = {256: GF256}
 
+
 def GF(modulus):
     """Generate a Galois (finite) field with the given modulus.
 
@@ -313,11 +315,12 @@ def GF(modulus):
         return _field_cache[modulus]
 
     if not mpz(modulus).is_prime():
-        raise ValueError, "%d is not a prime" % modulus
+        raise ValueError("%d is not a prime" % modulus)
 
     # Define a new class representing the field. This class will be
     # returned at the end of the function.
     class GFElement(FieldElement):
+
         def __init__(self, value):
             self.value = value % self.modulus
 
@@ -377,7 +380,7 @@ def GF(modulus):
             will raise a ZeroDivisionError.
             """
             if self.value == 0:
-                raise ZeroDivisionError, "Cannot invert zero"
+                raise ZeroDivisionError("Cannot invert zero")
 
             def extended_gcd(a, b):
                 """The extended Euclidean algorithm."""

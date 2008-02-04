@@ -25,7 +25,7 @@ from twisted.internet import reactor
 from twisted.internet.defer import gatherResults
 
 from viff.field import GF
-from viff.runtime import create_runtime 
+from viff.runtime import create_runtime
 from viff.config import load_config
 from viff.util import dprint
 
@@ -33,6 +33,7 @@ id, players = load_config(sys.argv[1])
 print "I am player %d" % id
 
 Z31 = GF(31)
+
 
 def protocol(rt):
     elements = [rt.open(rt.prss_share_random(Z31)) for _ in range(10)]

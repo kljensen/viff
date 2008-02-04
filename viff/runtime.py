@@ -199,7 +199,7 @@ class ShareExchanger(Int16StringReceiver):
         except AttributeError:
             #print "No certificate in session"
             self.peer_cert = None
-        
+
     def stringReceived(self, string):
         """Called when a share is received.
 
@@ -279,7 +279,8 @@ class ShareExchangerFactory(ServerFactory, ClientFactory):
         self.runtime.add_player(self.players[protocol.peer_id], protocol)
         self.needed_protocols -= 1
         if self.needed_protocols == 0:
-            self.protocols_ready.callback(self.runtime)        
+            self.protocols_ready.callback(self.runtime)
+
 
 def create_runtime(id, players, threshold, options=None):
     """Create a L{Runtime} and connect to the other players.
@@ -298,19 +299,19 @@ def create_runtime(id, players, threshold, options=None):
             a = runtime.open(a)
             b = runtime.open(b)
             c = runtime.open(c)
-        
+
             dprint("Opened a: %s", a)
             dprint("Opened b: %s", b)
             dprint("Opened c: %s", c)
-        
+
             runtime.wait_for(a,b,c)
-        
+
         pre_runtime = create_runtime(id, players, 1)
         pre_runtime.addCallback(protocol)
 
     This is the general template which VIFF programs should follow.
     Please see the example applications for more examples.
-    
+
     """
     # This will yield a Runtime when all protocols are connected.
     result = Deferred()
@@ -349,10 +350,11 @@ def create_runtime(id, players, threshold, options=None):
             println("Will connect to %s", player)
             if options and options.tls:
                 reactor.connectTLS(player.host, player.port, factory, cred)
-            else:                
+            else:
                 reactor.connectTCP(player.host, player.port, factory)
 
     return result
+
 
 def increment_pc(method):
     """Make method automatically increment the program counter.
@@ -624,7 +626,7 @@ class Runtime:
         result = gather_shares(shares)
         result.addCallback(lambda _: None)
         return result
-        
+
     def add(self, share_a, share_b):
         """Addition of shares.
 
@@ -673,11 +675,11 @@ class Runtime:
         self.callback(result, self._shamir_share)
         self.callback(result, self._recombine, threshold=2*self.threshold)
         return result
-    
+
     @increment_pc
     def xor_int(self, share_a, share_b):
         """Exclusive-or of integer sharings.
-        
+
         Communication cost: 1 multiplication.
         """
         if not isinstance(share_a, Share):
@@ -707,7 +709,7 @@ class Runtime:
 
         # The shares for which we have all the keys.
         all_shares = []
-        
+
         # Shares we calculate from doing PRSS with the other players.
         tmp_shares = {}
 
@@ -785,7 +787,7 @@ class Runtime:
         """
         shares = shamir.share(number, self.threshold, len(self.players))
         #println("Shares of %s: %s", number, shares)
-        
+
         result = []
         for other_id, share in shares:
             d = self._exchange_shares(other_id.value, share)
@@ -837,7 +839,7 @@ class Runtime:
             xor = self.xor_bit
         else:
             xor = self.xor_int
-        
+
         # TODO: Using a parallel reduce below seems to be slower than
         # using the built-in reduce.
 
@@ -845,7 +847,7 @@ class Runtime:
         # the dst_field.
         tmp = self.open(reduce(xor, src_shares, share))
         tmp.addCallback(lambda i: dst_field(i.value))
-        
+
         if dst_field is GF256:
             xor = self.xor_bit
         else:
@@ -1024,7 +1026,7 @@ class Runtime:
         ##################################################
         # Preprocessing done
         ##################################################
-        
+
 
     @increment_pc
     def greater_thanII_online(self, share_a, share_b, preproc, field):
@@ -1036,7 +1038,7 @@ class Runtime:
         # a = 2a+1; b= 2b // ensures inputs not equal
         share_a = 2 * share_a + 1
         share_b = 2 * share_b
-        
+
         ##################################################
         # Unpack preprocessing
         ##################################################
@@ -1100,7 +1102,7 @@ class Runtime:
         result = (c_mod2l - r_modl) + UF * 2**l
         return (z - result) * ~field(2**l)
     # END _finish_greater_thanII
-    
+
     @increment_pc
     def greater_thanII(self, share_a, share_b, field):
         """Compute share_a >= share_b.

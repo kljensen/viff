@@ -19,7 +19,8 @@
 # Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 # 02110-1301 USA
 
-import time, signal
+import time
+import signal
 from optparse import OptionParser
 
 from twisted.internet import reactor
@@ -37,11 +38,13 @@ from viff.util import rand, find_prime
 last_timestamp = time.time()
 start = 0
 
+
 def record_start():
     global start
     start = time.time()
     print "*" * 64
     print "Started"
+
 
 def record_stop(x):
     stop = time.time()
@@ -51,12 +54,14 @@ def record_stop(x):
     print "*" * 64
     return x
 
+
 def timestamp(x):
     global last_timestamp
     now = time.time()
     print "Delta: %8.3f ms" % (1000*(now-last_timestamp))
     last_timestamp = now
     return x
+
 
 def finish(*x):
     reactor.stop()
@@ -94,6 +99,7 @@ Zq = GF(long(qprime))
 
 count = options.count
 print "I am player %d, will compare %d numbers" % (id, count)
+
 
 def protocol(rt):
     print "Testing online requirements for comparisonII"
@@ -158,6 +164,6 @@ def protocol(rt):
 
 pre_runtime = create_runtime(id, players, (len(players) -1)//2, options)
 pre_runtime.addCallback(protocol)
-    
+
 print "#### Starting reactor ###"
 reactor.run()

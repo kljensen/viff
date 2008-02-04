@@ -33,6 +33,7 @@ input = GF256(int(sys.argv[2]))
 
 print "I am player %d and will input %s" % (id, input)
 
+
 def protocol(rt):
     print "-" * 64
     print "Program started"
@@ -43,7 +44,7 @@ def protocol(rt):
     while len(shares) > 1:
         a = shares.pop(0)
         b = shares.pop(0)
-        shares.append(rt.xor_bit(a,b))
+        shares.append(rt.xor_bit(a, b))
 
     xor = rt.open(shares[0])
     dprint("Result: %s", xor)

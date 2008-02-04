@@ -25,7 +25,7 @@ I{Communications of the ACM} B{22} (11): 612-613.
 
 import operator
 from viff.util import rand
-    
+
 def share(secret, threshold, num_players):
     """Shamir share secret.
 
@@ -51,7 +51,7 @@ def share(secret, threshold, num_players):
     @returntype: C{list} of (player id, share) pairs
     """
     assert threshold > 0 and threshold < num_players
-    
+
     coef = [secret]
     for j in range(threshold):
         # TODO: introduce a random() method in FieldElements so that
@@ -98,7 +98,7 @@ def recombine(shares, x_recomb=0):
     xs = [x_i for (x_i, _) in shares]
     ys = [y_i for (_, y_i) in shares]
     try:
-        key = tuple(xs) + (x_recomb,)
+        key = tuple(xs) + (x_recomb, )
         vector = _recombination_vectors[key]
     except KeyError:
         vector = []

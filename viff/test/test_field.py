@@ -95,11 +95,11 @@ class GFpElementTestCase(TestCase):
         square = self.field(4)**2
         root = square.sqrt()
         self.assertEquals(root**2, square)
-        
+
         square = self.field(5)**2
         root = square.sqrt()
         self.assertEquals(root**2, square)
-        
+
         square = self.field(6)**2
         root = square.sqrt()
         self.assertEquals(root**2, square)

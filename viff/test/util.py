@@ -27,6 +27,7 @@ from viff.runtime import Runtime, ShareExchanger, ShareExchangerFactory
 from viff.field import GF
 from viff.config import generate_configs, load_config
 
+
 def protocol(method):
     """Decorator for protocol tests.
 
@@ -47,6 +48,7 @@ def protocol(method):
         return gatherResults([self.rt1, self.rt2, self.rt3])
     wrapper.func_name = method.func_name
     return wrapper
+
 
 def create_loopback_runtime(id, players, threshold, protocols):
     """Create a L{Runtime} connected with a loopback.
@@ -92,10 +94,10 @@ def create_loopback_runtime(id, players, threshold, protocols):
     return result
 
 class RuntimeTestCase(TestCase):
-    
+
     def setUp(self):
         """Configure and connect three Runtimes."""
-        # Our standard 65 bit Blum prime 
+        # Our standard 65 bit Blum prime
         self.Zp = GF(30916444023318367583)
 
         configs = generate_configs(3, 1)

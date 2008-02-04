@@ -33,6 +33,7 @@ input = GF256(int(sys.argv[2]))
 
 print "I am player %d and will input %s" % (id, input)
 
+
 def protocol(runtime):
     print "-" * 64
     print "Program started"
@@ -48,7 +49,7 @@ def protocol(runtime):
     dprint("### opened b: %s ###", b)
     dprint("### opened c: %s ###", c)
 
-    runtime.wait_for(a,b,c)
+    runtime.wait_for(a, b, c)
 
 pre_runtime = create_runtime(id, players, 1)
 pre_runtime.addCallback(protocol)

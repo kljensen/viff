@@ -34,6 +34,7 @@ input = Zp(int(sys.argv[3]))
 
 print "I am player %d and will input %s" % (id, input)
 
+
 def protocol(rt):
     print "-" * 64
     print "Program started"
@@ -49,7 +50,7 @@ def protocol(rt):
     dprint("### opened b: %s ###", b)
     dprint("### opened c: %s ###", c)
 
-    rt.wait_for(a,b,c)
+    rt.wait_for(a, b, c)
 
 
 pre_runtime = create_runtime(id, players, 1)

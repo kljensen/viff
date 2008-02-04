@@ -137,12 +137,12 @@ class RuntimeTest(RuntimeTestCase):
                 # the special GF256 addition here when field is GF256.
                 share_a = Share(runtime, field(a) + runtime.id)
                 share_b = Share(runtime, field(b) + runtime.id)
-                
+
                 if field is self.Zp:
                     share_c = runtime.xor_int(share_a, share_b)
                 else:
                     share_c = runtime.xor_bit(share_a, share_b)
-            
+
                 opened_c = runtime.open(share_c)
                 opened_c.addCallback(self.assertEquals, field(a ^ b))
                 results.append(opened_c)
@@ -210,7 +210,7 @@ class RuntimeTest(RuntimeTestCase):
     def test_prss_share_int(self, runtime):
         """Test sharing of a Zp element using PRSS."""
         a, b, c = runtime.prss_share(self.Zp(42 + runtime.id))
-        
+
         self.assertTrue(isinstance(a, Share),
                         "Type should be Share, but is %s" % a.__class__)
         self.assertTrue(isinstance(b, Share),
@@ -232,7 +232,7 @@ class RuntimeTest(RuntimeTestCase):
     def test_prss_share_bit(self, runtime):
         """Test sharing of a GF256 element using PRSS."""
         a, b, c = runtime.prss_share(GF256(42 + runtime.id))
-        
+
         self.assertTrue(isinstance(a, Share),
                         "Type should be Share, but is %s" % a.__class__)
         self.assertTrue(isinstance(b, Share),
@@ -350,17 +350,16 @@ if 'STRESS' in os.environ:
         def test_mul_200(self, runtime):
             """Test 200 multiplication rounds."""
             return self._mul_stress_test(runtime, 200)
-        
+
         @protocol
         def test_mul_400(self, runtime):
             """Test 400 multiplication rounds."""
             return self._mul_stress_test(runtime, 400)
-        
+
         @protocol
         def test_mul_800(self, runtime):
             """Test 800 multiplication rounds."""
             return self._mul_stress_test(runtime, 800)
-        
 
         def _compare_stress_test(self, runtime, count):
             """Repeatedly share and compare random numbers.
@@ -412,12 +411,12 @@ if 'STRESS' in os.environ:
         def test_compare_2(self, runtime):
             """Test 2 comparison rounds."""
             return self._compare_stress_test(runtime, 2)
-        
+
         @protocol
         def test_compare_4(self, runtime):
             """Test 4 comparison rounds."""
             return self._compare_stress_test(runtime, 4)
-        
+
         @protocol
         def test_compare_8(self, runtime):
             """Test 8 comparison rounds."""

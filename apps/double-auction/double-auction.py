@@ -108,6 +108,7 @@ S.sort()
 seller_bids = [shamir.share(Zp(x), t, n)[id-1][1] for x in S]
 buyer_bids  = [shamir.share(Zp(x), t, n)[id-1][1] for x in B]
 
+
 def auction(rt):
 
     def debug(low, mid, high):
@@ -141,11 +142,11 @@ def auction(rt):
             return result
         else:
             if options.verbose:
-                debug(low,mid,high)
+                debug(low, mid, high)
             return low
 
     def check_result(result):
-        expected = max([i for i, (b,s) in enumerate(zip(B,S)) if b > s])
+        expected = max([i for i, (b, s) in enumerate(zip(B, S)) if b > s])
         if result == expected:
             print "Result: %d (correct)" % result
         else:

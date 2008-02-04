@@ -26,8 +26,8 @@
 # compared pair-wise. This can be scheduled in two ways: parallel or
 # sequentially. Parallel execution looks like this:
 #
-#      *        *             *   
-#     / \      / \    ...    / \  
+#      *        *             *
+#     / \      / \    ...    / \
 #   a1   b1  a2   b2       an   bn
 #
 # Given sufficient bandwidth all operations should be executed in
@@ -38,7 +38,7 @@
 #      *
 #     / \
 #   a1   b1
-#        
+#
 #      *
 #     / \
 #   a2   b2
@@ -68,11 +68,13 @@ from viff.util import find_prime
 last_timestamp = time.time()
 start = 0
 
+
 def record_start():
     global start
     start = time.time()
     print "*" * 64
     print "Started"
+
 
 def record_stop(_):
     stop = time.time()
@@ -80,6 +82,7 @@ def record_stop(_):
     print "Total time used: %.3f sec" % (stop-start)
     print "Time per operation: %.3f ms" % (1000*float(stop-start) / count)
     print "*" * 6
+
 
 parser = OptionParser()
 parser.add_option("-m", "--modulus",
@@ -115,6 +118,7 @@ print "I am player %d, will %s %d numbers" % (id, options.operation, count)
 # callbacks in the order they are called. This class is a base class
 # that executes the protocol by calling the run_test method.
 class Benchmark:
+
     def __init__(self, rt, operation):
         print "Runtime ready, starting protocol"
         self.rt = rt
@@ -144,7 +148,7 @@ class Benchmark:
         print "Finished, synchronizing shutdown."
         sync = self.rt.synchronize()
         sync.addCallback(self.shutdown)
-        
+
     def shutdown(self, _):
         print "Shutdown."
         self.rt.shutdown()
@@ -153,6 +157,7 @@ class Benchmark:
 # This class implements a benchmark where run_test executes all
 # operations in parallel.
 class ParallelBenchmark(Benchmark):
+
     def run_test(self, _):
         print "Starting parallel test."
         c_shares = []
@@ -168,6 +173,7 @@ class ParallelBenchmark(Benchmark):
 
 # A benchmark where the operations are executed one after each other.
 class SequentialBenchmark(Benchmark):
+
     def run_test(self, _):
         print "Starting sequential test."
         record_start()
