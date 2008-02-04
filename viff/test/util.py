@@ -17,6 +17,8 @@
 # Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 # 02110-1301 USA
 
+"""Utility functions and classes used for testing."""
+
 from twisted.internet.defer import Deferred, gatherResults
 from twisted.trial.unittest import TestCase
 from twisted.protocols.loopback import loopbackAsync
@@ -26,6 +28,15 @@ from viff.field import GF
 from viff.config import generate_configs, load_config
 
 def protocol(method):
+    """Decorator for protocol tests.
+
+    Using this decorator on a method in a class inheriting from
+    L{RuntimeTestCase} will ensure that the method code is executed
+    three times, each time with a different L{Runtime} object as
+    argument. The code should use this Runtime as in a real protocol.
+
+    The three runtimes are connected by L{create_loopback_runtime}.
+    """
     def wrapper(self):
         def cb_method(runtime):
             return method(self, runtime)
@@ -38,6 +49,17 @@ def protocol(method):
     return wrapper
 
 def create_loopback_runtime(id, players, threshold, protocols):
+    """Create a L{Runtime} connected with a loopback.
+
+    This is used to connect Runtime instances without involving real
+    network traffic -- this is transparent to the Runtime.
+
+    @param id: ID of the player owning this Runtime.
+    @param players: player configuration.
+    @param threshold: security threshold.
+    @param protocols: dictionary containing already established
+    loopback connections.
+    """
     # This will yield a Runtime when all protocols are connected.
     result = Deferred()
 
@@ -72,6 +94,7 @@ def create_loopback_runtime(id, players, threshold, protocols):
 class RuntimeTestCase(TestCase):
     
     def setUp(self):
+        """Configure and connect three Runtimes."""
         # Our standard 65 bit Blum prime 
         self.Zp = GF(30916444023318367583)
 
