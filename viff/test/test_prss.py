@@ -17,18 +17,29 @@
 # Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 # 02110-1301 USA
 
+"""Tests for viff.prss."""
+
 from viff.prss import generate_subsets
 
 from twisted.trial.unittest import TestCase
 
+#: Declare doctests for Trial.
 __doctests__ = ['viff.prss']
 
 class PRSSTestCase(TestCase):
 
     def test_generate_subsets(self):
+        """Test subset generation.
+
+        All possible subsets of all possible sizes are generated and
+        it is verified that they have the correct size and that they
+        can be combined to yield the original set.
+        """
 
         def binom(n, k):
+            """Binomial coefficient."""
             def fac(n):
+                """Factorial."""
                 if n > 1:
                     return n * fac(n-1)
                 else:
@@ -36,6 +47,8 @@ class PRSSTestCase(TestCase):
 
             return fac(n) // (fac(k) * fac(n-k))
 
+        # Maximum size of sets to test. The running time grows quite
+        # rapidly, so this should not be too big.
         max_size = 6
 
         for size in range(max_size):
