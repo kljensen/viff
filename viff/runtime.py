@@ -63,7 +63,7 @@ class Share(Deferred):
         """Initialize a share.
 
         @param runtime: The L{Runtime} to use.
-        @param value: The initial value of the share (if know).
+        @param value: The initial value of the share (if known).
         """
         Deferred.__init__(self)
         self.runtime = runtime
