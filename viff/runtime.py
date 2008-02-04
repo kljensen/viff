@@ -225,10 +225,10 @@ class ShareExchanger(Int16StringReceiver):
 
             self.factory.identify_peer(self)
         else:
-            program_counter, data = marshal.loads(string)
+            program_counter, type, data = marshal.loads(string)
             # TODO: The incoming_data mapping could also be stored
             # in self, and so self.peer_id would not be needed.
-            key = (program_counter, self.peer_id)
+            key = (program_counter, self.peer_id, type)
             incoming_data = self.factory.runtime.incoming_data
 
             try:
@@ -255,7 +255,7 @@ class ShareExchanger(Int16StringReceiver):
         #println("Sending to id=%d: program_counter=%s, share=%s",
         #        self.id, program_counter, share)
 
-        data = (program_counter, (share.modulus, share.value))
+        data = (program_counter, None, (share.modulus, share.value))
         self.sendString(marshal.dumps(data))
 
     def loseConnection(self):
@@ -1137,14 +1137,14 @@ class Runtime:
         # will save us from sending it back and forth over the net.
         share = Share(self)
         share.addCallback(lambda (modulus, value): GF(modulus)(value))
-        self._expect_data(peer_id, share)
+        self._expect_data(peer_id, None, share)
         return share
 
-    def _expect_data(self, peer_id, deferred):
+    def _expect_data(self, peer_id, type, deferred):
         # Convert self.program_counter to a hashable value in order
         # to use it as a key in self.incoming_data.
         pc = tuple(self.program_counter)
-        key = (pc, peer_id)
+        key = (pc, peer_id, type)
 
         data = self.incoming_data.pop(key, None)
         if data is None:
