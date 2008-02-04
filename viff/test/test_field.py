@@ -17,22 +17,26 @@
 # Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 # 02110-1301 USA
 
+"""Tests for viff.field."""
+
 from viff.field import GF, GF256
 
 from twisted.trial.unittest import TestCase
 import operator
 
-# This will make Trial run the doctests too, in addition to the tests
-# defined below.
+#: Declare doctests for Trial.
 __doctests__ = ['viff.field']
 
 
 class GFpElementTestCase(TestCase):
+    """Tests for elements from a Zp field."""
 
     def setUp(self):
+        """Initialize Zp to Z31."""
         self.field = GF(31)
 
     def _test_binary_operator(self, operation, a, b, expected):
+        """Test C{operation} with and without coerced operands."""
         result = operation(self.field(a), self.field(b))
         self.assertEquals(result, self.field(expected))
 
@@ -43,22 +47,26 @@ class GFpElementTestCase(TestCase):
         self.assertEquals(result, self.field(expected))
 
     def test_add(self):
+        """Test addition."""
         self._test_binary_operator(operator.add, 5, 0, 5)
         self._test_binary_operator(operator.add, 5, 3, 8)
         self._test_binary_operator(operator.add, 5, 30, 4)
 
     def test_sub(self):
+        """Test subtraction."""
         self._test_binary_operator(operator.sub, 5, 0, 5)
         self._test_binary_operator(operator.sub, 5, 3, 2)
         self._test_binary_operator(operator.sub, 5, 10, 26)
 
     def test_mul(self):
+        """Test multiplication."""
         self._test_binary_operator(operator.mul, 5, 0, 0)
         self._test_binary_operator(operator.mul, 5, 1, 5)
         self._test_binary_operator(operator.mul, 5, 4, 20)
         self._test_binary_operator(operator.mul, 5, 8, 9)
 
     def test_div(self):
+        """Test division, including division by zero."""
         self.assertRaises(ZeroDivisionError, operator.div,
                           self.field(10), self.field(0))
 
@@ -73,14 +81,17 @@ class GFpElementTestCase(TestCase):
                           self.field(2))
 
     def test_invert(self):
+        """Test inverse operation, including inverting zero."""
         self.assertRaises(ZeroDivisionError, lambda: ~self.field(0))
         self.assertEquals(~self.field(1), self.field(1))
 
     def test_neg(self):
+        """Test negation."""
         self.assertEquals(-self.field(10), self.field(21))
         self.assertEquals(-self.field(10), self.field(-10))
 
     def test_sqrt(self):
+        """Test extraction of square roots."""
         square = self.field(4)**2
         root = square.sqrt()
         self.assertEquals(root**2, square)
@@ -94,6 +105,7 @@ class GFpElementTestCase(TestCase):
         self.assertEquals(root**2, square)
 
     def test_bit(self):
+        """Test bit extraction."""
         a = self.field(14)
         self.assertEquals(a.bit(0), 0)
         self.assertEquals(a.bit(1), 1)
@@ -115,18 +127,22 @@ class GFpElementTestCase(TestCase):
 #                          "IntegerFieldElement(10)")
 
     def test_str(self):
+        """Test string conversion."""
         self.assertEquals(str(self.field(0)), "{0}")
         self.assertEquals(str(self.field(1)), "{1}")
         self.assertEquals(str(self.field(10)), "{10}")
 
 
 class GF256TestCase(TestCase):
+    """Tests for elements from the GF256 field."""
 
     def test_construct(self):
+        """Test overflows in constructor."""
         self.assertEquals(GF256(256), GF256(0))
         self.assertEquals(GF256(257), GF256(1))
 
     def _test_binary_operator(self, operation, a, b, expected):
+        """Test C{operation} with and without coerced operands."""
         result = operation(GF256(a), GF256(b))
         self.assertEquals(result, GF256(expected))
 
@@ -137,6 +153,7 @@ class GF256TestCase(TestCase):
         self.assertEquals(result, GF256(expected))
 
     def test_add(self):
+        """Test addition."""
         self._test_binary_operator(operator.add, 0, 0, 0)
         self._test_binary_operator(operator.add, 1, 1, 0)
         self._test_binary_operator(operator.add, 100, 100, 0)
@@ -148,6 +165,7 @@ class GF256TestCase(TestCase):
         self.assertEquals(a, GF256(0))
 
     def test_sub(self):
+        """Test subtraction."""
         self._test_binary_operator(operator.sub, 0, 0, 0)
         self._test_binary_operator(operator.sub, 1, 1, 0)
         self._test_binary_operator(operator.sub, 100, 100, 0)
@@ -155,11 +173,13 @@ class GF256TestCase(TestCase):
         self._test_binary_operator(operator.sub, 1, 2, 3)
 
     def test_mul(self):
+        """Test multiplication."""
         self._test_binary_operator(operator.mul, 0, 47, 0)
         self._test_binary_operator(operator.mul, 2, 3, 6)
         self._test_binary_operator(operator.mul, 16, 32, 54)
 
     def test_div(self):
+        """Test division, including division by zero."""
         self.assertRaises(ZeroDivisionError, lambda: GF256(10) / GF256(0))
 
         self.assertEquals(GF256(10) / GF256(10), GF256(1))
@@ -169,14 +189,17 @@ class GF256TestCase(TestCase):
         self.assertEquals(10 / GF256(5), GF256(2))
 
     def test_pow(self):
+        """Test exponentiation."""
         self.assertEquals(GF256(3)**3, GF256(3) * GF256(3) * GF256(3))
         self.assertEquals(GF256(27)**100, GF256(27)**50 * GF256(27)**50)
 
     def test_invert(self):
+        """Test inverse operation, including inverting zero."""
         self.assertRaises(ZeroDivisionError, lambda: ~GF256(0))
         self.assertEquals(~GF256(1), GF256(1))
 
     def test_neg(self):
+        """Test negation."""
         self.assertEquals(-GF256(0), GF256(0))
         self.assertEquals(-GF256(10), GF256(10))
         self.assertEquals(-GF256(100), GF256(100))
@@ -187,6 +210,7 @@ class GF256TestCase(TestCase):
 #        self.assertEquals(repr(GF256(10)), "GF256(10)")
 
     def test_str(self):
+        """Test string conversion."""
         self.assertEquals(str(GF256(0)), "[0]")
         self.assertEquals(str(GF256(1)), "[1]")
         self.assertEquals(str(GF256(10)), "[10]")
