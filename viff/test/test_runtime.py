@@ -17,6 +17,14 @@
 # Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 # 02110-1301 USA
 
+"""Tests for viff.runtime.
+
+Each method in Runtime is tested using a small protocol in
+L{RuntimeTest}. If the environment variable STRESS is defined (to any
+value) additional multiplication and comparison stress testing is
+performed by L{StressTest}.
+"""
+
 import os
 from random import Random
 
@@ -29,12 +37,11 @@ from viff.test.util import RuntimeTestCase, protocol
 
 
 class RuntimeTest(RuntimeTestCase):
+    """Test L{viff.runtime.Runtime}."""
 
     @protocol
     def test_open(self, runtime):
-        """
-        Shamir share and open Zp(42).
-        """
+        """Shamir share and open Zp(42)."""
         # The parties have shares 43, 44, 45 respectively.
         share = Share(runtime, self.Zp(42 + runtime.id))
         opened = runtime.open(share)
@@ -44,9 +51,7 @@ class RuntimeTest(RuntimeTestCase):
 
     @protocol
     def test_open_no_mutate(self, runtime):
-        """
-        Shamir share and open Zp(42) twice.
-        """
+        """Test that opening a share does not change it."""
         # The parties have shares 43, 44, 45 respectively.
         share = Share(runtime, self.Zp(42 + runtime.id))
         opened = runtime.open(share)
@@ -58,6 +63,7 @@ class RuntimeTest(RuntimeTestCase):
 
     @protocol
     def test_add(self, runtime):
+        """Test addition."""
         share_a = Share(runtime)
         share_b = Share(runtime, self.Zp(200))
 
@@ -72,6 +78,7 @@ class RuntimeTest(RuntimeTestCase):
 
     @protocol
     def test_add_coerce(self, runtime):
+        """Test addition with mixed operands."""
         share_a = Share(runtime)
         share_b = self.Zp(200)
         share_c = share_a + share_b
@@ -82,6 +89,7 @@ class RuntimeTest(RuntimeTestCase):
 
     @protocol
     def test_sub(self, runtime):
+        """Test subtraction."""
         share_a = Share(runtime)
         share_b = Share(runtime, self.Zp(200))
 
@@ -95,6 +103,7 @@ class RuntimeTest(RuntimeTestCase):
 
     @protocol
     def test_sub_coerce(self, runtime):
+        """Test subtraction with mixed operands."""
         share_a = Share(runtime)
         share_b = self.Zp(200)
         share_c = share_a - share_b
@@ -105,6 +114,7 @@ class RuntimeTest(RuntimeTestCase):
 
     @protocol
     def test_mul(self, runtime):
+        """Test multiplication with mixed operands."""
         share_a = Share(runtime, self.Zp(42 + runtime.id))
         share_b = self.Zp(117 + runtime.id)
         opened_c = runtime.open(share_a * share_b)
@@ -114,6 +124,11 @@ class RuntimeTest(RuntimeTestCase):
 
     @protocol
     def test_xor(self, runtime):
+        """Test exclusive-or.
+
+        All possible combination of 0/1 are tried for both a Zp field
+        and GF256.
+        """
         results = []
         for field in self.Zp, GF256:
             for a, b in (0, 0), (0, 1), (1, 0), (1, 1):
@@ -135,6 +150,10 @@ class RuntimeTest(RuntimeTestCase):
 
     @protocol
     def test_shamir_share(self, runtime):
+        """Test symmetric Shamir sharing.
+
+        Every player participates in the sharing.
+        """
         a, b, c = runtime.shamir_share(self.Zp(42 + runtime.id), [1, 2, 3])
 
         self.assertTrue(isinstance(a, Share),
@@ -189,6 +208,7 @@ class RuntimeTest(RuntimeTestCase):
 
     @protocol
     def test_prss_share_int(self, runtime):
+        """Test sharing of a Zp element using PRSS."""
         a, b, c = runtime.prss_share(self.Zp(42 + runtime.id))
         
         self.assertTrue(isinstance(a, Share),
@@ -210,6 +230,7 @@ class RuntimeTest(RuntimeTestCase):
 
     @protocol
     def test_prss_share_bit(self, runtime):
+        """Test sharing of a GF256 element using PRSS."""
         a, b, c = runtime.prss_share(GF256(42 + runtime.id))
         
         self.assertTrue(isinstance(a, Share),
@@ -231,9 +252,7 @@ class RuntimeTest(RuntimeTestCase):
 
     @protocol
     def test_prss_share_random_bit(self, runtime):
-        """
-        Tests the sharing of a 0/1 GF256.
-        """
+        """Tests the sharing of a 0/1 GF256 element using PRSS."""
         a = runtime.prss_share_random(field=GF256, binary=True)
 
         self.assertTrue(isinstance(a, Share),
@@ -245,6 +264,7 @@ class RuntimeTest(RuntimeTestCase):
 
     @protocol
     def test_prss_share_random_int(self, runtime):
+        """Tests the sharing of a 0/1 Zp element using PRSS."""
         a = runtime.prss_share_random(field=self.Zp, binary=True)
 
         self.assertTrue(isinstance(a, Share),
@@ -256,6 +276,7 @@ class RuntimeTest(RuntimeTestCase):
 
     @protocol
     def test_convert_bit_share(self, runtime):
+        """Test conversion 0/1 element conversion from Zp to GF256."""
         # TODO: test conversion from GF256 to Zp and between Zp and Zq
         # fields.
         results = []
@@ -269,6 +290,7 @@ class RuntimeTest(RuntimeTestCase):
 
     @protocol
     def test_greater_than(self, runtime):
+        """Test comparison."""
         # Shamir shares of 42 and 117:
         share_a = self.Zp(42 + runtime.id)
         share_b = self.Zp(117 - runtime.id)
@@ -281,6 +303,7 @@ class RuntimeTest(RuntimeTestCase):
 
     @protocol
     def test_greater_thanII(self, runtime):
+        """Test comparison (improved version)."""
         # Shamir shares of 42 and 117:
         share_a = self.Zp(42 + runtime.id)
         share_b = self.Zp(117 - runtime.id)
@@ -294,8 +317,17 @@ class RuntimeTest(RuntimeTestCase):
 if 'STRESS' in os.environ:
 
     class StressTest(RuntimeTestCase):
+        """Multiplication and comparison stress test.
+
+        These tests are only executed if the environment variable
+        C{STRESS} is defined.
+        """
 
         def _mul_stress_test(self, runtime, count):
+            """Execute a number of multiplication rounds.
+
+            Three numbers are multiplied in each round.
+            """
             a, b, c = runtime.shamir_share(self.Zp(42 + runtime.id), [1, 2, 3])
 
             product = 1
@@ -311,24 +343,30 @@ if 'STRESS' in os.environ:
 
         @protocol
         def test_mul_100(self, runtime):
+            """Test 100 multiplication rounds."""
             return self._mul_stress_test(runtime, 100)
 
         @protocol
         def test_mul_200(self, runtime):
+            """Test 200 multiplication rounds."""
             return self._mul_stress_test(runtime, 200)
         
         @protocol
         def test_mul_400(self, runtime):
+            """Test 400 multiplication rounds."""
             return self._mul_stress_test(runtime, 400)
         
         @protocol
         def test_mul_800(self, runtime):
+            """Test 800 multiplication rounds."""
             return self._mul_stress_test(runtime, 800)
         
 
         def _compare_stress_test(self, runtime, count):
-            """
-            This test repeatedly shares and compares random inputs.
+            """Repeatedly share and compare random numbers.
+
+            Three random numbers are generated and compared in all six
+            possible ways.
             """
             # Random generators
             rand = Random(count)
@@ -367,16 +405,20 @@ if 'STRESS' in os.environ:
 
         @protocol
         def test_compare_1(self, runtime):
+            """Test 1 comparison round."""
             return self._compare_stress_test(runtime, 1)
 
         @protocol
         def test_compare_2(self, runtime):
+            """Test 2 comparison rounds."""
             return self._compare_stress_test(runtime, 2)
         
         @protocol
         def test_compare_4(self, runtime):
+            """Test 4 comparison rounds."""
             return self._compare_stress_test(runtime, 4)
         
         @protocol
         def test_compare_8(self, runtime):
+            """Test 8 comparison rounds."""
             return self._compare_stress_test(runtime, 8)
