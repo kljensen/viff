@@ -30,10 +30,9 @@ def protocol(method):
         def cb_method(runtime):
             return method(self, runtime)
 
-        self.rt1.addCallback(cb_method)
-        self.rt2.addCallback(cb_method)
-        self.rt3.addCallback(cb_method)
-        return gatherResults([self.rt1, self.rt2, self.rt3])
+        for runtime in self.runtimes.itervalues():
+            runtime.addCallback(cb_method)
+        return gatherResults(self.runtimes.values())
     wrapper.func_name = method.func_name
     return wrapper
 
@@ -70,19 +69,20 @@ def create_loopback_runtime(id, players, threshold, protocols):
     return result
 
 class RuntimeTestCase(TestCase):
-    
+
+    num_players = 3
+    threshold = 1
+        
     def setUp(self):
         # Our standard 65 bit Blum prime 
         self.Zp = GF(30916444023318367583)
 
-        configs = generate_configs(3, 1)
+        configs = generate_configs(self.num_players, self.threshold)
         protocols = {}
 
-        id, players = load_config(configs[3])
-        self.rt3 = create_loopback_runtime(id, players, 1, protocols)
-
-        id, players = load_config(configs[2])
-        self.rt2 = create_loopback_runtime(id, players, 1, protocols)
-
-        id, players = load_config(configs[1])
-        self.rt1 = create_loopback_runtime(id, players, 1, protocols)
+        self.runtimes = {}
+        for id in reversed(range(1, self.num_players+1)):
+            _, players = load_config(configs[id])
+            self.runtimes[id] = create_loopback_runtime(id, players,
+                                                        self.threshold,
+                                                        protocols)
