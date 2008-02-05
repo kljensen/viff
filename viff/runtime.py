@@ -1140,7 +1140,7 @@ class Runtime:
         # will save us from sending it back and forth over the net.
         share = Share(self)
         share.addCallback(lambda (modulus, value): GF(modulus)(value))
-        self._expect_data(peer_id, None, share)
+        self._expect_data(peer_id, "share", share)
         return share
 
     def _expect_data(self, peer_id, type, deferred):
