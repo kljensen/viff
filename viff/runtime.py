@@ -34,6 +34,7 @@ scheduling things correctly behind the scenes.
 
 import marshal
 from optparse import OptionParser, OptionGroup
+from math import ceil
 
 from viff import shamir
 from viff.prss import prss
@@ -519,6 +520,15 @@ class Runtime:
         # communicating with ourselves.
         self.add_player(player, None)
 
+        #: Echo counters for Bracha broadcast.
+        self._bracha_echo = {}
+        #: Ready counters for Bracha broadcast.
+        self._bracha_ready = {}
+        #: Have we sent a ready message?
+        self._bracha_sent_ready = {}
+        #: Have we delivered the message?
+        self._bracha_delivered = {}
+
     def add_player(self, player, protocol):
         self.players[player.id] = player
         # There is no protocol for ourselves, so we wont add that:
@@ -971,6 +981,68 @@ class Runtime:
         bot = self.xor_bit(top_b * self.xor_bit(bot_a, bot_b), bot_b)
         return (top, bot)
 
+    @increment_pc
+    def broadcast(self, sender, message=None):
+        result = Deferred()
+
+        pc = tuple(self.program_counter)
+
+        self._bracha_echo[pc] = []
+        self._bracha_ready[pc] = []
+        self._bracha_sent_ready[pc] = False
+        self._bracha_delivered[pc] = False
+
+        def unsafe_broadcast(type, message):
+            for protocol in self.protocols.itervalues():
+                protocol.sendData(pc, type, message)
+
+        def echo_received(message, peer_id):
+            ids = self._bracha_echo[pc]
+            if peer_id not in ids:
+                ids.append(peer_id)
+                if len(ids) >= ceil((len(self.players)+self.threshold+1)/2) \
+                   and not self._bracha_sent_ready[pc]:
+                    self._bracha_sent_ready[pc] = True
+                    unsafe_broadcast("ready", message)
+                    ready_received(message, self.id)
+
+        def ready_received(message, peer_id):
+            ids = self._bracha_ready[pc]
+            if peer_id not in ids:
+                ids.append(peer_id)
+                if len(ids) == self.threshold+1 \
+                   and not self._bracha_sent_ready[pc]:
+                    self._bracha_sent_ready[pc] = True
+                    unsafe_broadcast("ready", message)
+                    ready_received(message, self.id)
+
+                if len(ids) == 2*self.threshold+1 \
+                   and not self._bracha_delivered[pc]:
+                    result.callback(message)
+
+        def send_received(message):
+            unsafe_broadcast("echo", message)
+            echo_received(message, self.id)
+
+
+        d_send = Deferred().addCallback(send_received)
+        self._expect_data(sender, "send", d_send)
+            
+        for peer_id in self.players:
+            d_echo = Deferred().addCallback(echo_received, peer_id)
+            self._expect_data(peer_id, "echo", d_echo)
+            
+            d_ready = Deferred().addCallback(ready_received, peer_id)
+            self._expect_data(peer_id, "ready", d_ready)
+            
+        if self.id == sender:
+            unsafe_broadcast("send", message)
+            send_received(message)
+
+        return result
+                        
+                
+                
     ########################################################################
     ########################################################################
 
