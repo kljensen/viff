@@ -240,6 +240,10 @@ class ShareExchanger(Int16StringReceiver):
             # TODO: marshal.loads can raise EOFError, ValueError, and
             # TypeError. They should be handled somehow.
 
+    def sendData(self, program_counter, type, data):
+        send_data = (program_counter, type, data)
+        self.sendString(marshal.dumps(send_data))
+
     def sendShare(self, program_counter, share):
         """Send a share.
 
@@ -255,9 +259,8 @@ class ShareExchanger(Int16StringReceiver):
         #println("Sending to id=%d: program_counter=%s, share=%s",
         #        self.id, program_counter, share)
 
-        data = (program_counter, None, (share.modulus, share.value))
-        self.sendString(marshal.dumps(data))
-
+        self.sendData(program_counter, "share", (share.modulus, share.value))
+        
     def loseConnection(self):
         """Disconnect this protocol instance."""
         self.transport.loseConnection()
