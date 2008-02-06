@@ -33,6 +33,9 @@ class ActiveRuntimeTest(RuntimeTestCase):
 
     @protocol
     def test_broadcast(self, runtime):
+        """Test Bracha broadcast."""
+        # TODO: Figure out how to introduce network errors and test
+        # those too.
         if runtime.id == 1:
             x = runtime.broadcast(1, "Hello world!")
         else:
