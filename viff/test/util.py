@@ -42,10 +42,29 @@ def protocol(method):
         def cb_method(runtime):
             return method(self, runtime)
 
-        self.rt1.addCallback(cb_method)
-        self.rt2.addCallback(cb_method)
-        self.rt3.addCallback(cb_method)
-        return gatherResults([self.rt1, self.rt2, self.rt3])
+        for runtime in self.runtimes.itervalues():
+            runtime.addCallback(cb_method)
+            
+        # If one of the executions throw an exception, then
+        # gatherResults will call its errback with a Failure
+        # containing a FirstError, which in turn contains a Failure
+        # wrapping the original exception. In the case of a timeout we
+        # get a TimeoutError instead.
+        #
+        # This code first tries to unpack a FirstError and if that
+        # fails it simply returns the Failure passed in. In both
+        # cases, Trial will print the exception it in the summary
+        # after the test run.
+        def unpack(failure):
+            try:
+                return failure.value.subFailure
+            except AttributeError:
+                return failure
+
+        result = gatherResults(self.runtimes.values())
+        result.addErrback(unpack)
+        return result
+
     wrapper.func_name = method.func_name
     return wrapper
 
@@ -95,19 +114,25 @@ def create_loopback_runtime(id, players, threshold, protocols):
 
 class RuntimeTestCase(TestCase):
 
+    #: Timeout in seconds per unit test.
+    timeout = 3
+    #: Number of players to test.
+    num_players = 3
+    #: Shamir sharing threshold.
+    threshold = 1
+
+
     def setUp(self):
         """Configure and connect three Runtimes."""
         # Our standard 65 bit Blum prime
         self.Zp = GF(30916444023318367583)
 
-        configs = generate_configs(3, 1)
+        configs = generate_configs(self.num_players, self.threshold)
         protocols = {}
 
-        id, players = load_config(configs[3])
-        self.rt3 = create_loopback_runtime(id, players, 1, protocols)
-
-        id, players = load_config(configs[2])
-        self.rt2 = create_loopback_runtime(id, players, 1, protocols)
-
-        id, players = load_config(configs[1])
-        self.rt1 = create_loopback_runtime(id, players, 1, protocols)
+        self.runtimes = {}
+        for id in reversed(range(1, self.num_players+1)):
+            _, players = load_config(configs[id])
+            self.runtimes[id] = create_loopback_runtime(id, players,
+                                                        self.threshold,
+                                                        protocols)
