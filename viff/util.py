@@ -58,9 +58,11 @@ else:
     print 'Seeding random generator with seed %d' % _seed
     rand = random.Random(_seed)
 
+
 def deprecation(message):
     """Issue a deprecation warning."""
     warnings.warn(message, DeprecationWarning, stacklevel=3)
+
 
 def dlift(func):
     """Lift a function to handle deferred arguments.

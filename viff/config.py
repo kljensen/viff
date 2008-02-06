@@ -36,6 +36,7 @@ from configobj import ConfigObj
 from viff.prss import generate_subsets, PRF
 from viff.util import rand
 
+
 class Player:
     """Wrapper for information about a player in the protocol."""
 
@@ -47,7 +48,6 @@ class Player:
         self.keys = keys
         self.dealer_keys = dealer_keys
 
-    # TODO: the PRFs ought to be cached
     def prfs(self, modulus):
         """Retrieve PRSS PRFs.
 
@@ -61,9 +61,9 @@ class Player:
         prfs = {}
         for subset, key in self.keys.iteritems():
             prfs[subset] = PRF(key, modulus)
+        # TODO: the PRFs ought to be cached
         return prfs
 
-    # TODO: the PRFs ought to be cached
     def dealer_prfs(self, modulus):
         """Retrieve dealer PRSS PRFs.
 
@@ -79,6 +79,7 @@ class Player:
             for subset, key in keys.iteritems():
                 prfs[subset] = PRF(key, modulus)
                 dealers[dealer] = prfs
+        # TODO: the PRFs ought to be cached
         return dealers
 
     def __repr__(self):

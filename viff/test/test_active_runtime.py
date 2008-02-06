@@ -27,6 +27,7 @@ from viff.runtime import Share
 
 from viff.test.util import RuntimeTestCase, protocol
 
+
 class ActiveRuntimeTest(RuntimeTestCase):
     """Test for active security."""
 

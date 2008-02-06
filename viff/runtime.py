@@ -166,7 +166,6 @@ class ShareList(Share):
         return result
 
 
-# Roughly based on defer.gatherResults
 def gather_shares(shares):
     """Gather shares.
 
@@ -262,7 +261,7 @@ class ShareExchanger(Int16StringReceiver):
         #        self.id, program_counter, share)
 
         self.sendData(program_counter, "share", (share.modulus, share.value))
-        
+
     def loseConnection(self):
         """Disconnect this protocol instance."""
         self.transport.loseConnection()
@@ -873,8 +872,8 @@ class Runtime:
     def convert_bit_share_II(self, share, src_field, dst_field):
         """Convert a 0/1 share from src_field into dst_field."""
 
-        #TODO: don't do log like this...
         def log(x):
+            # TODO: Don't do log like this...
             result = 0
             while x > 1:
                 result += 1
@@ -1012,20 +1011,20 @@ class Runtime:
         self._bracha_sent_ready[pc] = {}
         self._bracha_delivered[pc] = {}
 
-        # Performs a regular broadcast without any guarantees. In
-        # other words, it sends the message to each player except for
-        # this one.
         def unsafe_broadcast(type, message):
+            # Performs a regular broadcast without any guarantees. In
+            # other words, it sends the message to each player except
+            # for this one.
             for protocol in self.protocols.itervalues():
                 protocol.sendData(pc, type, message)
 
-        # This is called when we receive an echo message. It updates
-        # the echo count for the message and enters the ready state if
-        # the count is high enough.
         def echo_received(message, peer_id):
+            # This is called when we receive an echo message. It
+            # updates the echo count for the message and enters the
+            # ready state if the count is high enough.
             ids = self._bracha_echo[pc].setdefault(message, [])
             ready = self._bracha_sent_ready[pc].setdefault(message, False)
-            
+
             if peer_id not in ids:
                 ids.append(peer_id)
                 if len(ids) >= ceil((n+t+1)/2) and not ready:
@@ -1033,11 +1032,11 @@ class Runtime:
                     unsafe_broadcast("ready", message)
                     ready_received(message, self.id)
 
-        # This is called when we receive a ready message. It updates
-        # the ready count for the message. Depending on the count, we
-        # may either stay in the same state or enter the ready or
-        # delivered state.
         def ready_received(message, peer_id):
+            # This is called when we receive a ready message. It
+            # updates the ready count for the message. Depending on
+            # the count, we may either stay in the same state or enter
+            # the ready or delivered state.
             ids = self._bracha_ready[pc].setdefault(message, [])
             ready = self._bracha_sent_ready[pc].setdefault(message, False)
             delivered = self._bracha_delivered[pc].setdefault(message, False)
@@ -1052,11 +1051,11 @@ class Runtime:
                     self._bracha_delivered[pc][message] = True
                     result.callback(message)
 
-        # This is called when we receive a send message. We react by
-        # sending an echo message to each player. Since the unsafe
-        # broadcast doesn't send a message to this player, we simulate
-        # it by calling the echo_received function.
         def send_received(message):
+            # This is called when we receive a send message. We react
+            # by sending an echo message to each player. Since the
+            # unsafe broadcast doesn't send a message to this player,
+            # we simulate it by calling the echo_received function.
             unsafe_broadcast("echo", message)
             echo_received(message, self.id)
 
@@ -1066,27 +1065,22 @@ class Runtime:
         # each player.
         d_send = Deferred().addCallback(send_received)
         self._expect_data(sender, "send", d_send)
-            
+
         for peer_id in self.players:
             d_echo = Deferred().addCallback(echo_received, peer_id)
             self._expect_data(peer_id, "echo", d_echo)
-            
+
             d_ready = Deferred().addCallback(ready_received, peer_id)
             self._expect_data(peer_id, "ready", d_ready)
 
         # If this player is the sender, we transmit a send message to
         # each player. We send one to this player by calling the
-        # send_received function.        
+        # send_received function.
         if self.id == sender:
             unsafe_broadcast("send", message)
             send_received(message)
 
         return result
-                        
-                
-                
-    ########################################################################
-    ########################################################################
 
     @increment_pc
     def greater_thanII_preproc(self, field, smallField=None):
@@ -1141,7 +1135,6 @@ class Runtime:
         ##################################################
         # Preprocessing done
         ##################################################
-
 
     @increment_pc
     def greater_thanII_online(self, share_a, share_b, preproc, field):
@@ -1228,9 +1221,6 @@ class Runtime:
         preproc = self.greater_thanII_preproc(field)
         return self.greater_thanII_online(share_a, share_b, preproc, field)
 
-    ########################################################################
-    ########################################################################
-
     def _exchange_shares(self, id, field_element):
         """Exchange shares with another player.
 
@@ -1238,8 +1228,6 @@ class Runtime:
         trigger when the share from the other side arrives.
         """
         assert isinstance(field_element, FieldElement)
-        #println("exchange_shares sending: program_counter=%s, id=%d, share=%s",
-        #        self.program_counter, id, share)
 
         if id == self.id:
             return Share(self, field_element)

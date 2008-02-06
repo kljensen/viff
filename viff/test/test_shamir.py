@@ -19,4 +19,3 @@
 
 #: Declare doctests for Trial.
 __doctests__ = ['viff.shamir']
-

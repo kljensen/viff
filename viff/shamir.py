@@ -26,6 +26,7 @@ I{Communications of the ACM} B{22} (11): 612-613.
 import operator
 from viff.util import rand
 
+
 def share(secret, threshold, num_players):
     """Shamir share secret.
 
@@ -86,6 +87,7 @@ def share(secret, threshold, num_players):
 #: recombination point and the player IDs of the shares, and so it can
 #: be cached for efficiency.
 _recombination_vectors = {}
+
 
 def recombine(shares, x_recomb=0):
     """Recombines list of (xi, yi) pairs.

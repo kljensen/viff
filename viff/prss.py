@@ -222,7 +222,6 @@ class PRF(object):
                 seed = sha.new(seed).digest()
             self.sha1s.append(sha.new(seed))
 
-
     def __call__(self, input):
         """Return a number based on input.
 

@@ -70,6 +70,7 @@ C{z} are instances of two I{different} classes called C{GFElement}.
 
 from gmpy import mpz
 
+
 class FieldElement(object):
     """Common base class for elements."""
 

@@ -44,18 +44,18 @@ def protocol(method):
 
         for runtime in self.runtimes.itervalues():
             runtime.addCallback(cb_method)
-            
-        # If one of the executions throw an exception, then
-        # gatherResults will call its errback with a Failure
-        # containing a FirstError, which in turn contains a Failure
-        # wrapping the original exception. In the case of a timeout we
-        # get a TimeoutError instead.
-        #
-        # This code first tries to unpack a FirstError and if that
-        # fails it simply returns the Failure passed in. In both
-        # cases, Trial will print the exception it in the summary
-        # after the test run.
+
         def unpack(failure):
+            # If one of the executions throw an exception, then
+            # gatherResults will call its errback with a Failure
+            # containing a FirstError, which in turn contains a
+            # Failure wrapping the original exception. In the case of
+            # a timeout we get a TimeoutError instead.
+            #
+            # This code first tries to unpack a FirstError and if that
+            # fails it simply returns the Failure passed in. In both
+            # cases, Trial will print the exception it in the summary
+            # after the test run.
             try:
                 return failure.value.subFailure
             except AttributeError:
@@ -112,6 +112,7 @@ def create_loopback_runtime(id, players, threshold, protocols):
 
     return result
 
+
 class RuntimeTestCase(TestCase):
 
     #: Timeout in seconds per unit test.
@@ -120,7 +121,6 @@ class RuntimeTestCase(TestCase):
     num_players = 3
     #: Shamir sharing threshold.
     threshold = 1
-
 
     def setUp(self):
         """Configure and connect three Runtimes."""
