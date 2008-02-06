@@ -33,14 +33,24 @@ def protocol(method):
         for runtime in self.runtimes.itervalues():
             runtime.addCallback(cb_method)
             
-        result = gatherResults(self.runtimes.values())
-
         # If one of the executions throw an exception, then
         # gatherResults will call its errback with a Failure
-        # containing a FirstError. This will unpack and return the
-        # original exception to Trial, which will then print it in the
-        # summary after the test run.
-        result.addErrback(lambda failure: failure.value.subFailure)
+        # containing a FirstError, which in turn contains a Failure
+        # wrapping the original exception. In the case of a timeout we
+        # get a TimeoutError instead.
+        #
+        # This code first tries to unpack a FirstError and if that
+        # fails it simply returns the Failure passed in. In both
+        # cases, Trial will print the exception it in the summary
+        # after the test run.
+        def unpack(failure):
+            try:
+                return failure.value.subFailure
+            except AttributeError:
+                return failure
+
+        result = gatherResults(self.runtimes.values())
+        result.addErrback(unpack)
         return result
 
     wrapper.func_name = method.func_name
