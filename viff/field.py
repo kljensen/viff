@@ -217,6 +217,8 @@ class GF256(FieldElement):
         """
         return self * ~other
 
+    __truediv__ = __div__
+
     def __rdiv__(self, other):
         """Division (reflected argument version).
 
@@ -224,6 +226,8 @@ class GF256(FieldElement):
         @type other: integer
         """
         return GF256(other) / self
+
+    __rtruediv__ = __rdiv__
 
     def __neg__(self):
         """Negation."""
@@ -406,9 +410,13 @@ def GF(modulus):
             except AttributeError:
                 return self * ~GFElement(other)
 
+        __truediv__ = __div__
+
         def __rdiv__(self, other):
             """Division (reflected argument version)."""
             return GFElement(other) / self
+
+        __rtruediv__ = __rdiv__
 
         def sqrt(self):
             """Square root.
