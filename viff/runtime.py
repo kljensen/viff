@@ -31,6 +31,7 @@ can be added, subtracted, and multiplied as normal thanks to
 overloaded arithmetic operators. The runtime will take care of
 scheduling things correctly behind the scenes.
 """
+from __future__ import division
 
 import marshal
 from optparse import OptionParser, OptionGroup
@@ -875,7 +876,7 @@ class Runtime:
             result = 0
             while x > 1:
                 result += 1
-                x /= 2
+                x //= 2
             return result+1 # Error for powers of two...
 
         l = self.options.security_parameter + log(dst_field.modulus)
