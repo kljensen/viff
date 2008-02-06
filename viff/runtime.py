@@ -986,38 +986,42 @@ class Runtime:
         result = Deferred()
 
         pc = tuple(self.program_counter)
+        n = len(self.players)
+        t = self.threshold
 
-        self._bracha_echo[pc] = []
-        self._bracha_ready[pc] = []
-        self._bracha_sent_ready[pc] = False
-        self._bracha_delivered[pc] = False
+        self._bracha_echo[pc] = {}
+        self._bracha_ready[pc] = {}
+        self._bracha_sent_ready[pc] = {}
+        self._bracha_delivered[pc] = {}
 
         def unsafe_broadcast(type, message):
             for protocol in self.protocols.itervalues():
                 protocol.sendData(pc, type, message)
 
         def echo_received(message, peer_id):
-            ids = self._bracha_echo[pc]
+            ids = self._bracha_echo[pc].setdefault(message, [])
+            ready = self._bracha_sent_ready[pc].setdefault(message, False)
+            
             if peer_id not in ids:
                 ids.append(peer_id)
-                if len(ids) >= ceil((len(self.players)+self.threshold+1)/2) \
-                   and not self._bracha_sent_ready[pc]:
-                    self._bracha_sent_ready[pc] = True
+                if len(ids) >= ceil((n+t+1)/2) and not ready:
+                    self._bracha_sent_ready[pc][message] = True
                     unsafe_broadcast("ready", message)
                     ready_received(message, self.id)
 
         def ready_received(message, peer_id):
-            ids = self._bracha_ready[pc]
+            ids = self._bracha_ready[pc].setdefault(message, [])
+            ready = self._bracha_sent_ready[pc].setdefault(message, False)
+            delivered = self._bracha_delivered[pc].setdefault(message, False)
             if peer_id not in ids:
                 ids.append(peer_id)
-                if len(ids) == self.threshold+1 \
-                   and not self._bracha_sent_ready[pc]:
-                    self._bracha_sent_ready[pc] = True
+                if len(ids) == t+1 and not ready:
+                    self._bracha_sent_ready[pc][message] = True
                     unsafe_broadcast("ready", message)
                     ready_received(message, self.id)
 
-                if len(ids) == 2*self.threshold+1 \
-                   and not self._bracha_delivered[pc]:
+                if len(ids) == 2*t+1 and not delivered:
+                    self._bracha_delivered[pc][message] = True
                     result.callback(message)
 
         def send_received(message):
