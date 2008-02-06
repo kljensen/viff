@@ -28,7 +28,12 @@ from viff.runtime import Share
 from viff.test.util import RuntimeTestCase, protocol
 
 class ActiveRuntimeTest(RuntimeTestCase):
+    """Test for active security."""
 
+    #: Number of players.
+    #:
+    #: The protocols for active security needs n > 3t+1, so with the
+    #: default threshold of t=1, we need n=4.
     num_players = 4
 
     @protocol
