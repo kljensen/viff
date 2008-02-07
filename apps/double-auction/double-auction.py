@@ -134,8 +134,7 @@ def auction(rt):
             mid = (low + high)//2
             if options.verbose:
                 debug(low, mid, high)
-            result = rt.open(rt.greater_than_equal(buyer_bids[mid],
-                                                   seller_bids[mid]))
+            result = rt.open(buyer_bids[mid] >= seller_bids[mid])
             result.addCallback(output, "%s >= %s: %%s" % (B[mid], S[mid]))
             result.addCallback(branch, low, mid, high)
             return result

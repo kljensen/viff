@@ -100,6 +100,26 @@ class Share(Deferred):
         """Multiplication (reflected argument version)."""
         return self.runtime.mul(other, self)
 
+    def __lt__(self, other):
+        """Strictly less-than comparison."""
+        # self < other <=> not (self >= other)
+        return 1 - self.runtime.greater_than_equal(self, other)
+
+    def __le__(self, other):
+        """Less-than or equal comparison."""
+        # self <= other <=> other >= self
+        return self.runtime.greater_than_equal(other, self)
+
+    def __gt__(self, other):
+        """Strictly greater-than comparison."""
+        # self > other <=> not (other >= self)
+        return 1 - self.runtime.greater_than_equal(other, self)
+
+    def __ge__(self, other):
+        """Greater-than or equal comparison."""
+        # self >= other
+        return self.runtime.greater_than_equal(self, other)
+
     # TODO: The xor implementation below does not work, and it is not
     # really a good idea either. Instead there should be a single xor
     # method in Runtime or two classes of Shares. So keep using

@@ -70,9 +70,9 @@ class Protocol:
         # compare them. We compare the worth of the first millionaire
         # with the two others, and compare those two millionaires with
         # each other.
-        m1_gt_m2 = runtime.greater_than_equal(m1, m2)
-        m1_gt_m3 = runtime.greater_than_equal(m1, m3)
-        m2_gt_m3 = runtime.greater_than_equal(m2, m3)
+        m1_gt_m2 = m1 >= m2
+        m1_gt_m3 = m1 >= m3
+        m2_gt_m3 = m2 >= m3
 
         # The results are secret shared, so we must open them before
         # we can do anything usefull with them.
