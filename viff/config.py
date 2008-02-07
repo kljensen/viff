@@ -36,6 +36,7 @@ from configobj import ConfigObj
 from viff.prss import generate_subsets, PRF
 from viff.util import rand
 
+
 class Player:
     """Wrapper for information about a player in the protocol."""
 
@@ -47,7 +48,6 @@ class Player:
         self.keys = keys
         self.dealer_keys = dealer_keys
 
-    # TODO: the PRFs ought to be cached
     def prfs(self, modulus):
         """Retrieve PRSS PRFs.
 
@@ -61,9 +61,9 @@ class Player:
         prfs = {}
         for subset, key in self.keys.iteritems():
             prfs[subset] = PRF(key, modulus)
+        # TODO: the PRFs ought to be cached
         return prfs
 
-    # TODO: the PRFs ought to be cached
     def dealer_prfs(self, modulus):
         """Retrieve dealer PRSS PRFs.
 
@@ -79,11 +79,13 @@ class Player:
             for subset, key in keys.iteritems():
                 prfs[subset] = PRF(key, modulus)
                 dealers[dealer] = prfs
+        # TODO: the PRFs ought to be cached
         return dealers
 
     def __repr__(self):
         """Simple string representation of the player."""
         return "<Player %d: %s:%d>" % (self.id, self.host, self.port)
+
 
 def load_config(source):
     """Load a player configuration file.
@@ -98,6 +100,7 @@ def load_config(source):
     @return: owner ID and a mapping of player IDs to players.
     @returntype: C{int}, C{dict} from C{int} to L{Player} instances.
     """
+
     def s_unstr(str):
         """Convert a string to a subset ID."""
         return frozenset(map(int, str.split()))
@@ -109,7 +112,7 @@ def load_config(source):
     def d_unstr(str):
         """Convert a string to a dealer ID."""
         return int(str[7:])
-    
+
     if isinstance(source, ConfigObj):
         config = source
     else:
@@ -144,6 +147,7 @@ def load_config(source):
 
     return owner_id, players
 
+
 def generate_configs(n, t, addresses=None, prefix=None):
     """Generate player configurations.
 
@@ -157,7 +161,7 @@ def generate_configs(n, t, addresses=None, prefix=None):
 
     @return: mapping from player id to player configuration.
     @returntype: C{dict} from C{int} to C{ConfigObj}.
-    """    
+    """
     players = frozenset(range(1, n+1))
     max_unqualified_subsets = generate_subsets(players, n-t)
 

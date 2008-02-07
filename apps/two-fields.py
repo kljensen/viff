@@ -38,12 +38,13 @@ input2 = base + id
 
 print "I am player %d, will share %d and %d " % (id, input1, input2)
 
+
 def protocol(rt):
     a, b, c = rt.shamir_share([1, 2, 3], Zp, input1)
     x, y, z = rt.shamir_share([1, 2, 3], Zq, input2)
 
-    d = rt.open(rt.mul(rt.mul(a,b), c))
-    w = rt.open(rt.mul(rt.mul(x,y), z))
+    d = rt.open(rt.mul(rt.mul(a, b), c))
+    w = rt.open(rt.mul(rt.mul(x, y), z))
 
     def check(result, field, expected):
         if result == expected:

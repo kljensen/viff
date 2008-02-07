@@ -48,7 +48,7 @@ class ReceiveBid(LineReceiver):
             print "Done! Got %s" % self
         else:
             print "Could not recognize '%s'" % line
-        
+
     def __repr__(self):
         return "<ReceiveBid auction_id: %s, client_id: %s, client_type: %s, bids: %s>" \
                % (self.auction_id, self.client_id, self.client_type, self.bids)

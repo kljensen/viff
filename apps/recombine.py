@@ -32,7 +32,7 @@ else:
 print "Field: GF%d" % F.modulus
 
 shares = [map(int, arg.split(":")) for arg in sys.argv[1:]]
-shares = [(F(id), F(share)) for id,share in shares]
+shares = [(F(id), F(share)) for id, share in shares]
 
 print "Shares:", shares
 print "Result:", shamir.recombine(shares)

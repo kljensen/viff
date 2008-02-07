@@ -19,7 +19,8 @@
 # Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 # 02110-1301 USA
 
-import sys, random
+import sys
+import random
 
 from twisted.internet import reactor
 from twisted.internet.defer import gatherResults
@@ -37,6 +38,7 @@ try:
 except IndexError:
     count = 10
 
+
 def protocol(rt):
     l = 7
 
@@ -44,7 +46,7 @@ def protocol(rt):
 
     inputs = []
     for i in range(count):
-        input = dict([(j, rand[j].randint(0,pow(2,l))) for j in players])
+        input = dict([(j, rand[j].randint(0, pow(2, l))) for j in players])
         inputs.append(input)
 
     # Fixed input for easier debugging

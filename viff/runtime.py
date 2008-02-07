@@ -31,6 +31,7 @@ can be added, subtracted, and multiplied as normal thanks to
 overloaded arithmetic operators. The runtime will take care of
 scheduling things correctly behind the scenes.
 """
+from __future__ import division
 
 import marshal
 from optparse import OptionParser, OptionGroup
@@ -190,7 +191,6 @@ class ShareList(Share):
         return result
 
 
-# Roughly based on defer.gatherResults
 def gather_shares(shares):
     """Gather shares.
 
@@ -225,7 +225,7 @@ class ShareExchanger(Int16StringReceiver):
         except AttributeError:
             #print "No certificate in session"
             self.peer_cert = None
-        
+
     def stringReceived(self, string):
         """Called when a share is received.
 
@@ -286,7 +286,8 @@ class ShareExchanger(Int16StringReceiver):
         #        self.id, program_counter, share)
 
         self.sendData(program_counter, "share", share.value)
-        
+
+
     def loseConnection(self):
         """Disconnect this protocol instance."""
         self.transport.loseConnection()
@@ -308,7 +309,8 @@ class ShareExchangerFactory(ServerFactory, ClientFactory):
         self.runtime.add_player(self.players[protocol.peer_id], protocol)
         self.needed_protocols -= 1
         if self.needed_protocols == 0:
-            self.protocols_ready.callback(self.runtime)        
+            self.protocols_ready.callback(self.runtime)
+
 
 def create_runtime(id, players, threshold, options=None):
     """Create a L{Runtime} and connect to the other players.
@@ -327,19 +329,19 @@ def create_runtime(id, players, threshold, options=None):
             a = runtime.open(a)
             b = runtime.open(b)
             c = runtime.open(c)
-        
+
             dprint("Opened a: %s", a)
             dprint("Opened b: %s", b)
             dprint("Opened c: %s", c)
-        
+
             runtime.wait_for(a,b,c)
-        
+
         pre_runtime = create_runtime(id, players, 1)
         pre_runtime.addCallback(protocol)
 
     This is the general template which VIFF programs should follow.
     Please see the example applications for more examples.
-    
+
     """
     # This will yield a Runtime when all protocols are connected.
     result = Deferred()
@@ -378,10 +380,11 @@ def create_runtime(id, players, threshold, options=None):
             println("Will connect to %s", player)
             if options and options.tls:
                 reactor.connectTLS(player.host, player.port, factory, cred)
-            else:                
+            else:
                 reactor.connectTCP(player.host, player.port, factory)
 
     return result
+
 
 def increment_pc(method):
     """Make method automatically increment the program counter.
@@ -662,7 +665,7 @@ class Runtime:
         result = gather_shares(shares)
         result.addCallback(lambda _: None)
         return result
-        
+
     def add(self, share_a, share_b):
         """Addition of shares.
 
@@ -713,11 +716,11 @@ class Runtime:
         self.callback(result, self._shamir_share)
         self.callback(result, self._recombine, threshold=2*self.threshold)
         return result
-    
+
     @increment_pc
     def xor_int(self, share_a, share_b):
         """Exclusive-or of integer sharings.
-        
+
         Communication cost: 1 multiplication.
         """
         field = getattr(share_a, "field", getattr(share_b, "field", None))
@@ -748,7 +751,7 @@ class Runtime:
 
         # The shares for which we have all the keys.
         all_shares = []
-        
+
         # Shares we calculate from doing PRSS with the other players.
         tmp_shares = {}
 
@@ -826,7 +829,7 @@ class Runtime:
         """
         shares = shamir.share(number, self.threshold, len(self.players))
         #println("Shares of %s: %s", number, shares)
-        
+
         result = []
         for other_id, share in shares:
             d = self._exchange_shares(other_id.value, share)
@@ -878,7 +881,7 @@ class Runtime:
             xor = self.xor_bit
         else:
             xor = self.xor_int
-        
+
         # TODO: Using a parallel reduce below seems to be slower than
         # using the built-in reduce.
 
@@ -886,7 +889,7 @@ class Runtime:
         # the dst_field.
         tmp = self.open(reduce(xor, src_shares, share))
         tmp.addCallback(lambda i: dst_field(i.value))
-        
+
         if dst_field is GF256:
             xor = self.xor_bit
         else:
@@ -898,12 +901,12 @@ class Runtime:
     def convert_bit_share_II(self, share, src_field, dst_field):
         """Convert a 0/1 share from src_field into dst_field."""
 
-        #TODO: don't do log like this...
         def log(x):
+            # TODO: Don't do log like this...
             result = 0
             while x > 1:
                 result += 1
-                x /= 2
+                x //= 2
             return result+1 # Error for powers of two...
 
         l = self.options.security_parameter + log(dst_field.modulus)
@@ -1011,69 +1014,140 @@ class Runtime:
         return (top, bot)
 
     @increment_pc
-    def broadcast(self, sender, message=None):
+    def _broadcast(self, sender, message=None):
+        """Perform a Bracha broadcast.
+
+        A Bracha broadcast is reliable against an active adversary
+        corrupting up to t < n/3 of the players. For more details, see
+        the paper "An asynchronous [(n-1)/3]-resilient consensus
+        protocol" by G. Bracha in Proc. 3rd ACM Symposium on
+        Principles of Distributed Computing, 1984, pages 154-162.
+
+        @param sender: the sender of the broadcast message.
+        @param message: the broadcast message, used only by the sender.
+        """
+
         result = Deferred()
-
         pc = tuple(self.program_counter)
+        n = len(self.players)
+        t = self.threshold
 
-        self._bracha_echo[pc] = []
-        self._bracha_ready[pc] = []
-        self._bracha_sent_ready[pc] = False
-        self._bracha_delivered[pc] = False
+        # For each distinct message (and program counter) we save a
+        # dictionary for each of the following variables. The reason
+        # is that we need to count for each distinct message how many
+        # echo and ready messages we have received.
+        self._bracha_echo[pc] = {}
+        self._bracha_ready[pc] = {}
+        self._bracha_sent_ready[pc] = {}
+        self._bracha_delivered[pc] = {}
 
         def unsafe_broadcast(type, message):
+            # Performs a regular broadcast without any guarantees. In
+            # other words, it sends the message to each player except
+            # for this one.
             for protocol in self.protocols.itervalues():
                 protocol.sendData(pc, type, message)
 
         def echo_received(message, peer_id):
-            ids = self._bracha_echo[pc]
+            # This is called when we receive an echo message. It
+            # updates the echo count for the message and enters the
+            # ready state if the count is high enough.
+            ids = self._bracha_echo[pc].setdefault(message, [])
+            ready = self._bracha_sent_ready[pc].setdefault(message, False)
+
             if peer_id not in ids:
                 ids.append(peer_id)
-                if len(ids) >= ceil((len(self.players)+self.threshold+1)/2) \
-                   and not self._bracha_sent_ready[pc]:
-                    self._bracha_sent_ready[pc] = True
+                if len(ids) >= ceil((n+t+1)/2) and not ready:
+                    self._bracha_sent_ready[pc][message] = True
                     unsafe_broadcast("ready", message)
                     ready_received(message, self.id)
 
         def ready_received(message, peer_id):
-            ids = self._bracha_ready[pc]
+            # This is called when we receive a ready message. It
+            # updates the ready count for the message. Depending on
+            # the count, we may either stay in the same state or enter
+            # the ready or delivered state.
+            ids = self._bracha_ready[pc].setdefault(message, [])
+            ready = self._bracha_sent_ready[pc].setdefault(message, False)
+            delivered = self._bracha_delivered[pc].setdefault(message, False)
             if peer_id not in ids:
                 ids.append(peer_id)
-                if len(ids) == self.threshold+1 \
-                   and not self._bracha_sent_ready[pc]:
-                    self._bracha_sent_ready[pc] = True
+                if len(ids) == t+1 and not ready:
+                    self._bracha_sent_ready[pc][message] = True
                     unsafe_broadcast("ready", message)
                     ready_received(message, self.id)
 
-                if len(ids) == 2*self.threshold+1 \
-                   and not self._bracha_delivered[pc]:
+                elif len(ids) == 2*t+1 and not delivered:
+                    self._bracha_delivered[pc][message] = True
                     result.callback(message)
 
         def send_received(message):
+            # This is called when we receive a send message. We react
+            # by sending an echo message to each player. Since the
+            # unsafe broadcast doesn't send a message to this player,
+            # we simulate it by calling the echo_received function.
             unsafe_broadcast("echo", message)
             echo_received(message, self.id)
 
 
+        # In the following we prepare to handle a send message from
+        # the sender and at most one echo and one ready message from
+        # each player.
         d_send = Deferred().addCallback(send_received)
         self._expect_data(sender, "send", d_send)
-            
+
         for peer_id in self.players:
             d_echo = Deferred().addCallback(echo_received, peer_id)
             self._expect_data(peer_id, "echo", d_echo)
-            
+
             d_ready = Deferred().addCallback(ready_received, peer_id)
             self._expect_data(peer_id, "ready", d_ready)
-            
+
+        # If this player is the sender, we transmit a send message to
+        # each player. We send one to this player by calling the
+        # send_received function.
         if self.id == sender:
             unsafe_broadcast("send", message)
             send_received(message)
 
         return result
-                        
-                
-                
-    ########################################################################
-    ########################################################################
+
+    @increment_pc
+    def broadcast(self, senders, message=None):
+        """Perform one or more Bracha broadcast(s).
+
+        The list of senders given will determine the subset of players
+        who wish to broadcast a message. If this player wishes to
+        broadcast, its id must be in the list of senders and the
+        optional message parameter must be used.
+        
+        If the list of senders consists only of a single sender, the
+        result will be a single element, otherwise it will be a list.
+        
+        A Bracha broadcast is reliable against an active adversary
+        corrupting up to t < n/3 of the players. For more details, see
+        the paper "An asynchronous [(n-1)/3]-resilient consensus
+        protocol" by G. Bracha in Proc. 3rd ACM Symposium on
+        Principles of Distributed Computing, 1984, pages 154-162.
+
+        @param sender: the list of senders.
+        @param message: the broadcast message, used if this player is
+        a sender.
+        """
+        assert message is None or self.id in senders
+
+        result = []
+
+        for sender in senders:
+            if sender == self.id:
+                result.append(self._broadcast(sender, message))
+            else:
+                result.append(self._broadcast(sender))
+
+        if len(result) == 1:
+            return result[0]
+        
+        return result
 
     @increment_pc
     def greater_than_equalII_preproc(self, field, smallField=None):
@@ -1128,7 +1202,6 @@ class Runtime:
         ##################################################
         # Preprocessing done
         ##################################################
-        
 
     @increment_pc
     def greater_than_equalII_online(self, share_a, share_b, preproc, field):
@@ -1140,7 +1213,7 @@ class Runtime:
         # a = 2a+1; b= 2b // ensures inputs not equal
         share_a = 2 * share_a + 1
         share_b = 2 * share_b
-        
+
         ##################################################
         # Unpack preprocessing
         ##################################################
@@ -1203,8 +1276,8 @@ class Runtime:
         c_mod2l = c.value % 2**l
         result = (c_mod2l - r_modl) + UF * 2**l
         return (z - result) * ~field(2**l)
-    # END _finish_greater_than_equalII
-    
+    # END _finish_greater_thanII
+
     @increment_pc
     def greater_than_equalII(self, share_a, share_b):
         """Compute share_a >= share_b.
@@ -1217,9 +1290,6 @@ class Runtime:
         return self.greater_than_equalII_online(share_a, share_b, preproc,
                                                 field)
 
-    ########################################################################
-    ########################################################################
-
     def _exchange_shares(self, id, field_element):
         """Exchange shares with another player.
 
@@ -1227,8 +1297,6 @@ class Runtime:
         trigger when the share from the other side arrives.
         """
         assert isinstance(field_element, FieldElement)
-        #println("exchange_shares sending: program_counter=%s, id=%d, share=%s",
-        #        self.program_counter, id, share)
 
         if id == self.id:
             return Share(self, field_element.field, field_element)

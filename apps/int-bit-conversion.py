@@ -30,6 +30,7 @@ from viff.config import load_config
 id, players = load_config(sys.argv[1])
 print "I am player %d" % id
 
+
 def protocol(rt):
     print "Starting protocol"
     Zp = GF(11)

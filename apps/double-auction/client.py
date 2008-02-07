@@ -30,11 +30,6 @@ import gtk.glade
 
 from configobj import ConfigObj
 
-
-
-
-
-
 PRICES = 10
 TRADE_MAX = 100
 
@@ -98,10 +93,10 @@ class Client:
                 config['client_type'] = 'seller'
 
             config['bids'] = {}
-        
+
             for price, scale in zip(range(PRICES), self.scales):
                 config['bids'][str(price)] = int(scale.get_value())
-            
+
             config.filename = chooser.get_filename()
             config.write()
         chooser.destroy()

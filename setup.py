@@ -41,7 +41,7 @@ class hg_sdist(sdist):
         repo = hg.repository(None)
         changeset = repo.changectx()
         files = changeset.manifest().keys()
-        
+
         # Add the files *before* the normal manifest magic is done.
         # That allows the manifest template to exclude some files
         # tracked by hg and to include others.
