@@ -268,24 +268,24 @@ class RuntimeTest(RuntimeTestCase):
         return gatherResults(results)
 
     @protocol
-    def test_greater_than(self, runtime):
+    def test_greater_than_equal(self, runtime):
         # Shamir shares of 42 and 117:
         share_a = self.Zp(42 + runtime.id)
         share_b = self.Zp(117 - runtime.id)
 
-        result = runtime.greater_than(share_a, share_b)
+        result = runtime.greater_than_equal(share_a, share_b)
         opened = runtime.open(result)
         opened.addCallback(self.assertEquals, GF256(42 >= 117))
 
         return opened
 
     @protocol
-    def test_greater_thanII(self, runtime):
+    def test_greater_than_equalII(self, runtime):
         # Shamir shares of 42 and 117:
         share_a = self.Zp(42 + runtime.id)
         share_b = self.Zp(117 - runtime.id)
 
-        result = runtime.greater_thanII(share_a, share_b)
+        result = runtime.greater_than_equalII(share_a, share_b)
         opened = runtime.open(result)
         opened.addCallback(self.assertEquals, self.Zp(42 >= 117))
 
@@ -342,12 +342,12 @@ if 'STRESS' in os.environ:
                 a, b, c = runtime.shamir_share([1, 2, 3], self.Zp,
                                                inputs[runtime.id])
 
-                result_shares = [runtime.greater_than(a, b),
-                                 runtime.greater_than(b, a),
-                                 runtime.greater_than(a, c),
-                                 runtime.greater_than(c, a),
-                                 runtime.greater_than(b, c),
-                                 runtime.greater_than(c, b)]
+                result_shares = [runtime.greater_than_equal(a, b),
+                                 runtime.greater_than_equal(b, a),
+                                 runtime.greater_than_equal(a, c),
+                                 runtime.greater_than_equal(c, a),
+                                 runtime.greater_than_equal(b, c),
+                                 runtime.greater_than_equal(c, b)]
 
                 # Open all results
                 opened_results = map(runtime.open, result_shares)

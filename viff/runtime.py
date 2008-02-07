@@ -909,7 +909,7 @@ class Runtime:
         return tmp - full_mask
 
     @increment_pc
-    def greater_than(self, share_a, share_b):
+    def greater_than_equal(self, share_a, share_b):
         """Compute share_a >= share_b.
 
         Both arguments must be from the field given. The result is a
@@ -945,11 +945,11 @@ class Runtime:
         T = self.open(2**t - int_b + a)
 
         result = gather_shares([T] + bit_bits)
-        self.callback(result, self._finish_greater_than, l)
+        self.callback(result, self._finish_greater_than_equal, l)
         return result
 
     @increment_pc
-    def _finish_greater_than(self, results, l):
+    def _finish_greater_than_equal(self, results, l):
         """Finish the calculation."""
         T = results[0]
         bit_bits = results[1:]
@@ -1056,8 +1056,8 @@ class Runtime:
     ########################################################################
 
     @increment_pc
-    def greater_thanII_preproc(self, field, smallField=None):
-        """Preprocessing for greater_thanII."""
+    def greater_than_equalII_preproc(self, field, smallField=None):
+        """Preprocessing for greater_than_equalII."""
         if smallField is None:
             smallField = field
 
@@ -1111,7 +1111,7 @@ class Runtime:
         
 
     @increment_pc
-    def greater_thanII_online(self, share_a, share_b, preproc, field):
+    def greater_than_equalII_online(self, share_a, share_b, preproc, field):
         """Compute share_a >= share_b.
         Result is shared.
         """
@@ -1136,13 +1136,13 @@ class Runtime:
         z = share_a - share_b + 2**l
         c = self.open(r_full + z)
 
-        self.callback(c, self._finish_greater_thanII,
+        self.callback(c, self._finish_greater_than_equalII,
                       field, smallField, s_bit, s_sign, mask,
                       r_modl, r_bits, z)
         return c
 
     @increment_pc
-    def _finish_greater_thanII(self, c, field, smallField, s_bit, s_sign,
+    def _finish_greater_than_equalII(self, c, field, smallField, s_bit, s_sign,
                                mask, r_modl, r_bits, z):
         """Finish the calculation."""
         # increment l as a, b are increased
@@ -1183,18 +1183,19 @@ class Runtime:
         c_mod2l = c.value % 2**l
         result = (c_mod2l - r_modl) + UF * 2**l
         return (z - result) * ~field(2**l)
-    # END _finish_greater_thanII
+    # END _finish_greater_than_equalII
     
     @increment_pc
-    def greater_thanII(self, share_a, share_b):
+    def greater_than_equalII(self, share_a, share_b):
         """Compute share_a >= share_b.
 
         Both arguments must be of type field. The result is a
         field share.
         """
         field = share_a.field
-        preproc = self.greater_thanII_preproc(field)
-        return self.greater_thanII_online(share_a, share_b, preproc, field)
+        preproc = self.greater_than_equalII_preproc(field)
+        return self.greater_than_equalII_online(share_a, share_b, preproc,
+                                                field)
 
     ########################################################################
     ########################################################################
