@@ -273,7 +273,7 @@ class RuntimeTest(RuntimeTestCase):
         share_a = self.Zp(42 + runtime.id)
         share_b = self.Zp(117 - runtime.id)
 
-        result = runtime.greater_than(share_a, share_b, self.Zp)
+        result = runtime.greater_than(share_a, share_b)
         opened = runtime.open(result)
         opened.addCallback(self.assertEquals, GF256(42 >= 117))
 
@@ -285,7 +285,7 @@ class RuntimeTest(RuntimeTestCase):
         share_a = self.Zp(42 + runtime.id)
         share_b = self.Zp(117 - runtime.id)
 
-        result = runtime.greater_thanII(share_a, share_b, self.Zp)
+        result = runtime.greater_thanII(share_a, share_b)
         opened = runtime.open(result)
         opened.addCallback(self.assertEquals, self.Zp(42 >= 117))
 
@@ -342,12 +342,12 @@ if 'STRESS' in os.environ:
                 a, b, c = runtime.shamir_share([1, 2, 3], self.Zp,
                                                inputs[runtime.id])
 
-                result_shares = [runtime.greater_than(a, b, self.Zp),
-                                 runtime.greater_than(b, a, self.Zp),
-                                 runtime.greater_than(a, c, self.Zp),
-                                 runtime.greater_than(c, a, self.Zp),
-                                 runtime.greater_than(b, c, self.Zp),
-                                 runtime.greater_than(c, b, self.Zp)]
+                result_shares = [runtime.greater_than(a, b),
+                                 runtime.greater_than(b, a),
+                                 runtime.greater_than(a, c),
+                                 runtime.greater_than(c, a),
+                                 runtime.greater_than(b, c),
+                                 runtime.greater_than(c, b)]
 
                 # Open all results
                 opened_results = map(runtime.open, result_shares)

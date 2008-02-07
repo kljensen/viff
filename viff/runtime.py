@@ -909,7 +909,7 @@ class Runtime:
         return tmp - full_mask
 
     @increment_pc
-    def greater_than(self, share_a, share_b, field):
+    def greater_than(self, share_a, share_b):
         """Compute share_a >= share_b.
 
         Both arguments must be from the field given. The result is a
@@ -918,6 +918,7 @@ class Runtime:
         l = self.options.bit_length
         m = l + 2
         t = m + 1
+        field = share_a.field # Should be the same as share_b.field.
 
         # Preprocessing begin
 
@@ -1185,12 +1186,13 @@ class Runtime:
     # END _finish_greater_thanII
     
     @increment_pc
-    def greater_thanII(self, share_a, share_b, field):
+    def greater_thanII(self, share_a, share_b):
         """Compute share_a >= share_b.
 
         Both arguments must be of type field. The result is a
         field share.
         """
+        field = share_a.field
         preproc = self.greater_thanII_preproc(field)
         return self.greater_thanII_online(share_a, share_b, preproc, field)
 
