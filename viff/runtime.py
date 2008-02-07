@@ -265,7 +265,7 @@ class ShareExchanger(Int16StringReceiver):
         #println("Sending to id=%d: program_counter=%s, share=%s",
         #        self.id, program_counter, share)
 
-        self.sendData(program_counter, "share", (share.modulus, share.value))
+        self.sendData(program_counter, "share", share.value)
         
     def loseConnection(self):
         """Disconnect this protocol instance."""
@@ -1216,9 +1216,8 @@ class Runtime:
             return share
 
     def _expect_share(self, peer_id, field):
-        # TODO: Avoid sending the modulus back and forth over the net.
         share = Share(self, field)
-        share.addCallback(lambda (modulus, value): GF(modulus)(value))
+        share.addCallback(lambda value: field(value))
         self._expect_data(peer_id, "share", share)
         return share
 
