@@ -60,14 +60,19 @@ class Share(Deferred):
     and the arithmetic operations simply call back to that runtime.
     """
 
-    def __init__(self, runtime, value=None):
+    def __init__(self, runtime, field, value=None):
         """Initialize a share.
 
         @param runtime: The L{Runtime} to use.
+        @param field: The field where the value lies.
         @param value: The initial value of the share (if known).
         """
+        assert field is not None, "Cannot construct share without a field."
+        assert callable(field), "The field is not callable, wrong argument?"
+
         Deferred.__init__(self)
         self.runtime = runtime
+        self.field = field
         if value is not None:
             self.callback(value)
 
@@ -121,7 +126,7 @@ class Share(Deferred):
         def split_result(result):
             clone.callback(result)
             return result
-        clone = Share(self.runtime)
+        clone = Share(self.runtime, self.field)
         self.addCallback(split_result)
         return clone
 
@@ -144,7 +149,7 @@ class ShareList(Share):
         assert threshold is None or 0 < threshold <= len(shares), \
             "Threshold out of range"
 
-        Share.__init__(self, shares[0].runtime)
+        Share.__init__(self, shares[0].runtime, shares[0].field)
 
         self.results = [None] * len(shares)
         if threshold is None:
@@ -643,10 +648,11 @@ class Runtime:
 
         Communication cost: none.
         """
+        field = getattr(share_a, "field", getattr(share_b, "field", None))
         if not isinstance(share_a, Share):
-            share_a = Share(self, share_a)
+            share_a = Share(self, field, share_a)
         if not isinstance(share_b, Share):
-            share_b = Share(self, share_b)
+            share_b = Share(self, field, share_b)
 
         result = gather_shares([share_a, share_b])
         result.addCallback(lambda (a, b): a + b)
@@ -657,10 +663,11 @@ class Runtime:
 
         Communication cost: none.
         """
+        field = getattr(share_a, "field", getattr(share_b, "field", None))
         if not isinstance(share_a, Share):
-            share_a = Share(self, share_a)
+            share_a = Share(self, field, share_a)
         if not isinstance(share_b, Share):
-            share_b = Share(self, share_b)
+            share_b = Share(self, field, share_b)
 
         result = gather_shares([share_a, share_b])
         result.addCallback(lambda (a, b): a - b)
@@ -675,11 +682,11 @@ class Runtime:
         # TODO:  mul accept FieldElements and do quick local
         # multiplication in that case. If two FieldElements are given,
         # return a FieldElement.
-
+        field = getattr(share_a, "field", getattr(share_b, "field", None))
         if not isinstance(share_a, Share):
-            share_a = Share(self, share_a)
+            share_a = Share(self, field, share_a)
         if not isinstance(share_b, Share):
-            share_b = Share(self, share_b)
+            share_b = Share(self, field, share_b)
 
         result = gather_shares([share_a, share_b])
         result.addCallback(lambda (a, b): a * b)
@@ -693,10 +700,11 @@ class Runtime:
         
         Communication cost: 1 multiplication.
         """
+        field = getattr(share_a, "field", getattr(share_b, "field", None))
         if not isinstance(share_a, Share):
-            share_a = Share(self, share_a)
+            share_a = Share(self, field, share_a)
         if not isinstance(share_b, Share):
-            share_b = Share(self, share_b)
+            share_b = Share(self, field, share_b)
 
         return share_a + share_b - 2 * share_a * share_b
 
@@ -771,7 +779,7 @@ class Runtime:
         share = prss(len(self.players), self.id, field, prfs, prss_key)
 
         if field is GF256 or not binary:
-            return Share(self, share)
+            return Share(self, field, share)
 
         # Open the square and compute a square-root
         result = self.open(self.mul(share, share), 2*self.threshold)
@@ -785,7 +793,7 @@ class Runtime:
                 root = square.sqrt()
                 # When the root is computed, we divide the share and
                 # convert the resulting -1/1 share into a 0/1 share.
-                return Share(self, (share/root + 1) / 2)
+                return Share(self, field, (share/root + 1) / 2)
 
         self.callback(result, finish, share, binary)
         return result
@@ -808,28 +816,28 @@ class Runtime:
         return result
 
     @increment_pc
-    def shamir_share(self, number, inputters):
-        """Share a field element using Shamir sharing.
+    def shamir_share(self, inputters, field, number=None):
+        """Secret share C{number} over C{field} using Shamir's method.
 
         Returns a list of shares.
 
         Communication cost: n elements transmitted.
         """
-        assert number is None or isinstance(number, FieldElement)
         assert number is None or self.id in inputters
 
         results = []
         for peer_id in inputters:
             if peer_id == self.id:
                 pc = tuple(self.program_counter)
-                shares = shamir.share(number, self.threshold, len(self.players))
+                shares = shamir.share(field(number), self.threshold,
+                                      len(self.players))
                 for other_id, share in shares:
                     if other_id.value == self.id:
-                        results.append(Share(self, share))
+                        results.append(Share(self, share.field, share))
                     else:
                         self.protocols[other_id.value].sendShare(pc, share)
             else:
-                results.append(self._expect_share(peer_id))
+                results.append(self._expect_share(peer_id, field))
 
         # Unpack a singleton list.
         if len(results) == 1:
@@ -1200,17 +1208,16 @@ class Runtime:
         #        self.program_counter, id, share)
 
         if id == self.id:
-            return Share(self, field_element)
+            return Share(self, field_element.field, field_element)
         else:
-            share = self._expect_share(id)
+            share = self._expect_share(id, field_element.field)
             pc = tuple(self.program_counter)
             self.protocols[id].sendShare(pc, field_element)
             return share
 
-    def _expect_share(self, peer_id):
-        # TODO: specify the modulus as an argument to the method. This
-        # will save us from sending it back and forth over the net.
-        share = Share(self)
+    def _expect_share(self, peer_id, field):
+        # TODO: Avoid sending the modulus back and forth over the net.
+        share = Share(self, field)
         share.addCallback(lambda (modulus, value): GF(modulus)(value))
         self._expect_data(peer_id, "share", share)
         return share

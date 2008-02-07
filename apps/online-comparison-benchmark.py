@@ -105,11 +105,9 @@ def protocol(rt):
     print "k = %d" % k
 
     shares = []
-    inputs = []
     for n in range(2*count//len(players) + 1):
-        input = Zp(rand.randint(0, 2**l - 1))
-        inputs.append(input)
-        shares.extend(rt.shamir_share(input, [1, 2, 3]))
+        input = rand.randint(0, 2**l - 1)
+        shares.extend(rt.shamir_share([1, 2, 3], Zp, input))
     # We want to measure the time for count comparisons, so we need
     # 2*count input numbers.
     shares = shares[:2*count]
