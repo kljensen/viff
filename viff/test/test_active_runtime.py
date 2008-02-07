@@ -43,9 +43,20 @@ class ActiveRuntimeTest(RuntimeTestCase):
         # TODO: Figure out how to introduce network errors and test
         # those too.
         if runtime.id == 1:
-            x = runtime.broadcast(1, "Hello world!")
+            x = runtime.broadcast([1], "Hello world!")
         else:
-            x = runtime.broadcast(1)
+            x = runtime.broadcast([1])
+
+        if runtime.id == 2:
+            y, z = runtime.broadcast([2, 3], "Hello two!")
+        elif runtime.id == 3:
+            y, z = runtime.broadcast([2, 3], "Hello three!")
+        else:
+            y, z = runtime.broadcast([2, 3])
 
         x.addCallback(self.assertEquals, "Hello world!")
-        return x
+        
+        y.addCallback(self.assertEquals, "Hello two!")
+        z.addCallback(self.assertEquals, "Hello three!")
+        
+        return gatherResults([x, y, z])

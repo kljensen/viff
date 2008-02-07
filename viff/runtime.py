@@ -984,7 +984,7 @@ class Runtime:
         return (top, bot)
 
     @increment_pc
-    def broadcast(self, sender, message=None):
+    def _broadcast(self, sender, message=None):
         """Perform a Bracha broadcast.
 
         A Bracha broadcast is reliable against an active adversary
@@ -996,8 +996,8 @@ class Runtime:
         @param sender: the sender of the broadcast message.
         @param message: the broadcast message, used only by the sender.
         """
-        result = Deferred()
 
+        result = Deferred()
         pc = tuple(self.program_counter)
         n = len(self.players)
         t = self.threshold
@@ -1080,6 +1080,43 @@ class Runtime:
             unsafe_broadcast("send", message)
             send_received(message)
 
+        return result
+
+    @increment_pc
+    def broadcast(self, senders, message=None):
+        """Perform one or more Bracha broadcast(s).
+
+        The list of senders given will determine the subset of players
+        who wish to broadcast a message. If this player wishes to
+        broadcast, its id must be in the list of senders and the
+        optional message parameter must be used.
+        
+        If the list of senders consists only of a single sender, the
+        result will be a single element, otherwise it will be a list.
+        
+        A Bracha broadcast is reliable against an active adversary
+        corrupting up to t < n/3 of the players. For more details, see
+        the paper "An asynchronous [(n-1)/3]-resilient consensus
+        protocol" by G. Bracha in Proc. 3rd ACM Symposium on
+        Principles of Distributed Computing, 1984, pages 154-162.
+
+        @param sender: the list of senders.
+        @param message: the broadcast message, used if this player is
+        a sender.
+        """
+        assert message is None or self.id in senders
+
+        result = []
+
+        for sender in senders:
+            if sender == self.id:
+                result.append(self._broadcast(sender, message))
+            else:
+                result.append(self._broadcast(sender))
+
+        if len(result) == 1:
+            return result[0]
+        
         return result
 
     @increment_pc
