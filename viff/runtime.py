@@ -1047,7 +1047,7 @@ class Runtime:
                     unsafe_broadcast("ready", message)
                     ready_received(message, self.id)
 
-                if len(ids) == 2*t+1 and not delivered:
+                elif len(ids) == 2*t+1 and not delivered:
                     self._bracha_delivered[pc][message] = True
                     result.callback(message)
 
