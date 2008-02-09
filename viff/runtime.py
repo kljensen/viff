@@ -879,30 +879,18 @@ class Runtime:
         dst_shares = self.prss_share(dst_field(bit))
         src_shares = self.prss_share(src_field(bit))
 
-        # TODO: merge xor_int and xor_bit into an xor method and move
-        # this decision there.
-        if src_field is GF256:
-            xor = self.xor_bit
-        else:
-            xor = self.xor_int
-
         # TODO: Using a parallel reduce below seems to be slower than
         # using the built-in reduce.
 
         # We open tmp and convert the value into a field element from
         # the dst_field.
-        tmp = self.open(reduce(xor, src_shares, share))
+        tmp = self.open(reduce(self.xor, src_shares, share))
         tmp.addCallback(lambda i: dst_field(i.value))
         # Must update field on Share when we change the field of the
         # the value within
         tmp.field = dst_field
 
-        if dst_field is GF256:
-            xor = self.xor_bit
-        else:
-            xor = self.xor_int
-
-        return reduce(xor, dst_shares, tmp)
+        return reduce(self.xor, dst_shares, tmp)
 
     @increment_pc
     def convert_bit_share_II(self, share, src_field, dst_field):
