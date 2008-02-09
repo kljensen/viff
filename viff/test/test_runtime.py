@@ -135,8 +135,8 @@ class RuntimeTest(RuntimeTestCase):
                 # Share a and b with a pseudo-Shamir sharing. The
                 # addition is done with field elements because we need
                 # the special GF256 addition here when field is GF256.
-                share_a = Share(runtime, self.Zp, field(a) + runtime.id)
-                share_b = Share(runtime, self.Zp, field(b) + runtime.id)
+                share_a = Share(runtime, field, field(a) + runtime.id)
+                share_b = Share(runtime, field, field(b) + runtime.id)
 
                 if field is self.Zp:
                     share_c = runtime.xor_int(share_a, share_b)
