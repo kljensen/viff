@@ -182,6 +182,13 @@ class GF256TestCase(TestCase):
         self._test_binary_operator(operator.sub, 0, 1, 1)
         self._test_binary_operator(operator.sub, 1, 2, 3)
 
+    def test_xor(self):
+        """Test exclusive-or."""
+        self._test_binary_operator(operator.xor, 0, 0, 0)
+        self._test_binary_operator(operator.xor, 0, 1, 1)
+        self._test_binary_operator(operator.xor, 1, 0, 1)
+        self._test_binary_operator(operator.xor, 1, 1, 0)
+
     def test_mul(self):
         """Test multiplication."""
         self._test_binary_operator(operator.mul, 0, 47, 0)

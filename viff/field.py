@@ -171,6 +171,14 @@ class GF256(FieldElement):
     #: Subtract this and another GF256 element (reflected argument version).
     __rsub__ = __sub__
 
+    #: Exclusive-or.
+    #:
+    #: This is just addition for GF256 elements.
+    __xor__ = __add__
+
+    #: Exclusive-or (reflected argument version).
+    __rxor__ = __xor__
+
     def __mul__(self, other):
         """Multiply this and another GF256.
 
