@@ -138,10 +138,7 @@ class RuntimeTest(RuntimeTestCase):
                 share_a = Share(runtime, field, field(a) + runtime.id)
                 share_b = Share(runtime, field, field(b) + runtime.id)
 
-                if field is self.Zp:
-                    share_c = runtime.xor_int(share_a, share_b)
-                else:
-                    share_c = runtime.xor_bit(share_a, share_b)
+                share_c = share_a ^ share_b
 
                 opened_c = runtime.open(share_c)
                 opened_c.addCallback(self.assertEquals, field(a ^ b))

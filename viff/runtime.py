@@ -101,6 +101,14 @@ class Share(Deferred):
         """Multiplication (reflected argument version)."""
         return self.runtime.mul(other, self)
 
+    def __xor__(self, other):
+        """Exclusive-or."""
+        return self.runtime.xor(self, other)
+
+    def __rxor__(self, other):
+        """Exclusive-or (reflected argument version)."""
+        return self.runtime.xor(other, self)
+
     def __lt__(self, other):
         """Strictly less-than comparison."""
         # self < other <=> not (self >= other)
@@ -120,23 +128,6 @@ class Share(Deferred):
         """Greater-than or equal comparison."""
         # self >= other
         return self.runtime.greater_than_equal(self, other)
-
-    # TODO: The xor implementation below does not work, and it is not
-    # really a good idea either. Instead there should be a single xor
-    # method in Runtime or two classes of Shares. So keep using
-    # xor_int and xor_bit for now.
-    #
-    #def __xor__(self, other):
-    #    """Exclusive-or."""
-    #    def run_correct_xor(shares):
-    #        if isinstance(shares[0], GF256) or isinstance(shares[1], GF256):
-    #            return self.runtime.xor_bit(shares[0], shares[1])
-    #        else:
-    #            return self.runtime.xor_int(shares[0], shares[1])
-    #
-    #    shares = gather_shares([self, other])
-    #    shares.addCallback(run_correct_xor)
-    #    return shares
 
     def clone(self):
         """Clone a share.
@@ -716,6 +707,19 @@ class Runtime:
         self.callback(result, self._shamir_share)
         self.callback(result, self._recombine, threshold=2*self.threshold)
         return result
+
+    @increment_pc
+    def xor(self, share_a, share_b):
+        field = getattr(share_a, "field", getattr(share_b, "field", None))
+        if not isinstance(share_a, Share):
+            share_a = Share(self, field, share_a)
+        if not isinstance(share_b, Share):
+            share_b = Share(self, field, share_b)
+
+        if field is GF256:
+            return share_a + share_b
+        else:
+            return share_a + share_b - 2 * share_a * share_b
 
     @increment_pc
     def xor_int(self, share_a, share_b):
