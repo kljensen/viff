@@ -280,6 +280,7 @@ class RuntimeTest(RuntimeTestCase):
         for value in 0, 1:
             share = Share(runtime, self.Zp, self.Zp(value))
             converted = runtime.convert_bit_share(share, self.Zp, GF256)
+            self.assertEquals(converted.field, GF256)
             opened = runtime.open(converted)
             opened.addCallback(self.assertEquals, GF256(value))
             results.append(opened)

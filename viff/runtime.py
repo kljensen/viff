@@ -893,6 +893,9 @@ class Runtime:
         # the dst_field.
         tmp = self.open(reduce(xor, src_shares, share))
         tmp.addCallback(lambda i: dst_field(i.value))
+        # Must update field on Share when we change the field of the
+        # the value within
+        tmp.field = dst_field
 
         if dst_field is GF256:
             xor = self.xor_bit
@@ -930,6 +933,9 @@ class Runtime:
         tmp = self.open(tmp)
 
         tmp.addCallback(lambda i: dst_field(i.value))
+        # Must update field on Share when we change the field of the
+        # the value within
+        tmp.field = dst_field
 
         full_mask = reduce(self.add, dst_shares)
 
