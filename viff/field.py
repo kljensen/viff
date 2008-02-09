@@ -136,14 +136,6 @@ class GF256(FieldElement):
         """
         self.value = value % self.modulus
 
-    def field(self, value):
-        """Return a field element with the given value.
-
-        Provided to make the construction of new elements easy in a
-        polymorphic context.
-        """
-        return GF256(value)
-
     def __add__(self, other):
         """Add this and another GF256 element.
 
@@ -278,6 +270,10 @@ class GF256(FieldElement):
         False
         """
         return self.value != 0
+
+# We provide the class here to make the construction of new elements
+# easy in a polymorphic context.
+GF256.field = GF256
 
 
 #: Cached fields.

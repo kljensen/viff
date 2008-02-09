@@ -35,6 +35,11 @@ class GFpElementTestCase(TestCase):
         """Initialize Zp to Z31."""
         self.field = GF(31)
 
+    def test_field(self):
+        """Test field attribute."""
+        self.assertIdentical(self.field.field, self.field)
+        self.assertIdentical(self.field(100).field, self.field)
+
     def _test_binary_operator(self, operation, a, b, expected):
         """Test C{operation} with and without coerced operands."""
         result = operation(self.field(a), self.field(b))
@@ -140,6 +145,11 @@ class GF256TestCase(TestCase):
         """Test overflows in constructor."""
         self.assertEquals(GF256(256), GF256(0))
         self.assertEquals(GF256(257), GF256(1))
+
+    def test_field(self):
+        """Test field attribute."""
+        self.assertIdentical(GF256.field, GF256)
+        self.assertIdentical(GF256(10).field, GF256)
 
     def _test_binary_operator(self, operation, a, b, expected):
         """Test C{operation} with and without coerced operands."""
