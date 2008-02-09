@@ -722,25 +722,6 @@ class Runtime:
             return share_a + share_b - 2 * share_a * share_b
 
     @increment_pc
-    def xor_int(self, share_a, share_b):
-        """Exclusive-or of integer sharings.
-
-        Communication cost: 1 multiplication.
-        """
-        field = getattr(share_a, "field", getattr(share_b, "field", None))
-        if not isinstance(share_a, Share):
-            share_a = Share(self, field, share_a)
-        if not isinstance(share_b, Share):
-            share_b = Share(self, field, share_b)
-
-        return share_a + share_b - 2 * share_a * share_b
-
-    #: Exclusive-or of GF256 sharings.
-    #:
-    #: Communication cost: none.
-    xor_bit = add
-
-    @increment_pc
     def prss_share(self, element):
         """PRSS share a field element.
 
@@ -980,7 +961,7 @@ class Runtime:
         # Calculate the vector, using only the first l bits
         for i, bi in enumerate(bit_bits[:l]):
             Ti = GF256(T.bit(i))
-            ci = self.xor_bit(bi, Ti)
+            ci = Share(self, GF256, bi ^ Ti)
             vec.append((ci, Ti))
 
         # Reduce using the diamond operator. We want to do as much
@@ -995,8 +976,7 @@ class Runtime:
                 tmp.append(vec[0])
             vec = tmp
 
-        return self.xor_bit(GF256(T.bit(l)),
-                            self.xor_bit(bit_bits[l], vec[0][1]))
+        return GF256(T.bit(l)) ^ (bit_bits[l] ^ vec[0][1])
 
     @increment_pc
     def _diamond(self, (top_a, bot_a), (top_b, bot_b)):
@@ -1008,7 +988,7 @@ class Runtime:
         (x, X) `diamond` (1, Y) = (x, X)
         """
         top = top_a * top_b
-        bot = self.xor_bit(top_b * self.xor_bit(bot_a, bot_b), bot_b)
+        bot = top_b * (bot_a ^ bot_b) ^ bot_b
         return (top, bot)
 
     @increment_pc
@@ -1245,7 +1225,7 @@ class Runtime:
         #                           - 2*r_bits[i+1]*c_(i+1)
         for i in range(l-2, -1, -1):
             # sumXORs[i] = \sum_{j=i+1}^{l-1} r_j\oplus c_j
-            sumXORs[i] = sumXORs[i+1] + self.xor_int(r_bits[i+1], c_bits[i+1])
+            sumXORs[i] = sumXORs[i+1] + (r_bits[i+1] ^ c_bits[i+1])
         E_tilde = []
         for i in range(len(r_bits)):
             ## s + rBit[i] - cBit[i] + 3 * sumXors[i];
@@ -1266,7 +1246,7 @@ class Runtime:
         non_zero = E_tilde[0]
 
         # UF == underflow
-        UF = self.xor_int(non_zero, s_bit)
+        UF = non_zero ^ s_bit
 
         # conclude the computation -- compute final bit and map to 0/1
         # return  2^(-l) * (z - (c%2**l - r%2**l + UF*2**l))
