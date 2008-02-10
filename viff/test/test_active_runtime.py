@@ -17,13 +17,7 @@
 # Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 # 02110-1301 USA
 
-import os
-from random import Random
-
 from twisted.internet.defer import gatherResults
-
-from viff.field import GF256
-from viff.runtime import Share
 
 from viff.test.util import RuntimeTestCase, protocol
 

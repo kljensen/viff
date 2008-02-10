@@ -39,7 +39,7 @@ from math import ceil
 
 from viff import shamir
 from viff.prss import prss
-from viff.field import GF, GF256, FieldElement
+from viff.field import GF256, FieldElement
 from viff.util import rand, println
 
 from twisted.internet import reactor
