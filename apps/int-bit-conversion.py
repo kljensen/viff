@@ -37,13 +37,13 @@ def protocol(rt):
     a, b, c = rt.prss_share(Zp(0))
     x, y, z = rt.prss_share(Zp(1))
 
-    a_b = rt.open(rt.convert_bit_share(a, Zp, GF256))
-    b_b = rt.open(rt.convert_bit_share(b, Zp, GF256))
-    c_b = rt.open(rt.convert_bit_share(c, Zp, GF256))
+    a_b = rt.open(rt.convert_bit_share(a, GF256))
+    b_b = rt.open(rt.convert_bit_share(b, GF256))
+    c_b = rt.open(rt.convert_bit_share(c, GF256))
 
-    x_b = rt.open(rt.convert_bit_share(x, Zp, GF256))
-    y_b = rt.open(rt.convert_bit_share(y, Zp, GF256))
-    z_b = rt.open(rt.convert_bit_share(z, Zp, GF256))
+    x_b = rt.open(rt.convert_bit_share(x, GF256))
+    y_b = rt.open(rt.convert_bit_share(y, GF256))
+    z_b = rt.open(rt.convert_bit_share(z, GF256))
 
     def check(result, variable, expected):
         if result == expected:

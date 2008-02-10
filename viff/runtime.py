@@ -854,11 +854,11 @@ class Runtime:
             return results
 
     @increment_pc
-    def convert_bit_share(self, share, src_field, dst_field):
-        """Convert a 0/1 share from src_field into dst_field."""
+    def convert_bit_share(self, share, dst_field):
+        """Convert a 0/1 share into dst_field."""
         bit = rand.randint(0, 1)
         dst_shares = self.prss_share(dst_field(bit))
-        src_shares = self.prss_share(src_field(bit))
+        src_shares = self.prss_share(share.field(bit))
 
         # TODO: Using a parallel reduce below seems to be slower than
         # using the built-in reduce.
@@ -874,8 +874,8 @@ class Runtime:
         return reduce(self.xor, dst_shares, tmp)
 
     @increment_pc
-    def convert_bit_share_II(self, share, src_field, dst_field):
-        """Convert a 0/1 share from src_field into dst_field."""
+    def convert_bit_share_II(self, share, dst_field):
+        """Convert a 0/1 share into dst_field."""
 
         def log(x):
             # TODO: Don't do log like this...
@@ -892,7 +892,7 @@ class Runtime:
 
         # Share large random values in the big field and reduced ones
         # in the small...
-        src_shares = self.prss_share(src_field(this_mask))
+        src_shares = self.prss_share(share.field(this_mask))
         dst_shares = self.prss_share(dst_field(this_mask))
 
         tmp = reduce(self.add, src_shares, share)
@@ -940,7 +940,7 @@ class Runtime:
 
         # TODO: this changes int_bits! It should be okay since
         # int_bits is not used any further, but still...
-        bit_bits = [self.convert_bit_share(b, field, GF256) for b in int_bits]
+        bit_bits = [self.convert_bit_share(b, GF256) for b in int_bits]
         # Preprocessing done
 
         a = share_a - share_b + 2**l
@@ -1159,12 +1159,12 @@ class Runtime:
         if field is smallField:
             r_bits = r_bitsField
         else:
-            r_bits = [self.convert_bit_share_II(bit, field, smallField) \
+            r_bits = [self.convert_bit_share_II(bit, smallField) \
                       for bit in r_bitsField]
 
         s_bit = self.prss_share_random(field, binary=True)
 
-        s_bitSmallField = self.convert_bit_share_II(s_bit, field, smallField)
+        s_bitSmallField = self.convert_bit_share_II(s_bit, smallField)
         s_sign = 1 + s_bitSmallField * -2
 
         # m: uniformly random -- should be non-zero, however, this
