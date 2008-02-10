@@ -22,6 +22,8 @@ from twisted.trial.unittest import TestCase
 
 from viff.test.util import RuntimeTestCase, protocol
 
+from viff.runtime import increment_pc
+
 class ProgramCounterTest(RuntimeTestCase):
     """Program counter tests."""
 
@@ -74,3 +76,37 @@ class ProgramCounterTest(RuntimeTestCase):
 
         # Now trigger verify_program_counter.
         d.callback(None)
+
+
+    @protocol
+    def test_nested_calls(self, runtime):
+        """Test Runtime methods that call other methods.
+
+        We create a couple of functions that are used as fake methods.
+        """
+
+        @increment_pc
+        def method_a(runtime):
+            # First top-level call, so first entry is 1. No calls to
+            # other methods decorated with increment_pc has been made,
+            # so the second entry is 0.
+            self.assertEquals(runtime.program_counter, [1, 0])
+            method_b(runtime, 1)
+
+            self.assertEquals(runtime.program_counter, [1, 1])
+            method_b(runtime, 2)
+
+            # At this point two sub-calls has been made:
+            self.assertEquals(runtime.program_counter, [1, 2])
+
+        @increment_pc
+        def method_b(runtime, count):
+            # This method is called twice from method_a:
+            self.assertEquals(runtime.program_counter, [1, count, 0])
+
+        # Zero top-level calls:
+        self.assertEquals(runtime.program_counter, [0])
+        method_a(runtime)
+
+        # One top-level call:
+        self.assertEquals(runtime.program_counter, [1])
