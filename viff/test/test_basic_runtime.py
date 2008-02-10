@@ -28,3 +28,49 @@ class ProgramCounterTest(RuntimeTestCase):
     @protocol
     def test_initial_value(self, runtime):
         self.assertEquals(runtime.program_counter, [0])
+
+    @protocol
+    def test_simple_operation(self, runtime):
+        """Test an operation which makes no further calls.
+
+        Each call should increment the program counter by one.
+        """
+        runtime.synchronize()
+        self.assertEquals(runtime.program_counter, [1])
+        runtime.synchronize()
+        self.assertEquals(runtime.program_counter, [2])
+
+    @protocol
+    def test_complex_operation(self, runtime):
+        """Test an operation which makes nested calls.
+
+        This verifies that the program counter is only incremented by
+        one, even for a complex operation.
+        """
+        # Exclusive-or is calculated as x + y - 2 * x * y, so add,
+        # sub, and mul are called.
+        runtime.xor(self.Zp(0), self.Zp(1))
+        self.assertEquals(runtime.program_counter, [1])
+        runtime.xor(self.Zp(0), self.Zp(1))
+        self.assertEquals(runtime.program_counter, [2])
+
+
+    @protocol
+    def test_callback(self, runtime):
+        """Test a scheduled callback.
+
+        The callback should see the program counter as it was when the
+        callback was added and not the current value.
+        """
+
+        def verify_program_counter(_):
+            self.assertEquals(runtime.program_counter, [0])
+
+        d = Deferred()
+        runtime.callback(d, verify_program_counter)
+
+        runtime.synchronize()
+        self.assertEquals(runtime.program_counter, [1])
+
+        # Now trigger verify_program_counter.
+        d.callback(None)
