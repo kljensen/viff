@@ -11,10 +11,15 @@ details can be found in the commit messages:
 Version ?, not yet released
 ---------------------------
 
-The behavior of field elements in Boolean expressions has been fixed.
-This means that "GF256(0) and GF256(1)" now returns GF256(0) instead
-of GF256(1). Added a modern implementation of the classic Yao
-millionaires example from 1982 which started this field of research.
+Implemented a reliable Bracha broadcast which is secure against active
+adversaries. Shamir sharings can now be asymmetric which means that
+only a subset of the parties provide input. The behavior of field
+elements in Boolean expressions has been fixed. This means that
+"GF256(0) and GF256(1)" now returns GF256(0) instead of GF256(1).
+Added a modern implementation of the classic Yao millionaires example
+from 1982 which started this field of research.
+
+Details:
 
 * Bracha broadcast, which is a reliable broadcast mechanism against
   active adversaries, has been implemented. Secure broadcast is a
