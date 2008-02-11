@@ -20,6 +20,20 @@ Bracha broadcast, which is a reliable broadcast mechanism against
 active adversaries, has been implemented. Secure broadcast is a
 building block that is often used in active security scenarios.
 
+Asymmetric Shamir sharing. It is now possible to specify that just a
+subset of the players should provide input to a Shamir sharing. This
+change is not backwards compatible with version 0.3 or earlier.
+Adapting old programs is easy, simply change:
+
+  a, b, c = rt.shamir_share(Zp(input))
+
+to
+
+  a, b, c = rt.shamir_share([1, 2, 3], Zp, input)
+
+where Zp is a field and rt is a Runtime.
+
+
 Version 0.3, released on 2007-12-27
 -----------------------------------
 
