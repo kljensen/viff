@@ -16,30 +16,30 @@ This means that "GF256(0) and GF256(1)" now returns GF256(0) instead
 of GF256(1). Added a modern implementation of the classic Yao
 millionaires example from 1982 which started this field of research.
 
-Bracha broadcast, which is a reliable broadcast mechanism against
-active adversaries, has been implemented. Secure broadcast is a
-building block that is often used in active security scenarios.
+* Bracha broadcast, which is a reliable broadcast mechanism against
+  active adversaries, has been implemented. Secure broadcast is a
+  building block that is often used in active security scenarios.
 
-Asymmetric Shamir sharing. It is now possible to specify that just a
-subset of the players should provide input to a Shamir sharing. This
-change is not backwards compatible with version 0.3 or earlier.
-Adapting old programs is easy, simply change:
+* Asymmetric Shamir sharing. It is now possible to specify that just a
+  subset of the players should provide input to a Shamir sharing. This
+  change is not backwards compatible with version 0.3 or earlier.
+  Adapting old programs is easy, simply change:
 
-  a, b, c = rt.shamir_share(Zp(input))
+    a, b, c = rt.shamir_share(Zp(input))
 
-to
+  to
 
-  a, b, c = rt.shamir_share([1, 2, 3], Zp, input)
+    a, b, c = rt.shamir_share([1, 2, 3], Zp, input)
 
-where Zp is a field and rt is a Runtime.
+  where Zp is a field and rt is a Runtime.
 
-Overloaded exclusive-or operations on Share instances. Given two
-shares a and b, one can now do
+* Overloaded exclusive-or operations on Share instances. Given two
+  shares a and b, one can now do
 
-  c = a ^ b
+    c = a ^ b
 
-to obtain the exclusive-or. This works for both GF256 shares and Zp
-shares, though the two types must not be mixed.
+  to obtain the exclusive-or. This works for both GF256 shares and Zp
+  shares, though the two types must not be mixed.
 
 
 Version 0.3, released on 2007-12-27
