@@ -16,6 +16,9 @@ This means that "GF256(0) and GF256(1)" now returns GF256(0) instead
 of GF256(1). Added a modern implementation of the classic Yao
 millionaires example from 1982 which started this field of research.
 
+Bracha broadcast, which is a reliable broadcast mechanism against
+active adversaries, has been implemented. Secure broadcast is a
+building block that is often used in active security scenarios.
 
 Version 0.3, released on 2007-12-27
 -----------------------------------
