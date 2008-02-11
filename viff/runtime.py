@@ -39,7 +39,7 @@ from math import ceil
 
 from viff import shamir
 from viff.prss import prss
-from viff.field import GF, GF256, FieldElement
+from viff.field import GF256, FieldElement
 from viff.util import rand, println
 
 from twisted.internet import reactor
@@ -61,14 +61,19 @@ class Share(Deferred):
     and the arithmetic operations simply call back to that runtime.
     """
 
-    def __init__(self, runtime, value=None):
+    def __init__(self, runtime, field, value=None):
         """Initialize a share.
 
         @param runtime: The L{Runtime} to use.
+        @param field: The field where the value lies.
         @param value: The initial value of the share (if known).
         """
+        assert field is not None, "Cannot construct share without a field."
+        assert callable(field), "The field is not callable, wrong argument?"
+
         Deferred.__init__(self)
         self.runtime = runtime
+        self.field = field
         if value is not None:
             self.callback(value)
 
@@ -96,22 +101,33 @@ class Share(Deferred):
         """Multiplication (reflected argument version)."""
         return self.runtime.mul(other, self)
 
-    # TODO: The xor implementation below does not work, and it is not
-    # really a good idea either. Instead there should be a single xor
-    # method in Runtime or two classes of Shares. So keep using
-    # xor_int and xor_bit for now.
-    #
-    #def __xor__(self, other):
-    #    """Exclusive-or."""
-    #    def run_correct_xor(shares):
-    #        if isinstance(shares[0], GF256) or isinstance(shares[1], GF256):
-    #            return self.runtime.xor_bit(shares[0], shares[1])
-    #        else:
-    #            return self.runtime.xor_int(shares[0], shares[1])
-    #
-    #    shares = gather_shares([self, other])
-    #    shares.addCallback(run_correct_xor)
-    #    return shares
+    def __xor__(self, other):
+        """Exclusive-or."""
+        return self.runtime.xor(self, other)
+
+    def __rxor__(self, other):
+        """Exclusive-or (reflected argument version)."""
+        return self.runtime.xor(other, self)
+
+    def __lt__(self, other):
+        """Strictly less-than comparison."""
+        # self < other <=> not (self >= other)
+        return 1 - self.runtime.greater_than_equal(self, other)
+
+    def __le__(self, other):
+        """Less-than or equal comparison."""
+        # self <= other <=> other >= self
+        return self.runtime.greater_than_equal(other, self)
+
+    def __gt__(self, other):
+        """Strictly greater-than comparison."""
+        # self > other <=> not (other >= self)
+        return 1 - self.runtime.greater_than_equal(other, self)
+
+    def __ge__(self, other):
+        """Greater-than or equal comparison."""
+        # self >= other
+        return self.runtime.greater_than_equal(self, other)
 
     def clone(self):
         """Clone a share.
@@ -122,7 +138,7 @@ class Share(Deferred):
         def split_result(result):
             clone.callback(result)
             return result
-        clone = Share(self.runtime)
+        clone = Share(self.runtime, self.field)
         self.addCallback(split_result)
         return clone
 
@@ -145,7 +161,7 @@ class ShareList(Share):
         assert threshold is None or 0 < threshold <= len(shares), \
             "Threshold out of range"
 
-        Share.__init__(self, shares[0].runtime)
+        Share.__init__(self, shares[0].runtime, shares[0].field)
 
         self.results = [None] * len(shares)
         if threshold is None:
@@ -260,7 +276,8 @@ class ShareExchanger(Int16StringReceiver):
         #println("Sending to id=%d: program_counter=%s, share=%s",
         #        self.id, program_counter, share)
 
-        self.sendData(program_counter, "share", (share.modulus, share.value))
+        self.sendData(program_counter, "share", share.value)
+
 
     def loseConnection(self):
         """Disconnect this protocol instance."""
@@ -645,10 +662,11 @@ class Runtime:
 
         Communication cost: none.
         """
+        field = getattr(share_a, "field", getattr(share_b, "field", None))
         if not isinstance(share_a, Share):
-            share_a = Share(self, share_a)
+            share_a = Share(self, field, share_a)
         if not isinstance(share_b, Share):
-            share_b = Share(self, share_b)
+            share_b = Share(self, field, share_b)
 
         result = gather_shares([share_a, share_b])
         result.addCallback(lambda (a, b): a + b)
@@ -659,10 +677,11 @@ class Runtime:
 
         Communication cost: none.
         """
+        field = getattr(share_a, "field", getattr(share_b, "field", None))
         if not isinstance(share_a, Share):
-            share_a = Share(self, share_a)
+            share_a = Share(self, field, share_a)
         if not isinstance(share_b, Share):
-            share_b = Share(self, share_b)
+            share_b = Share(self, field, share_b)
 
         result = gather_shares([share_a, share_b])
         result.addCallback(lambda (a, b): a - b)
@@ -677,11 +696,11 @@ class Runtime:
         # TODO:  mul accept FieldElements and do quick local
         # multiplication in that case. If two FieldElements are given,
         # return a FieldElement.
-
+        field = getattr(share_a, "field", getattr(share_b, "field", None))
         if not isinstance(share_a, Share):
-            share_a = Share(self, share_a)
+            share_a = Share(self, field, share_a)
         if not isinstance(share_b, Share):
-            share_b = Share(self, share_b)
+            share_b = Share(self, field, share_b)
 
         result = gather_shares([share_a, share_b])
         result.addCallback(lambda (a, b): a * b)
@@ -690,22 +709,17 @@ class Runtime:
         return result
 
     @increment_pc
-    def xor_int(self, share_a, share_b):
-        """Exclusive-or of integer sharings.
-
-        Communication cost: 1 multiplication.
-        """
+    def xor(self, share_a, share_b):
+        field = getattr(share_a, "field", getattr(share_b, "field", None))
         if not isinstance(share_a, Share):
-            share_a = Share(self, share_a)
+            share_a = Share(self, field, share_a)
         if not isinstance(share_b, Share):
-            share_b = Share(self, share_b)
+            share_b = Share(self, field, share_b)
 
-        return share_a + share_b - 2 * share_a * share_b
-
-    #: Exclusive-or of GF256 sharings.
-    #:
-    #: Communication cost: none.
-    xor_bit = add
+        if field is GF256:
+            return share_a + share_b
+        else:
+            return share_a + share_b - 2 * share_a * share_b
 
     @increment_pc
     def prss_share(self, element):
@@ -773,7 +787,7 @@ class Runtime:
         share = prss(len(self.players), self.id, field, prfs, prss_key)
 
         if field is GF256 or not binary:
-            return Share(self, share)
+            return Share(self, field, share)
 
         # Open the square and compute a square-root
         result = self.open(self.mul(share, share), 2*self.threshold)
@@ -787,7 +801,7 @@ class Runtime:
                 root = square.sqrt()
                 # When the root is computed, we divide the share and
                 # convert the resulting -1/1 share into a 0/1 share.
-                return Share(self, (share/root + 1) / 2)
+                return Share(self, field, (share/root + 1) / 2)
 
         self.callback(result, finish, share, binary)
         return result
@@ -810,28 +824,28 @@ class Runtime:
         return result
 
     @increment_pc
-    def shamir_share(self, number, inputters):
-        """Share a field element using Shamir sharing.
+    def shamir_share(self, inputters, field, number=None):
+        """Secret share C{number} over C{field} using Shamir's method.
 
         Returns a list of shares.
 
         Communication cost: n elements transmitted.
         """
-        assert number is None or isinstance(number, FieldElement)
         assert number is None or self.id in inputters
 
         results = []
         for peer_id in inputters:
             if peer_id == self.id:
                 pc = tuple(self.program_counter)
-                shares = shamir.share(number, self.threshold, len(self.players))
+                shares = shamir.share(field(number), self.threshold,
+                                      len(self.players))
                 for other_id, share in shares:
                     if other_id.value == self.id:
-                        results.append(Share(self, share))
+                        results.append(Share(self, share.field, share))
                     else:
                         self.protocols[other_id.value].sendShare(pc, share)
             else:
-                results.append(self._expect_share(peer_id))
+                results.append(self._expect_share(peer_id, field))
 
         # Unpack a singleton list.
         if len(results) == 1:
@@ -840,37 +854,28 @@ class Runtime:
             return results
 
     @increment_pc
-    def convert_bit_share(self, share, src_field, dst_field):
-        """Convert a 0/1 share from src_field into dst_field."""
+    def convert_bit_share(self, share, dst_field):
+        """Convert a 0/1 share into dst_field."""
         bit = rand.randint(0, 1)
         dst_shares = self.prss_share(dst_field(bit))
-        src_shares = self.prss_share(src_field(bit))
-
-        # TODO: merge xor_int and xor_bit into an xor method and move
-        # this decision there.
-        if src_field is GF256:
-            xor = self.xor_bit
-        else:
-            xor = self.xor_int
+        src_shares = self.prss_share(share.field(bit))
 
         # TODO: Using a parallel reduce below seems to be slower than
         # using the built-in reduce.
 
         # We open tmp and convert the value into a field element from
         # the dst_field.
-        tmp = self.open(reduce(xor, src_shares, share))
+        tmp = self.open(reduce(self.xor, src_shares, share))
         tmp.addCallback(lambda i: dst_field(i.value))
+        # Must update field on Share when we change the field of the
+        # the value within
+        tmp.field = dst_field
 
-        if dst_field is GF256:
-            xor = self.xor_bit
-        else:
-            xor = self.xor_int
-
-        return reduce(xor, dst_shares, tmp)
+        return reduce(self.xor, dst_shares, tmp)
 
     @increment_pc
-    def convert_bit_share_II(self, share, src_field, dst_field):
-        """Convert a 0/1 share from src_field into dst_field."""
+    def convert_bit_share_II(self, share, dst_field):
+        """Convert a 0/1 share into dst_field."""
 
         def log(x):
             # TODO: Don't do log like this...
@@ -887,7 +892,7 @@ class Runtime:
 
         # Share large random values in the big field and reduced ones
         # in the small...
-        src_shares = self.prss_share(src_field(this_mask))
+        src_shares = self.prss_share(share.field(this_mask))
         dst_shares = self.prss_share(dst_field(this_mask))
 
         tmp = reduce(self.add, src_shares, share)
@@ -897,13 +902,16 @@ class Runtime:
         tmp = self.open(tmp)
 
         tmp.addCallback(lambda i: dst_field(i.value))
+        # Must update field on Share when we change the field of the
+        # the value within
+        tmp.field = dst_field
 
         full_mask = reduce(self.add, dst_shares)
 
         return tmp - full_mask
 
     @increment_pc
-    def greater_than(self, share_a, share_b, field):
+    def greater_than_equal(self, share_a, share_b):
         """Compute share_a >= share_b.
 
         Both arguments must be from the field given. The result is a
@@ -912,6 +920,7 @@ class Runtime:
         l = self.options.bit_length
         m = l + 2
         t = m + 1
+        field = share_a.field # Should be the same as share_b.field.
 
         # Preprocessing begin
 
@@ -931,18 +940,18 @@ class Runtime:
 
         # TODO: this changes int_bits! It should be okay since
         # int_bits is not used any further, but still...
-        bit_bits = [self.convert_bit_share(b, field, GF256) for b in int_bits]
+        bit_bits = [self.convert_bit_share(b, GF256) for b in int_bits]
         # Preprocessing done
 
         a = share_a - share_b + 2**l
         T = self.open(2**t - int_b + a)
 
         result = gather_shares([T] + bit_bits)
-        self.callback(result, self._finish_greater_than, l)
+        self.callback(result, self._finish_greater_than_equal, l)
         return result
 
     @increment_pc
-    def _finish_greater_than(self, results, l):
+    def _finish_greater_than_equal(self, results, l):
         """Finish the calculation."""
         T = results[0]
         bit_bits = results[1:]
@@ -952,7 +961,7 @@ class Runtime:
         # Calculate the vector, using only the first l bits
         for i, bi in enumerate(bit_bits[:l]):
             Ti = GF256(T.bit(i))
-            ci = self.xor_bit(bi, Ti)
+            ci = Share(self, GF256, bi ^ Ti)
             vec.append((ci, Ti))
 
         # Reduce using the diamond operator. We want to do as much
@@ -967,8 +976,7 @@ class Runtime:
                 tmp.append(vec[0])
             vec = tmp
 
-        return self.xor_bit(GF256(T.bit(l)),
-                            self.xor_bit(bit_bits[l], vec[0][1]))
+        return GF256(T.bit(l)) ^ (bit_bits[l] ^ vec[0][1])
 
     @increment_pc
     def _diamond(self, (top_a, bot_a), (top_b, bot_b)):
@@ -980,7 +988,7 @@ class Runtime:
         (x, X) `diamond` (1, Y) = (x, X)
         """
         top = top_a * top_b
-        bot = self.xor_bit(top_b * self.xor_bit(bot_a, bot_b), bot_b)
+        bot = top_b * (bot_a ^ bot_b) ^ bot_b
         return (top, bot)
 
     @increment_pc
@@ -1120,8 +1128,8 @@ class Runtime:
         return result
 
     @increment_pc
-    def greater_thanII_preproc(self, field, smallField=None):
-        """Preprocessing for greater_thanII."""
+    def greater_than_equalII_preproc(self, field, smallField=None):
+        """Preprocessing for greater_than_equalII."""
         if smallField is None:
             smallField = field
 
@@ -1151,12 +1159,12 @@ class Runtime:
         if field is smallField:
             r_bits = r_bitsField
         else:
-            r_bits = [self.convert_bit_share_II(bit, field, smallField) \
+            r_bits = [self.convert_bit_share_II(bit, smallField) \
                       for bit in r_bitsField]
 
         s_bit = self.prss_share_random(field, binary=True)
 
-        s_bitSmallField = self.convert_bit_share_II(s_bit, field, smallField)
+        s_bitSmallField = self.convert_bit_share_II(s_bit, smallField)
         s_sign = 1 + s_bitSmallField * -2
 
         # m: uniformly random -- should be non-zero, however, this
@@ -1174,7 +1182,7 @@ class Runtime:
         ##################################################
 
     @increment_pc
-    def greater_thanII_online(self, share_a, share_b, preproc, field):
+    def greater_than_equalII_online(self, share_a, share_b, preproc, field):
         """Compute share_a >= share_b.
         Result is shared.
         """
@@ -1199,13 +1207,13 @@ class Runtime:
         z = share_a - share_b + 2**l
         c = self.open(r_full + z)
 
-        self.callback(c, self._finish_greater_thanII,
+        self.callback(c, self._finish_greater_than_equalII,
                       field, smallField, s_bit, s_sign, mask,
                       r_modl, r_bits, z)
         return c
 
     @increment_pc
-    def _finish_greater_thanII(self, c, field, smallField, s_bit, s_sign,
+    def _finish_greater_than_equalII(self, c, field, smallField, s_bit, s_sign,
                                mask, r_modl, r_bits, z):
         """Finish the calculation."""
         # increment l as a, b are increased
@@ -1217,7 +1225,7 @@ class Runtime:
         #                           - 2*r_bits[i+1]*c_(i+1)
         for i in range(l-2, -1, -1):
             # sumXORs[i] = \sum_{j=i+1}^{l-1} r_j\oplus c_j
-            sumXORs[i] = sumXORs[i+1] + self.xor_int(r_bits[i+1], c_bits[i+1])
+            sumXORs[i] = sumXORs[i+1] + (r_bits[i+1] ^ c_bits[i+1])
         E_tilde = []
         for i in range(len(r_bits)):
             ## s + rBit[i] - cBit[i] + 3 * sumXors[i];
@@ -1238,7 +1246,7 @@ class Runtime:
         non_zero = E_tilde[0]
 
         # UF == underflow
-        UF = self.xor_int(non_zero, s_bit)
+        UF = non_zero ^ s_bit
 
         # conclude the computation -- compute final bit and map to 0/1
         # return  2^(-l) * (z - (c%2**l - r%2**l + UF*2**l))
@@ -1249,14 +1257,16 @@ class Runtime:
     # END _finish_greater_thanII
 
     @increment_pc
-    def greater_thanII(self, share_a, share_b, field):
+    def greater_than_equalII(self, share_a, share_b):
         """Compute share_a >= share_b.
 
         Both arguments must be of type field. The result is a
         field share.
         """
-        preproc = self.greater_thanII_preproc(field)
-        return self.greater_thanII_online(share_a, share_b, preproc, field)
+        field = share_a.field
+        preproc = self.greater_than_equalII_preproc(field)
+        return self.greater_than_equalII_online(share_a, share_b, preproc,
+                                                field)
 
     def _exchange_shares(self, id, field_element):
         """Exchange shares with another player.
@@ -1267,18 +1277,16 @@ class Runtime:
         assert isinstance(field_element, FieldElement)
 
         if id == self.id:
-            return Share(self, field_element)
+            return Share(self, field_element.field, field_element)
         else:
-            share = self._expect_share(id)
+            share = self._expect_share(id, field_element.field)
             pc = tuple(self.program_counter)
             self.protocols[id].sendShare(pc, field_element)
             return share
 
-    def _expect_share(self, peer_id):
-        # TODO: specify the modulus as an argument to the method. This
-        # will save us from sending it back and forth over the net.
-        share = Share(self)
-        share.addCallback(lambda (modulus, value): GF(modulus)(value))
+    def _expect_share(self, peer_id, field):
+        share = Share(self, field)
+        share.addCallback(lambda value: field(value))
         self._expect_data(peer_id, "share", share)
         return share
 

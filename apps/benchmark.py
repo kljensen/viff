@@ -192,9 +192,9 @@ class SequentialBenchmark(Benchmark):
 if options.operation == "mul":
     operation = lambda a, b: a * b
 elif options.operation == "comp":
-    operation = lambda a, b: a.runtime.greater_than(a, b, Zp)
+    operation = lambda a, b: a >= b
 elif options.operation == "compII":
-    operation = lambda a, b: a.runtime.greater_thanII(a, b, Zp)
+    operation = lambda a, b: a.runtime.greater_than_equalII(a, b)
 
 if options.parallel:
     benchmark = ParallelBenchmark

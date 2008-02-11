@@ -111,11 +111,9 @@ def protocol(rt):
     print "k = %d" % k
 
     shares = []
-    inputs = []
     for n in range(2*count//len(players) + 1):
-        input = Zp(rand.randint(0, 2**l - 1))
-        inputs.append(input)
-        shares.extend(rt.shamir_share(input, [1, 2, 3]))
+        input = rand.randint(0, 2**l - 1)
+        shares.extend(rt.shamir_share([1, 2, 3], Zp, input))
     # We want to measure the time for count comparisons, so we need
     # 2*count input numbers.
     shares = shares[:2*count]
@@ -123,7 +121,7 @@ def protocol(rt):
     preproc = []
     pseudoPreproc = []
     for i in range(count):
-        thisPreproc = rt.greater_thanII_preproc(Zp, smallField = Zq)
+        thisPreproc = rt.greater_than_equalII_preproc(Zp, smallField = Zq)
         preproc.append(thisPreproc)
         pseudoPreproc += thisPreproc[2:-1]
         pseudoPreproc += thisPreproc[-1]
@@ -145,7 +143,7 @@ def protocol(rt):
         while len(shares) > 1:
             a = shares.pop(0)
             b = shares.pop(0)
-            c = rt.greater_thanII_online(a, b, preproc.pop(), Zp)
+            c = rt.greater_than_equalII_online(a, b, preproc.pop(), Zp)
             bits.append(c)
 
         stop = DeferredList(bits)

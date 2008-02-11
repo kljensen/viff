@@ -64,15 +64,15 @@ class Protocol:
 
         # We must secret share our input with the other parties. They
         # will do the same and we end up with three variables
-        m1, m2, m3 = runtime.shamir_share(Zp(self.millions), [1, 2, 3])
+        m1, m2, m3 = runtime.shamir_share([1, 2, 3], Zp, self.millions)
 
         # Now that everybody has secret shared their inputs we can
         # compare them. We compare the worth of the first millionaire
         # with the two others, and compare those two millionaires with
         # each other.
-        m1_gt_m2 = runtime.greater_than(m1, m2, Zp)
-        m1_gt_m3 = runtime.greater_than(m1, m3, Zp)
-        m2_gt_m3 = runtime.greater_than(m2, m3, Zp)
+        m1_gt_m2 = m1 >= m2
+        m1_gt_m3 = m1 >= m3
+        m2_gt_m3 = m2 >= m3
 
         # The results are secret shared, so we must open them before
         # we can do anything usefull with them.

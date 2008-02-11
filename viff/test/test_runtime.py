@@ -43,7 +43,7 @@ class RuntimeTest(RuntimeTestCase):
     def test_open(self, runtime):
         """Shamir share and open Zp(42)."""
         # The parties have shares 43, 44, 45 respectively.
-        share = Share(runtime, self.Zp(42 + runtime.id))
+        share = Share(runtime, self.Zp, self.Zp(42 + runtime.id))
         opened = runtime.open(share)
         self.assertTrue(isinstance(opened, Share))
         opened.addCallback(self.assertEquals, 42)
@@ -53,7 +53,7 @@ class RuntimeTest(RuntimeTestCase):
     def test_open_no_mutate(self, runtime):
         """Test that opening a share does not change it."""
         # The parties have shares 43, 44, 45 respectively.
-        share = Share(runtime, self.Zp(42 + runtime.id))
+        share = Share(runtime, self.Zp, self.Zp(42 + runtime.id))
         opened = runtime.open(share)
         opened.addCallback(self.assertEquals, 42)
         share.addCallback(self.assertEquals, 42 + runtime.id)
@@ -64,8 +64,8 @@ class RuntimeTest(RuntimeTestCase):
     @protocol
     def test_add(self, runtime):
         """Test addition."""
-        share_a = Share(runtime)
-        share_b = Share(runtime, self.Zp(200))
+        share_a = Share(runtime, self.Zp)
+        share_b = Share(runtime, self.Zp, self.Zp(200))
 
         share_c = share_a + share_b
         self.assertTrue(isinstance(share_c, Share),
@@ -79,7 +79,7 @@ class RuntimeTest(RuntimeTestCase):
     @protocol
     def test_add_coerce(self, runtime):
         """Test addition with mixed operands."""
-        share_a = Share(runtime)
+        share_a = Share(runtime, self.Zp)
         share_b = self.Zp(200)
         share_c = share_a + share_b
 
@@ -90,8 +90,8 @@ class RuntimeTest(RuntimeTestCase):
     @protocol
     def test_sub(self, runtime):
         """Test subtraction."""
-        share_a = Share(runtime)
-        share_b = Share(runtime, self.Zp(200))
+        share_a = Share(runtime, self.Zp)
+        share_b = Share(runtime, self.Zp, self.Zp(200))
 
         share_c = share_a - share_b
         self.assertTrue(isinstance(share_c, Share),
@@ -104,7 +104,7 @@ class RuntimeTest(RuntimeTestCase):
     @protocol
     def test_sub_coerce(self, runtime):
         """Test subtraction with mixed operands."""
-        share_a = Share(runtime)
+        share_a = Share(runtime, self.Zp)
         share_b = self.Zp(200)
         share_c = share_a - share_b
 
@@ -115,7 +115,7 @@ class RuntimeTest(RuntimeTestCase):
     @protocol
     def test_mul(self, runtime):
         """Test multiplication with mixed operands."""
-        share_a = Share(runtime, self.Zp(42 + runtime.id))
+        share_a = Share(runtime, self.Zp, self.Zp(42 + runtime.id))
         share_b = self.Zp(117 + runtime.id)
         opened_c = runtime.open(share_a * share_b)
 
@@ -135,13 +135,10 @@ class RuntimeTest(RuntimeTestCase):
                 # Share a and b with a pseudo-Shamir sharing. The
                 # addition is done with field elements because we need
                 # the special GF256 addition here when field is GF256.
-                share_a = Share(runtime, field(a) + runtime.id)
-                share_b = Share(runtime, field(b) + runtime.id)
+                share_a = Share(runtime, field, field(a) + runtime.id)
+                share_b = Share(runtime, field, field(b) + runtime.id)
 
-                if field is self.Zp:
-                    share_c = runtime.xor_int(share_a, share_b)
-                else:
-                    share_c = runtime.xor_bit(share_a, share_b)
+                share_c = share_a ^ share_b
 
                 opened_c = runtime.open(share_c)
                 opened_c.addCallback(self.assertEquals, field(a ^ b))
@@ -154,7 +151,7 @@ class RuntimeTest(RuntimeTestCase):
 
         Every player participates in the sharing.
         """
-        a, b, c = runtime.shamir_share(self.Zp(42 + runtime.id), [1, 2, 3])
+        a, b, c = runtime.shamir_share([1, 2, 3], self.Zp, 42 + runtime.id)
 
         self.assertTrue(isinstance(a, Share),
                         "Type should be Share, but is %s" % a.__class__)
@@ -179,15 +176,15 @@ class RuntimeTest(RuntimeTestCase):
         # Share a single input -- the result should be a Share and not
         # a singleton list.
         if runtime.id == 2:
-            b = runtime.shamir_share(self.Zp(42 + runtime.id), [2])
+            b = runtime.shamir_share([2], self.Zp, 42 + runtime.id)
         else:
-            b = runtime.shamir_share(None, [2])
+            b = runtime.shamir_share([2], self.Zp)
 
         # Share two inputs, but do it in "backwards" order.
         if runtime.id == 1 or runtime.id == 3:
-            c, a = runtime.shamir_share(self.Zp(42 + runtime.id), [3, 1])
+            c, a = runtime.shamir_share([3, 1], self.Zp, 42 + runtime.id)
         else:
-            c, a = runtime.shamir_share(None, [3, 1])
+            c, a = runtime.shamir_share([3, 1], self.Zp)
 
         self.assertTrue(isinstance(a, Share),
                         "Type should be Share, but is %s" % a.__class__)
@@ -281,34 +278,63 @@ class RuntimeTest(RuntimeTestCase):
         # fields.
         results = []
         for value in 0, 1:
-            share = Share(runtime, self.Zp(value))
-            converted = runtime.convert_bit_share(share, self.Zp, GF256)
+            share = Share(runtime, self.Zp, self.Zp(value))
+            converted = runtime.convert_bit_share(share, GF256)
+            self.assertEquals(converted.field, GF256)
             opened = runtime.open(converted)
             opened.addCallback(self.assertEquals, GF256(value))
             results.append(opened)
         return gatherResults(results)
 
+    # TODO: Convert the following four tests to a general test for
+    # binary operations.
+
     @protocol
     def test_greater_than(self, runtime):
         """Test comparison."""
         # Shamir shares of 42 and 117:
-        share_a = self.Zp(42 + runtime.id)
-        share_b = self.Zp(117 - runtime.id)
+        share_a = Share(runtime, self.Zp, self.Zp(42 + runtime.id))
+        share_b = Share(runtime, self.Zp, self.Zp(117 - runtime.id))
 
-        result = runtime.greater_than(share_a, share_b, self.Zp)
-        opened = runtime.open(result)
-        opened.addCallback(self.assertEquals, GF256(42 >= 117))
-
-        return opened
+        result = runtime.open(share_a > share_b)
+        result.addCallback(self.assertEquals, GF256(42 > 117))
+        return result
 
     @protocol
-    def test_greater_thanII(self, runtime):
+    def test_greater_than_equal(self, runtime):
+        share_a = Share(runtime, self.Zp, self.Zp(42 + runtime.id))
+        share_b = Share(runtime, self.Zp, self.Zp(117 - runtime.id))
+
+        result = runtime.open(share_a >= share_b)
+        result.addCallback(self.assertEquals, GF256(42 >= 117))
+        return result
+
+    @protocol
+    def test_less_than(self, runtime):
+        share_a = Share(runtime, self.Zp, self.Zp(42 + runtime.id))
+        share_b = Share(runtime, self.Zp, self.Zp(117 - runtime.id))
+
+        result = runtime.open(share_a < share_b)
+        result.addCallback(self.assertEquals, GF256(42 < 117))
+        return result
+
+    @protocol
+    def test_less_than_equal(self, runtime):
+        share_a = Share(runtime, self.Zp, self.Zp(42 + runtime.id))
+        share_b = Share(runtime, self.Zp, self.Zp(117 - runtime.id))
+
+        result = runtime.open(share_a <= share_b)
+        result.addCallback(self.assertEquals, GF256(42 <= 117))
+        return result
+
+    @protocol
+    def test_greater_than_equalII(self, runtime):
         """Test comparison (improved version)."""
         # Shamir shares of 42 and 117:
         share_a = self.Zp(42 + runtime.id)
         share_b = self.Zp(117 - runtime.id)
 
-        result = runtime.greater_thanII(share_a, share_b, self.Zp)
+        result = runtime.greater_than_equalII(share_a, share_b)
         opened = runtime.open(result)
         opened.addCallback(self.assertEquals, self.Zp(42 >= 117))
 
@@ -328,7 +354,7 @@ if 'STRESS' in os.environ:
 
             Three numbers are multiplied in each round.
             """
-            a, b, c = runtime.shamir_share(self.Zp(42 + runtime.id), [1, 2, 3])
+            a, b, c = runtime.shamir_share([1, 2, 3], self.Zp, 42 + runtime.id)
 
             product = 1
 
@@ -376,15 +402,11 @@ if 'STRESS' in os.environ:
                 inputs = {1: rand.randint(0, max),
                           2: rand.randint(0, max),
                           3: rand.randint(0, max)}
-                a, b, c = runtime.shamir_share(self.Zp(inputs[runtime.id]),
-                                               [1, 2, 3])
+                a, b, c = runtime.shamir_share([1, 2, 3], self.Zp,
+                                               inputs[runtime.id])
 
-                result_shares = [runtime.greater_than(a, b, self.Zp),
-                                 runtime.greater_than(b, a, self.Zp),
-                                 runtime.greater_than(a, c, self.Zp),
-                                 runtime.greater_than(c, a, self.Zp),
-                                 runtime.greater_than(b, c, self.Zp),
-                                 runtime.greater_than(c, b, self.Zp)]
+                result_shares = [a >= b, b >= a, a >= c,
+                                 c >= a, b >= c, c >= b]
 
                 # Open all results
                 opened_results = map(runtime.open, result_shares)

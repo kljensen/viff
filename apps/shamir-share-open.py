@@ -30,7 +30,7 @@ from viff.util import dprint
 
 id, players = load_config(sys.argv[1])
 Zp = GF(int(sys.argv[2]))
-input = Zp(int(sys.argv[3]))
+input = int(sys.argv[3])
 
 print "I am player %d and will input %s" % (id, input)
 
@@ -40,7 +40,7 @@ def protocol(rt):
     print "Program started"
     print
 
-    a, b, c = rt.shamir_share(input, [1, 2, 3])
+    a, b, c = rt.shamir_share([1, 2, 3], Zp, input)
 
     a = rt.open(a)
     b = rt.open(b)

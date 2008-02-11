@@ -56,8 +56,8 @@ def protocol(rt):
 
     bits = []
     for input in inputs:
-        x, y, z = rt.shamir_share(Zp(input[id]), [1, 2, 3])
-        bit = rt.open(rt.greater_than(x, y, Zp))
+        x, y, z = rt.shamir_share([1, 2, 3], Zp, input[id])
+        bit = rt.open(x >= y)
         bit.addCallback(lambda b: b == GF256(1))
         bit.addCallback(lambda b, x, y: "%3d >= %3d: %-5s (%s)" \
                             % (x, y, b, b == (x >= y)), input[1], input[2])

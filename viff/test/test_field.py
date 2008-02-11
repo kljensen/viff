@@ -35,6 +35,11 @@ class GFpElementTestCase(TestCase):
         """Initialize Zp to Z31."""
         self.field = GF(31)
 
+    def test_field(self):
+        """Test field attribute."""
+        self.assertIdentical(self.field.field, self.field)
+        self.assertIdentical(self.field(100).field, self.field)
+
     def _test_binary_operator(self, operation, a, b, expected):
         """Test C{operation} with and without coerced operands."""
         result = operation(self.field(a), self.field(b))
@@ -141,6 +146,11 @@ class GF256TestCase(TestCase):
         self.assertEquals(GF256(256), GF256(0))
         self.assertEquals(GF256(257), GF256(1))
 
+    def test_field(self):
+        """Test field attribute."""
+        self.assertIdentical(GF256.field, GF256)
+        self.assertIdentical(GF256(10).field, GF256)
+
     def _test_binary_operator(self, operation, a, b, expected):
         """Test C{operation} with and without coerced operands."""
         result = operation(GF256(a), GF256(b))
@@ -171,6 +181,13 @@ class GF256TestCase(TestCase):
         self._test_binary_operator(operator.sub, 100, 100, 0)
         self._test_binary_operator(operator.sub, 0, 1, 1)
         self._test_binary_operator(operator.sub, 1, 2, 3)
+
+    def test_xor(self):
+        """Test exclusive-or."""
+        self._test_binary_operator(operator.xor, 0, 0, 0)
+        self._test_binary_operator(operator.xor, 0, 1, 1)
+        self._test_binary_operator(operator.xor, 1, 0, 1)
+        self._test_binary_operator(operator.xor, 1, 1, 0)
 
     def test_mul(self):
         """Test multiplication."""
