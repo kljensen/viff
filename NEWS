@@ -33,6 +33,14 @@ to
 
 where Zp is a field and rt is a Runtime.
 
+Overloaded exclusive-or operations on Share instances. Given two
+shares a and b, one can now do
+
+  c = a ^ b
+
+to obtain the exclusive-or. This works for both GF256 shares and Zp
+shares, though the two types must not be mixed.
+
 
 Version 0.3, released on 2007-12-27
 -----------------------------------
