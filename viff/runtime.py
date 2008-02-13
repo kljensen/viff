@@ -534,6 +534,15 @@ class Runtime:
         #: @type: C{dict} from Player ID to L{ShareExchanger} objects.
         self.protocols = {}
 
+        #: Number of known players.
+        #:
+        #: Equal to C{len(players)}, but storing it here is more
+        #: direct.
+        self.num_players = 0
+
+        #: Information on players.
+        #:
+        #: @type: C{dict} from player_id to L{Player} objects.
         self.players = {}
         # Add ourselves, but with no protocol since we wont be
         # communicating with ourselves.
@@ -550,6 +559,7 @@ class Runtime:
 
     def add_player(self, player, protocol):
         self.players[player.id] = player
+        self.num_players = len(self.players)
         # There is no protocol for ourselves, so we wont add that:
         if protocol is not None:
             self.protocols[player.id] = protocol
@@ -729,7 +739,7 @@ class Runtime:
         """
         assert isinstance(element, FieldElement)
         field = type(element)
-        n = len(self.players)
+        n = self.num_players
 
         # Key used for PRSS.
         key = tuple(self.program_counter)
@@ -784,7 +794,7 @@ class Runtime:
         # Key used for PRSS.
         prss_key = tuple(self.program_counter)
         prfs = self.players[self.id].prfs(modulus)
-        share = prss(len(self.players), self.id, field, prfs, prss_key)
+        share = prss(self.num_players, self.id, field, prfs, prss_key)
 
         if field is GF256 or not binary:
             return Share(self, field, share)
@@ -812,7 +822,7 @@ class Runtime:
 
         Returns a list of (id, share) pairs.
         """
-        shares = shamir.share(number, self.threshold, len(self.players))
+        shares = shamir.share(number, self.threshold, self.num_players)
         #println("Shares of %s: %s", number, shares)
 
         result = []
@@ -838,7 +848,7 @@ class Runtime:
             if peer_id == self.id:
                 pc = tuple(self.program_counter)
                 shares = shamir.share(field(number), self.threshold,
-                                      len(self.players))
+                                      self.num_players)
                 for other_id, share in shares:
                     if other_id.value == self.id:
                         results.append(Share(self, share.field, share))
@@ -925,7 +935,7 @@ class Runtime:
         # Preprocessing begin
 
         assert 2**(l+1) + 2**t < field.modulus, "2^(l+1) + 2^t < p must hold"
-        assert len(self.players) + 2 < 2**l
+        assert self.num_players + 2 < 2**l
 
         int_bits = [self.prss_share_random(field, True) for _ in range(m)]
         # We must use int_bits without adding callbacks to the bits --
@@ -1007,7 +1017,7 @@ class Runtime:
 
         result = Deferred()
         pc = tuple(self.program_counter)
-        n = len(self.players)
+        n = self.num_players
         t = self.threshold
 
         # For each distinct message (and program counter) we save a
