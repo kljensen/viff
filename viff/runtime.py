@@ -928,7 +928,7 @@ class Runtime:
         GF256 share.
         """
         l = self.options.bit_length
-        m = l + 2
+        m = l + self.options.security_parameter
         t = m + 1
         field = share_a.field # Should be the same as share_b.field.
 
