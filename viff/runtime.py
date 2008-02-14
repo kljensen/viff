@@ -1318,6 +1318,14 @@ class Runtime:
     def _recombine(self, shares, threshold):
         """Shamir recombine a list of deferred (id,share) pairs."""
         assert len(shares) > threshold
-        result = gatherResults(shares[:threshold+1])
+
+        def filter_good_shares(results):
+            # Filter results, which is a list of (success, share)
+            # pairs.
+            return [result[1] for result in results
+                    if result is not None and result[0]][:threshold+1]
+
+        result = ShareList(shares, threshold+1)
+        result.addCallback(filter_good_shares)
         result.addCallback(shamir.recombine)
         return result
