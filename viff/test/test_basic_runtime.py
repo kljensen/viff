@@ -17,8 +17,8 @@
 # Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 # 02110-1301 USA
 
-from twisted.internet.defer import Deferred, gatherResults
-from twisted.trial.unittest import TestCase
+from twisted.internet.defer import Deferred, gatherResults, FirstError
+from twisted.trial.unittest import TestCase, FailTest
 
 from viff.test.util import RuntimeTestCase, protocol
 
@@ -110,3 +110,29 @@ class ProgramCounterTest(RuntimeTestCase):
 
         # One top-level call:
         self.assertEquals(runtime.program_counter, [1])
+
+    @protocol
+    def test_multiple_callbacks(self, runtime):
+
+        d1 = Deferred()
+        d2 = Deferred()
+
+        def verify_program_counter(_, count):
+            self.assertEquals(runtime.program_counter, [1, count, 0])
+
+        @increment_pc
+        def method_a(runtime):
+            self.assertEquals(runtime.program_counter, [1, 0])
+
+            runtime.callback(d1, verify_program_counter, 1)
+            runtime.callback(d2, verify_program_counter, 2)
+
+        method_a(runtime)
+
+        # Trigger verify_program_counter.
+        d1.callback(None)
+        d2.callback(None)
+
+        return gatherResults([d1, d2])
+    test_multiple_callbacks.skip = ("TODO: Scheduling callbacks fails to "
+                                    "increment program counter!")
