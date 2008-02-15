@@ -14,3 +14,12 @@ doc/api/api-objects.txt
 doc/api/epydoc.{css,js}
 dist
 MANIFEST
+
+# ignore eclipse project files
+.project
+
+# ignore eclipse pydev extension project files
+.pydevproject
+
+# ignore eclipse settings
+.settings
