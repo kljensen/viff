@@ -26,6 +26,9 @@ from twisted.protocols.loopback import loopbackAsync
 from viff.runtime import Runtime, ShareExchanger, ShareExchangerFactory
 from viff.field import GF
 from viff.config import generate_configs, load_config
+from viff.util import rand
+
+from random import Random
 
 
 def protocol(method):
@@ -121,6 +124,15 @@ class RuntimeTestCase(TestCase):
     num_players = 3
     #: Shamir sharing threshold.
     threshold = 1
+    
+    #: A dictionary mapping player ids to pseudorandom generators.
+    #:
+    #: The generators have all been seeded with the same seed, which
+    #: is again obtained from the viff.util.rand generator. A unit
+    #: test should use these genrators when all players need to agree 
+    #: on the same randomness, e.g. to select the same random number or
+    #: to sample the same subsequence from a sequence.
+    shared_rand = None
 
     def setUp(self):
         """Configure and connect three Runtimes."""
@@ -129,6 +141,11 @@ class RuntimeTestCase(TestCase):
 
         configs = generate_configs(self.num_players, self.threshold)
         protocols = {}
+        
+        # initialize the dictionary of random generators
+        seed = rand.random()
+        self.shared_rand = dict([(player_id, Random(seed)) 
+                  for player_id in range(1,self.num_players + 1)])
 
         self.runtimes = {}
         for id in reversed(range(1, self.num_players+1)):
