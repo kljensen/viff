@@ -78,7 +78,7 @@ that an operation starts as soon as the operands are ready.
       keywords=[
         'crypto', 'cryptography', 'multi-party computation', 'MPC', 'SMPC',
         'secure comparison', 'ideal functionality',
-        'Shamir', 'pseudo-random secret sharing', 'PRSS'
+        'Shamir', 'pseudo-random secret sharing', 'PRSS', 'Bracha broadcast'
         ],
       license=viff.__license__,
       packages=['viff', 'viff.test'],
