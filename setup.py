@@ -67,6 +67,8 @@ secure multi-party computations (SMPC). Features include:
 * two comparison protocols which compare secret shared Zp inputs, with
   secret GF(2^8) or Zp output.
 
+* reliable Bracha broadcast secure against active adversaries.
+
 * computations with any number of players for which an honest majority
   can be found.
 
