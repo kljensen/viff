@@ -17,7 +17,7 @@
 # Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 # 02110-1301 USA
 
-"""Shamir sharing and recombination.
+"""Shamir secret sharing and recombination.
 
 Based on the paper "How to share a secret" by Adi Shamir in
 I{Communications of the ACM} B{22} (11): 612-613.
