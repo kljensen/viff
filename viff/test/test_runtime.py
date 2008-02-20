@@ -39,26 +39,6 @@ from viff.test.util import RuntimeTestCase, protocol
 class RuntimeTest(RuntimeTestCase):
     """Test L{viff.runtime.Runtime}."""
 
-    @protocol
-    def test_open(self, runtime):
-        """Shamir share and open Zp(42)."""
-        # The parties have shares 43, 44, 45 respectively.
-        share = Share(runtime, self.Zp, self.Zp(42 + runtime.id))
-        opened = runtime.open(share)
-        self.assertTrue(isinstance(opened, Share))
-        opened.addCallback(self.assertEquals, 42)
-        return opened
-
-    @protocol
-    def test_open_no_mutate(self, runtime):
-        """Test that opening a share does not change it."""
-        # The parties have shares 43, 44, 45 respectively.
-        share = Share(runtime, self.Zp, self.Zp(42 + runtime.id))
-        opened = runtime.open(share)
-        opened.addCallback(self.assertEquals, 42)
-        share.addCallback(self.assertEquals, 42 + runtime.id)
-        return opened
-
     # TODO: factor out common code from test_add* and test_sub*.
 
     @protocol
@@ -305,7 +285,14 @@ class RuntimeTest(RuntimeTestCase):
         share_a = Share(runtime, self.Zp, self.Zp(42 + runtime.id))
         share_b = Share(runtime, self.Zp, self.Zp(117 - runtime.id))
 
-        result = runtime.open(share_a >= share_b)
+        #tmp = share_a >= share_b
+        tmp = runtime.greater_than_equal(share_a, share_b)
+        #print "\n\n", runtime.id, tmp.results
+        #tmp.addCallback(lambda x: x)
+        
+        result = runtime.open(tmp)
+        #print "opened: ", result
+        #result = runtime.open(share_a >= share_b)
         result.addCallback(self.assertEquals, GF256(42 >= 117))
         return result
 

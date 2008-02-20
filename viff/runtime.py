@@ -43,7 +43,7 @@ from viff.field import GF256, FieldElement
 from viff.util import rand, println
 
 from twisted.internet import reactor
-from twisted.internet.defer import Deferred, DeferredList, gatherResults
+from twisted.internet.defer import Deferred, DeferredList, gatherResults, succeed
 from twisted.internet.protocol import ClientFactory, ServerFactory
 from twisted.protocols.basic import Int16StringReceiver
 
@@ -630,42 +630,68 @@ class Runtime:
         deferred.addCallback(callback_wrapper, *args, **kwargs)
 
     @increment_pc
-    def open(self, sharing, threshold=None):
-        """Open a share using the threshold given or the runtime
-        default if threshold is None. Returns a new Deferred which
-        will contain the opened value.
-
-        Communication cost: 1 broadcast (for each player, n broadcasts
-        in total).
-        """
-        assert isinstance(sharing, Share)
-        if threshold is None:
-            threshold = self.threshold
-
-        def broadcast(share):
-            """Broadcast share to all players."""
-            assert isinstance(share, FieldElement)
-            deferreds = []
-            for id in self.players:
-                d = self._exchange_shares(id, share)
-                self.callback(d, lambda s, id: (s.field(id), s), id)
-                deferreds.append(d)
-
-            # TODO: This list ought to trigger as soon as more than
-            # threshold shares has been received.
-            return self._recombine(deferreds, threshold)
-
-        result = sharing.clone()
-        self.callback(result, broadcast)
-        return result
-
-    @increment_pc
     def synchronize(self):
         shares = [self._exchange_shares(player, GF256(0))
                   for player in self.players]
         result = gather_shares(shares)
         result.addCallback(lambda _: None)
         return result
+        
+    @increment_pc
+    def open(self, share, receivers=None, threshold=None):
+        """
+        Open a secret sharing.
+
+        Communication cost: every player sends one share to each
+            receiving player.
+        
+        @param share: the player's private part of the sharing to open.
+        @type share: Share
+        
+        @param receivers: the ids of the players that  will eventually
+            obtain the opened result or None if all players should
+            obtain the opened result
+        @type receivers: None or a C{List} of integers
+
+        @param threshold: the threshold used to open the sharing or None
+            if the runtime default should be used 
+        @param threshold: integer or None
+        
+        @return: the result of the opened sharing if the player's id 
+            is in C{receivers}, otherwise None 
+        @returntype: Share or None
+        """
+        assert isinstance(share, Share)
+        # all players receive result by default 
+        if receivers is None:
+            receivers = self.players.keys()
+        if threshold is None:
+            threshold = self.threshold
+            
+        # send share to all receivers
+        def exchange(share):
+            for id in receivers:
+                if id != self.id:
+                    pc = tuple(self.program_counter)
+                    self.protocols[id].sendShare(pc, share)
+            # receive and recombine shares if receiver
+            if self.id in receivers:
+                deferreds = []
+                for id in self.players:
+                    if id == self.id:
+                        d = succeed((share.field(id), share))
+                    else:
+                        d = self._expect_share(id, share.field)
+                        self.callback(d, lambda s, id: (s.field(id), s), id)
+                    deferreds.append(d)
+                # TODO: This list ought to trigger as soon as more than
+                # threshold shares has been received.
+                return self._recombine(deferreds, threshold)
+            
+        result = share.clone()
+        self.callback(result, exchange) 
+        if self.id in receivers:
+            return result
 
     def add(self, share_a, share_b):
         """Addition of shares.
@@ -800,7 +826,7 @@ class Runtime:
             return Share(self, field, share)
 
         # Open the square and compute a square-root
-        result = self.open(self.mul(share, share), 2*self.threshold)
+        result = self.open(self.mul(share, share), threshold=2*self.threshold)
 
         def finish(square, share, binary):
             if square == 0:
@@ -938,6 +964,7 @@ class Runtime:
         assert self.num_players + 2 < 2**l
 
         int_bits = [self.prss_share_random(field, True) for _ in range(m)]
+        
         # We must use int_bits without adding callbacks to the bits --
         # having int_b wait on them ensures this.
 
@@ -952,7 +979,7 @@ class Runtime:
         # int_bits is not used any further, but still...
         bit_bits = [self.convert_bit_share(b, GF256) for b in int_bits]
         # Preprocessing done
-
+        
         a = share_a - share_b + 2**l
         T = self.open(2**t - int_b + a)
 
