@@ -18,9 +18,8 @@ Please see the INSTALL file for installation instructions.
 Current Status
 --------------
 
-VIFF is still under development and should be considered a "proof of
-concept". While not being done, VIFF is nevertheless quite usable and
-currently offers the following features:
+VIFF is still under development, but it is nevertheless quite usable
+and offers the following features:
 
 * secret sharing based on standard Shamir and pseudo-random secret
   sharing (PRSS).
