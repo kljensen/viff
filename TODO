@@ -147,12 +147,5 @@ Website
    BuildBot can automate builds and display a status page with the
    results form running the test suite.
 
-Miscellaneous
--------------
-
-* References to papers
-   We need references to the original papers. There should at least be
-   references in the source code itself, but maybe also in a separate
-   file. A new Epydoc field might help?
    
  LocalWords:  VIFF TODO Shamir GMPY wiki BuildBot Epydoc
