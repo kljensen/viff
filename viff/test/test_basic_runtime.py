@@ -17,7 +17,7 @@
 # Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 # 02110-1301 USA
 
-from twisted.internet.defer import Deferred, gatherResults, FirstError
+from twisted.internet.defer import Deferred, gatherResults
 from twisted.trial.unittest import TestCase, FailTest
 
 from viff.test.util import RuntimeTestCase, protocol
