@@ -30,6 +30,8 @@ and offers the following features:
 * two comparison protocols which compare secret shared Zp inputs, with
   secret GF(2^8) or Zp output.
 
+* reliable broadcast, even in the presence of active adversaries.
+
 * computations with any number of players for which an honest majority
   can be found.
 
