@@ -18,7 +18,6 @@
 # 02110-1301 USA
 
 from twisted.internet.defer import Deferred, gatherResults
-from twisted.trial.unittest import TestCase, FailTest
 
 from viff.test.util import RuntimeTestCase, protocol
 
