@@ -92,6 +92,8 @@ id, players = load_config(args[0])
 
 Zp = GF(find_prime(options.modulus, blum=True))
 
+print Zp.modulus
+
 # TODO: better q-prime...must depend on prime
 qprime = 3001
 Zq = GF(long(qprime))
@@ -105,7 +107,7 @@ def protocol(rt):
     print "Testing online requirements for comparisonII"
     l = rt.options.bit_length
     k = rt.options.security_parameter
-    assert prime > 2**(l+k)
+    assert Zp.modulus > 2**(l+k)
 
     print "l = %d" % l
     print "k = %d" % k

@@ -81,7 +81,7 @@ Runtime.add_options(parser)
 if len(args) == 0:
     parser.error("you must specify a config file")
 
-Zp = GF(find_prime(option.modulus, blum=True))
+Zp = GF(find_prime(options.modulus, blum=True))
 id, players = load_config(args[0])
 
 print "I am player %d" % id
