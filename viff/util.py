@@ -224,10 +224,10 @@ def find_prime(lower_bound, blum=False):
 
     Blum primes (a prime p such that p % 4 == 3) can be found as well:
 
-    >>> find_prime(10)
-    11L
-    >>> find_prime(10, blum=True)
+    >>> find_prime(12)
     13L
+    >>> find_prime(12, blum=True)
+    19L
 
     If the bound is negative, 2 (the smallest prime) is returned:
 
@@ -241,7 +241,7 @@ def find_prime(lower_bound, blum=False):
         prime = mpz(lower_bound - 1).next_prime()
 
     if blum:
-        while prime % 4 == 3:
+        while prime % 4 != 3:
             prime = prime.next_prime()
 
     return long(prime)
