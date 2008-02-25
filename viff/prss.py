@@ -256,7 +256,7 @@ class PRF(object):
         # We can only feed str data to sha1 instance, so we must
         # convert the input.
         if not isinstance(input, str):
-            input = pack("L", hash(input))
+            input = pack("l", hash(input))
 
         # There is a chance that we generate a number that is too big,
         # so we must keep trying until we succeed.

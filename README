@@ -15,12 +15,11 @@ VIFF is Free Software licensed under the GNU General Public License
 Please see the INSTALL file for installation instructions.
 
 
-Current Status
---------------
+Features
+--------
 
-VIFF is still under development and should be considered a "proof of
-concept". While not being done, VIFF is nevertheless quite usable and
-currently offers the following features:
+VIFF is still under development, but it is nevertheless quite usable
+and offers the following features:
 
 * secret sharing based on standard Shamir and pseudo-random secret
   sharing (PRSS).
@@ -30,6 +29,8 @@ currently offers the following features:
 
 * two comparison protocols which compare secret shared Zp inputs, with
   secret GF(2^8) or Zp output.
+
+* reliable broadcast, even in the presence of active adversaries.
 
 * computations with any number of players for which an honest majority
   can be found.
@@ -58,5 +59,7 @@ Example Applications
 The apps directory contains a number of example applications. They
 require player configuration files to be generated in advance, use
 apps/generate-config-files.py for that. Run apps/generate-certificates
-to generate certificates for TLS communication. Then execute three
-players, starting with player 3, then 2, and finally 1.
+to generate certificates for TLS communication. This is optional, the
+examples that support command line arguments can be run with a
+--no-tls flag and will then use plain TCP connections. Finally,
+execute three players, starting with player 3, then 2, and finally 1.

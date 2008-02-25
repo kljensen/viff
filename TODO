@@ -12,10 +12,6 @@ benchmarking, and website features.
 Design
 ------
 
-* Asymmetric computation
-   It should be possible to open a share to a single player and for a
-   single player to input a number.
-
 * Define a hierarchy for Runtime functionality
    The Runtime class keeps growing as more and more functionality is
    put into it. An option would be to split it into a basic Runtime
@@ -143,21 +139,4 @@ Website
    It might be convenient to have a place where users can submit bugs.
    But until there is a real demand, the mailing list can be used.
 
-* Wiki
-   Writing the web pages in a wiki would be nice. A wiki like ikiwiki
-   (http://ikiwiki.info/) would be especially nice since it allows you
-   to store the pages in Mercurial and then edit pages offline.
-
-* BuildBot status page
-   BuildBot can automate builds and display a status page with the
-   results form running the test suite.
-
-Miscellaneous
--------------
-
-* References to papers
-   We need references to the original papers. There should at least be
-   references in the source code itself, but maybe also in a separate
-   file. A new Epydoc field might help?
-   
  LocalWords:  VIFF TODO Shamir GMPY wiki BuildBot Epydoc

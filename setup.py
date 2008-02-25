@@ -67,6 +67,8 @@ secure multi-party computations (SMPC). Features include:
 * two comparison protocols which compare secret shared Zp inputs, with
   secret GF(2^8) or Zp output.
 
+* reliable Bracha broadcast secure against active adversaries.
+
 * computations with any number of players for which an honest majority
   can be found.
 
@@ -76,7 +78,7 @@ that an operation starts as soon as the operands are ready.
       keywords=[
         'crypto', 'cryptography', 'multi-party computation', 'MPC', 'SMPC',
         'secure comparison', 'ideal functionality',
-        'Shamir', 'pseudo-random secret sharing', 'PRSS'
+        'Shamir', 'pseudo-random secret sharing', 'PRSS', 'Bracha broadcast'
         ],
       license=viff.__license__,
       packages=['viff', 'viff.test'],

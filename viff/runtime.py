@@ -679,7 +679,7 @@ class Runtime:
                 deferreds = []
                 for id in self.players:
                     if id == self.id:
-                        d = succeed((share.field(id), share))
+                        d = Share(self, share.field, (share.field(id), share)) 
                     else:
                         d = self._expect_share(id, share.field)
                         self.callback(d, lambda s, id: (s.field(id), s), id)
@@ -954,7 +954,7 @@ class Runtime:
         GF256 share.
         """
         l = self.options.bit_length
-        m = l + 2
+        m = l + self.options.security_parameter
         t = m + 1
         field = share_a.field # Should be the same as share_b.field.
 
@@ -964,7 +964,6 @@ class Runtime:
         assert self.num_players + 2 < 2**l
 
         int_bits = [self.prss_share_random(field, True) for _ in range(m)]
-        
         # We must use int_bits without adding callbacks to the bits --
         # having int_b wait on them ensures this.
 
@@ -979,7 +978,7 @@ class Runtime:
         # int_bits is not used any further, but still...
         bit_bits = [self.convert_bit_share(b, GF256) for b in int_bits]
         # Preprocessing done
-        
+
         a = share_a - share_b + 2**l
         T = self.open(2**t - int_b + a)
 
@@ -1345,6 +1344,14 @@ class Runtime:
     def _recombine(self, shares, threshold):
         """Shamir recombine a list of deferred (id,share) pairs."""
         assert len(shares) > threshold
-        result = gatherResults(shares[:threshold+1])
+
+        def filter_good_shares(results):
+            # Filter results, which is a list of (success, share)
+            # pairs.
+            return [result[1] for result in results
+                    if result is not None and result[0]][:threshold+1]
+
+        result = ShareList(shares, threshold+1)
+        result.addCallback(filter_good_shares)
         result.addCallback(shamir.recombine)
         return result
