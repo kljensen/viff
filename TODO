@@ -12,10 +12,6 @@ benchmarking, and website features.
 Design
 ------
 
-* Asymmetric computation
-   It should be possible to open a share to a single player and for a
-   single player to input a number.
-
 * Define a hierarchy for Runtime functionality
    The Runtime class keeps growing as more and more functionality is
    put into it. An option would be to split it into a basic Runtime
