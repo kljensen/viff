@@ -636,28 +636,28 @@ class Runtime:
         result = gather_shares(shares)
         result.addCallback(lambda _: None)
         return result
-        
+
     @increment_pc
     def open(self, share, receivers=None, threshold=None):
         """Open a secret sharing.
 
         Communication cost: every player sends one share to each
-            receiving player.
-        
+        receiving player.
+
         @param share: the player's private part of the sharing to open.
         @type share: Share
-        
+
         @param receivers: the ids of the players that  will eventually
             obtain the opened result or None if all players should
-            obtain the opened result
+            obtain the opened result.
         @type receivers: None or a C{List} of integers
 
         @param threshold: the threshold used to open the sharing or None
-            if the runtime default should be used 
+            if the runtime default should be used.
         @param threshold: integer or None
-        
-        @return: the result of the opened sharing if the player's id 
-            is in C{receivers}, otherwise None 
+
+        @return: the result of the opened sharing if the player's id
+            is in C{receivers}, otherwise None.
         @returntype: Share or None
         """
         assert isinstance(share, Share)
