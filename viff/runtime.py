@@ -639,8 +639,7 @@ class Runtime:
         
     @increment_pc
     def open(self, share, receivers=None, threshold=None):
-        """
-        Open a secret sharing.
+        """Open a secret sharing.
 
         Communication cost: every player sends one share to each
             receiving player.
