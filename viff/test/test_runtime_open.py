@@ -19,14 +19,9 @@
 
 """Tests for the open protocol in the viff.runtime."""
 
-import os
-from random import Random
-
 from twisted.internet.defer import gatherResults
 
-from viff.field import GF256
 from viff.runtime import Share, gather_shares
-
 from viff.test.util import RuntimeTestCase, protocol
 
 

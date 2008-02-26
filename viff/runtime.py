@@ -43,7 +43,7 @@ from viff.field import GF256, FieldElement
 from viff.util import rand, println, wrapper
 
 from twisted.internet import reactor
-from twisted.internet.defer import Deferred, DeferredList, gatherResults, succeed
+from twisted.internet.defer import Deferred, DeferredList
 from twisted.internet.protocol import ClientFactory, ServerFactory
 from twisted.protocols.basic import Int16StringReceiver
 
