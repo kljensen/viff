@@ -1144,7 +1144,7 @@ class Runtime:
         protocol" by G. Bracha in Proc. 3rd ACM Symposium on
         Principles of Distributed Computing, 1984, pages 154-162.
 
-        @param sender: the list of senders.
+        @param senders: the list of senders.
         @param message: the broadcast message, used if this player is
         a sender.
         """
