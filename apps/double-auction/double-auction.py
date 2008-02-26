@@ -37,11 +37,10 @@
 # be removed when the shares are distributed correctly as per the
 # previous TODO item.
 
-import sys, time, random
+import time, random
 from optparse import OptionParser
 
 from twisted.internet import reactor
-from twisted.internet.defer import gatherResults, succeed
 
 from viff import shamir
 from viff.field import GF

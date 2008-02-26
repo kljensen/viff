@@ -20,8 +20,6 @@
 from twisted.internet import gtk2reactor
 gtk2reactor.install()
 from twisted.internet import reactor
-from twisted.internet.protocol import ClientFactory, ServerFactory, Protocol
-
 
 import pygtk
 pygtk.require('2.0')
