@@ -654,7 +654,7 @@ class Runtime:
 
         @param threshold: the threshold used to open the sharing or None
             if the runtime default should be used.
-        @param threshold: integer or None
+        @type threshold: integer or None
 
         @return: the result of the opened sharing if the player's id
             is in C{receivers}, otherwise None.
