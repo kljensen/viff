@@ -59,6 +59,39 @@ else:
     rand = random.Random(_seed)
 
 
+def wrapper(func):
+    """Decorator used for wrapper functions.
+
+    It is important to use this decorator on any wrapper functions in
+    order to ensure that they end up with correct C{__name__} and
+    C{__doc__} attributes.
+
+    In addition, if the environment variable C{EPYDOC} is defined,
+    then the wrapper functions will be turned into functions that I{do
+    not} wrap -- instead they let their argument function through
+    unchanged. This is done so that epydoc can see the true function
+    arguments when generating documentation. Just remember that your
+    code will break if C{EPYDOC} is set, so it should only be used
+    when epydoc is being run.
+
+    @param func: the function that will be wrapped.
+    @type func: callable
+    """
+    if os.environ.get('EPYDOC'):
+        # Return a decorator which ignores the functions it is asked
+        # to decorate and instead returns func:
+        return lambda _: func
+    else:
+        # Return a decorator which does nothing to the function it is
+        # asked to decorate, except update the __name__ and __doc__
+        # attributes to match the original wrapped function.
+        def decorator(f):
+            f.__name__ = func.__name__
+            f.__doc__ = func.__doc__
+            return f
+        return decorator
+
+
 def deprecation(message):
     """Issue a deprecation warning."""
     warnings.warn(message, DeprecationWarning, stacklevel=3)

@@ -40,7 +40,7 @@ from math import ceil
 from viff import shamir
 from viff.prss import prss
 from viff.field import GF256, FieldElement
-from viff.util import rand, println
+from viff.util import rand, println, wrapper
 
 from twisted.internet import reactor
 from twisted.internet.defer import Deferred, DeferredList, gatherResults, succeed
@@ -386,6 +386,8 @@ def increment_pc(method):
     @param method: the method.
     @type method: a method of L{Runtime}
     """
+
+    @wrapper(method)
     def inc_pc_wrapper(self, *args, **kwargs):
         try:
             self.program_counter[-1] += 1
@@ -394,7 +396,6 @@ def increment_pc(method):
             return method(self, *args, **kwargs)
         finally:
             self.program_counter.pop()
-    inc_pc_wrapper.func_name = method.func_name
     return inc_pc_wrapper
 
 
@@ -615,6 +616,7 @@ class Runtime:
         saved_pc = self.program_counter[:]
         #println("Saved PC: %s for %s", saved_pc, func.func_name)
 
+        @wrapper(func)
         def callback_wrapper(*args, **kwargs):
             """Wrapper for a callback which ensures a correct PC."""
             try:
@@ -624,7 +626,6 @@ class Runtime:
                 return func(*args, **kwargs)
             finally:
                 self.program_counter = current_pc
-        callback_wrapper.func_name = func.func_name
 
         #println("Adding %s to %s", func.func_name, deferred)
         deferred.addCallback(callback_wrapper, *args, **kwargs)
