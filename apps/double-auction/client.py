@@ -26,7 +26,7 @@ from twisted.internet.protocol import ClientFactory, ServerFactory, Protocol
 import pygtk
 pygtk.require('2.0')
 import gtk
-import gtk.glade
+from gtk import glade
 
 from configobj import ConfigObj
 
@@ -131,7 +131,7 @@ class Client:
     def __init__(self):
 
         ui = "auction-client.glade"
-        self.widget_tree = gtk.glade.XML(ui, "window")
+        self.widget_tree = glade.XML(ui, "window")
 
         signals = {"on_quit_clicked": self.quit,
                    "on_save_clicked": self.save,
