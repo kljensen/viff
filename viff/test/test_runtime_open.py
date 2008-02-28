@@ -60,10 +60,10 @@ class RuntimeOpenTest(RuntimeTestCase):
         a = runtime.open(share)
         res.append(a)
         receivers = runtime.players.keys()[0:2]
-        if (runtime.id in receivers):
+        if runtime.id in receivers:
             b = runtime.open(share, receivers)
-            c = gather_shares([a,b])
-            c.addCallback(lambda (a,b): self.assertEquals(a,b))
+            c = gather_shares([a, b])
+            c.addCallback(lambda (a, b): self.assertEquals(a, b))
             res.append(c)
         else:
             runtime.open(share, receivers)
@@ -78,7 +78,7 @@ class RuntimeOpenTest(RuntimeTestCase):
         
         if runtime.id in receivers:
             opened = runtime.open(share, receivers)
-            self.assertTrue(isinstance(opened,Share))
+            self.assertTrue(isinstance(opened, Share))
             opened.addCallback(self.assertEquals, secret)
             return opened
         else:
