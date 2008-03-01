@@ -13,6 +13,9 @@ doc/api/
 dist
 MANIFEST
 
+# ignore trace2html.py's standard output directory
+coverage_dir
+
 # ignore eclipse project files
 .project
 
