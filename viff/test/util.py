@@ -19,14 +19,14 @@
 
 """Utility functions and classes used for testing."""
 
-from twisted.internet.defer import Deferred, gatherResults
+from twisted.internet.defer import Deferred, gatherResults, maybeDeferred
 from twisted.trial.unittest import TestCase
-from twisted.protocols.loopback import loopbackAsync
 
 from viff.runtime import Runtime, ShareExchanger, ShareExchangerFactory
 from viff.field import GF
 from viff.config import generate_configs, load_config
 from viff.util import rand
+from viff.test.loopback import loopbackAsync
 
 from random import Random
 
@@ -43,7 +43,16 @@ def protocol(method):
     """
     def wrapper(self):
         def cb_method(runtime):
-            return method(self, runtime)
+            # First run the method with the runtime as argument:
+            result = maybeDeferred(method, self, runtime)
+
+            # Then schedule the shutdown when the result is ready:
+            def shutdown_protocols(_):
+                # TODO: this should use runtime.shutdown instead.
+                for protocol in runtime.protocols.itervalues():
+                    protocol.loseConnection()
+            result.addCallback(shutdown_protocols)
+            return result
 
         for runtime in self.runtimes:
             runtime.addCallback(cb_method)
