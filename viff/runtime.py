@@ -289,11 +289,11 @@ class ShareExchangerFactory(ServerFactory, ClientFactory):
 
     protocol = ShareExchanger
 
-    def __init__(self, runtime, players, needed_protocols, protocols_ready):
+    def __init__(self, runtime, players, protocols_ready):
         """Initialize the factory."""
         self.runtime = runtime
         self.players = players
-        self.needed_protocols = needed_protocols
+        self.needed_protocols = len(players) - 1
         self.protocols_ready = protocols_ready
 
     def identify_peer(self, protocol):
@@ -341,9 +341,7 @@ def create_runtime(id, players, threshold, options=None):
     # It will eventually be returned in result when the factory has
     # determined that all needed protocols are ready.
     runtime = Runtime(players[id], threshold, options)
-    needed_protocols = len(players) - 1
-
-    factory = ShareExchangerFactory(runtime, players, needed_protocols, result)
+    factory = ShareExchangerFactory(runtime, players, result)
 
     if options and options.tls:
         print "Using TLS"

@@ -126,8 +126,7 @@ class RuntimeTestCase(TestCase):
         # It will eventually be returned in result when the factory has
         # determined that all needed protocols are ready.
         runtime = Runtime(players[id], self.threshold)
-        needed_protocols = len(players) - 1
-        factory = ShareExchangerFactory(runtime, players, needed_protocols, result)
+        factory = ShareExchangerFactory(runtime, players, result)
 
         for peer_id in players:
             if peer_id != id:
