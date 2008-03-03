@@ -104,11 +104,14 @@ class RuntimeTestCase(TestCase):
         self.shared_rand = dict([(player_id, Random(seed)) 
                   for player_id in range(1,self.num_players + 1)])
 
+        # This will be a list of Deferreds which will trigger when the
+        # virtual connections between the players are closed.
+        self.close_sentinels = []
+
         self.runtimes = []
         for id in reversed(range(1, self.num_players+1)):
             _, players = load_config(configs[id])
-            runtime = self.create_loopback_runtime(id, players)
-            self.runtimes.append(runtime)
+            self.create_loopback_runtime(id, players)
 
     def create_loopback_runtime(self, id, players):
         """Create a L{Runtime} connected with a loopback.
@@ -127,6 +130,10 @@ class RuntimeTestCase(TestCase):
         # determined that all needed protocols are ready.
         runtime = Runtime(players[id], self.threshold)
         factory = ShareExchangerFactory(runtime, players, result)
+        # We add the Deferred passed to ShareExchangerFactory and not
+        # the Runtime, since we want everybody to wait until all
+        # runtimes are ready.
+        self.runtimes.append(result)
 
         for peer_id in players:
             if peer_id != id:
@@ -145,6 +152,9 @@ class RuntimeTestCase(TestCase):
                     # and the other player is the server.
                     client = self.protocols[client_key]
                     server = self.protocols[server_key]
-                    loopbackAsync(server, client)
-
-        return result
+                    # The loopback connection pumps data back and
+                    # forth, and when both sides has closed the
+                    # connection, then the returned Deferred will
+                    # fire.
+                    sentinel = loopbackAsync(server, client)
+                    self.close_sentinels.append(sentinel)
