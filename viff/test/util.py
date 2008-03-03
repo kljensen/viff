@@ -72,49 +72,6 @@ def protocol(method):
     return wrapper
 
 
-def create_loopback_runtime(id, players, threshold, protocols):
-    """Create a L{Runtime} connected with a loopback.
-
-    This is used to connect Runtime instances without involving real
-    network traffic -- this is transparent to the Runtime.
-
-    @param id: ID of the player owning this Runtime.
-    @param players: player configuration.
-    @param threshold: security threshold.
-    @param protocols: dictionary containing already established
-    loopback connections.
-    """
-    # This will yield a Runtime when all protocols are connected.
-    result = Deferred()
-
-    # Create a runtime that knows about no other players than itself.
-    # It will eventually be returned in result when the factory has
-    # determined that all needed protocols are ready.
-    runtime = Runtime(players[id], threshold)
-    needed_protocols = len(players) - 1
-    factory = ShareExchangerFactory(runtime, players, needed_protocols, result)
-
-    for peer_id in players:
-        if peer_id != id:
-            protocol = ShareExchanger()
-            protocol.factory = factory
-
-            # Keys for when we are the client and when we are the server.
-            client_key = (id, peer_id)
-            server_key = (peer_id, id)
-            # Store a protocol used when we are the server.
-            protocols[server_key] = protocol
-
-            if peer_id > id:
-                # Make a "connection" to the other player. We are
-                # the client (because we initiate the connection)
-                # and the other player is the server.
-                client = protocols[client_key]
-                server = protocols[server_key]
-                loopbackAsync(server, client)
-
-    return result
-
 
 class RuntimeTestCase(TestCase):
 
@@ -140,7 +97,7 @@ class RuntimeTestCase(TestCase):
         self.Zp = GF(30916444023318367583)
 
         configs = generate_configs(self.num_players, self.threshold)
-        protocols = {}
+        self.protocols = {}
         
         # initialize the dictionary of random generators
         seed = rand.random()
@@ -150,6 +107,45 @@ class RuntimeTestCase(TestCase):
         self.runtimes = []
         for id in reversed(range(1, self.num_players+1)):
             _, players = load_config(configs[id])
-            runtime = create_loopback_runtime(id, players, self.threshold,
-                                              protocols)
+            runtime = self.create_loopback_runtime(id, players)
             self.runtimes.append(runtime)
+
+    def create_loopback_runtime(self, id, players):
+        """Create a L{Runtime} connected with a loopback.
+
+        This is used to connect Runtime instances without involving real
+        network traffic -- this is transparent to the Runtime.
+
+        @param id: ID of the player owning this Runtime.
+        @param players: player configuration.
+        """
+        # This will yield a Runtime when all protocols are connected.
+        result = Deferred()
+
+        # Create a runtime that knows about no other players than itself.
+        # It will eventually be returned in result when the factory has
+        # determined that all needed protocols are ready.
+        runtime = Runtime(players[id], self.threshold)
+        needed_protocols = len(players) - 1
+        factory = ShareExchangerFactory(runtime, players, needed_protocols, result)
+
+        for peer_id in players:
+            if peer_id != id:
+                protocol = ShareExchanger()
+                protocol.factory = factory
+
+                # Keys for when we are the client and when we are the server.
+                client_key = (id, peer_id)
+                server_key = (peer_id, id)
+                # Store a protocol used when we are the server.
+                self.protocols[server_key] = protocol
+
+                if peer_id > id:
+                    # Make a "connection" to the other player. We are
+                    # the client (because we initiate the connection)
+                    # and the other player is the server.
+                    client = self.protocols[client_key]
+                    server = self.protocols[server_key]
+                    loopbackAsync(server, client)
+
+        return result
