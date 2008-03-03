@@ -45,7 +45,7 @@ def protocol(method):
         def cb_method(runtime):
             return method(self, runtime)
 
-        for runtime in self.runtimes.itervalues():
+        for runtime in self.runtimes:
             runtime.addCallback(cb_method)
 
         def unpack(failure):
@@ -64,7 +64,7 @@ def protocol(method):
             except AttributeError:
                 return failure
 
-        result = gatherResults(self.runtimes.values())
+        result = gatherResults(self.runtimes)
         result.addErrback(unpack)
         return result
 
@@ -147,9 +147,9 @@ class RuntimeTestCase(TestCase):
         self.shared_rand = dict([(player_id, Random(seed)) 
                   for player_id in range(1,self.num_players + 1)])
 
-        self.runtimes = {}
+        self.runtimes = []
         for id in reversed(range(1, self.num_players+1)):
             _, players = load_config(configs[id])
-            self.runtimes[id] = create_loopback_runtime(id, players,
-                                                        self.threshold,
-                                                        protocols)
+            runtime = create_loopback_runtime(id, players, self.threshold,
+                                              protocols)
+            self.runtimes.append(runtime)
