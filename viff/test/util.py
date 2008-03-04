@@ -42,16 +42,20 @@ def protocol(method):
     The three runtimes are connected by L{create_loopback_runtime}.
     """
     def wrapper(self):
-        def cb_method(runtime):
-            # First run the method with the runtime as argument:
-            result = maybeDeferred(method, self, runtime)
 
-            # Then schedule the shutdown when the result is ready:
-            def shutdown_protocols(_):
-                # TODO: this should use runtime.shutdown instead.
-                for protocol in runtime.protocols.itervalues():
-                    protocol.loseConnection()
-            result.addCallback(shutdown_protocols)
+        def shutdown_protocols(result, runtime):
+            # TODO: this should use runtime.shutdown instead.
+            for protocol in runtime.protocols.itervalues():
+                protocol.loseConnection()
+            # If we were called as an errback, then returning the
+            # result signals the original error to Trial.
+            return result
+
+        def cb_method(runtime):
+            # Run the method with the runtime as argument:
+            result = maybeDeferred(method, self, runtime)
+            # Always call shutdown_protocols:
+            result.addBoth(shutdown_protocols, runtime)
             return result
 
         for runtime in self.runtimes:
@@ -75,7 +79,7 @@ def protocol(method):
 
         result = gatherResults(self.runtimes)
         result.addErrback(unpack)
-        return result
+        return gatherResults(self.close_sentinels)
 
     wrapper.func_name = method.func_name
     return wrapper
