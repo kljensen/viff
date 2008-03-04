@@ -1,15 +1,29 @@
 syntax: glob
+
 *.pyc
+
+# ignore backup files
 *~
-*-[1-9].{ini,cert,key}
-ca.{cert,key}
 *.bak
 *.orig
+
+
+# ignore keys and certificates
+*-[1-9].{ini,cert,key}
+ca.{cert,key}
+
+# ignore Trial output directory
 _trial_temp
+
+# ignore benchmarking data
 profile.data
 *.prof
+
+# ignore LaTeX outputs
 *.{aux,dvi,log,nav,out,pdf,ps,snm,toc,vrb}
 doc/api/
+
+# ignore Distutils generated files
 dist
 MANIFEST
 
