@@ -1,3 +1,6 @@
+# This is actually not a -*- shell-script -*- but the syntax is
+# close enough...
+
 syntax: glob
 
 *.pyc
