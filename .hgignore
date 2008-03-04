@@ -1,6 +1,7 @@
 # This is actually not a -*- shell-script -*- but the syntax is
 # close enough...
 
+# use shell glob syntax (the alternative is Python regexp syntax)
 syntax: glob
 
 *.pyc
