@@ -1,44 +1,44 @@
 # This is actually not a -*- shell-script -*- but the syntax is
 # close enough...
 
-# use shell glob syntax (the alternative is Python regexp syntax)
+# Use shell glob syntax (the alternative is Python regexp syntax).
 syntax: glob
 
 *.pyc
 
-# ignore backup files
+# Ignore backup files.
 *~
 *.bak
 *.orig
 
 
-# ignore keys and certificates
+# Keys and certificates.
 *-[1-9].{ini,cert,key}
 ca.{cert,key}
 
-# ignore Trial output directory
+# Trial output directory.
 _trial_temp
 
-# ignore benchmarking data
+# Benchmarking data.
 profile.data
 *.prof
 
-# ignore LaTeX outputs
+# LaTeX outputs.
 *.{aux,dvi,log,nav,out,pdf,ps,snm,toc,vrb}
 doc/api/
 
-# ignore Distutils generated files
+# Distutils generated files.
 dist
 MANIFEST
 
-# ignore trace2html.py's standard output directory
+# Trace2html.py's standard output directory.
 coverage_dir
 
-# ignore eclipse project files
+# Eclipse project files
 .project
 
-# ignore eclipse pydev extension project files
+# Eclipse PyDev extension project files.
 .pydevproject
 
-# ignore eclipse settings
+# Eclipse settings.
 .settings
