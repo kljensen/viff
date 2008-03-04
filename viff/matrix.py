@@ -17,6 +17,11 @@
 # Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 # 02110-1301 USA
 
+"""Basic matrix operations as well as a function to build square
+hyper-invertible matrices. The matrix implementation provides operator
+overloading.
+"""
+
 from viff.prss import generate_subsets
 from viff.field import GF
 from __future__ import division
