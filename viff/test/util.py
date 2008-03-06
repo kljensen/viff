@@ -126,6 +126,18 @@ class RuntimeTestCase(TestCase):
             _, players = load_config(configs[id])
             self.create_loopback_runtime(id, players)
 
+    def tearDown(self):
+        """Ensure that all protocol transports are closed.
+
+        This is normally done above when C{loseConnection} is called
+        on the protocols, but it may happen that a test case is
+        interrupted by a C{TimeoutError}, and so we do it here in all
+        cases to avoid leaving scheduled calls lying around in the
+        reactor.
+        """
+        for protocol in self.protocols.itervalues():
+            protocol.transport.close()
+
     def create_loopback_runtime(self, id, players):
         """Create a L{Runtime} connected with a loopback.
 
