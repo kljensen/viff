@@ -88,8 +88,6 @@ def protocol(method):
 
 class RuntimeTestCase(TestCase):
 
-    #: Timeout in seconds per unit test.
-    timeout = 3
     #: Number of players to test.
     num_players = 3
     #: Shamir sharing threshold.
