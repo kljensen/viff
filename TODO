@@ -39,27 +39,6 @@ Design
    file and produce another file with a pickled pool of preprocessed
    stuff.
 
-* Lazy Shamir resharing
-   After multiplying two shares, the result is a correct share of the
-   product, but a share from a polynomial of degree 2t. We therefore
-   normally reshare to get a polynomial of degree t.
-
-   But for doing addition these degree 2t shares are fine, so we could
-   wait with the resharing until it is surely needed.
- 
-   Let [a]_t denote a share of a using a degree t polynomial and let
-   [a]_2t -> [a]_t denote a resharing going from degree 2t to t.
-
-   We could then calculate
-
-     sum([a_i]_t * [b_i]_t) = sum([a_i b_i]_2t)
-                            = [sum(a_i b_i)]_2t -> [sum(a_i b_i)]_t
-
-   using only one resharing at the end, saving network traffic. There
-   does not seem to be many places where we do stuff like that,
-   though. So the overhead of keeping track of when resharing is
-   needed might be too big for this to be an improvement.
-
 Infrastructure
 ---------------
 
@@ -140,5 +119,30 @@ Website
 * Bug tracker
    It might be convenient to have a place where users can submit bugs.
    But until there is a real demand, the mailing list can be used.
+
+Things we might eventually do
+-----------------------------
+
+* Lazy Shamir resharing
+   After multiplying two shares, the result is a correct share of the
+   product, but a share from a polynomial of degree 2t. We therefore
+   normally reshare to get a polynomial of degree t.
+
+   But for doing addition these degree 2t shares are fine, so we could
+   wait with the resharing until it is surely needed.
+ 
+   Let [a]_t denote a share of a using a degree t polynomial and let
+   [a]_2t -> [a]_t denote a resharing going from degree 2t to t.
+
+   We could then calculate
+
+     sum([a_i]_t * [b_i]_t) = sum([a_i b_i]_2t)
+                            = [sum(a_i b_i)]_2t -> [sum(a_i b_i)]_t
+
+   using only one resharing at the end, saving network traffic. There
+   does not seem to be many places where we do stuff like that,
+   though. So the overhead of keeping track of when resharing is
+   needed might be too big for this to be an improvement.
+
 
  LocalWords:  VIFF TODO Shamir GMPY wiki BuildBot Epydoc
