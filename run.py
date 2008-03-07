@@ -27,7 +27,7 @@ run the commands used when building releases of VIFF.
 """
 
 import sys, os
-from os.path import isdir
+from os.path import isdir, join, getsize
 from subprocess import Popen, call
 from pprint import pprint
 from textwrap import wrap
@@ -115,6 +115,17 @@ def upload(build, key):
              '--chmod', 'go=rX',
              '-e', 'ssh -l viff -i %s' % key,
              build, 'viff.dk:~/viff.dk/builds/'])
+
+@command('size')
+def size():
+    """Calculate the size in KiB of the working copy currently checked
+    out."""
+    total = 0
+    for root, dirs, files in os.walk('.'):
+        total += sum(getsize(join(root, name)) for name in files)
+        if '.hg' in dirs:
+            dirs.remove('.hg')
+    print total // 1024
 
 @command('help')
 def usage():
