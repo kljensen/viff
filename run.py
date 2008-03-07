@@ -27,7 +27,7 @@ run the commands used when building releases of VIFF.
 """
 
 import sys, os
-import os.path
+from os.path import isdir
 from subprocess import Popen, call
 from pprint import pprint
 from textwrap import wrap
@@ -67,7 +67,7 @@ def execute(args, env=None):
         abort("Interrupted")
 
 def ensure_dir(path):
-    if not os.path.isdir(path):
+    if not isdir(path):
         try:
             os.makedirs(path)
         except OSError, e:
@@ -105,7 +105,7 @@ def coverage(build):
 def upload(build, key):
     """Upload build directory to http://viff.dk/builds/. This requires
     access to a SSH private key that has access to viff.dk."""
-    if not os.path.isdir(build):
+    if not isdir(build):
         abort("%s should be a directory", build)
     if not os.access(key, os.R_OK):
         abort("Cannot read %s", key)
