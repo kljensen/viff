@@ -88,6 +88,20 @@ def coverage(build):
     execute(["trace2html.py", "-o", target, "-w", "viff", "-b", "viff.test",
              "--run-command", trial, "--reporter", "timing", "viff"])
 
+def upload(build, key):
+    """Upload build directory to http://viff.dk/builds/. This requires
+    access to a SSH private key that has access to viff.dk."""
+    if not os.path.isdir(build):
+        abort("%s should be a directory", build)
+    if not os.access(key, os.R_OK):
+        abort("Cannot read %s", key)
+
+    execute(['rsync', '--recursive',
+             '--human-readable', '--stats', '--verbose',
+             '--chmod', 'go=rX',
+             '-e', 'ssh -l viff -i %s' % key,
+             build, 'viff.dk:~/viff.dk/builds/'])
+
 def usage():
     """Show this help message and exit."""
     try:
@@ -123,6 +137,7 @@ def usage():
 # lists.
 command_table = {'epydoc':   [epydoc,   ["build"]],
                  'coverage': [coverage, ["build"]],
+                 'upload':   [upload,   ["build", "key"]],
                  'help':     [usage,    []]}
 
 if __name__ == "__main__":
