@@ -108,11 +108,6 @@ Benchmarking
    from PODC 1989 should be implemented and tested against a standard
    logarithmic round protocol.
 
-* Profile and optimize
-   We need to see if the time is spend on network latency or in the
-   CPU. If the latter is the case, then we could consider writing the
-   inner loop in C for more speed.
-
 Website
 -------
 
