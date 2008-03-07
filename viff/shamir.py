@@ -112,5 +112,6 @@ def recombine(shares, x_recomb=0):
     return sum(map(operator.mul, ys, vector))
 
 if __name__ == "__main__":
-    import doctest
-    doctest.testmod()
+    import doctest    #pragma NO COVER
+    doctest.testmod() #pragma NO COVER
+

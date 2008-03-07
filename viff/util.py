@@ -281,5 +281,5 @@ def find_prime(lower_bound, blum=False):
 
 
 if __name__ == "__main__":
-    import doctest
-    doctest.testmod()
+    import doctest    #pragma NO COVER
+    doctest.testmod() #pragma NO COVER
