@@ -16,7 +16,9 @@ Design
    The Runtime class keeps growing as more and more functionality is
    put into it. An option would be to split it into a basic Runtime
    which provides communication and nothing else. More functionality
-   could be provided by mix-in classes.
+   could be provided by mix-in classes. See the discussion here:
+
+     http://thread.gmane.org/gmane.comp.cryptography.viff.devel/61/
 
 * Support preprocessing
    With the use of deferreds, some amount of preprocessing is already
