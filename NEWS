@@ -12,8 +12,10 @@ Version ?, not yet released
 ---------------------------
 
 Implemented a reliable Bracha broadcast which is secure against active
-adversaries. Shamir sharings can now be asymmetric which means that
-only a subset of the parties provide input. The behavior of field
+adversaries. Shamir sharings, pseudo-random as well as standard, can now 
+be asymmetric which means that only a subset of the parties provide input.
+The open protocol is now also asymmetric, in the sense that only a subset
+of the parties receive the opened result. The behavior of field
 elements in Boolean expressions has been fixed. This means that
 "GF256(0) and GF256(1)" now returns GF256(0) instead of GF256(1).
 Added a modern implementation of the classic Yao millionaires example
@@ -37,6 +39,29 @@ Details:
     a, b, c = rt.shamir_share([1, 2, 3], Zp, input)
 
   where Zp is a field and rt is a Runtime.
+  
+* Asymmetric pseudo-random secret sharing. As the asymmetric Shamir sharing
+  above, this is not backwards compatible. This can be fixed by changing
+  statements such as e.g.
+  
+    a, b, c = rt.prss_share(Zp(input))
+  
+  to
+  
+    a, b, c = rt.prss_share([1, 2, 3], Zp, input)
+    
+  where Zp is a field and rt is a Runtime.
+
+* Asymmetric open protocol, meaning that it is now possible to specify that
+  only a subset of the players should receive the opened secret. This change
+  is not backwards compatible in cases, where threshold is explicitly passed
+  as a parameter. To correct this, name the threshold parameter, e.g. change
+  
+    result = rt.open(sharing, rt.threshold * 2)
+    
+  to
+  
+    result = rt.open(sharing, threshold=rt.threshold * 2)
 
 * Overloaded exclusive-or operations on Share instances. Given two
   shares a and b, one can now do

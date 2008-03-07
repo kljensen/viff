@@ -1,3 +1,4 @@
+# Necessary because of the 'å' in 'Damgård': -*- coding: latin-1 -*-
 # Copyright 2007, 2008 VIFF Development Team.
 #
 # This file is part of VIFF, the Virtual Ideal Functionality Framework.
@@ -315,7 +316,7 @@ def create_runtime(id, players, threshold, options=None):
     code like this::
 
         def protocol(runtime):
-            a, b, c = runtime.prss_share(input)
+            a, b, c = runtime.shamir_share(input)
 
             a = runtime.open(a)
             b = runtime.open(b)
@@ -648,7 +649,7 @@ class Runtime:
         @param share: the player's private part of the sharing to open.
         @type share: Share
 
-        @param receivers: the ids of the players that  will eventually
+        @param receivers: the ids of the players that will eventually
             obtain the opened result or None if all players should
             obtain the opened result.
         @type receivers: None or a C{List} of integers
@@ -662,19 +663,19 @@ class Runtime:
         @returntype: Share or None
         """
         assert isinstance(share, Share)
-        # all players receive result by default 
+        # all players receive result by default
         if receivers is None:
             receivers = self.players.keys()
         if threshold is None:
             threshold = self.threshold
             
-        # send share to all receivers
         def exchange(share):
+            # Send share to all receivers.
             for id in receivers:
                 if id != self.id:
                     pc = tuple(self.program_counter)
                     self.protocols[id].sendShare(pc, share)
-            # receive and recombine shares if receiver
+            # Receive and recombine shares if this player is a receiver.
             if self.id in receivers:
                 deferreds = []
                 for id in self.players:
@@ -758,13 +759,40 @@ class Runtime:
             return share_a + share_b - 2 * share_a * share_b
 
     @increment_pc
-    def prss_share(self, element):
-        """PRSS share a field element.
+    def prss_share(self, inputters, field, element=None):
+        """Creates pseudo-random secret sharings.
 
-        Communication cost: 1 broadcast.
+        This protocol creates a secret sharing for each player in the
+        subset of players specified in C{inputters}. The protocol uses the
+        pseudo-random secret sharing technique described in the paper "Share
+        Conversion, Pseudorandom Secret-Sharing and Applications to Secure
+        Computation" by Ronald Cramer, Ivan Damgård, and Yuval Ishai in Proc.
+        of TCC 2005, LNCS 3378.
+        U{Download <http://www.cs.technion.ac.il/~yuvali/pubs/CDI05.ps>}.
+
+        Communication cost: Each inputter does one broadcast.
+
+        @param inputters: The ids of the players that will share a secret.
+        @type inputters: C{list} of integers
+
+        @param field: The field over which to share all the secrets.
+        @type field: L{FieldElement}
+
+        @param element: The secret that this player shares or C{None} if this
+            player is not in C{inputters}.
+        @type element: int, long, or None
+
+        @return: A list of shares corresponding to the secrets submitted by
+            the players in C{inputters}.
+        @returntype: C{List} of C{Shares}
         """
-        assert isinstance(element, FieldElement)
-        field = type(element)
+        # Verifying parameters.
+        if element is None:
+            assert self.id not in inputters, "No element given."
+        else:
+            assert self.id in inputters, \
+                "Element given, but we are not sharing?"
+
         n = self.num_players
 
         # Key used for PRSS.
@@ -778,30 +806,36 @@ class Runtime:
 
         prfs = self.players[self.id].dealer_prfs(field.modulus)
 
-        # TODO: Stop calculating shares for all_shares at
-        # self.threshold+1 since that is all we need to do the Shamir
-        # recombine below.
-        for player in self.players:
-            # TODO: when player == self.id, the two calls to prss are
-            # the same.
-            share = prss(n, player, field, prfs[self.id], key)
-            all_shares.append((field(player), share))
-            tmp_shares[player] = prss(n, self.id, field, prfs[player], key)
-
-        # We can now calculate what was shared and derive the
-        # correction factor.
-        shared = shamir.recombine(all_shares[:self.threshold+1])
-        correction = element - shared
-
-        result = []
-        for player in self.players:
+        # Compute and broadcast correction value. 
+        if self.id in inputters:
+            for player in self.players:
+                share = prss(n, player, field, prfs[self.id], key)
+                all_shares.append((field(player), share))
+            shared = shamir.recombine(all_shares[:self.threshold+1])
+            correction = element - shared
+            # if this player is inputter then broadcast correction value
             # TODO: more efficient broadcast?
-            d = self._exchange_shares(player, correction)
-            # We have to add our own share to the correction factor
-            # received.
+            pc = tuple(self.program_counter)
+            for id in self.players:
+                if self.id != id:
+                    self.protocols[id].sendShare(pc, correction)
+
+        # Receive correction value from inputters and compute share.
+        result = []
+        for player in inputters:
+            tmp_shares[player] = prss(n, self.id, field, prfs[player], key)
+            if player == self.id:
+                d = Share(self, field, correction)
+            else:
+                d = self._expect_share(player, field)
             d.addCallback(lambda c, s: s + c, tmp_shares[player])
             result.append(d)
-        return result
+
+        # Unpack a singleton list.
+        if len(result) == 1:
+            return result[0]
+        else:
+            return result
 
     @increment_pc
     def prss_share_random(self, field, binary=False):
@@ -893,8 +927,8 @@ class Runtime:
     def convert_bit_share(self, share, dst_field):
         """Convert a 0/1 share into dst_field."""
         bit = rand.randint(0, 1)
-        dst_shares = self.prss_share(dst_field(bit))
-        src_shares = self.prss_share(share.field(bit))
+        dst_shares = self.prss_share(self.players, dst_field, bit)
+        src_shares = self.prss_share(self.players, share.field, bit)
 
         # TODO: Using a parallel reduce below seems to be slower than
         # using the built-in reduce.
@@ -928,8 +962,8 @@ class Runtime:
 
         # Share large random values in the big field and reduced ones
         # in the small...
-        src_shares = self.prss_share(share.field(this_mask))
-        dst_shares = self.prss_share(dst_field(this_mask))
+        src_shares = self.prss_share(self.players, share.field, this_mask)
+        dst_shares = self.prss_share(self.players, dst_field, this_mask)
 
         tmp = reduce(self.add, src_shares, share)
 

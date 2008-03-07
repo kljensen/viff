@@ -186,7 +186,7 @@ class RuntimeTest(RuntimeTestCase):
     @protocol
     def test_prss_share_int(self, runtime):
         """Test sharing of a Zp element using PRSS."""
-        a, b, c = runtime.prss_share(self.Zp(42 + runtime.id))
+        a, b, c = runtime.prss_share(runtime.players, self.Zp, 42 + runtime.id)
 
         self.assertTrue(isinstance(a, Share),
                         "Type should be Share, but is %s" % a.__class__)
@@ -208,7 +208,7 @@ class RuntimeTest(RuntimeTestCase):
     @protocol
     def test_prss_share_bit(self, runtime):
         """Test sharing of a GF256 element using PRSS."""
-        a, b, c = runtime.prss_share(GF256(42 + runtime.id))
+        a, b, c = runtime.prss_share(runtime.players, GF256, 42 + runtime.id)
 
         self.assertTrue(isinstance(a, Share),
                         "Type should be Share, but is %s" % a.__class__)
