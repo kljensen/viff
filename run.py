@@ -73,12 +73,18 @@ def ensure_dir(path):
         except OSError, e:
             abort(e)
 
+
+# Dictionary mapping command line arguments to [function, arguments]
+# lists.
+command_table = {}
+
 def epydoc(build):
     """Generate API documentation using epydoc."""
     target = "%s/api" % build
     ensure_dir(target)
     execute(["epydoc", "-vv", "--config", "epydoc.conf"],
             {'EPYDOC': 'YES', 'target': target})
+command_table['epydoc'] = [epydoc, ["build"]]
 
 def coverage(build):
     """Run Trial unit tests and collect coverage data."""
@@ -87,6 +93,7 @@ def coverage(build):
     trial = find_program("trial")
     execute(["trace2html.py", "-o", target, "-w", "viff", "-b", "viff.test",
              "--run-command", trial, "--reporter", "timing", "viff"])
+command_table['coverage'] = [coverage, ["build"]]
 
 def upload(build, key):
     """Upload build directory to http://viff.dk/builds/. This requires
@@ -101,6 +108,7 @@ def upload(build, key):
              '--chmod', 'go=rX',
              '-e', 'ssh -l viff -i %s' % key,
              build, 'viff.dk:~/viff.dk/builds/'])
+command_table['upload'] = [upload, ["build", "key"]]
 
 def usage():
     """Show this help message and exit."""
@@ -132,13 +140,8 @@ def usage():
         print "  %-*s%s" % (command_width, command, lines[0])
         for line in lines[1:]:
             print "  %-*s%s" % (command_width, '', line)
+command_table['help'] = [usage, []]
 
-# Dictionary mapping command line arguments to [function, arguments]
-# lists.
-command_table = {'epydoc':   [epydoc,   ["build"]],
-                 'coverage': [coverage, ["build"]],
-                 'upload':   [upload,   ["build", "key"]],
-                 'help':     [usage,    []]}
 
 if __name__ == "__main__":
     try:
