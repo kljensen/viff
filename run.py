@@ -78,14 +78,21 @@ def ensure_dir(path):
 # lists.
 command_table = {}
 
+def command(name, *required_args):
+    def wrapper(func):
+        command_table[name] = [func, required_args]
+        return func
+    return wrapper
+
+@command('epydoc', 'build')
 def epydoc(build):
     """Generate API documentation using epydoc."""
     target = "%s/api" % build
     ensure_dir(target)
     execute(["epydoc", "-vv", "--config", "epydoc.conf"],
             {'EPYDOC': 'YES', 'target': target})
-command_table['epydoc'] = [epydoc, ["build"]]
 
+@command('coverage', 'build')
 def coverage(build):
     """Run Trial unit tests and collect coverage data."""
     target = "%s/coverage" % build
@@ -93,8 +100,8 @@ def coverage(build):
     trial = find_program("trial")
     execute(["trace2html.py", "-o", target, "-w", "viff", "-b", "viff.test",
              "--run-command", trial, "--reporter", "timing", "viff"])
-command_table['coverage'] = [coverage, ["build"]]
 
+@command('upload', 'build', 'key')
 def upload(build, key):
     """Upload build directory to http://viff.dk/builds/. This requires
     access to a SSH private key that has access to viff.dk."""
@@ -108,8 +115,8 @@ def upload(build, key):
              '--chmod', 'go=rX',
              '-e', 'ssh -l viff -i %s' % key,
              build, 'viff.dk:~/viff.dk/builds/'])
-command_table['upload'] = [upload, ["build", "key"]]
 
+@command('help')
 def usage():
     """Show this help message and exit."""
     try:
@@ -140,7 +147,6 @@ def usage():
         print "  %-*s%s" % (command_width, command, lines[0])
         for line in lines[1:]:
             print "  %-*s%s" % (command_width, '', line)
-command_table['help'] = [usage, []]
 
 
 if __name__ == "__main__":
