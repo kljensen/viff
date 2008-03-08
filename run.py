@@ -28,7 +28,7 @@ run the commands used when building releases of VIFF.
 
 import sys, os
 from os.path import isdir, join, getsize
-from subprocess import Popen, call
+from subprocess import Popen
 from pprint import pprint
 from textwrap import wrap
 
