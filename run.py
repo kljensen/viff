@@ -87,20 +87,18 @@ def command(name, *required_args):
 @command('epydoc', 'build')
 def epydoc(build):
     """Generate API documentation using epydoc."""
-    epydoc = find_program("epydoc")
     target = "%s/api" % build
     ensure_dir(target)
-    execute([epydoc, "-vv", "--config", "epydoc.conf"],
+    execute(["epydoc", "-vv", "--config", "epydoc.conf"],
             {'EPYDOC': 'YES', 'target': target})
 
 @command('coverage', 'build')
 def coverage(build):
     """Run Trial unit tests and collect coverage data."""
-    trace2html = find_program("trace2html.py")
-    trial = find_program("trial")
     target = "%s/coverage" % build
     ensure_dir(target)
-    execute([trace2html, "-o", target, "-w", "viff", "-b", "viff.test",
+    trial = find_program("trial")
+    execute(["trace2html.py", "-o", target, "-w", "viff", "-b", "viff.test",
              "--run-command", trial, "--reporter", "timing", "viff"])
 
 @command('upload', 'build', 'key')
@@ -112,8 +110,7 @@ def upload(build, key):
     if not os.access(key, os.R_OK):
         abort("Cannot read %s", key)
 
-    rsync = find_program('rsync')
-    execute([rsync, '--recursive',
+    execute(['rsync', '--recursive',
              '--human-readable', '--stats', '--verbose',
              '--chmod', 'go=rX',
              '-e', 'ssh -l viff -i %s' % key,
@@ -133,14 +130,12 @@ def size():
 @command('pyflakes')
 def pyflakes():
     """Find static errors using Pyflakes."""
-    pyflakes = find_program('pyflakes')
-    execute([pyflakes, '.'])
+    execute(['pyflakes', '.'])
 
 @command('trial', 'python')
 def trial(python):
     """Execute Trial using the Python executable given."""
     trial = find_program("trial")
-    python = find_program(python)
     execute([python, trial, '--reporter=bwverbose', 'viff.test'])
 
 @command('help')
