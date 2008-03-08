@@ -48,11 +48,22 @@ def find_program(program):
     return possibilities[0]
 
 def execute(args, env={}):
+    if 'PATH' in os.environ:
+        if 'PATH' in env:
+            env['PATH'] += os.pathsep + os.environ['PATH']
+        else:
+            env['PATH'] = os.environ['PATH']
+
+    if 'PYTHONPATH' in os.environ:
+        if 'PYTHONPATH' in env:
+            env['PYTHONPATH'] += os.pathsep + os.environ['PYTHONPATH']
+        else:
+            env['PYTHONPATH'] = os.environ['PYTHONPATH']
+
     print "Executing:"
     pprint(args)
-    if env:
-        print "in environment:"
-        pprint(env)
+    print "in environment:"
+    pprint(env)
     print
 
     try:
