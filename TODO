@@ -16,7 +16,9 @@ Design
    The Runtime class keeps growing as more and more functionality is
    put into it. An option would be to split it into a basic Runtime
    which provides communication and nothing else. More functionality
-   could be provided by mix-in classes.
+   could be provided by mix-in classes. See the discussion here:
+
+     http://thread.gmane.org/gmane.comp.cryptography.viff.devel/61/
 
 * Support preprocessing
    With the use of deferreds, some amount of preprocessing is already
@@ -36,27 +38,6 @@ Design
    A separate preprocessing script can read this information from the
    file and produce another file with a pickled pool of preprocessed
    stuff.
-
-* Lazy Shamir resharing
-   After multiplying two shares, the result is a correct share of the
-   product, but a share from a polynomial of degree 2t. We therefore
-   normally reshare to get a polynomial of degree t.
-
-   But for doing addition these degree 2t shares are fine, so we could
-   wait with the resharing until it is surely needed.
- 
-   Let [a]_t denote a share of a using a degree t polynomial and let
-   [a]_2t -> [a]_t denote a resharing going from degree 2t to t.
-
-   We could then calculate
-
-     sum([a_i]_t * [b_i]_t) = sum([a_i b_i]_2t)
-                            = [sum(a_i b_i)]_2t -> [sum(a_i b_i)]_t
-
-   using only one resharing at the end, saving network traffic. There
-   does not seem to be many places where we do stuff like that,
-   though. So the overhead of keeping track of when resharing is
-   needed might be too big for this to be an improvement.
 
 Infrastructure
 ---------------
@@ -127,16 +108,36 @@ Benchmarking
    from PODC 1989 should be implemented and tested against a standard
    logarithmic round protocol.
 
-* Profile and optimize
-   We need to see if the time is spend on network latency or in the
-   CPU. If the latter is the case, then we could consider writing the
-   inner loop in C for more speed.
-
 Website
 -------
 
 * Bug tracker
    It might be convenient to have a place where users can submit bugs.
    But until there is a real demand, the mailing list can be used.
+
+Things we might eventually do
+-----------------------------
+
+* Lazy Shamir resharing
+   After multiplying two shares, the result is a correct share of the
+   product, but a share from a polynomial of degree 2t. We therefore
+   normally reshare to get a polynomial of degree t.
+
+   But for doing addition these degree 2t shares are fine, so we could
+   wait with the resharing until it is surely needed.
+ 
+   Let [a]_t denote a share of a using a degree t polynomial and let
+   [a]_2t -> [a]_t denote a resharing going from degree 2t to t.
+
+   We could then calculate
+
+     sum([a_i]_t * [b_i]_t) = sum([a_i b_i]_2t)
+                            = [sum(a_i b_i)]_2t -> [sum(a_i b_i)]_t
+
+   using only one resharing at the end, saving network traffic. There
+   does not seem to be many places where we do stuff like that,
+   though. So the overhead of keeping track of when resharing is
+   needed might be too big for this to be an improvement.
+
 
  LocalWords:  VIFF TODO Shamir GMPY wiki BuildBot Epydoc

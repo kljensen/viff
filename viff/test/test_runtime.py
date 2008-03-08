@@ -285,14 +285,7 @@ class RuntimeTest(RuntimeTestCase):
         share_a = Share(runtime, self.Zp, self.Zp(42 + runtime.id))
         share_b = Share(runtime, self.Zp, self.Zp(117 - runtime.id))
 
-        #tmp = share_a >= share_b
-        tmp = runtime.greater_than_equal(share_a, share_b)
-        #print "\n\n", runtime.id, tmp.results
-        #tmp.addCallback(lambda x: x)
-        
-        result = runtime.open(tmp)
-        #print "opened: ", result
-        #result = runtime.open(share_a >= share_b)
+        result = runtime.open(share_a >= share_b)
         result.addCallback(self.assertEquals, GF256(42 >= 117))
         return result
 
