@@ -163,7 +163,7 @@ def usage():
 
     print "VIFF Build Generation Tool"
     print
-    print "Available commands:"
+    print "Available commands (the arguments in angle brackets are required):"
     for command, doc in commands:
         lines = wrap(doc, doc_width)
         print "  %-*s%s" % (command_width, command, lines[0])
