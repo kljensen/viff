@@ -69,8 +69,6 @@ def execute(args, env={}):
     try:
         p = Popen(args, env=env)
         rc = p.wait()
-        print
-        print "Exit code: %d" % rc
         sys.exit(rc)
     except OSError, e:
         abort(e)
