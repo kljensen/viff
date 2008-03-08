@@ -127,6 +127,17 @@ def size():
             dirs.remove('.hg')
     print total // 1024
 
+@command('pyflakes')
+def pyflakes():
+    """Find static errors using Pyflakes."""
+    execute(['pyflakes', '.'])
+
+@command('trial', 'python')
+def trial(python):
+    """Execute Trial using the Python executable given."""
+    trial = find_program("trial")
+    execute([python, trial, '--reporter=bwverbose', 'viff.test'])
+
 @command('help')
 def usage():
     """Show this help message and exit."""
