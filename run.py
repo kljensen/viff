@@ -47,10 +47,10 @@ def find_program(program):
         abort("Could not find '%s' in PATH", program)
     return possibilities[0]
 
-def execute(args, env=None):
+def execute(args, env={}):
     print "Executing:"
     pprint(args)
-    if env is not None:
+    if env:
         print "in environment:"
         pprint(env)
     print
