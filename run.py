@@ -48,10 +48,10 @@ def find_program(program):
     return possibilities[0]
 
 def execute(args, env={}):
-    print "Executing:"
+    print "Executing"
     pprint(args)
     if env:
-        print "in environment:"
+        print "in environment"
         pprint(env)
     print
 
