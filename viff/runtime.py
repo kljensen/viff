@@ -668,7 +668,7 @@ class Runtime:
             receivers = self.players.keys()
         if threshold is None:
             threshold = self.threshold
-            
+
         def exchange(share):
             # Send share to all receivers.
             for id in receivers:
@@ -680,7 +680,7 @@ class Runtime:
                 deferreds = []
                 for id in self.players:
                     if id == self.id:
-                        d = Share(self, share.field, (share.field(id), share)) 
+                        d = Share(self, share.field, (share.field(id), share))
                     else:
                         d = self._expect_share(id, share.field)
                         self.callback(d, lambda s, id: (s.field(id), s), id)
@@ -688,9 +688,9 @@ class Runtime:
                 # TODO: This list ought to trigger as soon as more than
                 # threshold shares has been received.
                 return self._recombine(deferreds, threshold)
-            
+
         result = share.clone()
-        self.callback(result, exchange) 
+        self.callback(result, exchange)
         if self.id in receivers:
             return result
 
@@ -806,7 +806,7 @@ class Runtime:
 
         prfs = self.players[self.id].dealer_prfs(field.modulus)
 
-        # Compute and broadcast correction value. 
+        # Compute and broadcast correction value.
         if self.id in inputters:
             for player in self.players:
                 share = prss(n, player, field, prfs[self.id], key)

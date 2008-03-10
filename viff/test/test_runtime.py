@@ -221,7 +221,7 @@ class RuntimeTest(RuntimeTestCase):
         tmp = runtime.greater_than_equal(share_a, share_b)
         #print "\n\n", runtime.id, tmp.results
         #tmp.addCallback(lambda x: x)
-        
+
         result = runtime.open(tmp)
         #print "opened: ", result
         #result = runtime.open(share_a >= share_b)
