@@ -34,12 +34,12 @@ from textwrap import wrap
 
 from twisted.python.procutils import which
 
-def abort(msg, *args):
+def abort(msg, *args, **kwargs):
     if args:
         msg = msg % args
     print
     print "*** %s" % msg
-    sys.exit(1)
+    sys.exit(kwargs.get('exit_code', 1))
 
 def find_program(program):
     possibilities = which(program)
@@ -72,7 +72,8 @@ def execute(args, env={}, work_dir=None):
     try:
         p = Popen(args, env=env, cwd=work_dir)
         rc = p.wait()
-        sys.exit(rc)
+        if rc != 0:
+            abort("Exited with exit code %d", rc, exit_code=rc)
     except OSError, e:
         abort(e)
     except KeyboardInterrupt:
