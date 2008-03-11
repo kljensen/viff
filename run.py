@@ -47,12 +47,14 @@ def find_program(program):
         abort("Could not find '%s' in PATH", program)
     return possibilities[0]
 
-def execute(args, env={}):
+def execute(args, env={}, work_dir=None):
     print "Executing"
     pprint(args)
     if env:
         print "in environment"
         pprint(env)
+    if work_dir:
+        print "in working directory '%s'" % work_dir
     print
 
     if 'PATH' in os.environ:
@@ -68,7 +70,7 @@ def execute(args, env={}):
             env['PYTHONPATH'] = os.environ['PYTHONPATH']
 
     try:
-        p = Popen(args, env=env)
+        p = Popen(args, env=env, cwd=work_dir)
         rc = p.wait()
         sys.exit(rc)
     except OSError, e:
