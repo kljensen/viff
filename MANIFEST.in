@@ -6,4 +6,6 @@ include doc/api/*.png
 include doc/api/epydoc.*
 include doc/api/api-objects.txt
 
+include INSTALL
+
 exclude MANIFEST.in

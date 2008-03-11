@@ -31,6 +31,7 @@ from os.path import isdir, join, getsize
 from subprocess import Popen
 from pprint import pprint
 from textwrap import wrap
+from urllib import urlretrieve
 
 from twisted.python.procutils import which
 
@@ -96,6 +97,34 @@ def command(name, *required_args):
         command_table[name] = [func, required_args]
         return func
     return wrapper
+
+@command('build')
+def build():
+    """Build a VIFF distribution."""
+
+    # Generate API docs in doc/api.
+    epydoc('doc')
+
+    # First PDFLaTeX run...
+    execute(["pdflatex", "--interaction", "nonstopmode", "design-talk.tex"],
+            work_dir="doc/design-talk")
+    # Second run to update the table of contents.
+    execute(["pdflatex", "--interaction", "nonstopmode", "design-talk.tex"],
+            work_dir="doc/design-talk")
+
+    # Retrieve the latest version of install.txt from the website
+    # repository, and rename it to INSTALL.
+    url = 'http://hg.viff.dk/viff.dk/raw-file/tip/install.txt'
+    print "Fetching %s" % url,
+    urlretrieve(url, 'INSTALL')
+    print "done."
+
+    # Pack everything up with Distutils.
+    execute(["python", "setup.py", "sdist", "--force-manifest",
+             "--formats=bztar,gztar,zip"])
+
+    # Generate binary Windows installer (which has no docs, though).
+    execute(["python", "setup.py", "bdist", "--formats=wininst"])
 
 @command('epydoc', 'build')
 def epydoc(build):
