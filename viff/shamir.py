@@ -111,6 +111,35 @@ def recombine(shares, x_recomb=0):
         _recombination_vectors[key] = vector
     return sum(map(operator.mul, ys, vector))
 
+def verify_sharing(shares, degree):
+    """Verifies that a sharing is correct.
+
+    It is verified that the given shares correspond to points on a
+    polynomial of at most the given degree.
+
+    >>> from field import GF
+    >>> Zp = GF(47)
+    >>> shares = [(Zp(i), Zp(i**2)) for i in range(1, 6)] 
+    >>> print shares                                      
+    [({1}, {1}), ({2}, {4}), ({3}, {9}), ({4}, {16}), ({5}, {25})]
+    >>> verify_sharing(shares, 2)
+    True
+    >>> verify_sharing(shares, 1)
+    False
+    >>> 
+
+    @param shares: The shares to be checked.
+    @param degree: The maximum degree of the interpolating polynomial.
+    @return: C{True} if the sharing is correct, otherwise C{False}.
+    """
+    used_shares = shares[0:degree+1]
+    for i in range(degree+1, len(shares)+1):
+        if recombine(used_shares, i) != shares[i-1][1]:
+            return False
+
+    return True
+        
+
 if __name__ == "__main__":
     import doctest    #pragma NO COVER
     doctest.testmod() #pragma NO COVER
