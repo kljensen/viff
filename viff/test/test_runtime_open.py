@@ -27,10 +27,10 @@ from viff.test.util import RuntimeTestCase, protocol
 
 class RuntimeOpenTest(RuntimeTestCase):
     """Tests the open protocol in L{viff.runtime.Runtime}."""
-    
+
     # TODO: Test open of GF256 sharings?
-    # TODO: Test with various threshold? 
-    
+    # TODO: Test with various threshold?
+
     @protocol
     def test_all_players_receive_implicit(self, runtime):
         """Shamir share and open Zp(42)."""
@@ -50,7 +50,7 @@ class RuntimeOpenTest(RuntimeTestCase):
         opened.addCallback(self.assertEquals, 42)
         share.addCallback(self.assertEquals, 42 + runtime.id)
         return opened
-    
+
     @protocol
     def test_different_subsets_of_receivers_get_the_same_result(self, runtime):
         """Test that two different subsets of the players obtain the same
@@ -68,14 +68,13 @@ class RuntimeOpenTest(RuntimeTestCase):
         else:
             runtime.open(share, receivers)
         return gatherResults(res)
-    
 
     def _test_open(self, runtime, receivers):
-        
+
         # TODO: Test also with more natural sharings.
-        secret = 42 
-        share = Share(runtime, self.Zp, self.Zp(secret + runtime.id)) 
-        
+        secret = 42
+        share = Share(runtime, self.Zp, self.Zp(secret + runtime.id))
+
         if runtime.id in receivers:
             opened = runtime.open(share, receivers)
             self.assertTrue(isinstance(opened, Share))
@@ -84,23 +83,23 @@ class RuntimeOpenTest(RuntimeTestCase):
         else:
             foo = runtime.open(share, receivers)
             self.assertEquals(None, foo)
-                    
+
     @protocol
     def test_all_players_receive_explicit(self, runtime):
         """Tests symmetric opening of Shamir sharing, i.e. where
         all players receive the result."""
         receivers = range(1, len(runtime.players) + 1)
         return self._test_open(runtime, receivers)
-    
+
     @protocol
     def test_all_but_one_player_receive(self, runtime):
-        """Tests asymmetric opening of Shamir shares where 
+        """Tests asymmetric opening of Shamir shares where
         all but one player receive the result."""
         r = self.shared_rand[runtime.id]
-        receivers = r.sample(range(1, len(runtime.players) + 1), 
+        receivers = r.sample(range(1, len(runtime.players) + 1),
                              len(runtime.players) - 1)
         return self._test_open(runtime, receivers)
-    
+
     @protocol
     def test_only_one_player_receives(self, runtime):
         """Tests opening of Shamir sharing where only
@@ -108,7 +107,7 @@ class RuntimeOpenTest(RuntimeTestCase):
         r = self.shared_rand[runtime.id]
         receiver = r.sample(range(1, len(runtime.players) + 1), 1)
         return self._test_open(runtime, receiver)
-    
+
     @protocol
     def test_random_number_of_players_receive(self, runtime):
         """Tests opening of Shamir sharing where some random
@@ -116,6 +115,6 @@ class RuntimeOpenTest(RuntimeTestCase):
         submit their shares."""
         r = self.shared_rand[runtime.id]
         no_of_receivers = r.randint(2, len(runtime.players) - 1)
-        receivers = r.sample(range(1, len(runtime.players) + 1), 
+        receivers = r.sample(range(1, len(runtime.players) + 1),
                              no_of_receivers)
         return self._test_open(runtime, receivers)
