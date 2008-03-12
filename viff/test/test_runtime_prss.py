@@ -19,8 +19,6 @@
 
 """Tests for the prss based protocols in the viff.runtime."""
 
-from twisted.internet.defer import gatherResults
-
 from viff.runtime import Share, gather_shares
 from viff.test.util import RuntimeTestCase, protocol
 from viff.field import GF256
@@ -50,7 +48,7 @@ class RuntimePrssTest(RuntimeTestCase):
         opened_b.addCallback(self.assertEquals, 42 + 2)
         opened_c.addCallback(self.assertEquals, 42 + 3)
 
-        return gatherResults([opened_a, opened_b, opened_c])
+        return gather_shares([opened_a, opened_b, opened_c])
 
     @protocol
     def test_prss_share_bit(self, runtime):
@@ -73,7 +71,7 @@ class RuntimePrssTest(RuntimeTestCase):
         opened_b.addCallback(self.assertEquals, 42 + 2)
         opened_c.addCallback(self.assertEquals, 42 + 3)
 
-        return gatherResults([opened_a, opened_b, opened_c])
+        return gather_shares([opened_a, opened_b, opened_c])
 
     @protocol
     def test_prss_share_asymmetric(self, runtime):
@@ -106,7 +104,7 @@ class RuntimePrssTest(RuntimeTestCase):
         opened_b.addCallback(self.assertEquals, 42 + 2)
         opened_c.addCallback(self.assertEquals, 42 + 3)
 
-        return gatherResults([opened_a, opened_b, opened_c])
+        return gather_shares([opened_a, opened_b, opened_c])
 
     @protocol
     def test_prss_share_random_bit(self, runtime):
