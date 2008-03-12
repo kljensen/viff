@@ -29,7 +29,7 @@ from viff.config import load_config
 from viff.util import dprint
 
 id, players = load_config(sys.argv[1])
-input = GF256(int(sys.argv[2]))
+input = int(sys.argv[2])
 
 print "I am player %d and will input %s" % (id, input)
 
@@ -39,7 +39,7 @@ def protocol(rt):
     print "Program started"
     print
 
-    shares = rt.prss_share(input)
+    shares = rt.prss_share([1, 2, 3], GF256, input)
 
     while len(shares) > 1:
         a = shares.pop(0)
