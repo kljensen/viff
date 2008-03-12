@@ -22,8 +22,6 @@ hyper-invertible matrices. The matrix implementation provides operator
 overloading.
 """
 
-from viff.prss import generate_subsets
-from viff.field import GF
 from __future__ import division
 
 class Matrix(object):
