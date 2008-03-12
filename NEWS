@@ -8,8 +8,8 @@ details can be found in the commit messages:
   http://hg.viff.dk/viff/log/
 
 
-Version ?, not yet released
----------------------------
+Version 0.4, released on 2008-03-12
+-----------------------------------
 
 Implemented a reliable Bracha broadcast which is secure against active
 adversaries. Shamir sharings, pseudo-random as well as standard, can
