@@ -56,11 +56,14 @@ class Protocol:
             % (runtime.id, self.millions)
 
         # For the comparison protocol to work, we need a field modulus
-        # bigger than 2**(l+1) + 2**(l+3) when the bit length of the input
-        # numbers is l. The find_prime function lets us find a
-        # suitable prime.
+        # bigger than 2**(l+1) + 2**(l+k+1), where the bit length of
+        # the input numbers is l and k is the security parameter.
+        # Further more, the prime must be a Blum prime (a prime p such
+        # that p % 4 == 3 holds). The find_prime function lets us find
+        # a suitable prime.
         l = runtime.options.bit_length
-        Zp = GF(find_prime(2**(l + 1) + 2**(l + 3)))
+        k = runtime.options.security_parameter
+        Zp = GF(find_prime(2**(l + 1) + 2**(l + k + 1), blum=True))
 
         # We must secret share our input with the other parties. They
         # will do the same and we end up with three variables
