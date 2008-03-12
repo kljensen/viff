@@ -9,3 +9,5 @@ include doc/api/api-objects.txt
 include INSTALL
 
 exclude MANIFEST.in
+exclude run.py
+exclude epydoc.conf
