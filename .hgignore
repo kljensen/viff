@@ -28,8 +28,11 @@ profile.data
 doc/api/
 
 # Distutils generated files.
+build
 dist
 MANIFEST
+AUTHORS
+INSTALL
 
 # Trace2html.py's standard output directory.
 coverage_dir
