@@ -8,37 +8,6 @@ marked with 'TODO' which document things on a more local level. The
 features have been roughly divided into design, infrastructure,
 benchmarking, and website features.
 
-
-Design
-------
-
-* Define a hierarchy for Runtime functionality
-   The Runtime class keeps growing as more and more functionality is
-   put into it. An option would be to split it into a basic Runtime
-   which provides communication and nothing else. More functionality
-   could be provided by mix-in classes. See the discussion here:
-
-     http://thread.gmane.org/gmane.comp.cryptography.viff.devel/61/
-
-* Support preprocessing
-   With the use of deferreds, some amount of preprocessing is already
-   being done before the protocol begins proper. But this kind of
-   preprocessing does nothing for the double auction case where the
-   program branches during execution.
-
-   So a general mechanism is needed by which one can preprocess a
-   given number of multiplications, comparisons, etc.
-
-   A possible design could be one in which this is done dynamically:
-   when a protocol is executed, preprocessed stuff is taken from a
-   pool as needed. If the pool runs dry, then more stuff is generated
-   online. At the end of a run, the program will know how much stuff
-   was needed -- this information can then be dumped to a file.
-
-   A separate preprocessing script can read this information from the
-   file and produce another file with a pickled pool of preprocessed
-   stuff.
-
 Infrastructure
 ---------------
 
