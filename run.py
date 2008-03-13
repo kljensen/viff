@@ -112,12 +112,13 @@ def build():
     execute(["pdflatex", "--interaction", "nonstopmode", "design-talk.tex"],
             work_dir="doc/design-talk")
 
-    # Retrieve the latest version of install.txt from the website
-    # repository, and rename it to INSTALL.
-    url = 'http://hg.viff.dk/viff.dk/raw-file/tip/install.txt'
-    print "Fetching %s" % url,
-    urlretrieve(url, 'INSTALL')
-    print "done."
+    # Retrieve the latest version of install.txt and authors.txt from
+    # the website repository, and ship them as INSTALL and AUTHORS.
+    for filename in ('install.txt', 'authors.txt'):
+        url = 'http://hg.viff.dk/viff.dk/raw-file/tip/%s' % filename
+        print "Fetching %s" % url,
+        urlretrieve(url, filename[:-4].upper())
+        print "done."
 
     # Pack everything up with Distutils.
     execute(["python", "setup.py", "sdist", "--force-manifest",

@@ -7,6 +7,7 @@ include doc/api/epydoc.*
 include doc/api/api-objects.txt
 
 include INSTALL
+include AUTHORS
 
 exclude MANIFEST.in
 exclude run.py
