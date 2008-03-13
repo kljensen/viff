@@ -15,40 +15,6 @@ Infrastructure
    There is currently no error handling in VIFF. Twisted has support
    for defining error callbacks which we should use.
 
-* Replace the marshal module
-   The documentation for the marshal module says that:
-
-     Warning: The marshal module is not intended to be secure against
-     erroneous or maliciously constructed data. Never unmarshal data
-     received from an untrusted or unauthenticated source.
-
-   So when we start dealing with active adversaries, we should replace
-   it with something that is secure, probably something that uses the
-   struct module. See this discussion for more details:
-
-     http://thread.gmane.org/gmane.comp.cryptography.viff.devel/19
-
-* Use a logging module
-   Use a better technique for debug output than scattering print
-   statements around the source code.
-
-* Create unit tests which randomizes network delay
-   The current unit test with LoopbackRuntime are strictly sequential
-   and does not capture the random delays possible with real network
-   traffic.
-
-* Allow players to be started in any order
-   At the moment one must start players in descending order, 3-2-1,
-   but it would be nice if they could be started in any order. Player
-   1 would still try and connect to player 2 and 3, but if they cannot
-   be reached, then player 1 should retry a bit later.
-
-* More robust handling of port allocation
-   Players should check if the wanted port number is free, and if not,
-   then retry after a timeout. Ports can be occupied if a player is
-   killed, for then the ports normally end up in the TIME_WAIT state
-   for 60 seconds.
-
 * Rework port number magic
    Instead of requiring each player to use the correct port number for
    outgoing connections, we could let player 1 act as a coordinator.
