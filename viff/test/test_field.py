@@ -28,7 +28,7 @@ import operator
 __doctests__ = ['viff.field']
 
 
-class GFpElementTestCase(TestCase):
+class GFpElementTest(TestCase):
     """Tests for elements from a Zp field."""
 
     def setUp(self):
@@ -138,7 +138,7 @@ class GFpElementTestCase(TestCase):
         self.assertEquals(str(self.field(10)), "{10}")
 
 
-class GF256TestCase(TestCase):
+class GF256Test(TestCase):
     """Tests for elements from the GF256 field."""
 
     def test_construct(self):

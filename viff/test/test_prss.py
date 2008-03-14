@@ -27,7 +27,7 @@ from twisted.trial.unittest import TestCase
 __doctests__ = ['viff.prss']
 
 
-class PRSSTestCase(TestCase):
+class PRSSTest(TestCase):
 
     def test_generate_subsets(self):
         """Test subset generation.
