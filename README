@@ -40,11 +40,9 @@ and offers the following features:
 All operations are automatically scheduled to run in parallel meaning
 that an operation starts as soon as the operands are ready.
 
-The TODO file lists a number of ideas for future work.
-
-Should you encounter a bug or have problems with VIFF, then please
-start by downloading the latest version on http://viff.dk/. If that
-does not help, then ask for help on the VIFF mailing list at
+Should you encounter have problems with VIFF, then please start by
+downloading the latest version on http://viff.dk/. If that does not
+help, then ask for help on the VIFF mailing list at
 
   viff-devel@viff.dk
 
