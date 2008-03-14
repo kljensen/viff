@@ -19,14 +19,10 @@
 
 """Tests for the asynchronous testing framework."""
 
-from itertools import groupby
-
 from twisted.trial.unittest import TestCase
 from twisted.internet.defer import DeferredList
 from twisted.internet.protocol import Protocol
-from twisted.internet import reactor
 
-from viff.util import rand
 from viff.test.util import loopbackAsync
 
 
