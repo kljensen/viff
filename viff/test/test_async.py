@@ -23,7 +23,7 @@ from twisted.trial.unittest import TestCase
 from twisted.internet.defer import DeferredList
 from twisted.internet.protocol import Protocol
 
-from viff.test.util import loopbackAsync
+from viff.test.loopback import loopbackAsync
 
 
 class AsyncTest(TestCase):
