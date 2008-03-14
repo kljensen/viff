@@ -294,5 +294,5 @@ class PRF(object):
                 input += digest[-1]
 
 if __name__ == "__main__":
-    import doctest
-    doctest.testmod()
+    import doctest    #pragma NO COVER
+    doctest.testmod() #pragma NO COVER

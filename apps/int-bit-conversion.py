@@ -34,8 +34,8 @@ print "I am player %d" % id
 def protocol(rt):
     print "Starting protocol"
     Zp = GF(11)
-    a, b, c = rt.prss_share(Zp(0))
-    x, y, z = rt.prss_share(Zp(1))
+    a, b, c = rt.prss_share([1, 2, 3], Zp, 0)
+    x, y, z = rt.prss_share([1, 2, 3], Zp, 1)
 
     a_b = rt.open(rt.convert_bit_share(a, GF256))
     b_b = rt.open(rt.convert_bit_share(b, GF256))
