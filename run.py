@@ -250,6 +250,11 @@ def usage():
     print
     print "Available commands (the arguments in angle brackets are required):"
     for command, doc in commands:
+        # The docstring might contain newlines followed by an
+        # indention. So we split it up into lines, strip each line,
+        # and finally we combine all lines into one long string.
+        # combine them again.
+        doc = " ".join(map(str.strip, doc.splitlines()))
         lines = wrap(doc, doc_width)
         print "  %-*s%s" % (command_width, command, lines[0])
         for line in lines[1:]:
