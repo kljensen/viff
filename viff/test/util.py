@@ -102,6 +102,12 @@ class RuntimeTestCase(TestCase):
     #: to sample the same subsequence from a sequence.
     shared_rand = None
 
+    def assert_type(self, var, wanted_type):
+        """Assert that C{var} has the type C{wanted_type}."""
+        if not isinstance(var, wanted_type):
+            msg = "Type should be %s, but is %s" % (wanted_type, var.__class__)
+            raise self.failureException(msg)
+
     def setUp(self):
         """Configure and connect three Runtimes."""
         # Our standard 65 bit Blum prime

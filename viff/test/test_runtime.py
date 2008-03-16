@@ -48,8 +48,7 @@ class RuntimeTest(RuntimeTestCase):
         share_b = Share(runtime, self.Zp, self.Zp(200))
 
         share_c = share_a + share_b
-        self.assertTrue(isinstance(share_c, Share),
-                        "Type should be Share, but is %s" % share_c.__class__)
+        self.assert_type(share_c, Share)
 
         share_c.addCallback(self.assertEquals, self.Zp(300))
 
@@ -74,8 +73,7 @@ class RuntimeTest(RuntimeTestCase):
         share_b = Share(runtime, self.Zp, self.Zp(200))
 
         share_c = share_a - share_b
-        self.assertTrue(isinstance(share_c, Share),
-                        "Type should be Share, but is %s" % share_c.__class__)
+        self.assert_type(share_c, Share)
 
         share_c.addCallback(self.assertEquals, self.Zp(300))
         share_a.callback(self.Zp(500))
@@ -133,12 +131,9 @@ class RuntimeTest(RuntimeTestCase):
         """
         a, b, c = runtime.shamir_share([1, 2, 3], self.Zp, 42 + runtime.id)
 
-        self.assertTrue(isinstance(a, Share),
-                        "Type should be Share, but is %s" % a.__class__)
-        self.assertTrue(isinstance(b, Share),
-                        "Type should be Share, but is %s" % b.__class__)
-        self.assertTrue(isinstance(c, Share),
-                        "Type should be Share, but is %s" % c.__class__)
+        self.assert_type(a, Share)
+        self.assert_type(b, Share)
+        self.assert_type(c, Share)
 
         opened_a = runtime.open(a)
         opened_b = runtime.open(b)
@@ -166,12 +161,9 @@ class RuntimeTest(RuntimeTestCase):
         else:
             c, a = runtime.shamir_share([3, 1], self.Zp)
 
-        self.assertTrue(isinstance(a, Share),
-                        "Type should be Share, but is %s" % a.__class__)
-        self.assertTrue(isinstance(b, Share),
-                        "Type should be Share, but is %s" % b.__class__)
-        self.assertTrue(isinstance(c, Share),
-                        "Type should be Share, but is %s" % c.__class__)
+        self.assert_type(a, Share)
+        self.assert_type(b, Share)
+        self.assert_type(c, Share)
 
         opened_a = runtime.open(a)
         opened_b = runtime.open(b)
