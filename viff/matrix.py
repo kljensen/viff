@@ -17,9 +17,13 @@
 # Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 # 02110-1301 USA
 
-"""Basic matrix operations as well as a function to build square
-hyper-invertible matrices. The matrix implementation provides operator
-overloading.
+"""Matrix operations.
+
+This module contains basic matrix operations as well as a function to
+build square hyper-invertible matrices. The matrix implementation
+provides operator overloading and works with any type that acts like a
+number, including L{viff.field.GF256} and L{viff.field.GF} elements.
+
 """
 
 from __future__ import division
