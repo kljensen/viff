@@ -179,40 +179,19 @@ class RuntimeTest(RuntimeTestCase):
     @protocol
     def test_greater_than(self, runtime):
         """Test comparison."""
-        # Shamir shares of 42 and 117:
-        share_a = Share(runtime, self.Zp, self.Zp(42 + runtime.id))
-        share_b = Share(runtime, self.Zp, self.Zp(117 - runtime.id))
-
-        result = runtime.open(share_a > share_b)
-        result.addCallback(self.assertEquals, GF256(42 > 117))
-        return result
+        return self._test_binary_operator(runtime, operator.gt, 42, 117)
 
     @protocol
     def test_greater_than_equal(self, runtime):
-        share_a = Share(runtime, self.Zp, self.Zp(42 + runtime.id))
-        share_b = Share(runtime, self.Zp, self.Zp(117 - runtime.id))
-
-        result = runtime.open(share_a >= share_b)
-        result.addCallback(self.assertEquals, GF256(42 >= 117))
-        return result
+        return self._test_binary_operator(runtime, operator.ge, 42, 117)
 
     @protocol
     def test_less_than(self, runtime):
-        share_a = Share(runtime, self.Zp, self.Zp(42 + runtime.id))
-        share_b = Share(runtime, self.Zp, self.Zp(117 - runtime.id))
-
-        result = runtime.open(share_a < share_b)
-        result.addCallback(self.assertEquals, GF256(42 < 117))
-        return result
+        return self._test_binary_operator(runtime, operator.lt, 42, 117)
 
     @protocol
     def test_less_than_equal(self, runtime):
-        share_a = Share(runtime, self.Zp, self.Zp(42 + runtime.id))
-        share_b = Share(runtime, self.Zp, self.Zp(117 - runtime.id))
-
-        result = runtime.open(share_a <= share_b)
-        result.addCallback(self.assertEquals, GF256(42 <= 117))
-        return result
+        return self._test_binary_operator(runtime, operator.le, 42, 117)
 
     @protocol
     def test_greater_than_equalII(self, runtime):
