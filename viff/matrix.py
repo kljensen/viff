@@ -132,6 +132,24 @@ class Matrix(object):
         Multiplies this matrix with another matrix, or multiplies the
         matrix with an element.
 
+        >>> A = Matrix([[x + 2*y for x in range(2)] for y in range(2)])
+        >>> print A
+        [[0 1]
+         [2 3]]
+        >>> print A * 10
+        [[ 0 10]
+         [20 30]]
+        >>> print A * A
+        [[ 2  3]
+         [ 6 11]]
+
+        The matrices must have compatible dimensions:
+
+        >>> Matrix(1, 5) * Matrix(2, 3)
+        Traceback (most recent call last):
+            ...
+        ValueError: Matrix dimensions do not match for multiplication
+
         @param other: The matrix or element to multiply with this one.
         @return: The product.
         """
