@@ -173,9 +173,6 @@ class RuntimeTest(RuntimeTestCase):
             results.append(opened)
         return gatherResults(results)
 
-    # TODO: Convert the following four tests to a general test for
-    # binary operations.
-
     @protocol
     def test_greater_than(self, runtime):
         """Test comparison."""
