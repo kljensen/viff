@@ -985,10 +985,15 @@ class Runtime:
         Both arguments must be from the field given. The result is a
         GF256 share.
         """
+        field = getattr(share_a, "field", getattr(share_b, "field", None))
+        if not isinstance(share_a, Share):
+            share_a = Share(self, field, share_a)
+        if not isinstance(share_b, Share):
+            share_b = Share(self, field, share_b)
+
         l = self.options.bit_length
         m = l + self.options.security_parameter
         t = m + 1
-        field = share_a.field # Should be the same as share_b.field.
 
         # Preprocessing begin
 
@@ -1331,7 +1336,12 @@ class Runtime:
         Both arguments must be of type field. The result is a
         field share.
         """
-        field = share_a.field
+        field = getattr(share_a, "field", getattr(share_b, "field", None))
+        if not isinstance(share_a, Share):
+            share_a = Share(self, field, share_a)
+        if not isinstance(share_b, Share):
+            share_b = Share(self, field, share_b)
+
         preproc = self.greater_than_equalII_preproc(field)
         return self.greater_than_equalII_online(share_a, share_b, preproc,
                                                 field)

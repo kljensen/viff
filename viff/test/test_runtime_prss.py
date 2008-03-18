@@ -33,12 +33,9 @@ class RuntimePrssTest(RuntimeTestCase):
         a, b, c = runtime.prss_share(runtime.players, self.Zp,
                                      42 + runtime.id)
 
-        self.assertTrue(isinstance(a, Share),
-                        "Type should be Share, but is %s" % a.__class__)
-        self.assertTrue(isinstance(b, Share),
-                        "Type should be Share, but is %s" % b.__class__)
-        self.assertTrue(isinstance(c, Share),
-                        "Type should be Share, but is %s" % c.__class__)
+        self.assert_type(a, Share)
+        self.assert_type(b, Share)
+        self.assert_type(c, Share)
 
         opened_a = runtime.open(a)
         opened_b = runtime.open(b)
@@ -56,12 +53,9 @@ class RuntimePrssTest(RuntimeTestCase):
         a, b, c = runtime.prss_share(runtime.players, GF256.field,
                                      42 + runtime.id)
 
-        self.assertTrue(isinstance(a, Share),
-                        "Type should be Share, but is %s" % a.__class__)
-        self.assertTrue(isinstance(b, Share),
-                        "Type should be Share, but is %s" % b.__class__)
-        self.assertTrue(isinstance(c, Share),
-                        "Type should be Share, but is %s" % c.__class__)
+        self.assert_type(a, Share)
+        self.assert_type(b, Share)
+        self.assert_type(c, Share)
 
         opened_a = runtime.open(a)
         opened_b = runtime.open(b)
@@ -89,12 +83,9 @@ class RuntimePrssTest(RuntimeTestCase):
         else:
             c, a = runtime.prss_share([3, 1], self.Zp)
 
-        self.assertTrue(isinstance(a, Share),
-                        "Type should be Share, but is %s" % a.__class__)
-        self.assertTrue(isinstance(b, Share),
-                        "Type should be Share, but is %s" % b.__class__)
-        self.assertTrue(isinstance(c, Share),
-                        "Type should be Share, but is %s" % c.__class__)
+        self.assert_type(a, Share)
+        self.assert_type(b, Share)
+        self.assert_type(c, Share)
 
         opened_a = runtime.open(a)
         opened_b = runtime.open(b)
@@ -110,9 +101,7 @@ class RuntimePrssTest(RuntimeTestCase):
     def test_prss_share_random_bit(self, runtime):
         """Tests the sharing of a 0/1 GF256 element using PRSS."""
         a = runtime.prss_share_random(field=GF256, binary=True)
-
-        self.assertTrue(isinstance(a, Share),
-                        "Type should be Share, but is %s" % a.__class__)
+        self.assert_type(a, Share)
 
         opened_a = runtime.open(a)
         opened_a.addCallback(self.assertIn, [GF256(0), GF256(1)])
@@ -122,9 +111,7 @@ class RuntimePrssTest(RuntimeTestCase):
     def test_prss_share_random_int(self, runtime):
         """Tests the sharing of a 0/1 Zp element using PRSS."""
         a = runtime.prss_share_random(field=self.Zp, binary=True)
-
-        self.assertTrue(isinstance(a, Share),
-                        "Type should be Share, but is %s" % a.__class__)
+        self.assert_type(a, Share)
 
         opened_a = runtime.open(a)
         opened_a.addCallback(self.assertIn, [self.Zp(0), self.Zp(1)])

@@ -32,6 +32,7 @@ from subprocess import Popen
 from pprint import pprint
 from textwrap import wrap
 from urllib import urlretrieve
+from base64 import b64decode
 
 from twisted.python.procutils import which
 
@@ -144,6 +145,47 @@ def coverage(build):
     execute(["trace2html.py", "-o", target, "-w", "viff", "-b", "viff.test",
              "--run-command", trial, "--reporter", "timing", "viff"])
 
+    # The trace2html script references an image called blank.png, but
+    # this is not included in the output! So we have stored a blank
+    # 10x12 pixel PNG image here. In addition we have images of an
+    # upwards and downwards arrow. The image data is base64 encoded.
+    images = {
+        'blank': 'iVBORw0KGgoAAAANSUhEUgAAAAoAAAAMCAQAAADxYuQrAAAAAXNSR0IA' \
+            'rs4c6QAAAAxJREFUCNdjYBi5AAAA/AAB3Q3J0QAAAABJRU5ErkJggg==',
+        'up': 'iVBORw0KGgoAAAANSUhEUgAAAAoAAAAMCAQAAADxYuQrAAAAAXNSR0IArs4' \
+            'c6QAAAD1JREFUCNdjYKAiYGaYycCMLljA8J+hAFVIhuEzw3+GzwwyjEiCpQy3' \
+            'GDYwBDCooRvwn4GBgYEJm30UCgIAjEkJGS0CllcAAAAASUVORK5CYII=',
+        'down': 'iVBORw0KGgoAAAANSUhEUgAAAAoAAAAMCAQAAADxYuQrAAAAAXNSR0IAr' \
+            's4c6QAAAD5JREFUCNdjYKAq+M/AwMDAhE2GQkEWJHYpwy0GBgZ/BjVkBTIMnx' \
+            'n+M3xmkEHVV8Dwn6EA3TBmhpkMzAwMAPNoCGsXUhMyAAAAAElFTkSuQmCC'
+        }
+
+    ensure_dir("%s/images" % target)
+
+    for name, data in images.iteritems():
+        filename = "%s/images/%s.png" % (target, name)
+        fp = open(filename, 'w')
+        fp.write(b64decode(data))
+        fp.close()
+
+    # To use the images we need to append some extra rules to the
+    # stylesheet.
+    extra_css = """
+img.ascending {
+  background-image: url("images/up.png");
+}
+
+img.descending {
+  background-image: url("images/down.png");
+}
+"""
+
+    filename = "%s/trace2html.css" % target
+    fp = open(filename, 'a')
+    fp.write(extra_css)
+    fp.close()
+
+
 @command('upload', 'build', 'key')
 def upload(build, key):
     """Upload build directory to http://viff.dk/builds/. This requires
@@ -208,6 +250,11 @@ def usage():
     print
     print "Available commands (the arguments in angle brackets are required):"
     for command, doc in commands:
+        # The docstring might contain newlines followed by an
+        # indention. So we split it up into lines, strip each line,
+        # and finally we combine all lines into one long string.
+        # combine them again.
+        doc = " ".join(map(str.strip, doc.splitlines()))
         lines = wrap(doc, doc_width)
         print "  %-*s%s" % (command_width, command, lines[0])
         for line in lines[1:]:

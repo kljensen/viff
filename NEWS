@@ -7,6 +7,19 @@ details can be found in the commit messages:
 
   http://hg.viff.dk/viff/log/
 
+The issue numbers referenced below refer to the online issue tracker,
+please refer to it for details on the issues:
+
+  http://tracker.viff.dk/
+
+
+Version ?, not yet released
+---------------------------
+
+Details:
+
+* Issue 7: New system for unit tests.
+
 
 Version 0.4, released on 2008-03-12
 -----------------------------------

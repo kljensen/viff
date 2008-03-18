@@ -27,6 +27,7 @@ performed by L{StressTest}.
 
 import os
 from random import Random
+import operator
 
 from twisted.internet.defer import gatherResults
 
@@ -39,68 +40,48 @@ from viff.test.util import RuntimeTestCase, protocol
 class RuntimeTest(RuntimeTestCase):
     """Test L{viff.runtime.Runtime}."""
 
-    # TODO: factor out common code from test_add* and test_sub*.
+    def _test_binary_operator(self, runtime, op, a, b):
+        """Test a binary operator.
+
+        The left and right operands will be coerced into field
+        elements (using C{self.Zp}) and L{Share}s and the operator
+        will be called on all combinations thereof.
+
+        @param op: a binary operator.
+        @param a: left operand.
+        @param b: right operand.
+        """
+        def test(share_a, share_b):
+            """Test C{op} on two operands."""
+            result = op(share_a, share_b)
+            self.assert_type(result, Share)
+            opened = runtime.open(result)
+            opened.addCallback(self.assertEquals, op(a, b))
+            return opened
+
+        Zp = self.Zp
+
+        res_1 = test(Share(runtime, Zp, Zp(a)), b)
+        res_2 = test(a, Share(runtime, Zp, Zp(b)))
+        res_3 = test(Share(runtime, Zp, Zp(a)), Zp(b))
+        res_4 = test(Zp(a), Share(runtime, Zp, Zp(b)))
+        res_5 = test(Share(runtime, Zp, Zp(a)), Share(runtime, Zp, Zp(b)))
+        return gatherResults([res_1, res_2, res_3, res_4, res_5])
 
     @protocol
     def test_add(self, runtime):
         """Test addition."""
-        share_a = Share(runtime, self.Zp)
-        share_b = Share(runtime, self.Zp, self.Zp(200))
-
-        share_c = share_a + share_b
-        self.assertTrue(isinstance(share_c, Share),
-                        "Type should be Share, but is %s" % share_c.__class__)
-
-        share_c.addCallback(self.assertEquals, self.Zp(300))
-
-        share_a.callback(self.Zp(100))
-        return share_c
-
-    @protocol
-    def test_add_coerce(self, runtime):
-        """Test addition with mixed operands."""
-        share_a = Share(runtime, self.Zp)
-        share_b = self.Zp(200)
-        share_c = share_a + share_b
-
-        share_c.addCallback(self.assertEquals, self.Zp(300))
-        share_a.callback(self.Zp(100))
-        return share_c
+        return self._test_binary_operator(runtime, operator.add, 200, 300)
 
     @protocol
     def test_sub(self, runtime):
         """Test subtraction."""
-        share_a = Share(runtime, self.Zp)
-        share_b = Share(runtime, self.Zp, self.Zp(200))
-
-        share_c = share_a - share_b
-        self.assertTrue(isinstance(share_c, Share),
-                        "Type should be Share, but is %s" % share_c.__class__)
-
-        share_c.addCallback(self.assertEquals, self.Zp(300))
-        share_a.callback(self.Zp(500))
-        return share_c
-
-    @protocol
-    def test_sub_coerce(self, runtime):
-        """Test subtraction with mixed operands."""
-        share_a = Share(runtime, self.Zp)
-        share_b = self.Zp(200)
-        share_c = share_a - share_b
-
-        share_c.addCallback(self.assertEquals, self.Zp(300))
-        share_a.callback(self.Zp(500))
-        return share_c
+        return self._test_binary_operator(runtime, operator.sub, 300, 200)
 
     @protocol
     def test_mul(self, runtime):
         """Test multiplication with mixed operands."""
-        share_a = Share(runtime, self.Zp, self.Zp(42 + runtime.id))
-        share_b = self.Zp(117 + runtime.id)
-        opened_c = runtime.open(share_a * share_b)
-
-        opened_c.addCallback(self.assertEquals, self.Zp(42 * 117))
-        return opened_c
+        return self._test_binary_operator(runtime, operator.mul, 42, 117)
 
     @protocol
     def test_xor(self, runtime):
@@ -133,12 +114,9 @@ class RuntimeTest(RuntimeTestCase):
         """
         a, b, c = runtime.shamir_share([1, 2, 3], self.Zp, 42 + runtime.id)
 
-        self.assertTrue(isinstance(a, Share),
-                        "Type should be Share, but is %s" % a.__class__)
-        self.assertTrue(isinstance(b, Share),
-                        "Type should be Share, but is %s" % b.__class__)
-        self.assertTrue(isinstance(c, Share),
-                        "Type should be Share, but is %s" % c.__class__)
+        self.assert_type(a, Share)
+        self.assert_type(b, Share)
+        self.assert_type(c, Share)
 
         opened_a = runtime.open(a)
         opened_b = runtime.open(b)
@@ -166,12 +144,9 @@ class RuntimeTest(RuntimeTestCase):
         else:
             c, a = runtime.shamir_share([3, 1], self.Zp)
 
-        self.assertTrue(isinstance(a, Share),
-                        "Type should be Share, but is %s" % a.__class__)
-        self.assertTrue(isinstance(b, Share),
-                        "Type should be Share, but is %s" % b.__class__)
-        self.assertTrue(isinstance(c, Share),
-                        "Type should be Share, but is %s" % c.__class__)
+        self.assert_type(a, Share)
+        self.assert_type(b, Share)
+        self.assert_type(c, Share)
 
         opened_a = runtime.open(a)
         opened_b = runtime.open(b)
@@ -204,40 +179,19 @@ class RuntimeTest(RuntimeTestCase):
     @protocol
     def test_greater_than(self, runtime):
         """Test comparison."""
-        # Shamir shares of 42 and 117:
-        share_a = Share(runtime, self.Zp, self.Zp(42 + runtime.id))
-        share_b = Share(runtime, self.Zp, self.Zp(117 - runtime.id))
-
-        result = runtime.open(share_a > share_b)
-        result.addCallback(self.assertEquals, GF256(42 > 117))
-        return result
+        return self._test_binary_operator(runtime, operator.gt, 42, 117)
 
     @protocol
     def test_greater_than_equal(self, runtime):
-        share_a = Share(runtime, self.Zp, self.Zp(42 + runtime.id))
-        share_b = Share(runtime, self.Zp, self.Zp(117 - runtime.id))
-
-        result = runtime.open(share_a >= share_b)
-        result.addCallback(self.assertEquals, GF256(42 >= 117))
-        return result
+        return self._test_binary_operator(runtime, operator.ge, 42, 117)
 
     @protocol
     def test_less_than(self, runtime):
-        share_a = Share(runtime, self.Zp, self.Zp(42 + runtime.id))
-        share_b = Share(runtime, self.Zp, self.Zp(117 - runtime.id))
-
-        result = runtime.open(share_a < share_b)
-        result.addCallback(self.assertEquals, GF256(42 < 117))
-        return result
+        return self._test_binary_operator(runtime, operator.lt, 42, 117)
 
     @protocol
     def test_less_than_equal(self, runtime):
-        share_a = Share(runtime, self.Zp, self.Zp(42 + runtime.id))
-        share_b = Share(runtime, self.Zp, self.Zp(117 - runtime.id))
-
-        result = runtime.open(share_a <= share_b)
-        result.addCallback(self.assertEquals, GF256(42 <= 117))
-        return result
+        return self._test_binary_operator(runtime, operator.le, 42, 117)
 
     @protocol
     def test_greater_than_equalII(self, runtime):

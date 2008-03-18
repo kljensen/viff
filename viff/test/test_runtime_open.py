@@ -37,7 +37,7 @@ class RuntimeOpenTest(RuntimeTestCase):
         # The parties have shares 43, 44, 45 respectively.
         share = Share(runtime, self.Zp, self.Zp(42 + runtime.id))
         opened = runtime.open(share)
-        self.assertTrue(isinstance(opened, Share))
+        self.assert_type(opened, Share)
         opened.addCallback(self.assertEquals, 42)
         return opened
 
@@ -77,7 +77,7 @@ class RuntimeOpenTest(RuntimeTestCase):
 
         if runtime.id in receivers:
             opened = runtime.open(share, receivers)
-            self.assertTrue(isinstance(opened, Share))
+            self.assert_type(opened, Share)
             opened.addCallback(self.assertEquals, secret)
             return opened
         else:
