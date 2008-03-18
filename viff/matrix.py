@@ -223,11 +223,20 @@ class Matrix(object):
 def hyper(n, field):
     """Makes a hyper-invertible square matrix.
 
+    A hyper-invertible matrix is a matrix where every sub-matrix is
+    invertible. A sub-matrix consists of an arbitrary subset of the
+    rows and columns of the original matrix (and is not necessarily a
+    contiguous region).
+
     >>> from field import GF
     >>> Zp = GF(47)
     >>> print hyper(2, Zp)
     [[{46}  {2}]
      [{45}  {3}]]
+    >>> print hyper(3, Zp)
+    [[ {1} {44}  {3}]
+     [ {3} {39}  {6}]
+     [ {6} {32} {10}]]
 
     @param n: The dimension of the matrix (it will be n times n).
     @param field: The field to use. Expected to be a Zp field.
