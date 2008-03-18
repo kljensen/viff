@@ -188,6 +188,16 @@ class Matrix(object):
     def transpose(self):
         """Returns the transpose of the matrix.
 
+        >>> M = Matrix([[x + 3*y for x in range(3)] for y in range(3)])
+        >>> print M
+        [[0 1 2]
+         [3 4 5]
+         [6 7 8]]
+        >>> print M.transpose()
+        [[0 3 6]
+         [1 4 7]
+         [2 5 8]]
+
         @return: The transpose of the matrix.
         """
         result = Matrix(self.n, self.m)
