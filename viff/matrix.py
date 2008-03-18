@@ -131,6 +131,10 @@ class Matrix(object):
     def __radd__(self, other):
         """Adds the matrix to an element.
 
+        >>> print 10 + Matrix([[0, 1], [2, 3]])
+        [[10 11]
+         [12 13]]
+
         @param other: The element to which the matrix will be added.
         @return: The sum.
         """
@@ -191,6 +195,10 @@ class Matrix(object):
 
     def __rmul__(self, other):
         """Multiplies an element with the matrix.
+
+        >>> print 10 * Matrix([[0, 1], [2, 3]])
+        [[ 0 10]
+         [20 30]]
 
         @param other: The element with which the matrix will be multiplied.
         @return: The product.
