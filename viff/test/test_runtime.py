@@ -37,51 +37,87 @@ from viff.runtime import Share
 from viff.test.util import RuntimeTestCase, protocol
 
 
+class BinaryOperatorTestCase:
+    """Test a binary operator.
+
+    This mix-in class should be used together with a RuntimeTestCase
+    class, and the new class must define C{self.operator} to be a
+    suitable operator.
+
+    """
+
+    a = 12345
+    b = 6789
+
+    def _verify(self, runtime, result, expected):
+        self.assert_type(result, Share)
+        opened = runtime.open(result)
+        opened.addCallback(self.assertEquals, expected)
+        return opened
+
+    @protocol
+    def test_op_share_int(self, runtime):
+        share_a = Share(runtime, self.Zp, self.Zp(self.a))
+        share_b = self.b
+        return self._verify(runtime,
+                            self.operator(share_a, share_b),
+                            self.operator(self.a, self.b))
+
+    @protocol
+    def test_op_int_share(self, runtime):
+        share_a = self.a
+        share_b = Share(runtime, self.Zp, self.Zp(self.b))
+        return self._verify(runtime,
+                            self.operator(share_a, share_b),
+                            self.operator(self.a, self.b))
+
+    @protocol
+    def test_op_share_element(self, runtime):
+        share_a = Share(runtime, self.Zp, self.Zp(self.a))
+        share_b = self.Zp(self.b)
+        return self._verify(runtime,
+                            self.operator(share_a, share_b),
+                            self.operator(self.a, self.b))
+
+    @protocol
+    def test_op_element_share(self, runtime):
+        share_a = self.Zp(self.a)
+        share_b = Share(runtime, self.Zp, self.Zp(self.b))
+        return self._verify(runtime,
+                            self.operator(share_a, share_b),
+                            self.operator(self.a, self.b))
+
+    @protocol
+    def test_op_share_share(self, runtime):
+        share_a = Share(runtime, self.Zp, self.Zp(self.a))
+        share_b = Share(runtime, self.Zp, self.Zp(self.b))
+        return self._verify(runtime,
+                            self.operator(share_a, share_b),
+                            self.operator(self.a, self.b))
+
+class AddTest(BinaryOperatorTestCase, RuntimeTestCase):
+    operator = operator.add
+
+class SubTest(BinaryOperatorTestCase, RuntimeTestCase):
+    operator = operator.sub
+
+class MulTest(BinaryOperatorTestCase, RuntimeTestCase):
+    operator = operator.mul
+
+class GreaterThanTest(BinaryOperatorTestCase, RuntimeTestCase):
+    operator = operator.ge
+
+class GreaterThanEqualTest(BinaryOperatorTestCase, RuntimeTestCase):
+    operator = operator.gt
+
+class LessThanTest(BinaryOperatorTestCase, RuntimeTestCase):
+    operator = operator.lt
+
+class LessThanEqualTest(BinaryOperatorTestCase, RuntimeTestCase):
+    operator = operator.le
+
 class RuntimeTest(RuntimeTestCase):
     """Test L{viff.runtime.Runtime}."""
-
-    def _test_binary_operator(self, runtime, op, a, b):
-        """Test a binary operator.
-
-        The left and right operands will be coerced into field
-        elements (using C{self.Zp}) and L{Share}s and the operator
-        will be called on all combinations thereof.
-
-        @param op: a binary operator.
-        @param a: left operand.
-        @param b: right operand.
-        """
-        def test(share_a, share_b):
-            """Test C{op} on two operands."""
-            result = op(share_a, share_b)
-            self.assert_type(result, Share)
-            opened = runtime.open(result)
-            opened.addCallback(self.assertEquals, op(a, b))
-            return opened
-
-        Zp = self.Zp
-
-        res_1 = test(Share(runtime, Zp, Zp(a)), b)
-        res_2 = test(a, Share(runtime, Zp, Zp(b)))
-        res_3 = test(Share(runtime, Zp, Zp(a)), Zp(b))
-        res_4 = test(Zp(a), Share(runtime, Zp, Zp(b)))
-        res_5 = test(Share(runtime, Zp, Zp(a)), Share(runtime, Zp, Zp(b)))
-        return gatherResults([res_1, res_2, res_3, res_4, res_5])
-
-    @protocol
-    def test_add(self, runtime):
-        """Test addition."""
-        return self._test_binary_operator(runtime, operator.add, 200, 300)
-
-    @protocol
-    def test_sub(self, runtime):
-        """Test subtraction."""
-        return self._test_binary_operator(runtime, operator.sub, 300, 200)
-
-    @protocol
-    def test_mul(self, runtime):
-        """Test multiplication with mixed operands."""
-        return self._test_binary_operator(runtime, operator.mul, 42, 117)
 
     @protocol
     def test_xor(self, runtime):
@@ -172,23 +208,6 @@ class RuntimeTest(RuntimeTestCase):
             opened.addCallback(self.assertEquals, GF256(value))
             results.append(opened)
         return gatherResults(results)
-
-    @protocol
-    def test_greater_than(self, runtime):
-        """Test comparison."""
-        return self._test_binary_operator(runtime, operator.gt, 42, 117)
-
-    @protocol
-    def test_greater_than_equal(self, runtime):
-        return self._test_binary_operator(runtime, operator.ge, 42, 117)
-
-    @protocol
-    def test_less_than(self, runtime):
-        return self._test_binary_operator(runtime, operator.lt, 42, 117)
-
-    @protocol
-    def test_less_than_equal(self, runtime):
-        return self._test_binary_operator(runtime, operator.le, 42, 117)
 
     @protocol
     def test_greater_than_equalII(self, runtime):
