@@ -70,8 +70,8 @@ class Matrix(object):
         >>> M = Matrix(2, 2)
         >>> M[0, 1] = 42
         >>> print M
-        0 42
-        0 0
+        [[ 0 42]
+         [ 0  0]]
 
         param i: The entry row.
         param j: The entry column.
@@ -172,17 +172,18 @@ class Matrix(object):
     def __str__(self):
         """Returns a string representation of the matrix.
 
+        >>> print Matrix([[x + 4*y for x in range(4)] for y in range(4)])
+        [[ 0  1  2  3]
+         [ 4  5  6  7]
+         [ 8  9 10 11]
+         [12 13 14 15]]
+
         @return: A string representation of the matrix.
         """
-        # the output obviously needs to be nicer
-        result = ''
-        for i in range(0, self.m):
-            for j in range(0, self.n-1):
-                result += str(self[i, j]) + ' '
-            result += str(self[i, self.n-1])
-            if i < self.n-1:
-                result += '\n'
-        return result
+        width = max([len(str(elem)) for row in self.rows for elem in row])
+        output = [" ".join(["%*s" % (width, e) for e in r]) for r in self.rows]
+        # Output suggesting the nested lists (from array in numpy).
+        return "[[%s]]" % "]\n [".join(output)
 
     def transpose(self):
         """Returns the transpose of the matrix.
@@ -224,10 +225,9 @@ def hyper(n, field):
 
     >>> from field import GF
     >>> Zp = GF(47)
-    >>> m = hyper(2, Zp)
-    >>> print m
-    {46} {2}
-    {45} {3}
+    >>> print hyper(2, Zp)
+    [[{46}  {2}]
+     [{45}  {3}]]
 
     @param n: The dimension of the matrix (it will be n times n).
     @param field: The field to use. Expected to be a Zp field.
