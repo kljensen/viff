@@ -96,6 +96,20 @@ class Matrix(object):
     def __add__(self, other):
         """Adds another matrix or an element to this matrix.
 
+        Adds this matrix with another matrix, or adds the matrix with
+        an element. The addition is done element-wise.
+
+        >>> A = Matrix([[x + 2*y for x in range(2)] for y in range(2)])
+        >>> print A
+        [[0 1]
+         [2 3]]
+        >>> print A + 10
+        [[10 11]
+         [12 13]]
+        >>> print A + A
+        [[0 2]
+         [4 6]]
+
         @param other: The matrix or element to add to this one.
         @return: The sum.
         """
