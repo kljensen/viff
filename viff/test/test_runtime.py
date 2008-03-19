@@ -34,17 +34,20 @@ from twisted.internet.defer import gatherResults
 from viff.field import GF256
 from viff.runtime import Share
 from viff.comparison import Toft05Runtime
-
 from viff.test.util import RuntimeTestCase, BinaryOperatorTestCase, protocol
+
 
 class AddTest(BinaryOperatorTestCase, RuntimeTestCase):
     operator = operator.add
 
+
 class SubTest(BinaryOperatorTestCase, RuntimeTestCase):
     operator = operator.sub
 
+
 class MulTest(BinaryOperatorTestCase, RuntimeTestCase):
     operator = operator.mul
+
 
 class XorTest(BinaryOperatorTestCase, RuntimeTestCase):
     a = 0

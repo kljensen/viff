@@ -20,8 +20,8 @@
 from twisted.internet.defer import Deferred, gatherResults
 
 from viff.test.util import RuntimeTestCase, protocol
-
 from viff.runtime import increment_pc
+
 
 class ProgramCounterTest(RuntimeTestCase):
     """Program counter tests."""
@@ -55,7 +55,6 @@ class ProgramCounterTest(RuntimeTestCase):
         runtime.xor(self.Zp(0), self.Zp(1))
         self.assertEquals(runtime.program_counter, [2])
 
-
     @protocol
     def test_callback(self, runtime):
         """Test a scheduled callback.
@@ -75,7 +74,6 @@ class ProgramCounterTest(RuntimeTestCase):
 
         # Now trigger verify_program_counter.
         d.callback(None)
-
 
     @protocol
     def test_nested_calls(self, runtime):
