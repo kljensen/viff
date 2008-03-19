@@ -105,10 +105,10 @@ class MulTest(BinaryOperatorTestCase, RuntimeTestCase):
     operator = operator.mul
 
 class GreaterThanTest(BinaryOperatorTestCase, RuntimeTestCase):
-    operator = operator.ge
+    operator = operator.gt
 
 class GreaterThanEqualTest(BinaryOperatorTestCase, RuntimeTestCase):
-    operator = operator.gt
+    operator = operator.ge
 
 class LessThanTest(BinaryOperatorTestCase, RuntimeTestCase):
     operator = operator.lt
