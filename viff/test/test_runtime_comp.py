@@ -40,6 +40,19 @@ class LessThanEqualTest(BinaryOperatorTestCase, RuntimeTestCase):
     runtime_class = Toft05Runtime
     operator = operator.le
 
+
+class Toft07GreaterThanTest(BinaryOperatorTestCase, RuntimeTestCase):
+    runtime_class = Toft07Runtime
+    operator = operator.gt
+
 class Toft07GreaterThanEqualTest(BinaryOperatorTestCase, RuntimeTestCase):
     runtime_class = Toft07Runtime
     operator = operator.ge
+
+class Toft07LessThanTest(BinaryOperatorTestCase, RuntimeTestCase):
+    runtime_class = Toft07Runtime
+    operator = operator.lt
+
+class Toft07LessThanEqualTest(BinaryOperatorTestCase, RuntimeTestCase):
+    runtime_class = Toft07Runtime
+    operator = operator.le
