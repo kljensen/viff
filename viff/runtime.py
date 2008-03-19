@@ -560,6 +560,28 @@ class BasicRuntime:
             # We have already received the data from the other side.
             deferred.callback(data)
 
+    def _exchange_shares(self, id, field_element):
+        """Exchange shares with another player.
+
+        We send the player our share and record a Deferred which will
+        trigger when the share from the other side arrives.
+        """
+        assert isinstance(field_element, FieldElement)
+
+        if id == self.id:
+            return Share(self, field_element.field, field_element)
+        else:
+            share = self._expect_share(id, field_element.field)
+            pc = tuple(self.program_counter)
+            self.protocols[id].sendShare(pc, field_element)
+            return share
+
+    def _expect_share(self, peer_id, field):
+        share = Share(self, field)
+        share.addCallback(lambda value: field(value))
+        self._expect_data(peer_id, "share", share)
+        return share
+
 
 class Runtime(BasicRuntime):
     """The VIFF runtime.
@@ -1014,28 +1036,6 @@ class Runtime(BasicRuntime):
             return result[0]
         
         return result
-
-    def _exchange_shares(self, id, field_element):
-        """Exchange shares with another player.
-
-        We send the player our share and record a Deferred which will
-        trigger when the share from the other side arrives.
-        """
-        assert isinstance(field_element, FieldElement)
-
-        if id == self.id:
-            return Share(self, field_element.field, field_element)
-        else:
-            share = self._expect_share(id, field_element.field)
-            pc = tuple(self.program_counter)
-            self.protocols[id].sendShare(pc, field_element)
-            return share
-
-    def _expect_share(self, peer_id, field):
-        share = Share(self, field)
-        share.addCallback(lambda value: field(value))
-        self._expect_data(peer_id, "share", share)
-        return share
 
     @increment_pc
     def _recombine(self, shares, threshold):
