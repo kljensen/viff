@@ -66,7 +66,7 @@ class Matrix(object):
         """Allows matrix entry assignment using C{[,]}.
 
         The assignment works as follows:
-        
+
         >>> M = Matrix(2, 2)
         >>> M[0, 1] = 42
         >>> print M
@@ -83,7 +83,7 @@ class Matrix(object):
         """Allows matrix entry access using C{[, ]}.
 
         The access works as follows:
-        
+
         >>> M = Matrix([[1, 2], [3, 4]])
         >>> print M[1,1]
         4
@@ -121,7 +121,7 @@ class Matrix(object):
                 for j in range(0, self.n):
                     result[i, j] = self[i, j] + other
             return result
-        
+
         result = Matrix(self.m, self.n)
         for i in range(0, self.m):
             for j in range(0, self.n):
@@ -143,7 +143,7 @@ class Matrix(object):
             for j in range(0, self.n):
                 result[i, j] = other + self[i, j]
         return result
-        
+
     def __mul__(self, other):
         """Matrix multiplication.
 
@@ -171,7 +171,7 @@ class Matrix(object):
         @param other: The matrix or element to multiply with this one.
         @return: The product.
         """
-        
+
         if not isinstance(other, Matrix):
             result = Matrix(self.m, self.n)
             for i in range(0, self.m):
@@ -183,7 +183,7 @@ class Matrix(object):
         if self.n != other.m:
             raise ValueError('Matrix dimensions do not match for '
                              'multiplication')
-            
+
         result = Matrix(self.m, other.n)
         for i in range(0, self.m):
             for j in range(0, other.n):
@@ -249,15 +249,15 @@ class Matrix(object):
 
     def determinant(mat):
         """Calculates the determinant of a matrix.
-        
+
         @param mat: A square matrix.
         @return: The determinant of the matrix.
         """
         if mat.m == 1:
             return mat[0, 0]
         if mat.m == 2:
-            return mat[0, 0] * mat[1,1] - mat[1, 0] * mat[0, 1]
-        
+            return mat[0, 0] * mat[1, 1] - mat[1, 0] * mat[0, 1]
+
         sum = 0
         for k in range(mat.m):
             sub = Matrix(mat.m-1, mat.n-1)
@@ -269,7 +269,7 @@ class Matrix(object):
                     sub[i-1, j-1] = mat[i, j]
             sum += mat[k, 0] * (-1)**k * sub.determinant()
         return sum
-                        
+
 def hyper(n, field):
     """Makes a hyper-invertible square matrix.
 
