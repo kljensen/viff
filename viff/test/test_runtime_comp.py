@@ -21,7 +21,7 @@
 
 import operator
 
-from viff.runtime import Runtime
+from viff.runtime import Toft07Runtime
 from viff.test.util import RuntimeTestCase, BinaryOperatorTestCase
 
 class GreaterThanTest(BinaryOperatorTestCase, RuntimeTestCase):
@@ -36,14 +36,6 @@ class LessThanTest(BinaryOperatorTestCase, RuntimeTestCase):
 class LessThanEqualTest(BinaryOperatorTestCase, RuntimeTestCase):
     operator = operator.le
 
-class GreaterThanEqualIITest(BinaryOperatorTestCase, RuntimeTestCase):
-    def operator(self, x, y):
-        # TODO: This method can be replaced with operator.ge when we
-        # have split the Runtime into smaller parts as described in
-        # Issue 2.
-        runtime = getattr(x, "runtime", getattr(y, "runtime", None))
-        if runtime is not None:
-            return runtime.greater_than_equalII(x, y)
-        else:
-            return x >= y
-
+class Toft07GreaterThanEqualTest(BinaryOperatorTestCase, RuntimeTestCase):
+    runtime_class = Toft07Runtime
+    operator = operator.ge

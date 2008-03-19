@@ -57,11 +57,12 @@
 
 import time
 from optparse import OptionParser
+import operator
 
 from twisted.internet import reactor
 
 from viff.field import GF
-from viff.runtime import Runtime, create_runtime, gather_shares
+from viff.runtime import Runtime, Toft07Runtime, create_runtime, gather_shares
 from viff.config import load_config
 from viff.util import find_prime
 
@@ -190,18 +191,21 @@ class SequentialBenchmark(Benchmark):
             self.finished(None)
 
 if options.operation == "mul":
-    operation = lambda a, b: a * b
+    operation = operator.mul
+    runtime_class = Runtime
 elif options.operation == "comp":
-    operation = lambda a, b: a >= b
+    operation = operator.ge
+    runtime_class = Runtime
 elif options.operation == "compII":
-    operation = lambda a, b: a.runtime.greater_than_equalII(a, b)
+    operation = operator.ge
+    runtime_class = Toft07Runtime
 
 if options.parallel:
     benchmark = ParallelBenchmark
 else:
     benchmark = SequentialBenchmark
 
-pre_runtime = create_runtime(id, players, (len(players) -1)//2, options)
+pre_runtime = create_runtime(id, players, (len(players) -1)//2, options, runtime_class)
 pre_runtime.addCallback(benchmark, operation)
 
 print "#### Starting reactor ###"

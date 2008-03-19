@@ -30,7 +30,7 @@ from twisted.internet.defer import DeferredList, gatherResults
 #defer.setDebugging(True)
 
 from viff.field import GF
-from viff.runtime import Runtime, create_runtime
+from viff.runtime import Runtime, Toft07Runtime, create_runtime
 from viff.config import load_config
 from viff.util import rand, find_prime
 
@@ -104,7 +104,7 @@ print "I am player %d, will compare %d numbers" % (id, count)
 
 
 def protocol(rt):
-    print "Testing online requirements for comparisonII"
+    print "Testing online requirements for Toft07 comparison"
     l = rt.options.bit_length
     k = rt.options.security_parameter
     assert Zp.modulus > 2**(l+k)
@@ -123,7 +123,7 @@ def protocol(rt):
     preproc = []
     pseudoPreproc = []
     for i in range(count):
-        thisPreproc = rt.greater_than_equalII_preproc(Zp, smallField = Zq)
+        thisPreproc = rt.greater_than_equal_preproc(Zp, smallField = Zq)
         preproc.append(thisPreproc)
         pseudoPreproc += thisPreproc[2:-1]
         pseudoPreproc += thisPreproc[-1]
@@ -145,7 +145,7 @@ def protocol(rt):
         while len(shares) > 1:
             a = shares.pop(0)
             b = shares.pop(0)
-            c = rt.greater_than_equalII_online(a, b, preproc.pop(), Zp)
+            c = rt.greater_than_equal_online(a, b, preproc.pop(), Zp)
             bits.append(c)
 
         stop = DeferredList(bits)
@@ -162,7 +162,7 @@ def protocol(rt):
     dl = gatherResults(shares + pseudoPreproc)
     dl.addCallback(run_test)
 
-pre_runtime = create_runtime(id, players, (len(players) -1)//2, options)
+pre_runtime = create_runtime(id, players, (len(players) -1)//2, options, Toft07Runtime)
 pre_runtime.addCallback(protocol)
 
 print "#### Starting reactor ###"
