@@ -45,6 +45,11 @@ class SubTest(BinaryOperatorTestCase, RuntimeTestCase):
 class MulTest(BinaryOperatorTestCase, RuntimeTestCase):
     operator = operator.mul
 
+class XorTest(BinaryOperatorTestCase, RuntimeTestCase):
+    a = 0
+    b = 1
+    operator = operator.xor
+
 
 class RuntimeTest(RuntimeTestCase):
     """Test L{viff.runtime.Runtime}."""
