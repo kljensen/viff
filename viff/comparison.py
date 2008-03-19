@@ -187,7 +187,7 @@ class ComparisonToft07Mixin:
 
         full_mask = reduce(self.add, dst_shares)
         return tmp - full_mask
-    
+
     @increment_pc
     def greater_than_equal_preproc(self, field, smallField=None):
         """Preprocessing for greater_than_equal."""

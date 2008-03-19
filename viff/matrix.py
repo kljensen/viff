@@ -28,6 +28,7 @@ number, including L{viff.field.GF256} and L{viff.field.GF} elements.
 
 from __future__ import division
 
+
 class Matrix(object):
     """A matrix."""
 
@@ -269,6 +270,7 @@ class Matrix(object):
                     sub[i-1, j-1] = mat[i, j]
             sum += mat[k, 0] * (-1)**k * sub.determinant()
         return sum
+
 
 def hyper(n, field):
     """Makes a hyper-invertible square matrix.

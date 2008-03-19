@@ -111,6 +111,7 @@ def recombine(shares, x_recomb=0):
         _recombination_vectors[key] = vector
     return sum(map(operator.mul, ys, vector))
 
+
 def verify_sharing(shares, degree):
     """Verifies that a sharing is correct.
 
@@ -143,4 +144,3 @@ def verify_sharing(shares, degree):
 if __name__ == "__main__":
     import doctest    #pragma NO COVER
     doctest.testmod() #pragma NO COVER
-
