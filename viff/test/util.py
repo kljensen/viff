@@ -92,6 +92,8 @@ class RuntimeTestCase(TestCase):
     num_players = 3
     #: Shamir sharing threshold.
     threshold = 1
+    #: Default Runtime class to instantiate.
+    runtime_class = Runtime
     
     #: A dictionary mapping player ids to pseudorandom generators.
     #:
@@ -157,7 +159,7 @@ class RuntimeTestCase(TestCase):
         # Create a runtime that knows about no other players than itself.
         # It will eventually be returned in result when the factory has
         # determined that all needed protocols are ready.
-        runtime = Runtime(players[id], self.threshold)
+        runtime = self.runtime_class(players[id], self.threshold)
         factory = ShareExchangerFactory(runtime, players, result)
         # We add the Deferred passed to ShareExchangerFactory and not
         # the Runtime, since we want everybody to wait until all
