@@ -326,21 +326,11 @@ def increment_pc(method):
     return inc_pc_wrapper
 
 
-class Runtime:
-    """The VIFF runtime.
+class BasicRuntime:
+    """Basic VIFF runtime with no crypto.
 
-    The runtime is used for sharing values (L{shamir_share} or
-    L{prss_share}) into L{Share} object and opening such shares
-    (L{open}) again. Calculations on shares is normally done through
-    overloaded arithmetic operations, but it is also possible to call
-    L{add}, L{mul}, etc. directly if one prefers.
-
-    Each player in the protocol uses a Runtime object. To create in
-    instance and connect it correctly with the other players, please
-    use the L{create_runtime} function instead of instantiating a
-    Runtime directly. The L{create_runtime} function will take care of
-    setting up network connections and return a Deferred which
-    triggers with the Runtime object when it is ready.
+    This runtime contains only the most basic operations needed such
+    as the program counter, the list of other players, etc.
     """
 
     @staticmethod
@@ -476,15 +466,6 @@ class Runtime:
         # communicating with ourselves.
         self.add_player(player, None)
 
-        #: Echo counters for Bracha broadcast.
-        self._bracha_echo = {}
-        #: Ready counters for Bracha broadcast.
-        self._bracha_ready = {}
-        #: Have we sent a ready message?
-        self._bracha_sent_ready = {}
-        #: Have we delivered the message?
-        self._bracha_delivered = {}
-
     def add_player(self, player, protocol):
         self.players[player.id] = player
         self.num_players = len(self.players)
@@ -564,6 +545,51 @@ class Runtime:
         result = gather_shares(shares)
         result.addCallback(lambda _: None)
         return result
+
+    def _expect_data(self, peer_id, type, deferred):
+        # Convert self.program_counter to a hashable value in order
+        # to use it as a key in self.incoming_data.
+        pc = tuple(self.program_counter)
+        key = (pc, peer_id, type)
+
+        data = self.incoming_data.pop(key, None)
+        if data is None:
+            # We have not yet received data from the other side.
+            self.incoming_data[key] = deferred
+        else:
+            # We have already received the data from the other side.
+            deferred.callback(data)
+
+
+class Runtime(BasicRuntime):
+    """The VIFF runtime.
+
+    The runtime is used for sharing values (L{shamir_share} or
+    L{prss_share}) into L{Share} object and opening such shares
+    (L{open}) again. Calculations on shares is normally done through
+    overloaded arithmetic operations, but it is also possible to call
+    L{add}, L{mul}, etc. directly if one prefers.
+
+    Each player in the protocol uses a Runtime object. To create in
+    instance and connect it correctly with the other players, please
+    use the L{create_runtime} function instead of instantiating a
+    Runtime directly. The L{create_runtime} function will take care of
+    setting up network connections and return a Deferred which
+    triggers with the Runtime object when it is ready.
+    """
+
+    def __init__(self, player, threshold, options=None):
+        """Initialize runtime."""
+        BasicRuntime.__init__(self, player, threshold, options)
+
+        #: Echo counters for Bracha broadcast.
+        self._bracha_echo = {}
+        #: Ready counters for Bracha broadcast.
+        self._bracha_ready = {}
+        #: Have we sent a ready message?
+        self._bracha_sent_ready = {}
+        #: Have we delivered the message?
+        self._bracha_delivered = {}
 
     @increment_pc
     def open(self, share, receivers=None, threshold=None):
@@ -1010,20 +1036,6 @@ class Runtime:
         share.addCallback(lambda value: field(value))
         self._expect_data(peer_id, "share", share)
         return share
-
-    def _expect_data(self, peer_id, type, deferred):
-        # Convert self.program_counter to a hashable value in order
-        # to use it as a key in self.incoming_data.
-        pc = tuple(self.program_counter)
-        key = (pc, peer_id, type)
-
-        data = self.incoming_data.pop(key, None)
-        if data is None:
-            # We have not yet received data from the other side.
-            self.incoming_data[key] = deferred
-        else:
-            # We have already received the data from the other side.
-            deferred.callback(data)
 
     @increment_pc
     def _recombine(self, shares, threshold):
