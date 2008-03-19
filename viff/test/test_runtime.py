@@ -45,17 +45,6 @@ class SubTest(BinaryOperatorTestCase, RuntimeTestCase):
 class MulTest(BinaryOperatorTestCase, RuntimeTestCase):
     operator = operator.mul
 
-class GreaterThanTest(BinaryOperatorTestCase, RuntimeTestCase):
-    operator = operator.gt
-
-class GreaterThanEqualTest(BinaryOperatorTestCase, RuntimeTestCase):
-    operator = operator.ge
-
-class LessThanTest(BinaryOperatorTestCase, RuntimeTestCase):
-    operator = operator.lt
-
-class LessThanEqualTest(BinaryOperatorTestCase, RuntimeTestCase):
-    operator = operator.le
 
 class RuntimeTest(RuntimeTestCase):
     """Test L{viff.runtime.Runtime}."""
@@ -150,18 +139,6 @@ class RuntimeTest(RuntimeTestCase):
             results.append(opened)
         return gatherResults(results)
 
-    @protocol
-    def test_greater_than_equalII(self, runtime):
-        """Test comparison (improved version)."""
-        # Shamir shares of 42 and 117:
-        share_a = self.Zp(42 + runtime.id)
-        share_b = self.Zp(117 - runtime.id)
-
-        result = runtime.greater_than_equalII(share_a, share_b)
-        opened = runtime.open(result)
-        opened.addCallback(self.assertEquals, self.Zp(42 >= 117))
-
-        return opened
 
 if 'STRESS' in os.environ:
 
