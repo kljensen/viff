@@ -32,7 +32,8 @@ import operator
 from twisted.internet.defer import gatherResults
 
 from viff.field import GF256
-from viff.runtime import Share, Toft05Runtime
+from viff.runtime import Share
+from viff.comparison import Toft05Runtime
 
 from viff.test.util import RuntimeTestCase, BinaryOperatorTestCase, protocol
 

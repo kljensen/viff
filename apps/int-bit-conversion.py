@@ -24,7 +24,8 @@ import sys
 from twisted.internet import reactor
 
 from viff.field import GF, GF256
-from viff.runtime import create_runtime, Toft05Runtime
+from viff.runtime import create_runtime
+from viff.comparison import Toft05Runtime
 from viff.config import load_config
 
 id, players = load_config(sys.argv[1])

@@ -37,7 +37,8 @@ from optparse import OptionParser
 from twisted.internet import reactor
 
 from viff.field import GF
-from viff.runtime import Runtime, Toft05Runtime, create_runtime, gather_shares
+from viff.runtime import Runtime, create_runtime, gather_shares
+from viff.comparison import Toft05Runtime
 from viff.config import load_config
 from viff.util import rand, find_prime
 

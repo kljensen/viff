@@ -26,7 +26,8 @@ from twisted.internet import reactor
 from twisted.internet.defer import gatherResults
 
 from viff.field import GF, GF256
-from viff.runtime import create_runtime, Toft05Runtime
+from viff.runtime import create_runtime
+from viff.comparison import Toft05Runtime
 from viff.config import load_config
 from viff.util import dprint
 

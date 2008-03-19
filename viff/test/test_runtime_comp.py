@@ -21,7 +21,7 @@
 
 import operator
 
-from viff.runtime import Toft05Runtime, Toft07Runtime
+from viff.comparison import Toft05Runtime, Toft07Runtime
 from viff.test.util import RuntimeTestCase, BinaryOperatorTestCase
 
 class Toft05GreaterThanTest(BinaryOperatorTestCase, RuntimeTestCase):

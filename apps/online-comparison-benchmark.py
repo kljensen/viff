@@ -30,7 +30,8 @@ from twisted.internet.defer import DeferredList, gatherResults
 #defer.setDebugging(True)
 
 from viff.field import GF
-from viff.runtime import Runtime, Toft07Runtime, create_runtime
+from viff.runtime import Runtime, create_runtime
+from viff.comparison import Toft07Runtime
 from viff.config import load_config
 from viff.util import rand, find_prime
 
