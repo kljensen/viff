@@ -1336,10 +1336,15 @@ class Runtime:
         Both arguments must be of type field. The result is a
         field share.
         """
+        # TODO: Make all input-taking methods do coercion like this.
         field = getattr(share_a, "field", getattr(share_b, "field", None))
         if not isinstance(share_a, Share):
+            if not isinstance(share_a, FieldElement):
+                share_a = field(share_a)
             share_a = Share(self, field, share_a)
         if not isinstance(share_b, Share):
+            if not isinstance(share_b, FieldElement):
+                share_b = field(share_b)
             share_b = Share(self, field, share_b)
 
         preproc = self.greater_than_equalII_preproc(field)
