@@ -76,7 +76,7 @@ class AsyncTest(TestCase):
         closed = DeferredList([closed_a, closed_b])
         closed.addCallback(check, server_a, client_a, server_b, client_b)
         return closed
-        
+
     def test_interleaving(self):
         """Ensure that protocol runs are interleaved differently each time."""
 

@@ -136,6 +136,7 @@ class Share(Deferred):
         Works like L{util.clone_deferred} except that it returns a new
         Share instead of a Deferred.
         """
+
         def split_result(result):
             clone.callback(result)
             return result
@@ -188,6 +189,7 @@ def gather_shares(shares):
 
     Roughly modelled after the Twisted C{gatherResults} function.
     """
+
     def filter_results(results):
         return [share for (_, share) in results]
     share_list = ShareList(shares)
@@ -278,7 +280,6 @@ class ShareExchanger(Int16StringReceiver):
         #        self.id, program_counter, share)
 
         self.sendData(program_counter, "share", share.value)
-
 
     def loseConnection(self):
         """Disconnect this protocol instance."""
@@ -479,6 +480,7 @@ class BasicRuntime:
         All connections are closed and the runtime cannot be used
         again after this has been called.
         """
+
         def stop(_):
             println("Initiating shutdown sequence.")
             for protocol in self.protocols.itervalues():
@@ -1008,10 +1010,10 @@ class Runtime(BasicRuntime):
         who wish to broadcast a message. If this player wishes to
         broadcast, its id must be in the list of senders and the
         optional message parameter must be used.
-        
+
         If the list of senders consists only of a single sender, the
         result will be a single element, otherwise it will be a list.
-        
+
         A Bracha broadcast is reliable against an active adversary
         corrupting up to t < n/3 of the players. For more details, see
         the paper "An asynchronous [(n-1)/3]-resilient consensus
@@ -1034,7 +1036,7 @@ class Runtime(BasicRuntime):
 
         if len(result) == 1:
             return result[0]
-        
+
         return result
 
     @increment_pc

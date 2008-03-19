@@ -25,10 +25,10 @@ from viff.matrix import Matrix, hyper
 from viff.prss import generate_subsets
 from twisted.trial.unittest import TestCase
 
+
 class MatrixTest(TestCase):
     """Matrix tests."""
 
-    
     def is_hyper(self, mat):
         """Checks if a square matrix is hyper-invertible.
 
@@ -54,4 +54,3 @@ class MatrixTest(TestCase):
         for i in range(1, 6):
             m = hyper(i, Zp)
             self.assertTrue(self.is_hyper(m))
-        

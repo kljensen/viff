@@ -119,14 +119,14 @@ def verify_sharing(shares, degree):
 
     >>> from field import GF
     >>> Zp = GF(47)
-    >>> shares = [(Zp(i), Zp(i**2)) for i in range(1, 6)] 
-    >>> print shares                                      
+    >>> shares = [(Zp(i), Zp(i**2)) for i in range(1, 6)]
+    >>> print shares
     [({1}, {1}), ({2}, {4}), ({3}, {9}), ({4}, {16}), ({5}, {25})]
     >>> verify_sharing(shares, 2)
     True
     >>> verify_sharing(shares, 1)
     False
-    >>> 
+    >>>
 
     @param shares: The shares to be checked.
     @param degree: The maximum degree of the interpolating polynomial.
@@ -138,7 +138,7 @@ def verify_sharing(shares, degree):
             return False
 
     return True
-        
+
 
 if __name__ == "__main__":
     import doctest    #pragma NO COVER

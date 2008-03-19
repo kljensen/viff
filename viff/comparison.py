@@ -28,6 +28,7 @@ from viff.util import rand
 from viff.runtime import Runtime, Share, gather_shares, increment_pc
 from viff.field import GF256, FieldElement
 
+
 class ComparisonToft05Mixin:
     """Comparison by Tomas Toft, 2005."""
 
@@ -136,6 +137,7 @@ class ComparisonToft05Mixin:
         top = top_a * top_b
         bot = top_b * (bot_a ^ bot_b) ^ bot_b
         return (top, bot)
+
 
 class Toft05Runtime(ComparisonToft05Mixin, Runtime):
     """Default mix of L{ComparisonToft05Mixin} and L{Runtime}."""
@@ -336,6 +338,7 @@ class ComparisonToft07Mixin:
         preproc = self.greater_than_equal_preproc(field)
         return self.greater_than_equal_online(share_a, share_b, preproc,
                                               field)
+
 
 class Toft07Runtime(ComparisonToft07Mixin, Runtime):
     """Default mix of L{ComparisonToft07Mixin} and L{Runtime}."""

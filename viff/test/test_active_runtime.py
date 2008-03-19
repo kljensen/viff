@@ -49,8 +49,6 @@ class ActiveRuntimeTest(RuntimeTestCase):
             y, z = runtime.broadcast([2, 3])
 
         x.addCallback(self.assertEquals, "Hello world!")
-        
         y.addCallback(self.assertEquals, "Hello two!")
         z.addCallback(self.assertEquals, "Hello three!")
-        
         return gatherResults([x, y, z])

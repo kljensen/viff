@@ -66,6 +66,7 @@ from twisted.internet.interfaces import IAddress
 
 from viff.util import rand
 
+
 class _LoopbackQueue(object):
     """
     Trivial wrapper around a list to give it an interface like a queue, which
@@ -79,21 +80,17 @@ class _LoopbackQueue(object):
     def __init__(self):
         self._queue = []
 
-
     def put(self, v):
         self._queue.append(v)
         if self._notificationDeferred is not None:
             d, self._notificationDeferred = self._notificationDeferred, None
             d.callback(None)
 
-
     def __nonzero__(self):
         return bool(self._queue)
 
-
     def get(self):
         return self._queue.pop(0)
-
 
 
 class _LoopbackAddress(object):
@@ -107,6 +104,7 @@ class _LoopbackTransport(object):
     producer = None
 
     # ITransport
+
     def __init__(self, q):
         self.q = q
         self._buffer = ''
@@ -125,7 +123,7 @@ class _LoopbackTransport(object):
         if self.q.disconnect:
             # We are disconnected, so just return.
             return
-            
+
         if self._pending is None or not self._pending.active():
             delay = rand.uniform(0, 0.001)
             self._pending = reactor.callLater(delay, self._send_some_bytes)
@@ -179,6 +177,7 @@ class _LoopbackTransport(object):
         return _LoopbackAddress()
 
     # IConsumer
+
     def registerProducer(self, producer, streaming):
         assert self.producer is None
         self.producer = producer
