@@ -16,9 +16,21 @@ please refer to it for details on the issues:
 Version ?, not yet released
 ---------------------------
 
+The Runtime class has been split into several parts and two new mixin
+classes provide different comparison protocols. Several coercion
+problems were fixed.
+
 Details:
 
+* Issue 2: Split Runtime class into smaller parts.
+
 * Issue 7: New system for unit tests.
+
+* Better coercion. The comparison in Toft07Runtime can now correctly
+  deal with arguments of mixed types, e.g., comparisons like "100 < x"
+  where x is a Share.
+
+* The coercion done by the xor method was also fixed.
 
 
 Version 0.4, released on 2008-03-12
