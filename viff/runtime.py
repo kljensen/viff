@@ -304,78 +304,6 @@ class ShareExchangerFactory(ServerFactory, ClientFactory):
             self.protocols_ready.callback(self.runtime)
 
 
-def create_runtime(id, players, threshold, options=None):
-    """Create a L{Runtime} and connect to the other players.
-
-    This function should be used in normal programs instead of
-    instantiating the Runtime directly. This function makes sure that
-    the Runtime is correctly connected to the other players.
-
-    The return value is a Deferred which will trigger when the runtime
-    is ready. Add your protocol as a callback on this Deferred using
-    code like this::
-
-        def protocol(runtime):
-            a, b, c = runtime.shamir_share(input)
-
-            a = runtime.open(a)
-            b = runtime.open(b)
-            c = runtime.open(c)
-
-            dprint("Opened a: %s", a)
-            dprint("Opened b: %s", b)
-            dprint("Opened c: %s", c)
-
-            runtime.wait_for(a,b,c)
-
-        pre_runtime = create_runtime(id, players, 1)
-        pre_runtime.addCallback(protocol)
-
-    This is the general template which VIFF programs should follow.
-    Please see the example applications for more examples.
-
-    """
-    # This will yield a Runtime when all protocols are connected.
-    result = Deferred()
-
-    # Create a runtime that knows about no other players than itself.
-    # It will eventually be returned in result when the factory has
-    # determined that all needed protocols are ready.
-    runtime = Runtime(players[id], threshold, options)
-    factory = ShareExchangerFactory(runtime, players, result)
-
-    if options and options.tls:
-        print "Using TLS"
-        try:
-            from gnutls.interfaces.twisted import X509Credentials
-            from gnutls.crypto import X509Certificate, X509PrivateKey
-        except ImportError:
-            # TODO: Return a failed Deferred instead.
-            print "Could not import Python GNUTLS module, aborting!"
-            return
-
-        # TODO: Make the file names configurable.
-        cert = X509Certificate(open('player-%d.cert' % id).read())
-        key = X509PrivateKey(open('player-%d.key' % id).read())
-        ca = X509Certificate(open('ca.cert').read())
-        cred = X509Credentials(cert, key, [ca])
-        cred.verify_peer = True
-        reactor.listenTLS(players[id].port, factory, cred)
-    else:
-        print "Not using TLS"
-        reactor.listenTCP(players[id].port, factory)
-
-    for peer_id, player in players.iteritems():
-        if peer_id > id:
-            println("Will connect to %s", player)
-            if options and options.tls:
-                reactor.connectTLS(player.host, player.port, factory, cred)
-            else:
-                reactor.connectTCP(player.host, player.port, factory)
-
-    return result
-
-
 def increment_pc(method):
     """Make method automatically increment the program counter.
 
@@ -1406,3 +1334,75 @@ class Runtime:
         result.addCallback(filter_good_shares)
         result.addCallback(shamir.recombine)
         return result
+
+
+def create_runtime(id, players, threshold, options=None, runtime_class=Runtime):
+    """Create a L{Runtime} and connect to the other players.
+
+    This function should be used in normal programs instead of
+    instantiating the Runtime directly. This function makes sure that
+    the Runtime is correctly connected to the other players.
+
+    The return value is a Deferred which will trigger when the runtime
+    is ready. Add your protocol as a callback on this Deferred using
+    code like this::
+
+        def protocol(runtime):
+            a, b, c = runtime.shamir_share(input)
+
+            a = runtime.open(a)
+            b = runtime.open(b)
+            c = runtime.open(c)
+
+            dprint("Opened a: %s", a)
+            dprint("Opened b: %s", b)
+            dprint("Opened c: %s", c)
+
+            runtime.wait_for(a,b,c)
+
+        pre_runtime = create_runtime(id, players, 1)
+        pre_runtime.addCallback(protocol)
+
+    This is the general template which VIFF programs should follow.
+    Please see the example applications for more examples.
+
+    """
+    # This will yield a Runtime when all protocols are connected.
+    result = Deferred()
+
+    # Create a runtime that knows about no other players than itself.
+    # It will eventually be returned in result when the factory has
+    # determined that all needed protocols are ready.
+    runtime = runtime_class(players[id], threshold, options)
+    factory = ShareExchangerFactory(runtime, players, result)
+
+    if options and options.tls:
+        print "Using TLS"
+        try:
+            from gnutls.interfaces.twisted import X509Credentials
+            from gnutls.crypto import X509Certificate, X509PrivateKey
+        except ImportError:
+            # TODO: Return a failed Deferred instead.
+            print "Could not import Python GNUTLS module, aborting!"
+            return
+
+        # TODO: Make the file names configurable.
+        cert = X509Certificate(open('player-%d.cert' % id).read())
+        key = X509PrivateKey(open('player-%d.key' % id).read())
+        ca = X509Certificate(open('ca.cert').read())
+        cred = X509Credentials(cert, key, [ca])
+        cred.verify_peer = True
+        reactor.listenTLS(players[id].port, factory, cred)
+    else:
+        print "Not using TLS"
+        reactor.listenTCP(players[id].port, factory)
+
+    for peer_id, player in players.iteritems():
+        if peer_id > id:
+            println("Will connect to %s", player)
+            if options and options.tls:
+                reactor.connectTLS(player.host, player.port, factory, cred)
+            else:
+                reactor.connectTCP(player.host, player.port, factory)
+
+    return result
