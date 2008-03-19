@@ -41,6 +41,7 @@ def protocol(method):
 
     The three runtimes are connected by L{create_loopback_runtime}.
     """
+
     def wrapper(self):
 
         def shutdown_protocols(result, runtime):
@@ -85,7 +86,6 @@ def protocol(method):
     return wrapper
 
 
-
 class RuntimeTestCase(TestCase):
 
     #: Number of players to test.
@@ -94,14 +94,14 @@ class RuntimeTestCase(TestCase):
     threshold = 1
     #: Default Runtime class to instantiate.
     runtime_class = Runtime
-    
+
     #: A dictionary mapping player ids to pseudorandom generators.
     #:
     #: The generators have all been seeded with the same seed, which
     #: is again obtained from the viff.util.rand generator. A unit
-    #: test should use these genrators when all players need to agree 
-    #: on the same randomness, e.g. to select the same random number or
-    #: to sample the same subsequence from a sequence.
+    #: test should use these genrators when all players need to agree
+    #: on the same randomness, e.g. to select the same random number
+    #: or to sample the same subsequence from a sequence.
     shared_rand = None
 
     def assert_type(self, var, wanted_type):
@@ -117,11 +117,11 @@ class RuntimeTestCase(TestCase):
 
         configs = generate_configs(self.num_players, self.threshold)
         self.protocols = {}
-        
+
         # initialize the dictionary of random generators
         seed = rand.random()
-        self.shared_rand = dict([(player_id, Random(seed)) 
-                  for player_id in range(1,self.num_players + 1)])
+        self.shared_rand = dict([(player_id, Random(seed))
+                  for player_id in range(1, self.num_players + 1)])
 
         # This will be a list of Deferreds which will trigger when the
         # virtual connections between the players are closed.
