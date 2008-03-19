@@ -26,7 +26,7 @@ from twisted.internet import reactor
 from twisted.internet.defer import gatherResults
 
 from viff.field import GF, GF256
-from viff.runtime import create_runtime
+from viff.runtime import create_runtime, Toft05Runtime
 from viff.config import load_config
 from viff.util import dprint
 
@@ -67,7 +67,7 @@ def protocol(rt):
     results = gatherResults(bits)
     results.addCallback(lambda _: rt.shutdown())
 
-pre_runtime = create_runtime(id, players, 1)
+pre_runtime = create_runtime(id, players, 1, runtime_class=Toft05Runtime)
 pre_runtime.addCallback(protocol)
 
 reactor.run()

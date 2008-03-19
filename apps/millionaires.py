@@ -37,7 +37,7 @@ from optparse import OptionParser
 from twisted.internet import reactor
 
 from viff.field import GF
-from viff.runtime import Runtime, create_runtime, gather_shares
+from viff.runtime import Runtime, Toft05Runtime, create_runtime, gather_shares
 from viff.config import load_config
 from viff.util import rand, find_prime
 
@@ -142,7 +142,7 @@ else:
     id, players = load_config(args[0])
 
 # Create a deferred Runtime and ask it to run our protocol when ready.
-pre_runtime = create_runtime(id, players, 1, options)
+pre_runtime = create_runtime(id, players, 1, options, Toft05Runtime)
 pre_runtime.addCallback(Protocol)
 
 # Start the Twisted event loop.

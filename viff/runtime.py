@@ -854,112 +854,6 @@ class Runtime:
             return results
 
     @increment_pc
-    def convert_bit_share(self, share, dst_field):
-        """Convert a 0/1 share into dst_field."""
-        bit = rand.randint(0, 1)
-        dst_shares = self.prss_share(self.players, dst_field, bit)
-        src_shares = self.prss_share(self.players, share.field, bit)
-
-        # TODO: Using a parallel reduce below seems to be slower than
-        # using the built-in reduce.
-
-        # We open tmp and convert the value into a field element from
-        # the dst_field.
-        tmp = self.open(reduce(self.xor, src_shares, share))
-        tmp.addCallback(lambda i: dst_field(i.value))
-        # Must update field on Share when we change the field of the
-        # the value within
-        tmp.field = dst_field
-
-        return reduce(self.xor, dst_shares, tmp)
-
-    @increment_pc
-    def greater_than_equal(self, share_a, share_b):
-        """Compute share_a >= share_b.
-
-        Both arguments must be from the field given. The result is a
-        GF256 share.
-        """
-        field = getattr(share_a, "field", getattr(share_b, "field", None))
-        if not isinstance(share_a, Share):
-            share_a = Share(self, field, share_a)
-        if not isinstance(share_b, Share):
-            share_b = Share(self, field, share_b)
-
-        l = self.options.bit_length
-        m = l + self.options.security_parameter
-        t = m + 1
-
-        # Preprocessing begin
-
-        assert 2**(l+1) + 2**t < field.modulus, "2^(l+1) + 2^t < p must hold"
-        assert self.num_players + 2 < 2**l
-
-        int_bits = [self.prss_share_random(field, True) for _ in range(m)]
-        # We must use int_bits without adding callbacks to the bits --
-        # having int_b wait on them ensures this.
-
-        def bits_to_int(bits):
-            """Converts a list of bits to an integer."""
-            return sum([2**i * b for i, b in enumerate(bits)])
-
-        int_b = gather_shares(int_bits)
-        int_b.addCallback(bits_to_int)
-
-        # TODO: this changes int_bits! It should be okay since
-        # int_bits is not used any further, but still...
-        bit_bits = [self.convert_bit_share(b, GF256) for b in int_bits]
-        # Preprocessing done
-
-        a = share_a - share_b + 2**l
-        T = self.open(2**t - int_b + a)
-
-        result = gather_shares([T] + bit_bits)
-        self.callback(result, self._finish_greater_than_equal, l)
-        return result
-
-    @increment_pc
-    def _finish_greater_than_equal(self, results, l):
-        """Finish the calculation."""
-        T = results[0]
-        bit_bits = results[1:]
-
-        vec = [(GF256(0), GF256(0))]
-
-        # Calculate the vector, using only the first l bits
-        for i, bi in enumerate(bit_bits[:l]):
-            Ti = GF256(T.bit(i))
-            ci = Share(self, GF256, bi ^ Ti)
-            vec.append((ci, Ti))
-
-        # Reduce using the diamond operator. We want to do as much
-        # as possible in parallel while being careful not to
-        # switch the order of elements since the diamond operator
-        # is non-commutative.
-        while len(vec) > 1:
-            tmp = []
-            while len(vec) > 1:
-                tmp.append(self._diamond(vec.pop(0), vec.pop(0)))
-            if len(vec) == 1:
-                tmp.append(vec[0])
-            vec = tmp
-
-        return GF256(T.bit(l)) ^ (bit_bits[l] ^ vec[0][1])
-
-    @increment_pc
-    def _diamond(self, (top_a, bot_a), (top_b, bot_b)):
-        """The "diamond-operator".
-
-        Defined by
-
-        (x, X) `diamond` (0, Y) = (0, Y)
-        (x, X) `diamond` (1, Y) = (x, X)
-        """
-        top = top_a * top_b
-        bot = top_b * (bot_a ^ bot_b) ^ bot_b
-        return (top, bot)
-
-    @increment_pc
     def _broadcast(self, sender, message=None):
         """Perform a Bracha broadcast.
 
@@ -1146,6 +1040,121 @@ class Runtime:
         result.addCallback(filter_good_shares)
         result.addCallback(shamir.recombine)
         return result
+
+
+class ComparisonToft05Mixin:
+    """Comparison by Tomas Toft, 2005."""
+
+    @increment_pc
+    def convert_bit_share(self, share, dst_field):
+        """Convert a 0/1 share into dst_field."""
+        bit = rand.randint(0, 1)
+        dst_shares = self.prss_share(self.players, dst_field, bit)
+        src_shares = self.prss_share(self.players, share.field, bit)
+
+        # TODO: Using a parallel reduce below seems to be slower than
+        # using the built-in reduce.
+
+        # We open tmp and convert the value into a field element from
+        # the dst_field.
+        tmp = self.open(reduce(self.xor, src_shares, share))
+        tmp.addCallback(lambda i: dst_field(i.value))
+        # Must update field on Share when we change the field of the
+        # the value within
+        tmp.field = dst_field
+
+        return reduce(self.xor, dst_shares, tmp)
+
+    @increment_pc
+    def greater_than_equal(self, share_a, share_b):
+        """Compute share_a >= share_b.
+
+        Both arguments must be from the field given. The result is a
+        GF256 share.
+        """
+        field = getattr(share_a, "field", getattr(share_b, "field", None))
+        if not isinstance(share_a, Share):
+            share_a = Share(self, field, share_a)
+        if not isinstance(share_b, Share):
+            share_b = Share(self, field, share_b)
+
+        l = self.options.bit_length
+        m = l + self.options.security_parameter
+        t = m + 1
+
+        # Preprocessing begin
+
+        assert 2**(l+1) + 2**t < field.modulus, "2^(l+1) + 2^t < p must hold"
+        assert self.num_players + 2 < 2**l
+
+        int_bits = [self.prss_share_random(field, True) for _ in range(m)]
+        # We must use int_bits without adding callbacks to the bits --
+        # having int_b wait on them ensures this.
+
+        def bits_to_int(bits):
+            """Converts a list of bits to an integer."""
+            return sum([2**i * b for i, b in enumerate(bits)])
+
+        int_b = gather_shares(int_bits)
+        int_b.addCallback(bits_to_int)
+
+        # TODO: this changes int_bits! It should be okay since
+        # int_bits is not used any further, but still...
+        bit_bits = [self.convert_bit_share(b, GF256) for b in int_bits]
+        # Preprocessing done
+
+        a = share_a - share_b + 2**l
+        T = self.open(2**t - int_b + a)
+
+        result = gather_shares([T] + bit_bits)
+        self.callback(result, self._finish_greater_than_equal, l)
+        return result
+
+    @increment_pc
+    def _finish_greater_than_equal(self, results, l):
+        """Finish the calculation."""
+        T = results[0]
+        bit_bits = results[1:]
+
+        vec = [(GF256(0), GF256(0))]
+
+        # Calculate the vector, using only the first l bits
+        for i, bi in enumerate(bit_bits[:l]):
+            Ti = GF256(T.bit(i))
+            ci = Share(self, GF256, bi ^ Ti)
+            vec.append((ci, Ti))
+
+        # Reduce using the diamond operator. We want to do as much
+        # as possible in parallel while being careful not to
+        # switch the order of elements since the diamond operator
+        # is non-commutative.
+        while len(vec) > 1:
+            tmp = []
+            while len(vec) > 1:
+                tmp.append(self._diamond(vec.pop(0), vec.pop(0)))
+            if len(vec) == 1:
+                tmp.append(vec[0])
+            vec = tmp
+
+        return GF256(T.bit(l)) ^ (bit_bits[l] ^ vec[0][1])
+
+    @increment_pc
+    def _diamond(self, (top_a, bot_a), (top_b, bot_b)):
+        """The "diamond-operator".
+
+        Defined by
+
+        (x, X) `diamond` (0, Y) = (0, Y)
+        (x, X) `diamond` (1, Y) = (x, X)
+        """
+        top = top_a * top_b
+        bot = top_b * (bot_a ^ bot_b) ^ bot_b
+        return (top, bot)
+
+
+class Toft05Runtime(ComparisonToft05Mixin, Runtime):
+    """Default mix of L{ComparisonToft05Mixin} and L{Runtime}."""
+    pass
 
 
 class ComparisonToft07Mixin:

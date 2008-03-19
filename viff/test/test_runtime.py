@@ -32,7 +32,7 @@ import operator
 from twisted.internet.defer import gatherResults
 
 from viff.field import GF256
-from viff.runtime import Share
+from viff.runtime import Share, Toft05Runtime
 
 from viff.test.util import RuntimeTestCase, BinaryOperatorTestCase, protocol
 
@@ -128,6 +128,10 @@ class RuntimeTest(RuntimeTestCase):
         opened_c.addCallback(self.assertEquals, 42 + 3)
 
         return gatherResults([opened_a, opened_b, opened_c])
+
+
+class ConvertBitShareTest(RuntimeTestCase):
+    runtime_class = Toft05Runtime
 
     @protocol
     def test_convert_bit_share(self, runtime):

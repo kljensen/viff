@@ -24,7 +24,7 @@ import sys
 from twisted.internet import reactor
 
 from viff.field import GF, GF256
-from viff.runtime import create_runtime
+from viff.runtime import create_runtime, Toft05Runtime
 from viff.config import load_config
 
 id, players = load_config(sys.argv[1])
@@ -62,7 +62,8 @@ def protocol(rt):
 
     rt.wait_for(a_b, b_b, c_b, x_b, y_b, z_b)
 
-pre_runtime = create_runtime(id, players, (len(players) -1)//2)
+pre_runtime = create_runtime(id, players, (len(players) -1)//2,
+                             runtime_class=Toft05Runtime)
 pre_runtime.addCallback(protocol)
 
 reactor.run()

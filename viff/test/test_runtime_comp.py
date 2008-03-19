@@ -21,19 +21,23 @@
 
 import operator
 
-from viff.runtime import Toft07Runtime
+from viff.runtime import Toft05Runtime, Toft07Runtime
 from viff.test.util import RuntimeTestCase, BinaryOperatorTestCase
 
 class GreaterThanTest(BinaryOperatorTestCase, RuntimeTestCase):
+    runtime_class = Toft05Runtime
     operator = operator.gt
 
 class GreaterThanEqualTest(BinaryOperatorTestCase, RuntimeTestCase):
+    runtime_class = Toft05Runtime
     operator = operator.ge
 
 class LessThanTest(BinaryOperatorTestCase, RuntimeTestCase):
+    runtime_class = Toft05Runtime
     operator = operator.lt
 
 class LessThanEqualTest(BinaryOperatorTestCase, RuntimeTestCase):
+    runtime_class = Toft05Runtime
     operator = operator.le
 
 class Toft07GreaterThanEqualTest(BinaryOperatorTestCase, RuntimeTestCase):

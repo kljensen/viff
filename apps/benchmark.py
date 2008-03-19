@@ -62,7 +62,8 @@ import operator
 from twisted.internet import reactor
 
 from viff.field import GF
-from viff.runtime import Runtime, Toft07Runtime, create_runtime, gather_shares
+from viff.runtime import Runtime, Toft05Runtime, Toft07Runtime, \
+     create_runtime, gather_shares
 from viff.config import load_config
 from viff.util import find_prime
 
@@ -195,7 +196,7 @@ if options.operation == "mul":
     runtime_class = Runtime
 elif options.operation == "comp":
     operation = operator.ge
-    runtime_class = Runtime
+    runtime_class = Toft05Runtime
 elif options.operation == "compII":
     operation = operator.ge
     runtime_class = Toft07Runtime
