@@ -22,7 +22,7 @@
 from twisted.internet.defer import Deferred, gatherResults, maybeDeferred
 from twisted.trial.unittest import TestCase
 
-from viff.runtime import Runtime, ShareExchanger, ShareExchangerFactory
+from viff.runtime import Runtime, Share, ShareExchanger, ShareExchangerFactory
 from viff.field import GF
 from viff.config import generate_configs, load_config
 from viff.util import rand
@@ -187,3 +187,62 @@ class RuntimeTestCase(TestCase):
                     # fire.
                     sentinel = loopbackAsync(server, client)
                     self.close_sentinels.append(sentinel)
+
+
+class BinaryOperatorTestCase:
+    """Test a binary operator.
+
+    This mix-in class should be used together with a RuntimeTestCase
+    class, and the new class must define C{self.operator} to be a
+    suitable operator.
+
+    """
+
+    a = 12345
+    b = 6789
+
+    def _verify(self, runtime, result, expected):
+        self.assert_type(result, Share)
+        opened = runtime.open(result)
+        opened.addCallback(self.assertEquals, expected)
+        return opened
+
+    @protocol
+    def test_op_share_int(self, runtime):
+        share_a = Share(runtime, self.Zp, self.Zp(self.a))
+        share_b = self.b
+        return self._verify(runtime,
+                            self.operator(share_a, share_b),
+                            self.operator(self.a, self.b))
+
+    @protocol
+    def test_op_int_share(self, runtime):
+        share_a = self.a
+        share_b = Share(runtime, self.Zp, self.Zp(self.b))
+        return self._verify(runtime,
+                            self.operator(share_a, share_b),
+                            self.operator(self.a, self.b))
+
+    @protocol
+    def test_op_share_element(self, runtime):
+        share_a = Share(runtime, self.Zp, self.Zp(self.a))
+        share_b = self.Zp(self.b)
+        return self._verify(runtime,
+                            self.operator(share_a, share_b),
+                            self.operator(self.a, self.b))
+
+    @protocol
+    def test_op_element_share(self, runtime):
+        share_a = self.Zp(self.a)
+        share_b = Share(runtime, self.Zp, self.Zp(self.b))
+        return self._verify(runtime,
+                            self.operator(share_a, share_b),
+                            self.operator(self.a, self.b))
+
+    @protocol
+    def test_op_share_share(self, runtime):
+        share_a = Share(runtime, self.Zp, self.Zp(self.a))
+        share_b = Share(runtime, self.Zp, self.Zp(self.b))
+        return self._verify(runtime,
+                            self.operator(share_a, share_b),
+                            self.operator(self.a, self.b))
