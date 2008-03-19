@@ -41,7 +41,7 @@ from math import ceil
 from viff import shamir
 from viff.prss import prss
 from viff.field import GF256, FieldElement
-from viff.util import rand, println, wrapper
+from viff.util import println, wrapper
 
 from twisted.internet import reactor
 from twisted.internet.defer import Deferred, DeferredList
