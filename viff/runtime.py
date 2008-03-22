@@ -211,6 +211,17 @@ class ShareExchanger(Int16StringReceiver):
     def __init__(self):
         self.peer_id = None
 
+        #: Data expected to be received in the future.
+        #:
+        #: Data from our peer is put here, either as an empty Deferred
+        #: if we are waiting on input from the player, or the data
+        #: itself if data is received from the other player before we
+        #: are ready to use it.
+        #:
+        #: @type: C{dict} from C{(program_counter, data_type)} to
+        #: deferred data.
+        self.incoming_data = {}
+
     def connectionMade(self):
         #print "Transport:", self.transport
         self.sendString(str(self.factory.runtime.id))
@@ -225,7 +236,7 @@ class ShareExchanger(Int16StringReceiver):
 
         The string received is unmarshalled into the program counter,
         and a data part. The data is passed the appropriate Deferred
-        in the L{Runtime.incoming_data}.
+        in L{self.incoming_data}.
 
         @param string: bytes from the network.
         @type string: C{(program_counter, data)} in
@@ -246,16 +257,13 @@ class ShareExchanger(Int16StringReceiver):
             self.factory.identify_peer(self)
         else:
             program_counter, type, data = marshal.loads(string)
-            # TODO: The incoming_data mapping could also be stored
-            # in self, and so self.peer_id would not be needed.
-            key = (program_counter, self.peer_id, type)
-            incoming_data = self.factory.runtime.incoming_data
+            key = (program_counter, type)
 
             try:
-                deferred = incoming_data.pop(key)
+                deferred = self.incoming_data.pop(key)
                 deferred.callback(data)
             except KeyError:
-                incoming_data[key] = data
+                self.incoming_data[key] = data
 
             # TODO: marshal.loads can raise EOFError, ValueError, and
             # TypeError. They should be handled somehow.
@@ -428,26 +436,6 @@ class BasicRuntime:
         #: @type: C{list} of integers.
         self.program_counter = [0]
 
-        #: Data expected to be received in the future.
-        #:
-        #: Shares from other players are put here, either as an empty
-        #: Deferred if we are waiting on input from the player, or as
-        #: a succeeded Deferred if input is received from the other
-        #: player before we are ready to use it.
-        #:
-        #: When we expect to receive data from another player,
-        #: L{_expect_data} is used. If we are ahead of the other
-        #: player, it sets up a Deferred waiting for the player's
-        #: input. It is L{ShareExchanger.stringReceived} that triggers
-        #: this deferred when the input eventually arrives. If the
-        #: other player has already sent us its input, it will have
-        #: been stored by L{ShareExchanger.stringReceived} and
-        #: L{_expect_data} can do a callback immediatedly.
-        #:
-        #: @type: C{dict} from C{(program_counter, player_id,
-        #: data_type)} to deferred data.
-        self.incoming_data = {}
-
         #: Connections to the other players.
         #:
         #: @type: C{dict} from Player ID to L{ShareExchanger} objects.
@@ -551,15 +539,15 @@ class BasicRuntime:
 
     def _expect_data(self, peer_id, type, deferred):
         assert peer_id != self.id, "Do not expect data from yourself!"
-        # Convert self.program_counter to a hashable value in order
-        # to use it as a key in self.incoming_data.
+        # Convert self.program_counter to a hashable value in order to
+        # use it as a key in self.protocols[peer_id].incoming_data.
         pc = tuple(self.program_counter)
-        key = (pc, peer_id, type)
+        key = (pc, type)
 
-        data = self.incoming_data.pop(key, None)
+        data = self.protocols[peer_id].incoming_data.pop(key, None)
         if data is None:
             # We have not yet received data from the other side.
-            self.incoming_data[key] = deferred
+            self.protocols[peer_id].incoming_data[key] = deferred
         else:
             # We have already received the data from the other side.
             deferred.callback(data)
