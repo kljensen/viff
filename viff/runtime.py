@@ -519,10 +519,11 @@ class BasicRuntime:
         @param args: extra arguments.
         @param kwargs: extra keyword arguments.
         """
-        # TODO: When several callbacks are scheduled from the same
-        # method, they all save the same program counter. Simply
-        # decorating callback with increase_pc does not seem to work
-        # (the multiplication benchmark hangs). This should be fixed.
+        # TODO, http://tracker.viff.dk/issue22: When several callbacks
+        # are scheduled from the same method, they all save the same
+        # program counter. Simply decorating callback with increase_pc
+        # does not seem to work (the multiplication benchmark hangs).
+        # This should be fixed.
         saved_pc = self.program_counter[:]
         #println("Saved PC: %s for %s", saved_pc, func.func_name)
 
