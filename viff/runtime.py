@@ -435,17 +435,17 @@ class BasicRuntime:
         #: a succeeded Deferred if input is received from the other
         #: player before we are ready to use it.
         #:
-        #: When we have a share to exchange with another player,
-        #: L{_exchange_shares} is used. If we are ahead of the other
-        #: player, it sets up a Deferred waiting for the players
+        #: When we expect to receive data from another player,
+        #: L{_expect_data} is used. If we are ahead of the other
+        #: player, it sets up a Deferred waiting for the player's
         #: input. It is L{ShareExchanger.stringReceived} that triggers
         #: this deferred when the input eventually arrives. If the
-        #: other player has already sent us its input, then
-        #: L{ShareExchanger.stringReceived} has set up a succeeded
-        #: Deferred which L{_exchange_shares} can simply return.
+        #: other player has already sent us its input, it will have
+        #: been stored by L{ShareExchanger.stringReceived} and
+        #: L{_expect_data} can do a callback immediatedly.
         #:
-        #: @type: C{dict} from C{(program_counter, player_id)} to
-        #: deferred data.
+        #: @type: C{dict} from C{(program_counter, player_id,
+        #: data_type)} to deferred data.
         self.incoming_data = {}
 
         #: Connections to the other players.
