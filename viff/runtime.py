@@ -550,6 +550,7 @@ class BasicRuntime:
         return result
 
     def _expect_data(self, peer_id, type, deferred):
+        assert peer_id != self.id, "Do not expect data from yourself!"
         # Convert self.program_counter to a hashable value in order
         # to use it as a key in self.incoming_data.
         pc = tuple(self.program_counter)
@@ -989,11 +990,12 @@ class Runtime(BasicRuntime):
         self._expect_data(sender, "send", d_send)
 
         for peer_id in self.players:
-            d_echo = Deferred().addCallback(echo_received, peer_id)
-            self._expect_data(peer_id, "echo", d_echo)
+            if peer_id != self.id:
+                d_echo = Deferred().addCallback(echo_received, peer_id)
+                self._expect_data(peer_id, "echo", d_echo)
 
-            d_ready = Deferred().addCallback(ready_received, peer_id)
-            self._expect_data(peer_id, "ready", d_ready)
+                d_ready = Deferred().addCallback(ready_received, peer_id)
+                self._expect_data(peer_id, "ready", d_ready)
 
         # If this player is the sender, we transmit a send message to
         # each player. We send one to this player by calling the
