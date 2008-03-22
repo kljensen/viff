@@ -256,8 +256,8 @@ class ShareExchanger(Int16StringReceiver):
 
             self.factory.identify_peer(self)
         else:
-            program_counter, type, data = marshal.loads(string)
-            key = (program_counter, type)
+            program_counter, data_type, data = marshal.loads(string)
+            key = (program_counter, data_type)
 
             try:
                 deferred = self.incoming_data.pop(key)
@@ -268,8 +268,8 @@ class ShareExchanger(Int16StringReceiver):
             # TODO: marshal.loads can raise EOFError, ValueError, and
             # TypeError. They should be handled somehow.
 
-    def sendData(self, program_counter, type, data):
-        send_data = (program_counter, type, data)
+    def sendData(self, program_counter, data_type, data):
+        send_data = (program_counter, data_type, data)
         self.sendString(marshal.dumps(send_data))
 
     def sendShare(self, program_counter, share):
@@ -537,12 +537,12 @@ class BasicRuntime:
         result.addCallback(lambda _: None)
         return result
 
-    def _expect_data(self, peer_id, type, deferred):
+    def _expect_data(self, peer_id, data_type, deferred):
         assert peer_id != self.id, "Do not expect data from yourself!"
         # Convert self.program_counter to a hashable value in order to
         # use it as a key in self.protocols[peer_id].incoming_data.
         pc = tuple(self.program_counter)
-        key = (pc, type)
+        key = (pc, data_type)
 
         data = self.protocols[peer_id].incoming_data.pop(key, None)
         if data is None:
@@ -922,12 +922,12 @@ class Runtime(BasicRuntime):
         self._bracha_sent_ready[pc] = {}
         self._bracha_delivered[pc] = {}
 
-        def unsafe_broadcast(type, message):
+        def unsafe_broadcast(data_type, message):
             # Performs a regular broadcast without any guarantees. In
             # other words, it sends the message to each player except
             # for this one.
             for protocol in self.protocols.itervalues():
-                protocol.sendData(pc, type, message)
+                protocol.sendData(pc, data_type, message)
 
         def echo_received(message, peer_id):
             # This is called when we receive an echo message. It
