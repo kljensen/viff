@@ -501,7 +501,7 @@ class BasicRuntime:
         dl = DeferredList(vars)
         dl.addCallback(lambda _: self.shutdown())
 
-    def callback(self, deferred, func, *args, **kwargs):
+    def schedule_callback(self, deferred, func, *args, **kwargs):
         """Schedule a callback on a deferred with the correct program
         counter.
 
@@ -659,14 +659,14 @@ class Runtime(BasicRuntime):
                         d = Share(self, share.field, (share.field(id), share))
                     else:
                         d = self._expect_share(id, share.field)
-                        self.callback(d, lambda s, id: (s.field(id), s), id)
+                        self.schedule_callback(d, lambda s, id: (s.field(id), s), id)
                     deferreds.append(d)
                 # TODO: This list ought to trigger as soon as more than
                 # threshold shares has been received.
                 return self._recombine(deferreds, threshold)
 
         result = share.clone()
-        self.callback(result, exchange)
+        self.schedule_callback(result, exchange)
         if self.id in receivers:
             return result
 
@@ -717,8 +717,9 @@ class Runtime(BasicRuntime):
 
         result = gather_shares([share_a, share_b])
         result.addCallback(lambda (a, b): a * b)
-        self.callback(result, self._shamir_share)
-        self.callback(result, self._recombine, threshold=2*self.threshold)
+        self.schedule_callback(result, self._shamir_share)
+        self.schedule_callback(result, self._recombine,
+                               threshold=2*self.threshold)
         return result
 
     @increment_pc
@@ -853,7 +854,7 @@ class Runtime(BasicRuntime):
                 # convert the resulting -1/1 share into a 0/1 share.
                 return Share(self, field, (share/root + 1) / 2)
 
-        self.callback(result, finish, share, binary)
+        self.schedule_callback(result, finish, share, binary)
         return result
 
     @increment_pc

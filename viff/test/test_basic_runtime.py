@@ -67,7 +67,7 @@ class ProgramCounterTest(RuntimeTestCase):
             self.assertEquals(runtime.program_counter, [0])
 
         d = Deferred()
-        runtime.callback(d, verify_program_counter)
+        runtime.schedule_callback(d, verify_program_counter)
 
         runtime.synchronize()
         self.assertEquals(runtime.program_counter, [1])
@@ -121,8 +121,8 @@ class ProgramCounterTest(RuntimeTestCase):
         def method_a(runtime):
             self.assertEquals(runtime.program_counter, [1, 0])
 
-            runtime.callback(d1, verify_program_counter, 1)
-            runtime.callback(d2, verify_program_counter, 2)
+            runtime.schedule_callback(d1, verify_program_counter, 1)
+            runtime.schedule_callback(d2, verify_program_counter, 2)
 
         method_a(runtime)
 

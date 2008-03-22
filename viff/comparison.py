@@ -94,7 +94,7 @@ class ComparisonToft05Mixin:
         T = self.open(2**t - int_b + a)
 
         result = gather_shares([T] + bit_bits)
-        self.callback(result, self._finish_greater_than_equal, l)
+        self.schedule_callback(result, self._finish_greater_than_equal, l)
         return result
 
     @increment_pc
@@ -268,9 +268,9 @@ class ComparisonToft07Mixin:
         z = share_a - share_b + 2**l
         c = self.open(r_full + z)
 
-        self.callback(c, self._finish_greater_than_equal,
-                      field, smallField, s_bit, s_sign, mask,
-                      r_modl, r_bits, z)
+        self.schedule_callback(c, self._finish_greater_than_equal,
+                               field, smallField, s_bit, s_sign, mask,
+                               r_modl, r_bits, z)
         return c
 
     @increment_pc

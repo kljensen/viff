@@ -18,7 +18,8 @@ Version ?, not yet released
 
 The Runtime class has been split into several parts and two new mixin
 classes provide different comparison protocols. Several coercion
-problems were fixed.
+problems were fixed. The Runtime.callback method was renamed to
+Runtime.schedule_callback.
 
 Details:
 
