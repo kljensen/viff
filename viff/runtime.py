@@ -616,7 +616,7 @@ class Runtime(BasicRuntime):
         @param share: the player's private part of the sharing to open.
         @type share: Share
 
-        @param receivers: the ids of the players that will eventually
+        @param receivers: the IDs of the players that will eventually
             obtain the opened result or None if all players should
             obtain the opened result.
         @type receivers: None or a C{List} of integers
@@ -743,7 +743,7 @@ class Runtime(BasicRuntime):
 
         Communication cost: Each inputter does one broadcast.
 
-        @param inputters: The ids of the players that will share a secret.
+        @param inputters: The IDs of the players that will share a secret.
         @type inputters: C{list} of integers
 
         @param field: The field over which to share all the secrets.
@@ -1001,7 +1001,7 @@ class Runtime(BasicRuntime):
 
         The list of senders given will determine the subset of players
         who wish to broadcast a message. If this player wishes to
-        broadcast, its id must be in the list of senders and the
+        broadcast, its ID must be in the list of senders and the
         optional message parameter must be used.
 
         If the list of senders consists only of a single sender, the
