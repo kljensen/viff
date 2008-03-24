@@ -26,9 +26,14 @@ from viff.runtime import increment_pc
 class ProgramCounterTest(RuntimeTestCase):
     """Program counter tests."""
 
+    def assert_pc(self, runtime, pc):
+        """Assert that all protocols has a given program counter."""
+        for p in runtime.protocols.itervalues():
+            self.assertEquals(p.program_counter, pc)
+
     @protocol
     def test_initial_value(self, runtime):
-        self.assertEquals(runtime.program_counter, [0])
+        self.assert_pc(runtime, [0])
 
     @protocol
     def test_simple_operation(self, runtime):
@@ -37,9 +42,9 @@ class ProgramCounterTest(RuntimeTestCase):
         Each call should increment the program counter by one.
         """
         runtime.synchronize()
-        self.assertEquals(runtime.program_counter, [1])
+        self.assert_pc(runtime, [1])
         runtime.synchronize()
-        self.assertEquals(runtime.program_counter, [2])
+        self.assert_pc(runtime, [2])
 
     @protocol
     def test_complex_operation(self, runtime):
@@ -51,9 +56,9 @@ class ProgramCounterTest(RuntimeTestCase):
         # Exclusive-or is calculated as x + y - 2 * x * y, so add,
         # sub, and mul are called.
         runtime.xor(self.Zp(0), self.Zp(1))
-        self.assertEquals(runtime.program_counter, [1])
+        self.assert_pc(runtime, [1])
         runtime.xor(self.Zp(0), self.Zp(1))
-        self.assertEquals(runtime.program_counter, [2])
+        self.assert_pc(runtime, [2])
 
     @protocol
     def test_callback(self, runtime):
@@ -64,13 +69,13 @@ class ProgramCounterTest(RuntimeTestCase):
         """
 
         def verify_program_counter(_):
-            self.assertEquals(runtime.program_counter, [0])
+            self.assert_pc(runtime, [0])
 
         d = Deferred()
         runtime.schedule_callback(d, verify_program_counter)
 
         runtime.synchronize()
-        self.assertEquals(runtime.program_counter, [1])
+        self.assert_pc(runtime, [1])
 
         # Now trigger verify_program_counter.
         d.callback(None)
@@ -87,26 +92,26 @@ class ProgramCounterTest(RuntimeTestCase):
             # First top-level call, so first entry is 1. No calls to
             # other methods decorated with increment_pc has been made,
             # so the second entry is 0.
-            self.assertEquals(runtime.program_counter, [1, 0])
+            self.assert_pc(runtime, [1, 0])
             method_b(runtime, 1)
 
-            self.assertEquals(runtime.program_counter, [1, 1])
+            self.assert_pc(runtime, [1, 1])
             method_b(runtime, 2)
 
             # At this point two sub-calls has been made:
-            self.assertEquals(runtime.program_counter, [1, 2])
+            self.assert_pc(runtime, [1, 2])
 
         @increment_pc
         def method_b(runtime, count):
             # This method is called twice from method_a:
-            self.assertEquals(runtime.program_counter, [1, count, 0])
+            self.assert_pc(runtime, [1, count, 0])
 
         # Zero top-level calls:
-        self.assertEquals(runtime.program_counter, [0])
+        self.assert_pc(runtime, [0])
         method_a(runtime)
 
         # One top-level call:
-        self.assertEquals(runtime.program_counter, [1])
+        self.assert_pc(runtime, [1])
 
     @protocol
     def test_multiple_callbacks(self, runtime):
@@ -115,11 +120,11 @@ class ProgramCounterTest(RuntimeTestCase):
         d2 = Deferred()
 
         def verify_program_counter(_, count):
-            self.assertEquals(runtime.program_counter, [1, count, 0])
+            self.assert_pc(runtime, [1, count, 0])
 
         @increment_pc
         def method_a(runtime):
-            self.assertEquals(runtime.program_counter, [1, 0])
+            self.assert_pc(runtime, [1, 0])
 
             runtime.schedule_callback(d1, verify_program_counter, 1)
             runtime.schedule_callback(d2, verify_program_counter, 2)
