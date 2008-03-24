@@ -217,11 +217,24 @@ def pyflakes():
     """Find static errors using Pyflakes."""
     execute(['pyflakes', '.'])
 
+
 @command('trial', 'python')
 def trial(python):
     """Execute Trial using the Python executable given."""
     trial = find_program("trial")
-    execute([python, trial, '--reporter=bwverbose', 'viff.test'])
+    trial_env = {}
+
+    # Twisted on Windows needs the SYSTEMROOT env variable, see
+    # http://tracker.viff.dk/issue18
+    if sys.platform == "win32":
+        if os.environ['SYSTEMROOT']:
+            trial_env['SYSTEMROOT'] = os.environ['SYSTEMROOT']
+        else:
+            abort("Twisted Trial needs SYSTEMROOT env variable.")
+
+    execute([python, trial, '--reporter=bwverbose', 'viff.test'],
+            env=trial_env)
+
 
 @command('help')
 def usage():
