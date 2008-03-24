@@ -554,7 +554,7 @@ class BasicRuntime:
             # We have already received the data from the other side.
             deferred.callback(data)
 
-    def _exchange_shares(self, id, field_element):
+    def _exchange_shares(self, peer_id, field_element):
         """Exchange shares with another player.
 
         We send the player our share and record a Deferred which will
@@ -562,11 +562,11 @@ class BasicRuntime:
         """
         assert isinstance(field_element, FieldElement)
 
-        if id == self.id:
+        if peer_id == self.id:
             return Share(self, field_element.field, field_element)
         else:
-            share = self._expect_share(id, field_element.field)
-            self.protocols[id].sendShare(field_element)
+            share = self._expect_share(peer_id, field_element.field)
+            self.protocols[peer_id].sendShare(field_element)
             return share
 
     def _expect_share(self, peer_id, field):
@@ -638,18 +638,18 @@ class Runtime(BasicRuntime):
 
         def exchange(share):
             # Send share to all receivers.
-            for id in receivers:
-                if id != self.id:
-                    self.protocols[id].sendShare(share)
+            for peer_id in receivers:
+                if peer_id != self.id:
+                    self.protocols[peer_id].sendShare(share)
             # Receive and recombine shares if this player is a receiver.
             if self.id in receivers:
                 deferreds = []
-                for id in self.players:
-                    if id == self.id:
-                        d = Share(self, share.field, (share.field(id), share))
+                for peer_id in self.players:
+                    if peer_id == self.id:
+                        d = Share(self, share.field, (share.field(peer_id), share))
                     else:
-                        d = self._expect_share(id, share.field)
-                        self.schedule_callback(d, lambda s, id: (s.field(id), s), id)
+                        d = self._expect_share(peer_id, share.field)
+                        self.schedule_callback(d, lambda s, peer_id: (s.field(peer_id), s), peer_id)
                     deferreds.append(d)
                 # TODO: This list ought to trigger as soon as more than
                 # threshold shares has been received.
@@ -787,9 +787,9 @@ class Runtime(BasicRuntime):
             correction = element - shared
             # if this player is inputter then broadcast correction value
             # TODO: more efficient broadcast?
-            for id in self.players:
-                if self.id != id:
-                    self.protocols[id].sendShare(correction)
+            for peer_id in self.players:
+                if self.id != peer_id:
+                    self.protocols[peer_id].sendShare(correction)
 
         # Receive correction value from inputters and compute share.
         result = []
@@ -858,9 +858,9 @@ class Runtime(BasicRuntime):
         #println("Shares of %s: %s", number, shares)
 
         result = []
-        for other_id, share in shares:
-            d = self._exchange_shares(other_id.value, share)
-            d.addCallback(lambda share, id: (id, share), other_id)
+        for peer_id, share in shares:
+            d = self._exchange_shares(peer_id.value, share)
+            d.addCallback(lambda share, peer_id: (peer_id, share), peer_id)
             result.append(d)
 
         return result
