@@ -41,7 +41,7 @@ from math import ceil
 from viff import shamir
 from viff.prss import prss
 from viff.field import GF256, FieldElement
-from viff.util import println, wrapper
+from viff.util import wrapper
 
 from twisted.internet import reactor
 from twisted.internet.defer import Deferred, DeferredList
@@ -269,12 +269,10 @@ class ShareExchanger(Int16StringReceiver):
         self.program_counter = [0]
 
     def connectionMade(self):
-        #print "Transport:", self.transport
         self.sendString(str(self.factory.runtime.id))
         try:
             self.peer_cert = self.transport.socket.peer_certificate
         except AttributeError:
-            #print "No certificate in session"
             self.peer_cert = None
 
     def stringReceived(self, string):
@@ -367,7 +365,6 @@ def increment_pc(method):
             for protocol in self.protocols.itervalues():
                 protocol.program_counter[-1] += 1
                 protocol.program_counter.append(0)
-            #println("Calling %s: %s", method.func_name, self.program_counter)
             return method(self, *args, **kwargs)
         finally:
             for protocol in self.protocols.itervalues():
@@ -465,7 +462,7 @@ class BasicRuntime:
         """
 
         def stop(_):
-            println("Initiating shutdown sequence.")
+            print "Initiating shutdown sequence."
             for protocol in self.protocols.itervalues():
                 protocol.loseConnection()
             reactor.stop()
@@ -516,7 +513,6 @@ class BasicRuntime:
                 protocol.program_counter = pc
 
         saved_pcs = get_pcs()
-        #println("Saved PC: %s for %s", saved_pc, func.func_name)
 
         @wrapper(func)
         def callback_wrapper(*args, **kwargs):
@@ -524,12 +520,10 @@ class BasicRuntime:
             try:
                 current_pcs = get_pcs()
                 set_pcs(saved_pcs)
-                #println("Callback PC: %s", self.program_counter)
                 return func(*args, **kwargs)
             finally:
                 set_pcs(current_pcs)
 
-        #println("Adding %s to %s", func.func_name, deferred)
         deferred.addCallback(callback_wrapper, *args, **kwargs)
 
     @increment_pc
@@ -856,7 +850,6 @@ class Runtime(BasicRuntime):
         Returns a list of (id, share) pairs.
         """
         shares = shamir.share(number, self.threshold, self.num_players)
-        #println("Shares of %s: %s", number, shares)
 
         result = []
         for peer_id, share in shares:
@@ -1113,7 +1106,7 @@ def create_runtime(id, players, threshold, options=None, runtime_class=Runtime):
 
     for peer_id, player in players.iteritems():
         if peer_id > id:
-            println("Will connect to %s", player)
+            print "Will connect to %s" % player
             if options and options.tls:
                 reactor.connectTLS(player.host, player.port, factory, cred)
             else:
