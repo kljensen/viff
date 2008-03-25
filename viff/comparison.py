@@ -24,6 +24,8 @@ to the L{Runtime} they are mixed with.
 
 """
 
+import math
+
 from viff.util import rand
 from viff.runtime import Runtime, Share, gather_shares, increment_pc
 from viff.field import GF256, FieldElement
@@ -155,16 +157,7 @@ class ComparisonToft07Mixin:
     @increment_pc
     def convert_bit_share(self, share, dst_field):
         """Convert a 0/1 share into dst_field."""
-
-        def log(x):
-            # TODO: Don't do log like this...
-            result = 0
-            while x > 1:
-                result += 1
-                x //= 2
-            return result+1 # Error for powers of two...
-
-        l = self.options.security_parameter + log(dst_field.modulus)
+        l = self.options.security_parameter + math.log(dst_field.modulus)
         # TODO assert field sizes are OK...
 
         this_mask = rand.randint(0, (2**l) -1)
