@@ -248,7 +248,7 @@ class PRF(object):
 
         but it must be hashable:
 
-        >>> prf(["input", 123])
+        >>> prf(["input", 123])   # doctest: +IGNORE_EXCEPTION_DETAIL
         Traceback (most recent call last):
             ...
         TypeError: list objects are unhashable
