@@ -212,10 +212,14 @@ def size():
             dirs.remove('.hg')
     print total // 1024
 
+
 @command('pyflakes')
 def pyflakes():
     """Find static errors using Pyflakes."""
-    execute(['pyflakes', '.'])
+    if sys.platform == "win32":
+        execute(['pyflakes.bat', '.'])
+    else:
+        execute(['pyflakes', '.'])
 
 
 @command('trial', 'python')
