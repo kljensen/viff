@@ -263,6 +263,10 @@ class GF256(FieldElement):
             other = other.value
         return self.value == other
 
+    def __hash__(self):
+        """Hash value."""
+        return hash((self.field, self.value))
+
     def __nonzero__(self):
         """Truth value testing.
 

@@ -41,7 +41,7 @@ from math import ceil
 from viff import shamir
 from viff.prss import prss
 from viff.field import GF256, FieldElement
-from viff.util import println, wrapper
+from viff.util import wrapper
 
 from twisted.internet import reactor
 from twisted.internet.defer import Deferred, DeferredList
@@ -223,12 +223,10 @@ class ShareExchanger(Int16StringReceiver):
         self.incoming_data = {}
 
     def connectionMade(self):
-        #print "Transport:", self.transport
         self.sendString(str(self.factory.runtime.id))
         try:
             self.peer_cert = self.transport.socket.peer_certificate
         except AttributeError:
-            #print "No certificate in session"
             self.peer_cert = None
 
     def stringReceived(self, string):
@@ -280,13 +278,7 @@ class ShareExchanger(Int16StringReceiver):
 
         @param program_counter: the program counter associated with
         the share.
-
-        @return: C{self} so that C{sendShare} can be used as a
-        callback.
         """
-        #println("Sending to id=%d: program_counter=%s, share=%s",
-        #        self.id, program_counter, share)
-
         self.sendData(program_counter, "share", share.value)
 
     def loseConnection(self):
@@ -328,7 +320,6 @@ def increment_pc(method):
         try:
             self.program_counter[-1] += 1
             self.program_counter.append(0)
-            #println("Calling %s: %s", method.func_name, self.program_counter)
             return method(self, *args, **kwargs)
         finally:
             self.program_counter.pop()
@@ -470,7 +461,7 @@ class BasicRuntime:
         """
 
         def stop(_):
-            println("Initiating shutdown sequence.")
+            print "Initiating shutdown sequence."
             for protocol in self.protocols.itervalues():
                 protocol.loseConnection()
             reactor.stop()
@@ -513,7 +504,6 @@ class BasicRuntime:
         # does not seem to work (the multiplication benchmark hangs).
         # This should be fixed.
         saved_pc = self.program_counter[:]
-        #println("Saved PC: %s for %s", saved_pc, func.func_name)
 
         @wrapper(func)
         def callback_wrapper(*args, **kwargs):
@@ -521,12 +511,10 @@ class BasicRuntime:
             try:
                 current_pc = self.program_counter
                 self.program_counter = saved_pc
-                #println("Callback PC: %s", self.program_counter)
                 return func(*args, **kwargs)
             finally:
                 self.program_counter = current_pc
 
-        #println("Adding %s to %s", func.func_name, deferred)
         deferred.addCallback(callback_wrapper, *args, **kwargs)
 
     @increment_pc
@@ -552,7 +540,7 @@ class BasicRuntime:
             # We have already received the data from the other side.
             deferred.callback(data)
 
-    def _exchange_shares(self, id, field_element):
+    def _exchange_shares(self, peer_id, field_element):
         """Exchange shares with another player.
 
         We send the player our share and record a Deferred which will
@@ -560,12 +548,12 @@ class BasicRuntime:
         """
         assert isinstance(field_element, FieldElement)
 
-        if id == self.id:
+        if peer_id == self.id:
             return Share(self, field_element.field, field_element)
         else:
-            share = self._expect_share(id, field_element.field)
+            share = self._expect_share(peer_id, field_element.field)
             pc = tuple(self.program_counter)
-            self.protocols[id].sendShare(pc, field_element)
+            self.protocols[peer_id].sendShare(pc, field_element)
             return share
 
     def _expect_share(self, peer_id, field):
@@ -615,7 +603,7 @@ class Runtime(BasicRuntime):
         @param share: the player's private part of the sharing to open.
         @type share: Share
 
-        @param receivers: the ids of the players that will eventually
+        @param receivers: the IDs of the players that will eventually
             obtain the opened result or None if all players should
             obtain the opened result.
         @type receivers: None or a C{List} of integers
@@ -637,19 +625,19 @@ class Runtime(BasicRuntime):
 
         def exchange(share):
             # Send share to all receivers.
-            for id in receivers:
-                if id != self.id:
+            for peer_id in receivers:
+                if peer_id != self.id:
                     pc = tuple(self.program_counter)
-                    self.protocols[id].sendShare(pc, share)
+                    self.protocols[peer_id].sendShare(pc, share)
             # Receive and recombine shares if this player is a receiver.
             if self.id in receivers:
                 deferreds = []
-                for id in self.players:
-                    if id == self.id:
-                        d = Share(self, share.field, (share.field(id), share))
+                for peer_id in self.players:
+                    if peer_id == self.id:
+                        d = Share(self, share.field, (share.field(peer_id), share))
                     else:
-                        d = self._expect_share(id, share.field)
-                        self.schedule_callback(d, lambda s, id: (s.field(id), s), id)
+                        d = self._expect_share(peer_id, share.field)
+                        self.schedule_callback(d, lambda s, peer_id: (s.field(peer_id), s), peer_id)
                     deferreds.append(d)
                 # TODO: This list ought to trigger as soon as more than
                 # threshold shares has been received.
@@ -743,7 +731,7 @@ class Runtime(BasicRuntime):
 
         Communication cost: Each inputter does one broadcast.
 
-        @param inputters: The ids of the players that will share a secret.
+        @param inputters: The IDs of the players that will share a secret.
         @type inputters: C{list} of integers
 
         @param field: The field over which to share all the secrets.
@@ -787,9 +775,9 @@ class Runtime(BasicRuntime):
             # if this player is inputter then broadcast correction value
             # TODO: more efficient broadcast?
             pc = tuple(self.program_counter)
-            for id in self.players:
-                if self.id != id:
-                    self.protocols[id].sendShare(pc, correction)
+            for peer_id in self.players:
+                if self.id != peer_id:
+                    self.protocols[peer_id].sendShare(pc, correction)
 
         # Receive correction value from inputters and compute share.
         result = []
@@ -854,12 +842,11 @@ class Runtime(BasicRuntime):
         Returns a list of (id, share) pairs.
         """
         shares = shamir.share(number, self.threshold, self.num_players)
-        #println("Shares of %s: %s", number, shares)
 
         result = []
-        for other_id, share in shares:
-            d = self._exchange_shares(other_id.value, share)
-            d.addCallback(lambda share, id: (id, share), other_id)
+        for peer_id, share in shares:
+            d = self._exchange_shares(peer_id.value, share)
+            d.addCallback(lambda share, peer_id: (peer_id, share), peer_id)
             result.append(d)
 
         return result
@@ -1000,7 +987,7 @@ class Runtime(BasicRuntime):
 
         The list of senders given will determine the subset of players
         who wish to broadcast a message. If this player wishes to
-        broadcast, its id must be in the list of senders and the
+        broadcast, its ID must be in the list of senders and the
         optional message parameter must be used.
 
         If the list of senders consists only of a single sender, the
@@ -1111,7 +1098,7 @@ def create_runtime(id, players, threshold, options=None, runtime_class=Runtime):
 
     for peer_id, player in players.iteritems():
         if peer_id > id:
-            println("Will connect to %s", player)
+            print "Will connect to %s" % player
             if options and options.tls:
                 reactor.connectTLS(player.host, player.port, factory, cred)
             else:
