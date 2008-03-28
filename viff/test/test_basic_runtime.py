@@ -133,3 +133,29 @@ class ProgramCounterTest(RuntimeTestCase):
         return gatherResults([d1, d2])
     test_multiple_callbacks.skip = ("TODO: Scheduling callbacks fails to "
                                     "increment program counter!")
+
+    @protocol
+    def test_multi_send(self, runtime):
+        """Test sending multiple times from a Runtime method."""
+
+        # First send a couple of times to everybody.
+        for peer_id in range(1, self.num_players+1):
+            if peer_id != runtime.id:
+                pc = tuple(runtime.program_counter)
+                runtime.protocols[peer_id].sendData(pc, "test", 100)
+                runtime.protocols[peer_id].sendData(pc, "test", 200)
+                runtime.protocols[peer_id].sendData(pc, "test", 300)
+
+        # Then receive the data.
+        deferreds = []
+        for peer_id in range(1, self.num_players+1):
+            if peer_id != runtime.id:
+                d100 = Deferred().addCallback(self.assertEquals, 100)
+                d200 = Deferred().addCallback(self.assertEquals, 200)
+                d300 = Deferred().addCallback(self.assertEquals, 300)
+                runtime._expect_data(peer_id, "test", d100)
+                runtime._expect_data(peer_id, "test", d200)
+                runtime._expect_data(peer_id, "test", d300)
+                deferreds.extend([d100, d200, d300])
+
+        return gatherResults(deferreds)
