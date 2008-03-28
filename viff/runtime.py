@@ -37,6 +37,7 @@ from __future__ import division
 import marshal
 from optparse import OptionParser, OptionGroup
 from math import ceil
+from collections import deque
 
 from viff import shamir
 from viff.prss import prss
@@ -257,11 +258,12 @@ class ShareExchanger(Int16StringReceiver):
             program_counter, data_type, data = marshal.loads(string)
             key = (program_counter, data_type)
 
-            try:
-                deferred = self.incoming_data.pop(key)
+            deq = self.incoming_data.setdefault(key, deque())
+            if deq and isinstance(deq[0], Deferred):
+                deferred = deq.popleft()
                 deferred.callback(data)
-            except KeyError:
-                self.incoming_data[key] = data
+            else:
+                deq.append(data)
 
             # TODO: marshal.loads can raise EOFError, ValueError, and
             # TypeError. They should be handled somehow.
@@ -532,13 +534,14 @@ class BasicRuntime:
         pc = tuple(self.program_counter)
         key = (pc, data_type)
 
-        data = self.protocols[peer_id].incoming_data.pop(key, None)
-        if data is None:
-            # We have not yet received data from the other side.
-            self.protocols[peer_id].incoming_data[key] = deferred
-        else:
-            # We have already received the data from the other side.
+        deq = self.protocols[peer_id].incoming_data.setdefault(key, deque())
+        if deq and not isinstance(deq[0], Deferred):
+            # We have already received some data from the other side.
+            data = deq.popleft()
             deferred.callback(data)
+        else:
+            # We have not yet received anything from the other side.
+            deq.append(deferred)
 
     def _exchange_shares(self, peer_id, field_element):
         """Exchange shares with another player.
