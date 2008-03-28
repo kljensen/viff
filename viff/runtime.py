@@ -222,51 +222,6 @@ class ShareExchanger(Int16StringReceiver):
         #: deferred data.
         self.incoming_data = {}
 
-        #: Program counter for this connection.
-        #:
-        #: Whenever a share is sent over the network, it must be
-        #: uniquely identified so that the receiving player known what
-        #: operation the share is a result of. This is done by
-        #: associating a X{program counter} with each operation.
-        #:
-        #: Keeping the program counter synchronized between all
-        #: players ought to be easy, but because of the asynchronous
-        #: nature of network protocols, all players might not reach
-        #: the same parts of the program at the same time.
-        #:
-        #: Consider two players M{A} and M{B} who are both waiting on
-        #: the variables C{a} and C{b}. Callbacks have been added to
-        #: C{a} and C{b}, and the question is what program counter the
-        #: callbacks should use when sending data out over the
-        #: network.
-        #:
-        #: Let M{A} receive input for C{a} and then for C{b} a little
-        #: later, and let M{B} receive the inputs in reversed order so
-        #: that the input for C{b} arrives first. The goal is to keep
-        #: the program counters synchronized so that program counter
-        #: M{x} refers to the same operation on all players. Because
-        #: the inputs arrive in different order at different players,
-        #: incrementing a simple global counter is not enough.
-        #:
-        #: Instead, a I{tree} is made, which follows the tree of
-        #: execution. At the top level the program counter starts at
-        #: C{[0]}. At the next operation it becomes C{[1]}, and so on.
-        #: If a callback is scheduled (see L{callback}) at program
-        #: counter C{[x, y, z]}, any calls it makes will be numbered
-        #: C{[x, y, z, 1]}, then C{[x, y, z, 2]}, and so on.
-        #:
-        #: Maintaining such a tree of program counters ensures that
-        #: different parts of the program execution never reuses the
-        #: same program counter for different variables.
-        #:
-        #: The L{increment_pc} decorator is responsible for
-        #: dynamically building the tree as the execution unfolds and
-        #: L{Runtime.schedule_callback} is responsible for scheduling
-        #: callbacks with the correct program counter.
-        #:
-        #: @type: C{list} of integers.
-        self.program_counter = [0]
-
     def connectionMade(self):
         #print "Transport:", self.transport
         self.sendString(str(self.factory.runtime.id))
@@ -313,18 +268,26 @@ class ShareExchanger(Int16StringReceiver):
             # TODO: marshal.loads can raise EOFError, ValueError, and
             # TypeError. They should be handled somehow.
 
-    def sendData(self, data_type, data):
-        pc = tuple(self.program_counter)
-        send_data = (pc, data_type, data)
+    def sendData(self, program_counter, data_type, data):
+        send_data = (program_counter, data_type, data)
         self.sendString(marshal.dumps(send_data))
 
-    def sendShare(self, share):
+    def sendShare(self, program_counter, share):
         """Send a share.
 
-        The share is marshalled and sent to the peer along with the
-        current program counter for this connection.
+        The program counter and the share are marshalled and sent to
+        the peer.
+
+        @param program_counter: the program counter associated with
+        the share.
+
+        @return: C{self} so that C{sendShare} can be used as a
+        callback.
         """
-        self.sendData("share", share.value)
+        #println("Sending to id=%d: program_counter=%s, share=%s",
+        #        self.id, program_counter, share)
+
+        self.sendData(program_counter, "share", share.value)
 
     def loseConnection(self):
         """Disconnect this protocol instance."""
@@ -363,14 +326,12 @@ def increment_pc(method):
     @wrapper(method)
     def inc_pc_wrapper(self, *args, **kwargs):
         try:
-            for protocol in self.protocols.itervalues():
-                protocol.program_counter[-1] += 1
-                protocol.program_counter.append(0)
+            self.program_counter[-1] += 1
+            self.program_counter.append(0)
             #println("Calling %s: %s", method.func_name, self.program_counter)
             return method(self, *args, **kwargs)
         finally:
-            for protocol in self.protocols.itervalues():
-                protocol.program_counter.pop()
+            self.program_counter.pop()
     return inc_pc_wrapper
 
 
@@ -429,6 +390,51 @@ class BasicRuntime:
         if self.options.deferred_debug:
             from twisted.internet import defer
             defer.setDebugging(True)
+
+        #: Current program counter.
+        #:
+        #: Whenever a share is sent over the network, it must be
+        #: uniquely identified so that the receiving player known what
+        #: operation the share is a result of. This is done by
+        #: associating a X{program counter} with each operation.
+        #:
+        #: Keeping the program counter synchronized between all
+        #: players ought to be easy, but because of the asynchronous
+        #: nature of network protocols, all players might not reach
+        #: the same parts of the program at the same time.
+        #:
+        #: Consider two players M{A} and M{B} who are both waiting on
+        #: the variables C{a} and C{b}. Callbacks have been added to
+        #: C{a} and C{b}, and the question is what program counter the
+        #: callbacks should use when sending data out over the
+        #: network.
+        #:
+        #: Let M{A} receive input for C{a} and then for C{b} a little
+        #: later, and let M{B} receive the inputs in reversed order so
+        #: that the input for C{b} arrives first. The goal is to keep
+        #: the program counters synchronized so that program counter
+        #: M{x} refers to the same operation on all players. Because
+        #: the inputs arrive in different order at different players,
+        #: incrementing a simple global counter is not enough.
+        #:
+        #: Instead, a I{tree} is made, which follows the tree of
+        #: execution. At the top level the program counter starts at
+        #: C{[0]}. At the next operation it becomes C{[1]}, and so on.
+        #: If a callback is scheduled (see L{callback}) at program
+        #: counter C{[x, y, z]}, any calls it makes will be numbered
+        #: C{[x, y, z, 1]}, then C{[x, y, z, 2]}, and so on.
+        #:
+        #: Maintaining such a tree of program counters ensures that
+        #: different parts of the program execution never reuses the
+        #: same program counter for different variables.
+        #:
+        #: The L{increment_pc} decorator is responsible for
+        #: dynamically building the tree as the execution unfolds and
+        #: L{callback} is responsible for scheduling callbacks with
+        #: the correct program counter.
+        #:
+        #: @type: C{list} of integers.
+        self.program_counter = [0]
 
         #: Connections to the other players.
         #:
@@ -506,27 +512,19 @@ class BasicRuntime:
         # program counter. Simply decorating callback with increase_pc
         # does not seem to work (the multiplication benchmark hangs).
         # This should be fixed.
-
-        def get_pcs():
-            return [(protocol, protocol.program_counter[:]) for protocol
-                    in self.protocols.itervalues()]
-        def set_pcs(pcs):
-            for protocol, pc in pcs:
-                protocol.program_counter = pc
-
-        saved_pcs = get_pcs()
+        saved_pc = self.program_counter[:]
         #println("Saved PC: %s for %s", saved_pc, func.func_name)
 
         @wrapper(func)
         def callback_wrapper(*args, **kwargs):
             """Wrapper for a callback which ensures a correct PC."""
             try:
-                current_pcs = get_pcs()
-                set_pcs(saved_pcs)
+                current_pc = self.program_counter
+                self.program_counter = saved_pc
                 #println("Callback PC: %s", self.program_counter)
                 return func(*args, **kwargs)
             finally:
-                set_pcs(current_pcs)
+                self.program_counter = current_pc
 
         #println("Adding %s to %s", func.func_name, deferred)
         deferred.addCallback(callback_wrapper, *args, **kwargs)
@@ -543,7 +541,7 @@ class BasicRuntime:
         assert peer_id != self.id, "Do not expect data from yourself!"
         # Convert self.program_counter to a hashable value in order to
         # use it as a key in self.protocols[peer_id].incoming_data.
-        pc = tuple(self.protocols[peer_id].program_counter)
+        pc = tuple(self.program_counter)
         key = (pc, data_type)
 
         data = self.protocols[peer_id].incoming_data.pop(key, None)
@@ -566,7 +564,8 @@ class BasicRuntime:
             return Share(self, field_element.field, field_element)
         else:
             share = self._expect_share(id, field_element.field)
-            self.protocols[id].sendShare(field_element)
+            pc = tuple(self.program_counter)
+            self.protocols[id].sendShare(pc, field_element)
             return share
 
     def _expect_share(self, peer_id, field):
@@ -640,7 +639,8 @@ class Runtime(BasicRuntime):
             # Send share to all receivers.
             for id in receivers:
                 if id != self.id:
-                    self.protocols[id].sendShare(share)
+                    pc = tuple(self.program_counter)
+                    self.protocols[id].sendShare(pc, share)
             # Receive and recombine shares if this player is a receiver.
             if self.id in receivers:
                 deferreds = []
@@ -767,8 +767,7 @@ class Runtime(BasicRuntime):
         n = self.num_players
 
         # Key used for PRSS.
-        key = tuple([tuple(p.program_counter) for p
-                     in self.protocols.itervalues()])
+        key = tuple(self.program_counter)
 
         # The shares for which we have all the keys.
         all_shares = []
@@ -787,9 +786,10 @@ class Runtime(BasicRuntime):
             correction = element - shared
             # if this player is inputter then broadcast correction value
             # TODO: more efficient broadcast?
+            pc = tuple(self.program_counter)
             for id in self.players:
                 if self.id != id:
-                    self.protocols[id].sendShare(correction)
+                    self.protocols[id].sendShare(pc, correction)
 
         # Receive correction value from inputters and compute share.
         result = []
@@ -823,8 +823,7 @@ class Runtime(BasicRuntime):
             modulus = field.modulus
 
         # Key used for PRSS.
-        prss_key = tuple([tuple(p.program_counter) for p
-                          in self.protocols.itervalues()])
+        prss_key = tuple(self.program_counter)
         prfs = self.players[self.id].prfs(modulus)
         share = prss(self.num_players, self.id, field, prfs, prss_key)
 
@@ -878,13 +877,14 @@ class Runtime(BasicRuntime):
         results = []
         for peer_id in inputters:
             if peer_id == self.id:
+                pc = tuple(self.program_counter)
                 shares = shamir.share(field(number), self.threshold,
                                       self.num_players)
                 for other_id, share in shares:
                     if other_id.value == self.id:
                         results.append(Share(self, share.field, share))
                     else:
-                        self.protocols[other_id.value].sendShare(share)
+                        self.protocols[other_id.value].sendShare(pc, share)
             else:
                 results.append(self._expect_share(peer_id, field))
 
@@ -909,8 +909,7 @@ class Runtime(BasicRuntime):
         """
 
         result = Deferred()
-        pc = tuple([tuple(p.program_counter) for p
-                    in self.protocols.itervalues()])
+        pc = tuple(self.program_counter)
         n = self.num_players
         t = self.threshold
 
