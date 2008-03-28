@@ -413,9 +413,9 @@ class BasicRuntime:
         #: Instead, a I{tree} is made, which follows the tree of
         #: execution. At the top level the program counter starts at
         #: C{[0]}. At the next operation it becomes C{[1]}, and so on.
-        #: If a callback is scheduled (see L{callback}) at program
-        #: counter C{[x, y, z]}, any calls it makes will be numbered
-        #: C{[x, y, z, 1]}, then C{[x, y, z, 2]}, and so on.
+        #: If a callback is scheduled (see L{schedule_callback}) at
+        #: program counter C{[x, y, z]}, any calls it makes will be
+        #: numbered C{[x, y, z, 1]}, then C{[x, y, z, 2]}, and so on.
         #:
         #: Maintaining such a tree of program counters ensures that
         #: different parts of the program execution never reuses the
@@ -423,8 +423,8 @@ class BasicRuntime:
         #:
         #: The L{increment_pc} decorator is responsible for
         #: dynamically building the tree as the execution unfolds and
-        #: L{callback} is responsible for scheduling callbacks with
-        #: the correct program counter.
+        #: L{schedule_callback} is responsible for scheduling
+        #: callbacks with the correct program counter.
         #:
         #: @type: C{list} of integers.
         self.program_counter = [0]
