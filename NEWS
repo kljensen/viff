@@ -25,9 +25,15 @@ documentation was updated.
 
 Details:
 
-* Issue 2: Split Runtime class into smaller parts.
+* Issue 2: Split Runtime class into smaller parts. The old Runtime
+  class has been split. If your program used the greater_than_equal
+  method, then you need to use the new Toft05Runtime class from
+  viff.comparison. If you used greater_than_equalII, then use the
+  Toft07Runtime from the same module.
 
-* Issue 7: New system for unit tests.
+* Issue 7: New system for unit tests. The tests now better simulate an
+  asynchronous network by randomly delaying the communication between
+  the players.
 
 * Better coercion. The comparison in Toft07Runtime can now correctly
   deal with arguments of mixed types, e.g., comparisons like "100 < x"
@@ -35,7 +41,10 @@ Details:
 
 * The coercion done by the xor method was also fixed.
 
-* Issue 22: Allow sending data several times in one method.
+* Issue 22: Allow sending data several times in one method. Previously
+  one could only send once to a given players in a given method since
+  all communication used the same program counter. The data is now
+  correctly buffered on the receiving side.
 
 * Python 2.6 compability. VIFF is now regularly tested on Python 2.6
   via a new build slave.
