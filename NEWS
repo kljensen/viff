@@ -33,6 +33,8 @@ Details:
 
 * The coercion done by the xor method was also fixed.
 
+* Issue 22: Allow sending data several times in one method.
+
 
 Version 0.4, released on 2008-03-12
 -----------------------------------
