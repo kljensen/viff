@@ -214,7 +214,24 @@ class ShareList(Share):
 def gather_shares(shares):
     """Gather shares.
 
-    Roughly modelled after the Twisted C{gatherResults} function.
+    Roughly modelled after the Twisted C{gatherResults} function. It
+    takes a list of shares and returns a new L{Share} which will be
+    triggered with a list of values, namely the values from the
+    initial shares:
+
+    >>> from pprint import pprint
+    >>> from viff.field import GF256
+    >>> a = Share(None, GF256)
+    >>> b = Share(None, GF256)
+    >>> shares = gather_shares([a, b])
+    >>> shares.addCallback(pprint)           # doctest: +ELLIPSIS
+    <ShareList at 0x...>
+    >>> a.callback(10)
+    >>> b.callback(20)
+    [10, 20]
+
+    @param shares: the shares.
+    @type shares: C{list} of L{Share} objects
     """
 
     def filter_results(results):
