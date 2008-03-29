@@ -642,8 +642,6 @@ class Runtime(BasicRuntime):
                         d = self._expect_share(peer_id, share.field)
                         self.schedule_callback(d, lambda s, peer_id: (s.field(peer_id), s), peer_id)
                     deferreds.append(d)
-                # TODO: This list ought to trigger as soon as more than
-                # threshold shares has been received.
                 return self._recombine(deferreds, threshold)
 
         result = share.clone()
