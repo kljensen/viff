@@ -19,7 +19,8 @@ Version ?, not yet released
 The Runtime class has been split into several parts and two new mixin
 classes provide different comparison protocols. Several coercion
 problems were fixed. The Runtime.callback method was renamed to
-Runtime.schedule_callback.
+Runtime.schedule_callback. VIFF was tested on Python 2.6 and some
+small problems were fixed.
 
 Details:
 
@@ -34,6 +35,9 @@ Details:
 * The coercion done by the xor method was also fixed.
 
 * Issue 22: Allow sending data several times in one method.
+
+* Python 2.6 compability. VIFF is now regularly tested on Python 2.6
+  via a new build slave.
 
 
 Version 0.4, released on 2008-03-12
