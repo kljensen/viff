@@ -37,6 +37,9 @@ from viff.comparison import Toft05Runtime
 from viff.test.util import RuntimeTestCase, BinaryOperatorTestCase, protocol
 
 
+__doctests__ = ['viff.runtime']
+
+
 class AddTest(BinaryOperatorTestCase, RuntimeTestCase):
     operator = operator.add
 

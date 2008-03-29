@@ -149,7 +149,33 @@ class Share(Deferred):
 class ShareList(Share):
     """Create a share that waits on a number of other shares.
 
-    Roughly modelled after the Twisted C{DeferredList} class.
+    Roughly modelled after the Twisted C{DeferredList} class. The
+    advantage of this class is that it is a L{Share} (not just a
+    C{Deferred}) and that it can be made to trigger when a certain
+    threshold of the shares are ready. This example shows how the
+    C{pprint} callback is triggered when C{a} and C{c} are ready:
+
+    >>> from pprint import pprint
+    >>> from viff.field import GF256
+    >>> a = Share(None, GF256)
+    >>> b = Share(None, GF256)
+    >>> c = Share(None, GF256)
+    >>> shares = ShareList([a, b, c], threshold=2)
+    >>> shares.addCallback(pprint)           # doctest: +ELLIPSIS
+    <ShareList at 0x...>
+    >>> a.callback(10)
+    >>> c.callback(20)
+    [(True, 10), None, (True, 20)]
+
+    The C{pprint} function is called with a list of pairs. The first
+    component of each pair is a boolean indicating if the callback or
+    errback method was called on the corresponding L{Share}, and the
+    second component is the value given to the callback/errback.
+
+    If a threshold less than the full number of shares is used, some
+    of the pairs may be missing and C{None} is used instead. In the
+    example above the C{c} Share arrived later than C{a} and C{b}, and
+    so the list contains a C{None} on its place.
     """
 
     def __init__(self, shares, threshold=None):
@@ -1106,3 +1132,7 @@ def create_runtime(id, players, threshold, options=None, runtime_class=Runtime):
                 reactor.connectTCP(player.host, player.port, factory)
 
     return result
+
+if __name__ == "__main__":
+    import doctest    #pragma NO COVER
+    doctest.testmod() #pragma NO COVER
