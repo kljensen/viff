@@ -575,7 +575,7 @@ class Runtime(BasicRuntime):
     overloaded arithmetic operations, but it is also possible to call
     L{add}, L{mul}, etc. directly if one prefers.
 
-    Each player in the protocol uses a Runtime object. To create in
+    Each player in the protocol uses a Runtime object. To create an
     instance and connect it correctly with the other players, please
     use the L{create_runtime} function instead of instantiating a
     Runtime directly. The L{create_runtime} function will take care of
