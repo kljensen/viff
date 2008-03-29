@@ -609,13 +609,13 @@ class Runtime(BasicRuntime):
         @param receivers: the IDs of the players that will eventually
             obtain the opened result or None if all players should
             obtain the opened result.
-        @type receivers: None or a C{List} of integers
+        @type receivers: None or a C{list} of integers
 
         @param threshold: the threshold used to open the sharing or None
             if the runtime default should be used.
         @type threshold: integer or None
 
-        @return: the result of the opened sharing if the player's id
+        @return: the result of the opened sharing if the player's ID
             is in C{receivers}, otherwise None.
         @returntype: Share or None
         """
