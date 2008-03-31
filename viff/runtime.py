@@ -896,20 +896,25 @@ class Runtime(BasicRuntime):
         return result
 
     @increment_pc
-    def shamir_share(self, inputters, field, number=None):
+    def shamir_share(self, inputters, field, number=None, threshold=None):
         """Secret share C{number} over C{field} using Shamir's method.
 
-        Returns a list of shares.
+        The number is shared using polynomial of degree C{threshold}
+        (defaults to L{self.threshold}). Returns a list of shares
+        unless unless there is only one inputter in which case the
+        share is returned directly.
 
         Communication cost: n elements transmitted.
         """
         assert number is None or self.id in inputters
+        if threshold is None:
+            threshold = self.threshold
 
         results = []
         for peer_id in inputters:
             if peer_id == self.id:
                 pc = tuple(self.program_counter)
-                shares = shamir.share(field(number), self.threshold,
+                shares = shamir.share(field(number), threshold,
                                       self.num_players)
                 for other_id, share in shares:
                     if other_id.value == self.id:
