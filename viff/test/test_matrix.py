@@ -54,3 +54,14 @@ class MatrixTest(TestCase):
         for i in range(1, 6):
             m = hyper(i, Zp)
             self.assertTrue(self.is_hyper(m))
+
+    def test_not_hyper(self):
+        """Check a non-hyper-invertible matrix."""
+        Zp = GF(11)
+        # This is an invertible matrix, but it is not hyper-invertible
+        # since none of the three the upper 2x2 matrices are
+        # invertible.
+        m = Matrix([[Zp(2), Zp(3), Zp(4)],
+                    [Zp(4), Zp(6), Zp(9)],
+                    [Zp(3), Zp(5), Zp(8)]])
+        self.assertFalse(self.is_hyper(m))
