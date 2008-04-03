@@ -106,5 +106,5 @@ that an operation starts as soon as the operands are ready.
 # * http://pypi.python.org/pypi/viff/
 # * http://www.icewalkers.com/Linux/Software/532160/VIFF.html
 # * http://www.hotscripts.com/Detailed/74748.html
-# * http://sourcewell.berlios.de/
+# * http://sourcewell.berlios.de/appbyid.php?id=3572
 # * python-announce-list@python.org
