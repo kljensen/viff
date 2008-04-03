@@ -10,9 +10,10 @@ revealing any information on the individual votes. In a protocol with
 n players, the confidentiality of the inputs is ensured when up to n/2
 of the players are corrupted.
 
-VIFF is Free Software licensed under the GNU General Public License
-(GPL) version 2 or later. Please see the file COPYING for details.
-Please see the INSTALL file for installation instructions.
+VIFF is Free Software licensed under the GNU Lesser General Public
+License (LGPL) version 3 or later. Please see the files COPYING and
+COPYING.LIB for details. Please see the INSTALL file for installation
+instructions.
 
 
 Features
