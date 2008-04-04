@@ -1003,6 +1003,36 @@ class ActiveRuntime(Runtime):
         # the verifying step.
         return rvec1.rows[0][:T], rvec2.rows[0][:T]
 
+    def generate_triples(self, field):
+        """Generate multiplication triples.
+
+        These are random numbers M{a}, M{b}, and M{c} such that M{c =
+        ab}.
+
+        @return: C{list} of 3-tuples.
+        @returntype: C{list} of C{(Share, Share, Share)}
+        """
+        n = self.num_players
+        t = self.threshold
+        T = n - 2*t
+
+        # Generate normal random sharings.
+        a_t = [self.prss_share_random(field) for _ in range(T)]
+        b_t = [self.prss_share_random(field) for _ in range(T)]
+        c_2t = []
+        for i in range(T):
+            # Multiply a[i] and b[i] without resharing.
+            ci = gather_shares([a_t[i], b_t[i]])
+            ci.addCallback(lambda (ai, bi): ai * bi)
+            c_2t.append(ci)
+
+        r_t, r_2t = self.double_share_random(T, t, 2*t, field)
+        d_2t = [c_2t[i] - r_2t[i] for i in range(T)]
+        d = [self.open(d_2t[i], threshold=2*t) for i in range(T)]
+        c_t = [r_t[i] + d[i] for i in range(T)]
+
+        return zip(a_t, b_t, c_t)
+
     @increment_pc
     def _broadcast(self, sender, message=None):
         """Perform a Bracha broadcast.
