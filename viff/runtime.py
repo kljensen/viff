@@ -717,14 +717,29 @@ class Runtime(BasicRuntime):
 
         Communication cost: 1 Shamir sharing.
         """
-        # TODO:  mul accept FieldElements and do quick local
-        # multiplication in that case. If two FieldElements are given,
-        # return a FieldElement.
+        # If one of the arguments is a FieldElement, we do a local
+        # multiplication and skip the resharing step.
+
         field = getattr(share_a, "field", getattr(share_b, "field", None))
-        if not isinstance(share_a, Share):
+
+        if not isinstance(share_a, Share) and not isinstance(share_a,
+                                                             FieldElement):
             share_a = Share(self, field, share_a)
-        if not isinstance(share_b, Share):
+
+        if not isinstance(share_b, Share) and not isinstance(share_b,
+                                                             FieldElement):
             share_b = Share(self, field, share_b)
+
+        if isinstance(share_a, FieldElement) and isinstance(share_b,
+                                                            FieldElement):
+            return Share(self, field, share_a * share_b)
+        
+        if isinstance(share_a, FieldElement):
+            share_b.addCallback(lambda x: Share(self, field, share_a*x.value))
+            return share_b
+        if isinstance(share_b, FieldElement):
+            share_a.addCallback(lambda x: Share(self, field, x.value*share_b))
+            return share_a
 
         result = gather_shares([share_a, share_b])
         result.addCallback(lambda (a, b): a * b)
