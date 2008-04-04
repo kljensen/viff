@@ -3,20 +3,18 @@
 #
 # This file is part of VIFF, the Virtual Ideal Functionality Framework.
 #
-# VIFF is free software; you can redistribute it and/or modify it
-# under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2 of the License, or
-# (at your option) any later version.
+# VIFF is free software: you can redistribute it and/or modify it
+# under the terms of the GNU Lesser General Public License (LGPL) as
+# published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
 #
-# VIFF is distributed in the hope that it will be useful, but
-# WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-# General Public License for more details.
+# VIFF is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+# or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General
+# Public License for more details.
 #
-# You should have received a copy of the GNU General Public License
-# along with VIFF in the file COPYING; if not, write to the Free
-# Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
-# 02110-1301 USA
+# You should have received a copy of the GNU Lesser General Public
+# License along with VIFF. If not, see <http://www.gnu.org/licenses/>.
 
 """VIFF runtime.
 
@@ -630,15 +628,6 @@ class Runtime(BasicRuntime):
         """Initialize runtime."""
         BasicRuntime.__init__(self, player, threshold, options)
 
-        #: Echo counters for Bracha broadcast.
-        self._bracha_echo = {}
-        #: Ready counters for Bracha broadcast.
-        self._bracha_ready = {}
-        #: Have we sent a ready message?
-        self._bracha_sent_ready = {}
-        #: Have we delivered the message?
-        self._bracha_delivered = {}
-
     @increment_pc
     def open(self, share, receivers=None, threshold=None):
         """Open a secret sharing.
@@ -953,11 +942,12 @@ class Runtime(BasicRuntime):
         # dictionary for each of the following variables. The reason
         # is that we need to count for each distinct message how many
         # echo and ready messages we have received.
-        self._bracha_echo[pc] = {}
-        self._bracha_ready[pc] = {}
-        self._bracha_sent_ready[pc] = {}
-        self._bracha_delivered[pc] = {}
 
+        bracha_echo = {}
+        bracha_ready = {}
+        bracha_sent_ready = {}
+        bracha_delivered = {}
+        
         def unsafe_broadcast(data_type, message):
             # Performs a regular broadcast without any guarantees. In
             # other words, it sends the message to each player except
@@ -969,13 +959,13 @@ class Runtime(BasicRuntime):
             # This is called when we receive an echo message. It
             # updates the echo count for the message and enters the
             # ready state if the count is high enough.
-            ids = self._bracha_echo[pc].setdefault(message, [])
-            ready = self._bracha_sent_ready[pc].setdefault(message, False)
+            ids = bracha_echo.setdefault(message, [])
+            ready = bracha_sent_ready.setdefault(message, False)
 
             if peer_id not in ids:
                 ids.append(peer_id)
                 if len(ids) >= ceil((n+t+1)/2) and not ready:
-                    self._bracha_sent_ready[pc][message] = True
+                    bracha_sent_ready[message] = True
                     unsafe_broadcast("ready", message)
                     ready_received(message, self.id)
 
@@ -984,18 +974,18 @@ class Runtime(BasicRuntime):
             # updates the ready count for the message. Depending on
             # the count, we may either stay in the same state or enter
             # the ready or delivered state.
-            ids = self._bracha_ready[pc].setdefault(message, [])
-            ready = self._bracha_sent_ready[pc].setdefault(message, False)
-            delivered = self._bracha_delivered[pc].setdefault(message, False)
+            ids = bracha_ready.setdefault(message, [])
+            ready = bracha_sent_ready.setdefault(message, False)
+            delivered = bracha_delivered.setdefault(message, False)
             if peer_id not in ids:
                 ids.append(peer_id)
                 if len(ids) == t+1 and not ready:
-                    self._bracha_sent_ready[pc][message] = True
+                    bracha_sent_ready[message] = True
                     unsafe_broadcast("ready", message)
                     ready_received(message, self.id)
 
                 elif len(ids) == 2*t+1 and not delivered:
-                    self._bracha_delivered[pc][message] = True
+                    bracha_delivered[message] = True
                     result.callback(message)
 
         def send_received(message):
