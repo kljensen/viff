@@ -18,7 +18,7 @@
 from twisted.internet.defer import gatherResults
 
 from viff.test.util import RuntimeTestCase, protocol
-from viff.runtime import ActiveRuntime
+from viff.runtime import ActiveRuntime, Share
 
 
 class ActiveRuntimeTest(RuntimeTestCase):
@@ -53,3 +53,34 @@ class ActiveRuntimeTest(RuntimeTestCase):
         y.addCallback(self.assertEquals, "Hello two!")
         z.addCallback(self.assertEquals, "Hello three!")
         return gatherResults([x, y, z])
+
+    @protocol
+    def test_double_share_random(self, runtime):
+        """Test double-share random numbers."""
+        T = runtime.num_players - 2 * runtime.threshold
+        from viff.field import GF
+        self.Zp = GF(11)
+
+        r_t, r_2t = runtime.double_share_random(T,
+                                                runtime.threshold,
+                                                2*runtime.threshold,
+                                                self.Zp)
+
+        # Check that we got the expected number of shares.
+        self.assertEquals(len(r_t), T)
+        self.assertEquals(len(r_2t), T)
+
+        def verify(shares):
+            """Verify that the list contains two equal shares."""
+            self.assertEquals(shares[0], shares[1])
+
+        results = []
+        for a, b in zip(r_t, r_2t):
+            self.assert_type(a, Share)
+            self.assert_type(b, Share)
+            open_a = runtime.open(a)
+            open_b = runtime.open(b, threshold=2*runtime.threshold)
+            result = gatherResults([open_a, open_b])
+            result.addCallback(verify)
+            results.append(result)
+        return gatherResults(results)
