@@ -18,6 +18,7 @@
 from twisted.internet.defer import gatherResults
 
 from viff.test.util import RuntimeTestCase, protocol
+from viff.runtime import ActiveRuntime
 
 
 class ActiveRuntimeTest(RuntimeTestCase):
@@ -28,6 +29,8 @@ class ActiveRuntimeTest(RuntimeTestCase):
     #: The protocols for active security needs n > 3t+1, so with the
     #: default threshold of t=1, we need n=4.
     num_players = 4
+
+    runtime_class = ActiveRuntime
 
     @protocol
     def test_broadcast(self, runtime):

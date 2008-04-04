@@ -929,6 +929,30 @@ class Runtime(BasicRuntime):
             return results
 
     @increment_pc
+    def _recombine(self, shares, threshold):
+        """Shamir recombine a list of deferred (id,share) pairs."""
+        assert len(shares) > threshold
+
+        def filter_good_shares(results):
+            # Filter results, which is a list of (success, share)
+            # pairs.
+            return [result[1] for result in results
+                    if result is not None and result[0]][:threshold+1]
+
+        result = ShareList(shares, threshold+1)
+        result.addCallback(filter_good_shares)
+        result.addCallback(shamir.recombine)
+        return result
+
+
+class ActiveRuntime(Runtime):
+    """A runtime secure against active adversaries.
+
+    This class currently inherits most of its functionality from the
+    normal L{Runtime} class and is thus I{not} yet secure.
+    """
+
+    @increment_pc
     def _broadcast(self, sender, message=None):
         """Perform a Bracha broadcast.
 
@@ -1064,22 +1088,6 @@ class Runtime(BasicRuntime):
         if len(result) == 1:
             return result[0]
 
-        return result
-
-    @increment_pc
-    def _recombine(self, shares, threshold):
-        """Shamir recombine a list of deferred (id,share) pairs."""
-        assert len(shares) > threshold
-
-        def filter_good_shares(results):
-            # Filter results, which is a list of (success, share)
-            # pairs.
-            return [result[1] for result in results
-                    if result is not None and result[0]][:threshold+1]
-
-        result = ShareList(shares, threshold+1)
-        result.addCallback(filter_good_shares)
-        result.addCallback(shamir.recombine)
         return result
 
 
