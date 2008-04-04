@@ -36,7 +36,7 @@ class Matrix(object):
         @param m: The number of rows.
         @param n: The number of columns.
         """
-        self.rows = [[0 for i in range(0, n)] for j in range(0, m)]
+        self.rows = [[0 for _ in range(n)] for _ in range(m)]
         self.m = m
         self.n = n
 
