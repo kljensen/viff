@@ -38,10 +38,7 @@ class MatrixTest(TestCase):
             subsets = generate_subsets(frozenset(range(n)), size)
             for rows in subsets:
                 for columns in subsets:
-                    sub = Matrix(size, size)
-                    for i, row in enumerate(rows):
-                        for j, column in enumerate(columns):
-                            sub[i, j] = mat[row, column]
+                    sub = Matrix([[mat[r, c] for r in rows] for c in columns])
                     if sub.determinant() == 0:
                         return False
         return True
