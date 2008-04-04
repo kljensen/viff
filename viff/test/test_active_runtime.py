@@ -15,10 +15,17 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with VIFF. If not, see <http://www.gnu.org/licenses/>.
 
+import operator
+
 from twisted.internet.defer import gatherResults
 
-from viff.test.util import RuntimeTestCase, protocol
+from viff.test.util import RuntimeTestCase, protocol, BinaryOperatorTestCase
 from viff.runtime import ActiveRuntime, Share
+
+
+class MulTest(BinaryOperatorTestCase, RuntimeTestCase):
+    operator = operator.mul
+    runtime_class = ActiveRuntime
 
 
 class ActiveRuntimeTest(RuntimeTestCase):
