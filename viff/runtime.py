@@ -722,18 +722,16 @@ class Runtime(BasicRuntime):
 
         field = getattr(share_a, "field", getattr(share_b, "field", None))
 
-        if not isinstance(share_a, Share) and not isinstance(share_a,
-                                                             FieldElement):
+        if not isinstance(share_a, (Share, FieldElement)):
             share_a = Share(self, field, share_a)
 
-        if not isinstance(share_b, Share) and not isinstance(share_b,
-                                                             FieldElement):
+        if not isinstance(share_b, (Share, FieldElement)):
             share_b = Share(self, field, share_b)
 
         if isinstance(share_a, FieldElement) and isinstance(share_b,
                                                             FieldElement):
             return Share(self, field, share_a * share_b)
-        
+
         if isinstance(share_a, FieldElement):
             share_b.addCallback(lambda x: Share(self, field, share_a*x.value))
             return share_b
