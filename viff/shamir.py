@@ -36,6 +36,18 @@ def share(secret, threshold, num_players):
     >>> recombine(share(secret, 7, 15)[:8]) == secret
     True
 
+    The threshold can range from zero (for a dummy-sharing):
+
+    >>> share(Zp(10), 0, 5)
+    [({1}, {10}), ({2}, {10}), ({3}, {10}), ({4}, {10}), ({5}, {10})]
+
+    up to but not including C{num_players}:
+
+    >>> share(Zp(10), 5, 5)
+    Traceback (most recent call last):
+      ...
+    AssertionError: Threshold out of range
+
     @param secret: the secret to be shared.
     @type secret: a field element
 
@@ -49,7 +61,7 @@ def share(secret, threshold, num_players):
     @return: shares, one for each player.
     @returntype: C{list} of (player id, share) pairs
     """
-    assert threshold > 0 and threshold < num_players
+    assert threshold >= 0 and threshold < num_players, "Threshold out of range"
 
     coef = [secret]
     for j in range(threshold):
