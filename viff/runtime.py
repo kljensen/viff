@@ -717,28 +717,23 @@ class Runtime(BasicRuntime):
 
         Communication cost: 1 Shamir sharing.
         """
-        # If one of the arguments is a FieldElement, we do a local
-        # multiplication and skip the resharing step.
+        assert isinstance(share_a, Share) or isinstance(share_b, Share), \
+            "At least one of share_a and share_b must be a Share."
 
-        field = getattr(share_a, "field", getattr(share_b, "field", None))
+        if not isinstance(share_a, Share):
+            # Then share_b must be a Share => local multiplication. We
+            # clone first to avoid changing share_b.
+            result = share_b.clone()
+            result.addCallback(lambda b: share_a * b)
+            return result
+        if not isinstance(share_b, Share):
+            # Likewise when share_b is a constant.
+            result = share_a.clone()
+            result.addCallback(lambda a: a * share_b)
+            return result
 
-        if not isinstance(share_a, (Share, FieldElement)):
-            share_a = Share(self, field, share_a)
-
-        if not isinstance(share_b, (Share, FieldElement)):
-            share_b = Share(self, field, share_b)
-
-        if isinstance(share_a, FieldElement) and isinstance(share_b,
-                                                            FieldElement):
-            return Share(self, field, share_a * share_b)
-
-        if isinstance(share_a, FieldElement):
-            share_b.addCallback(lambda x: Share(self, field, share_a*x.value))
-            return share_b
-        if isinstance(share_b, FieldElement):
-            share_a.addCallback(lambda x: Share(self, field, x.value*share_b))
-            return share_a
-
+        # At this point both share_a and share_b must be Share
+        # objects. So we wait on them, multiply and reshare.
         result = gather_shares([share_a, share_b])
         result.addCallback(lambda (a, b): a * b)
         self.schedule_callback(result, self._shamir_share)
@@ -865,7 +860,8 @@ class Runtime(BasicRuntime):
             return Share(self, field, share)
 
         # Open the square and compute a square-root
-        result = self.open(self.mul(share, share), threshold=2*self.threshold)
+        result = self.open(Share(self, field, share*share),
+                           threshold=2*self.threshold)
 
         def finish(square, share, binary):
             if square == 0:
