@@ -1086,7 +1086,7 @@ def create_runtime(id, players, threshold, options=None, runtime_class=Runtime):
     code like this::
 
         def protocol(runtime):
-            a, b, c = runtime.shamir_share(input)
+            a, b, c = runtime.shamir_share([1, 2, 3], Zp, input)
 
             a = runtime.open(a)
             b = runtime.open(b)
