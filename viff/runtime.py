@@ -965,6 +965,53 @@ class ActiveRuntime(Runtime):
         Runtime.__init__(self, player, threshold, options)
 
     @increment_pc
+    def mul(self, share_x, share_y):
+        """Multiplication of shares.
+
+        Preprocessing: 1 multiplication triple.
+        Communication: 2 openings.
+        """
+        assert isinstance(share_x, Share) or isinstance(share_y, Share), \
+            "At least one of share_x and share_y must be a Share."
+
+        if not isinstance(share_x, Share):
+            # Then share_y must be a Share => local multiplication. We
+            # clone first to avoid changing share_y.
+            result = share_y.clone()
+            result.addCallback(lambda y: share_x * y)
+            return result
+        if not isinstance(share_y, Share):
+            # Likewise when share_y is a constant.
+            result = share_x.clone()
+            result.addCallback(lambda x: x * share_y)
+            return result
+
+        # At this point both share_x and share_y must be Share
+        # objects. We multiply them via a multiplication triple.
+
+        # TODO: This is of course insecure... We should move
+        # generate_triples to a preprocessing step and draw the
+        # triples from a pool instead. Also, using only the first
+        # triple is quite wasteful...
+        a, b, c = self.generate_triples(share_x.field)[0]
+
+        d = self.open(share_x - a)
+        e = self.open(share_y - b)
+
+        # TODO: We ought to be able to simple do
+        #
+        #   return d*e + d*y + e*x + c
+        #
+        # but that leads to infinite recursion since d and e are
+        # Shares, not FieldElements. So we have to do a bit more
+        # work... The following callback also leads to recursion, but
+        # only one level since d and e are FieldElements now, which
+        # means that we return in the above if statements.
+        result = gather_shares([d, e])
+        result.addCallback(lambda (d,e): d*e + d*b + e*a + c)
+        return result
+
+    @increment_pc
     def double_share_random(self, T, d1, d2, field):
         """Double-shares a randoms secret by using two polynomials.
 
