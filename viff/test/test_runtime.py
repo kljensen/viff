@@ -60,6 +60,43 @@ class RuntimeTest(RuntimeTestCase):
     """Test L{viff.runtime.Runtime}."""
 
     @protocol
+    def test_mul_no_resharing_int(self, runtime):
+        """Verify that local multiplications really are local."""
+        a = Share(runtime, self.Zp, self.Zp(2))
+        b = 3
+        c = a * b
+
+        # We setup a list which can be mutated from the mutate
+        # callback below:
+        c_value = [None]
+        def mutate(value):
+            c_value[0] = value
+
+        # We now add the callback to c and expect it to be called
+        # immediatedly since c should have a value right away. This is
+        # a slight hack: There is nothing in the Deferred abstraction
+        # that says that callbacks will be called immediatedly.
+        c.addCallback(mutate)
+        self.assertEquals(c_value[0], 6)
+
+    @protocol
+    def test_mul_no_resharing_field_element(self, runtime):
+        """Verify that local multiplications really are local.
+
+        This test uses a Zp element instead of a plain integer.
+        """
+        a = Share(runtime, self.Zp, self.Zp(2))
+        b = self.Zp(3)
+        c = a * b
+
+        c_value = [None]
+        def mutate(value):
+            c_value[0] = value
+
+        c.addCallback(mutate)
+        self.assertEquals(c_value[0], 6)
+
+    @protocol
     def test_xor(self, runtime):
         """Test exclusive-or.
 
