@@ -40,7 +40,8 @@ from collections import deque
 from viff import shamir
 from viff.prss import prss
 from viff.field import GF256, FieldElement
-from viff.util import wrapper
+from viff.matrix import Matrix, hyper
+from viff.util import wrapper, rand
 
 from twisted.internet import reactor
 from twisted.internet.defer import Deferred, DeferredList
@@ -951,6 +952,56 @@ class ActiveRuntime(Runtime):
     This class currently inherits most of its functionality from the
     normal L{Runtime} class and is thus I{not} yet secure.
     """
+
+    def __init__(self, player, threshold, options=None):
+        """Initialize runtime."""
+
+        #: A hyper-invertible matrix.
+        #:
+        #: It should be suitable for L{self.num_players} players, but
+        #: since we don't know the total number of players yet, we set
+        #: it to C{None} here and update it as necessary.
+        self._hyper = None
+        Runtime.__init__(self, player, threshold, options)
+
+    @increment_pc
+    def double_share_random(self, T, d1, d2, field):
+        """Double-shares a randoms secret by using two polynomials.
+
+        The guarantee is that a number of shares are made and out of
+        those, the T that are returned by this method will be correct
+        double-sharings of a random number using d1 and d2 as the
+        polynomial degrees.
+
+        @param T: The number of double-shares output.
+        @param d1: The degree of the first polynomial.
+        @param d2: The degree of the second polynomial.
+        @param field: The field over which to share the secret.
+        """
+        inputters = range(1, self.num_players + 1)
+        if self._hyper is None:
+            self._hyper = hyper(self.num_players, field)
+
+        # Generate a random element.
+        si = rand.randint(0, field.modulus - 1)
+
+        # Every player shares the random value with two thresholds.
+        d1_shares = self.shamir_share(inputters, field, si, d1)
+        d2_shares = self.shamir_share(inputters, field, si, d2)
+
+        # Turn the shares into a column vector.
+        svec1 = Matrix([d1_shares]).transpose()
+        svec2 = Matrix([d2_shares]).transpose()
+
+        # Apply the hyper-invertible matrix to svec1 and svec2.
+        rvec1 = (self._hyper * svec1).transpose()
+        rvec2 = (self._hyper * svec2).transpose()
+
+        # TODO: verify sharings
+
+        # Return the first T shares (the ones that was not opened in
+        # the verifying step.
+        return rvec1.rows[0][:T], rvec2.rows[0][:T]
 
     @increment_pc
     def _broadcast(self, sender, message=None):
