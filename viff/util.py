@@ -194,48 +194,6 @@ def clone_deferred(original):
     original.addCallback(split_result)
     return clone
 
-#: Indention level.
-_indent = 0
-#: Traced function call count.
-_trace_counters = {}
-
-
-def trace(func):
-    """Trace function entry and exit.
-
-    Using this decorator on a function will make it print a line on
-    entry and exit. The line is indented in nested calls, and contains
-    the number of calls made to each function.
-    """
-    def wrapper(*args, **kwargs):
-        """
-        Wrapper with tracing output.
-        """
-        global _indent
-        count = _trace_counters.setdefault(func.func_name, 1)
-        try:
-            print "%s-> Entering: %s (%d)" % ("  " * _indent,
-                                              func.func_name, count)
-            _indent += 1
-            _trace_counters[func.func_name] += 1
-            return func(*args, **kwargs)
-        finally:
-            _indent -= 1
-            print "%s<- Exiting:  %s (%d)" % ("  " * _indent,
-                                              func.func_name, count)
-    return wrapper
-
-
-def println(format="", *args):
-    """Print a line indented according to the stack depth.
-
-    The L{_indent} variable holds the current stack depth.
-    """
-    if len(args) > 0:
-        format = format % args
-
-    print "%s %s" % ("  " * _indent, format)
-
 
 def find_prime(lower_bound, blum=False):
     """Find a prime above a lower bound.
