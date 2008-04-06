@@ -60,7 +60,7 @@ import operator
 from twisted.internet import reactor
 
 from viff.field import GF
-from viff.runtime import Runtime, create_runtime, gather_shares
+from viff.runtime import Runtime, ActiveRuntime, create_runtime, gather_shares
 from viff.comparison import Toft05Runtime, Toft07Runtime
 from viff.config import load_config
 from viff.util import find_prime
@@ -90,8 +90,9 @@ parser.add_option("-m", "--modulus",
 parser.add_option("-c", "--count", type="int",
                   help="number of operations")
 parser.add_option("-o", "--operation", type="choice",
-                  choices=["mul", "comp", "compII"],
-                  help="operation to benchmark, one of 'mul', 'comp', 'compII'")
+                  choices=["mul", "mul-active", "comp", "compII"],
+                  help=("operation to benchmark, one of 'mul', 'mul-active', "
+                        "'comp', 'compII'"))
 parser.add_option("-p", "--parallel", action="store_true",
                   help="execute operations in parallel")
 parser.add_option("-s", "--sequential", action="store_false", dest="parallel",
@@ -192,6 +193,9 @@ class SequentialBenchmark(Benchmark):
 if options.operation == "mul":
     operation = operator.mul
     runtime_class = Runtime
+elif options.operation == "mul-active":
+    operation = operator.mul
+    runtime_class = ActiveRuntime
 elif options.operation == "comp":
     operation = operator.ge
     runtime_class = Toft05Runtime
