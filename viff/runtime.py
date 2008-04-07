@@ -1050,6 +1050,7 @@ class ActiveRuntime(Runtime):
         # the verifying step.
         return rvec1.rows[0][:T], rvec2.rows[0][:T]
 
+    @increment_pc
     def generate_triples(self, field):
         """Generate multiplication triples.
 
