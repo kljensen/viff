@@ -988,13 +988,7 @@ class ActiveRuntime(Runtime):
 
         # At this point both share_x and share_y must be Share
         # objects. We multiply them via a multiplication triple.
-
-        # TODO: This is of course insecure... We should move
-        # generate_triples to a preprocessing step and draw the
-        # triples from a pool instead. Also, using only the first
-        # triple is quite wasteful...
-        a, b, c = self.generate_triples(share_x.field)[0]
-
+        a, b, c = self.get_triple(share_x.field)
         d = self.open(share_x - a)
         e = self.open(share_y - b)
 
@@ -1049,6 +1043,14 @@ class ActiveRuntime(Runtime):
         # Return the first T shares (the ones that was not opened in
         # the verifying step.
         return rvec1.rows[0][:T], rvec2.rows[0][:T]
+
+    @increment_pc
+    def get_triple(self, field):
+        # TODO: This is of course insecure... We should move
+        # generate_triples to a preprocessing step and draw the
+        # triples from a pool instead. Also, using only the first
+        # triple is quite wasteful...
+        return self.generate_triples(field)[0]
 
     @increment_pc
     def generate_triples(self, field):
