@@ -389,12 +389,12 @@ class BasicRuntime:
                          help=("Security parameter. Comparisons will leak "
                                "information with probability 2**-K."))
         group.add_option("--no-tls", action="store_false", dest="tls",
-                         help="Disable the use secure TLS connections.")
+                         help="Disable the use of secure TLS connections.")
         group.add_option("--tls", action="store_true",
-                         help=("Enable the use secure TLS connections "
+                         help=("Enable the use of secure TLS connections "
                                "(if the GNUTLS bindings are available)."))
         group.add_option("--deferred-debug", action="store_true",
-                         help="Enable extra debug out for deferreds.")
+                         help="Enable extra debug output for deferreds.")
 
         parser.set_defaults(bit_length=32,
                             security_parameter=30,
