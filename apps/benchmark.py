@@ -53,6 +53,7 @@
 # In all cases the time reported is measured from the moment when the
 # operands are ready until all the results are ready.
 
+import sys
 import time
 from optparse import OptionParser
 import operator
@@ -131,15 +132,18 @@ class Benchmark:
 
     def sync_test(self, _):
         print "Synchronizing test start."
+        sys.stdout.flush()
         sync = self.rt.synchronize()
         sync.addCallback(self.countdown, 3)
 
     def countdown(self, _, seconds):
         if seconds > 0:
             print "Starting test in %d" % seconds
+            sys.stdout.flush()
             reactor.callLater(1, self.countdown, None, seconds - 1)
         else:
             print "Starting test now"
+            sys.stdout.flush()
             self.run_test(None)
 
     def run_test(self, _):
