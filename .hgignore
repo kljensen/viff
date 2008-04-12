@@ -13,7 +13,7 @@ syntax: glob
 
 
 # Keys and certificates.
-*-[1-9].{ini,cert,key}
+*-[1-9]*.{ini,cert,key}
 ca.{cert,key}
 
 # Trial output directory.
