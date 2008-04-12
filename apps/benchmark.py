@@ -212,7 +212,8 @@ if options.parallel:
 else:
     benchmark = SequentialBenchmark
 
-pre_runtime = create_runtime(id, players, (len(players) -1)//2, options, runtime_class)
+pre_runtime = create_runtime(id, players, (len(players) -1)//3,
+                             options, runtime_class)
 pre_runtime.addCallback(benchmark, operation)
 
 print "#### Starting reactor ###"
