@@ -95,21 +95,25 @@ class ActiveRuntimeTest(RuntimeTestCase):
     @protocol
     def test_generate_triples(self, runtime):
         """Test generation of multiplication triples."""
-        triples = runtime.generate_triples(self.Zp)
 
         def verify(triple):
             """Verify a multiplication triple."""
             self.assertEquals(triple[0] * triple[1], triple[2])
 
-        results = []
-        for a, b, c in triples:
-            self.assert_type(a, Share)
-            self.assert_type(b, Share)
-            self.assert_type(c, Share)
-            open_a = runtime.open(a)
-            open_b = runtime.open(b)
-            open_c = runtime.open(c)
-            result = gatherResults([open_a, open_b, open_c])
-            result.addCallback(verify)
-            results.append(result)
-        return gatherResults(results)
+        def check(triples):
+            results = []
+            for a, b, c in triples:
+                self.assert_type(a, Share)
+                self.assert_type(b, Share)
+                self.assert_type(c, Share)
+                open_a = runtime.open(a)
+                open_b = runtime.open(b)
+                open_c = runtime.open(c)
+                result = gatherResults([open_a, open_b, open_c])
+                result.addCallback(verify)
+                results.append(result)
+            return gatherResults(results)
+
+        triples = runtime.generate_triples(self.Zp)
+        triples.addCallback(check)
+        return triples

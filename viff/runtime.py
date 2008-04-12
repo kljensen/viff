@@ -44,7 +44,7 @@ from viff.matrix import Matrix, hyper
 from viff.util import wrapper, rand
 
 from twisted.internet import reactor
-from twisted.internet.defer import Deferred, DeferredList
+from twisted.internet.defer import Deferred, DeferredList, succeed
 from twisted.internet.protocol import ClientFactory, ServerFactory
 from twisted.protocols.basic import Int16StringReceiver
 
@@ -988,21 +988,31 @@ class ActiveRuntime(Runtime):
 
         # At this point both share_x and share_y must be Share
         # objects. We multiply them via a multiplication triple.
-        a, b, c = self.get_triple(share_x.field)
-        d = self.open(share_x - a)
-        e = self.open(share_y - b)
+        def finish_mul(triple):
+            a, b, c = triple
+            d = self.open(share_x - a)
+            e = self.open(share_y - b)
 
-        # TODO: We ought to be able to simple do
-        #
-        #   return d*e + d*y + e*x + c
-        #
-        # but that leads to infinite recursion since d and e are
-        # Shares, not FieldElements. So we have to do a bit more
-        # work... The following callback also leads to recursion, but
-        # only one level since d and e are FieldElements now, which
-        # means that we return in the above if statements.
-        result = gather_shares([d, e])
-        result.addCallback(lambda (d,e): d*e + d*b + e*a + c)
+            # TODO: We ought to be able to simple do
+            #
+            #   return d*e + d*y + e*x + c
+            #
+            # but that leads to infinite recursion since d and e are
+            # Shares, not FieldElements. So we have to do a bit more
+            # work... The following callback also leads to recursion, but
+            # only one level since d and e are FieldElements now, which
+            # means that we return in the above if statements.
+            result = gather_shares([d, e])
+            result.addCallback(lambda (d,e): d*e + d*b + e*a + c)
+            return result
+
+        # This will be the result, a Share object.
+        result = Share(self, share_x.field)
+        # This is the Deferred we will do processing on.
+        triple = self.get_triple(share_x.field)
+        triple.addCallback(finish_mul)
+        # We add the result to the chains in triple.
+        triple.chainDeferred(result)
         return result
 
     @increment_pc
@@ -1050,7 +1060,9 @@ class ActiveRuntime(Runtime):
         # generate_triples to a preprocessing step and draw the
         # triples from a pool instead. Also, using only the first
         # triple is quite wasteful...
-        return self.generate_triples(field)[0]
+        result = self.generate_triples(field)
+        result.addCallback(lambda triples: triples[0])
+        return result
 
     @increment_pc
     def generate_triples(self, field):
@@ -1081,7 +1093,7 @@ class ActiveRuntime(Runtime):
         d = [self.open(d_2t[i], threshold=2*t) for i in range(T)]
         c_t = [r_t[i] + d[i] for i in range(T)]
 
-        return zip(a_t, b_t, c_t)
+        return succeed(zip(a_t, b_t, c_t))
 
     @increment_pc
     def _broadcast(self, sender, message=None):
