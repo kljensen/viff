@@ -1007,7 +1007,7 @@ class ActiveRuntime(Runtime):
 
     @increment_pc
     def double_share_random(self, T, d1, d2, field):
-        """Double-shares a randoms secret by using two polynomials.
+        """Double-share a random secret using two polynomials.
 
         The guarantee is that a number of shares are made and out of
         those, the T that are returned by this method will be correct
