@@ -68,29 +68,32 @@ class ActiveRuntimeTest(RuntimeTestCase):
         from viff.field import GF
         self.Zp = GF(11)
 
-        r_t, r_2t = runtime.double_share_random(T,
-                                                runtime.threshold,
-                                                2*runtime.threshold,
-                                                self.Zp)
-
-        # Check that we got the expected number of shares.
-        self.assertEquals(len(r_t), T)
-        self.assertEquals(len(r_2t), T)
-
         def verify(shares):
             """Verify that the list contains two equal shares."""
             self.assertEquals(shares[0], shares[1])
 
-        results = []
-        for a, b in zip(r_t, r_2t):
-            self.assert_type(a, Share)
-            self.assert_type(b, Share)
-            open_a = runtime.open(a)
-            open_b = runtime.open(b, threshold=2*runtime.threshold)
-            result = gatherResults([open_a, open_b])
-            result.addCallback(verify)
-            results.append(result)
-        return gatherResults(results)
+        def check(double):
+            r_t, r_2t = double
+
+            # Check that we got the expected number of shares.
+            self.assertEquals(len(r_t), T)
+            self.assertEquals(len(r_2t), T)
+
+            results = []
+            for a, b in zip(r_t, r_2t):
+                self.assert_type(a, Share)
+                self.assert_type(b, Share)
+                open_a = runtime.open(a)
+                open_b = runtime.open(b, threshold=2*runtime.threshold)
+                result = gatherResults([open_a, open_b])
+                result.addCallback(verify)
+                results.append(result)
+            return gatherResults(results)
+
+        double = runtime.double_share_random(T, runtime.threshold,
+                                             2*runtime.threshold, self.Zp)
+        double.addCallback(check)
+        return double
 
     @protocol
     def test_generate_triples(self, runtime):

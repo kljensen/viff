@@ -1052,7 +1052,7 @@ class ActiveRuntime(Runtime):
 
         # Return the first T shares (the ones that was not opened in
         # the verifying step.
-        return rvec1.rows[0][:T], rvec2.rows[0][:T]
+        return succeed((rvec1.rows[0][:T], rvec2.rows[0][:T]))
 
     @increment_pc
     def get_triple(self, field):
@@ -1088,12 +1088,15 @@ class ActiveRuntime(Runtime):
             ci.addCallback(lambda (ai, bi): ai * bi)
             c_2t.append(ci)
 
-        r_t, r_2t = self.double_share_random(T, t, 2*t, field)
-        d_2t = [c_2t[i] - r_2t[i] for i in range(T)]
-        d = [self.open(d_2t[i], threshold=2*t) for i in range(T)]
-        c_t = [r_t[i] + d[i] for i in range(T)]
+        def make_triple((r_t, r_2t)):
+            d_2t = [c_2t[i] - r_2t[i] for i in range(T)]
+            d = [self.open(d_2t[i], threshold=2*t) for i in range(T)]
+            c_t = [r_t[i] + d[i] for i in range(T)]
+            return zip(a_t, b_t, c_t)
 
-        return succeed(zip(a_t, b_t, c_t))
+        double = self.double_share_random(T, t, 2*t, field)
+        double.addCallback(make_triple)
+        return double
 
     @increment_pc
     def _broadcast(self, sender, message=None):
