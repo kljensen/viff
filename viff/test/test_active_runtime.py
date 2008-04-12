@@ -65,8 +65,6 @@ class ActiveRuntimeTest(RuntimeTestCase):
     def test_double_share_random(self, runtime):
         """Test double-share random numbers."""
         T = runtime.num_players - 2 * runtime.threshold
-        from viff.field import GF
-        self.Zp = GF(11)
 
         def verify(shares):
             """Verify that the list contains two equal shares."""
