@@ -44,7 +44,7 @@ from viff.matrix import Matrix, hyper
 from viff.util import wrapper, rand
 
 from twisted.internet import reactor
-from twisted.internet.defer import Deferred, DeferredList, succeed
+from twisted.internet.defer import Deferred, DeferredList, gatherResults
 from twisted.internet.protocol import ClientFactory, ServerFactory
 from twisted.protocols.basic import Int16StringReceiver
 
@@ -1045,14 +1045,78 @@ class ActiveRuntime(Runtime):
         svec2 = Matrix([d2_shares]).transpose()
 
         # Apply the hyper-invertible matrix to svec1 and svec2.
-        rvec1 = (self._hyper * svec1).transpose()
-        rvec2 = (self._hyper * svec2).transpose()
+        rvec1 = (self._hyper * svec1)
+        rvec2 = (self._hyper * svec2)
 
-        # TODO: verify sharings
+        # Get back to normal lists of shares.
+        svec1 = svec1.transpose().rows[0]
+        svec2 = svec2.transpose().rows[0]
+        rvec1 = rvec1.transpose().rows[0]
+        rvec2 = rvec2.transpose().rows[0]
 
-        # Return the first T shares (the ones that was not opened in
-        # the verifying step.
-        return succeed((rvec1.rows[0][:T], rvec2.rows[0][:T]))
+        def verify(shares):
+            """Verify shares.
+
+            It is checked that they correspond to polynomial of the
+            expected degrees and that they can be recombined to the
+            same value.
+
+            If the verification succeeds, the T double shares are
+            returned, otherwise the errback is called.
+            """
+            si_1, si_2 = shares
+
+            # TODO: This is necessary since shamir.recombine expects
+            # to receive a list of *pairs* of field elements.
+            si_1 = map(lambda (i, s): (field(i+1), s), enumerate(si_1))
+            si_2 = map(lambda (i, s): (field(i+1), s), enumerate(si_2))
+
+            # Verify the sharings. If any of the assertions fail and
+            # raise an exception, the errbacks will be called on the
+            # double share returned by double_share_random.
+            assert shamir.verify_sharing(si_1, d1), "Could not verify si_1"
+            assert shamir.verify_sharing(si_2, d2), "Could not verify si_2"
+            assert shamir.recombine(si_1[:d1+1]) == shamir.recombine(si_2[:d2+1]), \
+                "Shares do not recombine to the same value"
+
+            # If we reach this point the n - T shares were verified
+            # and we can safely return the first T shares.
+            return (rvec1[:T], rvec2[:T])
+
+        def exchange(shares):
+            """Exchange and (if possible) verify shares."""
+            svec1, svec2 = shares
+            pc = tuple(self.program_counter)
+
+            # We send our shares to the verifying players.
+            for offset, (s1, s2) in enumerate(zip(svec1, svec2)):
+                if T+1+offset != self.id:
+                    self.protocols[T+1+offset].sendShare(pc, s1)
+                    self.protocols[T+1+offset].sendShare(pc, s2)
+
+            if self.id > T:
+                # The other players will send us their shares of si_1
+                # and si_2 and we will verify it.
+                si_1 = []
+                si_2 = []
+                for peer_id in inputters:
+                    if self.id == peer_id:
+                        si_1.append(Share(self, field, svec1[peer_id - T - 1]))
+                        si_2.append(Share(self, field, svec2[peer_id - T - 1]))
+                    else:
+                        si_1.append(self._expect_share(peer_id, field))
+                        si_2.append(self._expect_share(peer_id, field))
+                result = gatherResults([gatherResults(si_1), gatherResults(si_2)])
+                self.schedule_callback(result, verify)
+                return result
+            else:
+                # We cannot verify anything, so we just return the
+                # first T shares.
+                return (rvec1[:T], rvec2[:T])
+
+        result = gather_shares([gather_shares(svec1[T:]), gather_shares(svec2[T:])])
+        self.schedule_callback(result, exchange)
+        return result
 
     @increment_pc
     def get_triple(self, field):
