@@ -62,6 +62,23 @@ class ActiveRuntimeTest(RuntimeTestCase):
         return gatherResults([x, y, z])
 
     @protocol
+    def test_single_share_random(self, runtime):
+        """Test sharing of random numbers."""
+        T = runtime.num_players - 2 * runtime.threshold
+
+        def check(shares):
+            # Check that we got the expected number of shares.
+            self.assertEquals(len(shares), T)
+
+            results = []
+            for share in shares:
+                self.assert_type(share, Share)
+
+        shares = runtime.single_share_random(T, runtime.threshold, self.Zp)
+        shares.addCallback(check)
+        return shares
+
+    @protocol
     def test_double_share_random(self, runtime):
         """Test double-share random numbers."""
         T = runtime.num_players - 2 * runtime.threshold
