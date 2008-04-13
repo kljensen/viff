@@ -1010,7 +1010,7 @@ class ActiveRuntime(Runtime):
         result = Share(self, share_x.field)
         # This is the Deferred we will do processing on.
         triple = self.get_triple(share_x.field)
-        triple.addCallback(finish_mul)
+        self.schedule_callback(triple, finish_mul)
         # We add the result to the chains in triple.
         triple.chainDeferred(result)
         return result
@@ -1249,7 +1249,7 @@ class ActiveRuntime(Runtime):
         double_c = self.double_share_random(T, t, 2*t, field)
 
         result = gatherResults([single_a, single_b, double_c])
-        result.addCallback(make_triple)
+        self.schedule_callback(result, make_triple)
         return result
 
     @increment_pc
