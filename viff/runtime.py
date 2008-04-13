@@ -1229,25 +1229,28 @@ class ActiveRuntime(Runtime):
         t = self.threshold
         T = n - 2*t
 
-        # Generate normal random sharings.
-        a_t = [self.prss_share_random(field) for _ in range(T)]
-        b_t = [self.prss_share_random(field) for _ in range(T)]
-        c_2t = []
-        for i in range(T):
-            # Multiply a[i] and b[i] without resharing.
-            ci = gather_shares([a_t[i], b_t[i]])
-            ci.addCallback(lambda (ai, bi): ai * bi)
-            c_2t.append(ci)
+        def make_triple(shares):
+            a_t, b_t, (r_t, r_2t) = shares
 
-        def make_triple((r_t, r_2t)):
+            c_2t = []
+            for i in range(T):
+                # Multiply a[i] and b[i] without resharing.
+                ci = gather_shares([a_t[i], b_t[i]])
+                ci.addCallback(lambda (ai, bi): ai * bi)
+                c_2t.append(ci)
+
             d_2t = [c_2t[i] - r_2t[i] for i in range(T)]
             d = [self.open(d_2t[i], threshold=2*t) for i in range(T)]
             c_t = [r_t[i] + d[i] for i in range(T)]
             return zip(a_t, b_t, c_t)
 
-        double = self.double_share_random(T, t, 2*t, field)
-        double.addCallback(make_triple)
-        return double
+        single_a = self.single_share_random(T, t, field)
+        single_b = self.single_share_random(T, t, field)
+        double_c = self.double_share_random(T, t, 2*t, field)
+
+        result = gatherResults([single_a, single_b, double_c])
+        result.addCallback(make_triple)
+        return result
 
     @increment_pc
     def _broadcast(self, sender, message=None):
