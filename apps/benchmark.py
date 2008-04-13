@@ -57,6 +57,7 @@ import sys
 import time
 from optparse import OptionParser
 import operator
+from pprint import pprint
 
 from twisted.internet import reactor
 
@@ -122,9 +123,23 @@ print "I am player %d, will %s %d numbers" % (id, options.operation, count)
 class Benchmark:
 
     def __init__(self, rt, operation):
-        print "Runtime ready, starting protocol"
         self.rt = rt
         self.operation = operation
+
+        if isinstance(self.rt, ActiveRuntime) and self.operation == operator.mul:
+            print "Starting preprocessing"
+            program_desc = {
+                ("generate_triples", (Zp,)):
+                    [(i, 1, 0) for i in range(3 + 2*count, 3 + 3*count)]
+                }
+            preproc = rt.preprocess(program_desc)
+            preproc.addCallback(self.begin)
+        else:
+            print "Need no preprocessing"
+            self.begin(None)
+
+    def begin(self, _):
+        print "Runtime ready, starting protocol"
         self.a_shares = [self.rt.prss_share_random(Zp) for _ in range(count)]
         self.b_shares = [self.rt.prss_share_random(Zp) for _ in range(count)]
         shares_ready = gather_shares(self.a_shares + self.b_shares)
@@ -151,6 +166,11 @@ class Benchmark:
 
     def finished(self, _):
         print "Finished, synchronizing shutdown."
+
+        if self.rt._needed_data:
+            print "Missing pre-processed data:"
+            pprint(self.rt._needed_data)
+
         sync = self.rt.synchronize()
         sync.addCallback(self.shutdown)
 

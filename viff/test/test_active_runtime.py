@@ -132,6 +132,8 @@ class ActiveRuntimeTest(RuntimeTestCase):
                 results.append(result)
             return gatherResults(results)
 
-        triples = runtime.generate_triples(self.Zp)
+        count, triples = runtime.generate_triples(self.Zp)
+        self.assertEquals(count, runtime.num_players - 2*runtime.threshold)
+
         triples.addCallback(check)
         return triples

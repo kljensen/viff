@@ -44,7 +44,7 @@ from viff.matrix import Matrix, hyper
 from viff.util import wrapper, rand
 
 from twisted.internet import reactor
-from twisted.internet.defer import Deferred, DeferredList, gatherResults
+from twisted.internet.defer import Deferred, DeferredList, gatherResults, succeed
 from twisted.internet.protocol import ClientFactory, ServerFactory
 from twisted.protocols.basic import Int16StringReceiver
 
@@ -370,6 +370,38 @@ def increment_pc(method):
     return inc_pc_wrapper
 
 
+def preprocess(generator):
+    """Track calls to this method.
+
+    The decorated method will be replaced with a proxy method which
+    first tries to get the data needed from C{self._pool}, and if that
+    fails it falls back to the original method.
+
+    The C{generator} method is only used to record where the data
+    should be generated from, the method is not actually called.
+
+    @param generator: Use this method as the generator for
+    pre-processed data.
+    @type generator: C{str}
+    """
+
+    def preprocess_decorator(method):
+
+        @wrapper(method)
+        def preprocess_wrapper(self, *args, **kwargs):
+            pc = tuple(self.program_counter)
+            try:
+                return self._pool[pc]
+            except KeyError:
+                key = (generator, args)
+                pcs = self._needed_data.setdefault(key, [])
+                pcs.append(pc)
+                return method(self, *args, **kwargs)
+
+        return preprocess_wrapper
+    return preprocess_decorator
+
+
 class BasicRuntime:
     """Basic VIFF runtime with no crypto.
 
@@ -425,6 +457,11 @@ class BasicRuntime:
         if self.options.deferred_debug:
             from twisted.internet import defer
             defer.setDebugging(True)
+
+        #: Pool of preprocessed data.
+        self._pool = {}
+        #: Description of needed preprocessed data.
+        self._needed_data = {}
 
         #: Current program counter.
         #:
@@ -607,6 +644,72 @@ class BasicRuntime:
         self._expect_data(peer_id, "share", share)
         return share
 
+    @increment_pc
+    def preprocess(self, program):
+        """Generate preprocess material.
+
+        The C{program} specifies which methods to call and with which
+        arguments. The generator methods called must adhere to the
+        following interface:
+
+          - They must return a C{(int, Deferred)} tuple where the
+            C{int} tells us how many items of pre-processed data the
+            Deferred will yield.
+
+          - The Deferred must yield a C{list} of the promissed length.
+
+          - The C{list} contains the actual data. This data can be
+            either a Deferred or a C{tuple} of Deferreds.
+
+        The L{ActiveRuntime.generate_triples} method is an example of
+        a method fulfilling this interface.
+
+        @param program: A description of the needed data.
+        @type program: C{dict} mapping C{(str, args)} tuples to
+        program counters
+        """
+
+        def update(results, program_counters):
+            # We concatenate the sub-lists in results.
+            results = sum(results, [])
+
+            wait_list = []
+            for result in results:
+                # We allow pre-processing methods to return tuples of
+                # shares or individual shares as their result. Here we
+                # deconstruct result (if possible) and wait on its
+                # individual parts.
+                if isinstance(result, tuple):
+                    wait_list.extend(result)
+                else:
+                    wait_list.append(result)
+
+            # The pool must map program counters to Deferreds to
+            # present a uniform interface for the functions we
+            # pre-process.
+            results = map(succeed, results)
+
+            # Update the pool with pairs of program counter and data.
+            self._pool.update(zip(program_counters, results))
+            # Return a Deferred that waits on the individual results.
+            # This is important to make it possible for the players to
+            # avoid starting before the pre-processing is complete.
+            return gatherResults(wait_list)
+
+        wait_list = []
+        for ((generator, args), program_counters) in program.iteritems():
+            print "Preprocessing %s (%d items)" % (generator, len(program_counters))
+            func = getattr(self, generator)
+            results = []
+            items = 0
+            while items < len(program_counters):
+                item_count, result = func(*args)
+                items += item_count
+                results.append(result)
+            ready = gatherResults(results)
+            ready.addCallback(update, program_counters)
+            wait_list.append(ready)
+        return DeferredList(wait_list)
 
 class Runtime(BasicRuntime):
     """The VIFF runtime.
@@ -1206,12 +1309,11 @@ class ActiveRuntime(Runtime):
         return result
 
     @increment_pc
+    @preprocess("generate_triples")
     def get_triple(self, field):
-        # TODO: This is of course insecure... We should move
-        # generate_triples to a preprocessing step and draw the
-        # triples from a pool instead. Also, using only the first
-        # triple is quite wasteful...
-        result = self.generate_triples(field)
+        # This is a waste, but this function is only called if there
+        # are no pre-processed triples left.
+        count, result = self.generate_triples(field)
         result.addCallback(lambda triples: triples[0])
         return result
 
@@ -1220,10 +1322,12 @@ class ActiveRuntime(Runtime):
         """Generate multiplication triples.
 
         These are random numbers M{a}, M{b}, and M{c} such that M{c =
-        ab}.
+        ab}. This function can be used in pre-processing.
 
-        @return: C{list} of 3-tuples.
-        @returntype: C{list} of C{(Share, Share, Share)}
+        @return: Number of triples returned and a Deferred which will
+        yield a C{list} of 3-tuples.
+        @returntype: (C{int}, C{list} of Deferred C{(Share, Share,
+        Share)})
         """
         n = self.num_players
         t = self.threshold
@@ -1250,7 +1354,7 @@ class ActiveRuntime(Runtime):
 
         result = gatherResults([single_a, single_b, double_c])
         self.schedule_callback(result, make_triple)
-        return result
+        return T, result
 
     @increment_pc
     def _broadcast(self, sender, message=None):
