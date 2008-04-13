@@ -993,7 +993,7 @@ class ActiveRuntime(Runtime):
             d = self.open(share_x - a)
             e = self.open(share_y - b)
 
-            # TODO: We ought to be able to simple do
+            # TODO: We ought to be able to simply do
             #
             #   return d*e + d*y + e*x + c
             #
