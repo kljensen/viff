@@ -16,6 +16,8 @@ please refer to it for details on the issues:
 Version 0.5, not yet released
 -----------------------------
 
+Added preliminary support for preprocessing and an efficient
+multiplication protocol which is secure against active adversaries.
 The Runtime class has been split into several parts and two new mixin
 classes provide different comparison protocols. Several coercion
 problems were fixed. The Runtime.callback method was renamed to
@@ -30,6 +32,9 @@ Details:
   method, then you need to use the new Toft05Runtime class from
   viff.comparison. If you used greater_than_equalII, then use the
   Toft07Runtime from the same module.
+
+* Issue 3: Preprocessing. The runtime will now log the use of certain
+  methods and this log can be used to preprocess the needed data.
 
 * Issue 7: New system for unit tests. The tests now better simulate an
   asynchronous network by randomly delaying the communication between
