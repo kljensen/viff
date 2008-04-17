@@ -46,6 +46,10 @@ Details:
 
 * The coercion done by the xor method was also fixed.
 
+* Issue 30: Local multiplication if one operand is a constant. The
+  runtime will now avoid an expensive resharing step when multiplying
+  shares with constants.
+
 * Issue 22: Allow sending data several times in one method. Previously
   one could only send once to a given players in a given method since
   all communication used the same program counter. The data is now

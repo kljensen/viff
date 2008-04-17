@@ -71,18 +71,18 @@ last_timestamp = time.time()
 start = 0
 
 
-def record_start():
+def record_start(what):
     global start
     start = time.time()
     print "*" * 64
-    print "Started"
+    print "Started", what
 
 
-def record_stop(_):
+def record_stop(_, what):
     stop = time.time()
     print
     print "Total time used: %.3f sec" % (stop-start)
-    print "Time per operation: %.3f ms" % (1000*float(stop-start) / count)
+    print "Time per %s operation: %.3f ms" % (what, 1000*float(stop-start) / count)
     print "*" * 6
 
 
@@ -132,7 +132,9 @@ class Benchmark:
                 ("generate_triples", (Zp,)):
                     [(i, 1, 0) for i in range(3 + 2*count, 3 + 3*count)]
                 }
+            record_start("preprocessing")
             preproc = rt.preprocess(program_desc)
+            preproc.addCallback(record_stop, "preprocessing")
             preproc.addCallback(self.begin)
         else:
             print "Need no preprocessing"
@@ -166,13 +168,14 @@ class Benchmark:
 
     def finished(self, _):
         print "Finished, synchronizing shutdown."
+        sys.stdout.flush()
 
         if self.rt._needed_data:
             print "Missing pre-processed data:"
             pprint(self.rt._needed_data)
 
         sync = self.rt.synchronize()
-        sync.addCallback(self.shutdown)
+        sync.addCallback(lambda _: reactor.callLater(5, self.shutdown, None))
 
     def shutdown(self, _):
         print "Shutdown."
@@ -184,24 +187,22 @@ class Benchmark:
 class ParallelBenchmark(Benchmark):
 
     def run_test(self, _):
-        print "Starting parallel test."
         c_shares = []
-        record_start()
+        record_start("parallel test")
         while self.a_shares and self.b_shares:
             a = self.a_shares.pop()
             b = self.b_shares.pop()
             c_shares.append(self.operation(a, b))
 
         done = gather_shares(c_shares)
-        done.addCallback(record_stop)
+        done.addCallback(record_stop, "parallel test")
         done.addCallback(self.finished)
 
 # A benchmark where the operations are executed one after each other.
 class SequentialBenchmark(Benchmark):
 
     def run_test(self, _):
-        print "Starting sequential test."
-        record_start()
+        record_start("sequential test")
         self.single_operation(None)
 
     def single_operation(self, _):
@@ -211,7 +212,7 @@ class SequentialBenchmark(Benchmark):
             c = self.operation(a, b)
             c.addCallback(self.single_operation)
         else:
-            record_stop(None)
+            record_stop(None, "sequential test")
             self.finished(None)
 
 if options.operation == "mul":
