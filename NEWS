@@ -13,8 +13,8 @@ please refer to it for details on the issues:
   http://tracker.viff.dk/
 
 
-Version ?, not yet released
----------------------------
+Version 0.5, not yet released
+-----------------------------
 
 The Runtime class has been split into several parts and two new mixin
 classes provide different comparison protocols. Several coercion
