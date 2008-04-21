@@ -1,4 +1,5 @@
-# Necessary because of the 'å' in 'Damgård': -*- coding: latin-1 -*-
+# -*- coding: utf-8 -*-
+#
 # Copyright 2007, 2008 VIFF Development Team.
 #
 # This file is part of VIFF, the Virtual Ideal Functionality Framework.
@@ -864,13 +865,13 @@ class Runtime(BasicRuntime):
 
     @increment_pc
     def prss_share(self, inputters, field, element=None):
-        """Creates pseudo-random secret sharings.
+        u"""Creates pseudo-random secret sharings.
 
         This protocol creates a secret sharing for each player in the
         subset of players specified in C{inputters}. The protocol uses the
         pseudo-random secret sharing technique described in the paper "Share
         Conversion, Pseudorandom Secret-Sharing and Applications to Secure
-        Computation" by Ronald Cramer, Ivan Damgård, and Yuval Ishai in Proc.
+        Computation" by Ronald Cramer, Ivan DamgÃ¥rd, and Yuval Ishai in Proc.
         of TCC 2005, LNCS 3378.
         U{Download <http://www.cs.technion.ac.il/~yuvali/pubs/CDI05.ps>}.
 

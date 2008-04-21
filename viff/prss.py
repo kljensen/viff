@@ -1,4 +1,4 @@
-# Necessary because of the 'å' in 'Damgård': -*- coding: latin-1 -*-
+# -*- coding: utf-8 -*-
 #
 # Copyright 2007, 2008 VIFF Development Team.
 #
@@ -17,7 +17,7 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with VIFF. If not, see <http://www.gnu.org/licenses/>.
 
-"""Methods for pseudo-random secret sharing.
+u"""Methods for pseudo-random secret sharing.
 
 Normal Shamir sharing (see the L{shamir} module) requires secure
 channels between the players for distributing shares. With
@@ -36,7 +36,7 @@ method for generating subsets of a specific size.
 
 The code is based on the paper "Share Conversion, Pseudorandom
 Secret-Sharing and Applications to Secure Computation" by Ronald
-Cramer, Ivan Damgård, and Yuval Ishai in Proc. of TCC 2005, LNCS 3378.
+Cramer, Ivan DamgÃ¥rd, and Yuval Ishai in Proc. of TCC 2005, LNCS 3378.
 U{Download <http://www.cs.technion.ac.il/~yuvali/pubs/CDI05.ps>}.
 """
 
