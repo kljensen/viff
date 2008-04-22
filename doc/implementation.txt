@@ -10,3 +10,4 @@ VIFF consists of several modules which will be described next.
    shamir
    matrix
    prss
+   config
