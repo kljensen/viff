@@ -17,9 +17,12 @@
 
 """Shamir secret sharing and recombination.
 
-Based on the paper "How to share a secret" by Adi Shamir in
-I{Communications of the ACM} B{22} (11): 612-613.
+Based on the paper *How to share a secret* by Adi Shamir in
+*Communications of the ACM* **22** (11): 612-613.
 """
+
+__docformat__ = "restructuredtext"
+
 
 import operator
 from viff.util import rand
@@ -27,6 +30,10 @@ from viff.util import rand
 
 def share(secret, threshold, num_players):
     """Shamir share secret.
+
+    The *threshold* indicates the maximum number of shares that reveal
+    nothing about *secret*. The return value is a list of ``(player
+    id, share)`` pairs.
 
     It holds that sharing and recombination cancels each other:
 
@@ -41,25 +48,12 @@ def share(secret, threshold, num_players):
     >>> share(Zp(10), 0, 5)
     [({1}, {10}), ({2}, {10}), ({3}, {10}), ({4}, {10}), ({5}, {10})]
 
-    up to but not including C{num_players}:
+    up to but not including *num_players*:
 
     >>> share(Zp(10), 5, 5)
     Traceback (most recent call last):
       ...
     AssertionError: Threshold out of range
-
-    @param secret: the secret to be shared.
-    @type secret: a field element
-
-    @param threshold: maximum number of shares that reveal nothing
-    about the secret.
-    @type threshold: integer
-
-    @param num_players: number of players.
-    @type num_players: integer
-
-    @return: shares, one for each player.
-    @returntype: C{list} of (player id, share) pairs
     """
     assert threshold >= 0 and threshold < num_players, "Threshold out of range"
 
@@ -93,19 +87,17 @@ def share(secret, threshold, num_players):
 
 #: Cached recombination vectors.
 #:
-#: The recombination vector used by L{recombine} depends only on the
+#: The recombination vector used by `recombine` depends only on the
 #: recombination point and the player IDs of the shares, and so it can
 #: be cached for efficiency.
 _recombination_vectors = {}
 
 
 def recombine(shares, x_recomb=0):
-    """Recombines list of (xi, yi) pairs.
+    """Recombines list of ``(xi, yi)`` pairs.
 
-    Recombination is done in the optional point M{x}.
-
-    @param shares: M{threshold+1} shares.
-    @type shares: C{list} of (player id, share) pairs
+    Shares is a list of *threshold* + 1 ``(player id, share)`` pairs.
+    Recombination is done in the optional point *x_recomb*.
     """
     xs = [x_i for (x_i, _) in shares]
     ys = [y_i for (_, y_i) in shares]
@@ -137,11 +129,6 @@ def verify_sharing(shares, degree):
     True
     >>> verify_sharing(shares, 1)
     False
-    >>>
-
-    @param shares: The shares to be checked.
-    @param degree: The maximum degree of the interpolating polynomial.
-    @return: C{True} if the sharing is correct, otherwise C{False}.
     """
     used_shares = shares[0:degree+1]
     for i in range(degree+1, len(shares)+1):
