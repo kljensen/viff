@@ -18,8 +18,8 @@
 """Modeling of Galois (finite) fields.
 
 The GF function creates classes which implements Galois (finite)
-fields of prime order whereas the GF256 class implements the the
-GF(2^8) field with characteristic 2.
+fields of prime order whereas the :class:`GF256` class implements the
+the GF(2^8) field with characteristic 2.
 
 All fields work the same: instantiate an object from a field to get
 hold of an element of that field. Elements implement the normal
@@ -47,7 +47,7 @@ Exponentiation:
 {12}
 
 Square roots can be found for elements based on GF fields with a Blum
-prime modulus (see L{GF} for more information):
+prime modulus (see :func:`GF` for more information):
 
 >>> x.sqrt()
 {3}
@@ -62,9 +62,12 @@ Traceback (most recent call last):
     ...
 TypeError: unsupported operand type(s) for +: 'GFElement' and 'GFElement'
 
-The reason for the slightly confusing error message is that C{x} and
-C{z} are instances of two I{different} classes called C{GFElement}.
+The reason for the slightly confusing error message is that ``x`` and
+``z`` are instances of two *different* classes called ``GFElement``.
 """
+
+__docformat__ = "restructuredtext"
+
 
 from gmpy import mpz
 
@@ -75,15 +78,15 @@ class FieldElement(object):
 
 #: Logarithm table.
 #:
-#: Maps a value M{x} to M{log3(x)}. See L{_generate_tables}.
+#: Maps a value *x* to *log3(x)*. See `_generate_tables`.
 _log_table = {}
 #: Exponentiation table.
 #:
-#: Maps a value M{y} to M{3^y}. See L{_generate_tables}.
+#: Maps a value *y* to *3^y*. See `_generate_tables`.
 _exp_table = {}
 #: Inversion table.
 #:
-#: Maps a value M{x} to M{x^-1}. See L{_generate_tables}.
+#: Maps a value *x* to *x^-1*. See `_generate_tables`.
 _inv_table = {}
 
 
@@ -91,10 +94,10 @@ def _generate_tables():
     """Generate tables with logarithms, antilogarithms (exponentials)
     and inverses.
 
-    This updates the L{_log_table}, L{_exp_table}, and L{_inv_table}
-    fields. The generator used is 0x03.
+    This updates the `_log_table`, `_exp_table`, and `_inv_table`
+    fields. The generator used is ``0x03``.
 
-    Code adapted from U{http://www.samiam.org/galois.html}.
+    Code adapted from http://www.samiam.org/galois.html.
     """
     a = 1
     for c in range(255):
@@ -164,7 +167,7 @@ class GF256(FieldElement):
     #: Subtract this and another GF256 element.
     #:
     #: Addition is its own inverse in GF(2^8) and so this is the same
-    #: as L{__add__}.
+    #: as `__add__`.
     __sub__ = __add__
     #: Subtract this and another GF256 element (reflected argument version).
     __rsub__ = __sub__
@@ -209,22 +212,14 @@ class GF256(FieldElement):
         return result
 
     def __div__(self, other):
-        """Division.
-
-        @param other: right-hand side.
-        @type other: GF256 element
-        """
+        """Division."""
         return self * ~other
 
     __truediv__ = __div__
     __floordiv__ = __div__
 
     def __rdiv__(self, other):
-        """Division (reflected argument version).
-
-        @param other: the left-hand side.
-        @type other: integer
-        """
+        """Division (reflected argument version)."""
         return GF256(other) / self
 
     __rtruediv__ = __rdiv__
@@ -237,7 +232,7 @@ class GF256(FieldElement):
     def __invert__(self):
         """Invertion.
 
-        @raise ZeroDivisionError: if trying to inverse the zero
+        Raises :exc:`ZeroDivisionError` if trying to inverse the zero
         element.
         """
         if self.value == 0:
