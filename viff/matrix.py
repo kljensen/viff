@@ -243,7 +243,7 @@ class Matrix(object):
 
 
 def hyper(n, field):
-    """Makes a *n* times *n* hyper-invertible square matrix.
+    """Makes an *n* times *n* hyper-invertible square matrix.
     The matrix entries will belong to *field*.
 
     A hyper-invertible matrix is a matrix where every sub-matrix is
