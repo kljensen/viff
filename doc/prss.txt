@@ -1,0 +1,12 @@
+
+PRSS Module
+===========
+
+.. automodule:: viff.prss
+
+   .. autoclass:: PRF
+      :members: __call__
+
+   .. autofunction:: prss
+
+   .. autofunction:: generate_subsets

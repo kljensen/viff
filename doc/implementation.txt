@@ -9,3 +9,4 @@ VIFF consists of several modules which will be described next.
    field
    shamir
    matrix
+   prss
