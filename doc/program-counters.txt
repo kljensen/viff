@@ -1,0 +1,200 @@
+
+Program Counters
+================
+
+When two players execute a large computation they need to agree with
+each other on a labelling of the individual operations so that they
+know where each received result belongs. In VIFF we call these labels
+*program counters*. We will try to explain the design of these
+counters in this document and list some ideas for alternative
+implementations.
+
+The basic setup in VIFF is a set of players who communicate over
+reliable point-to-point links, e.g., TCP or SSL connections. It is
+important to remember that these links guarantee that all transmitted
+messages arrive unchanged at the destination and that they arrive in
+the order sent.
+
+
+The naive solution
+------------------
+
+The very first version of VIFF network data was numbered in the most
+naive way possible: using a single counter for each player. This
+worked fine most of the time, but once in a while a test would fail to
+give the correct result. It was only when one ran thousands of
+multiplications that the bug appeared, but its cause was quite simple.
+Consider a program like this where we assume that the shares *a*, *b*,
+*c*, and *d* have already been correctly defined::
+
+  x = mul(a, b)
+  y = mul(c, d)
+
+Back then, the :func:`mul` function was implemented like this::
+
+  def mul(share_a, share_b):
+      inc_pc()
+      result = gather_shares([share_a, share_b])
+      result.addCallback(lambda (a, b): a * b)
+      result.addCallback(shamir_share)
+      result.addCallback(recombine, threshold=2*threshold)
+      return result
+
+where :func:`inc_pc` took care of incrementing the global program
+counter. This simple implementation worked 99.99% of the time with
+three players connected on a LAN, but once in a while it would fail to
+calculate the correct results.
+
+In our example program, :func:`shamir_share` is called twice: once
+when *a* and *b* are ready, and once when *c* and *d* are ready. Most
+of the time *a* and *b* are ready first on all players, and so they
+all agree on the program counter value for this call to
+:func:`shamir_share`. But when we have bad luck, they one player sees
+*c* and *d* arrive first and so the two calls to :func:`shamir_share`
+are switched for that player.
+
+The problem is the asynchronous nature of Twisted: all players agree
+on the execution tree, but depending on the exact timing they might
+reach the nodes in the tree in a different order. The tree looks like
+this in our little example:
+
+.. code-block:: none
+
+     x       y
+     |       |
+    mul     mul
+    / \     / \
+   a   b   c   d
+
+and the two :func:`mul` can be called in either order since they do
+not depend on each other.
+
+
+The working solution
+--------------------
+
+The solution used now in VIFF has two ingredients. First, callbacks
+that depend on the program counter (like `func`:shamir_share in our
+example above) are not added with :meth:`addCallback` but instead with
+the special :meth:`viff.runtime.BasicRuntime.schedule_callback`
+method. This method saves the program counter in effect at the time of
+the its call, and ensures that the saved program counter is
+temporarily made active when the callback is called.
+
+Secondly, the program counter is a *list* of counters. This is
+necessary to ensure that we can allocate new fresh counters at any
+point in the execution tree. The execution tree is never explicitly
+constructed in VIFF, so a simple static numbering is not possible.
+
+Instead we mark methods that need to increment the program counter
+with the :func:`viff.runtime.increment_pc` decorator. The program
+counter starts at the value ``[0]`` and the decorated method will now
+begin by doing::
+
+  self.program_counter[-1] += 1
+  self.program_counter.append(0)
+
+before it executes its body. When the body is finished, the method
+does::
+
+  self.program_counter.pop()
+
+before it returns. A method :meth:`foo` defined like this::
+
+  @increment_pc
+  def foo(self):
+      print "foo:", self.program_counter
+
+is thus turned into this::
+
+  def foo(self):
+      self.program_counter[-1] += 1
+      self.program_counter.append(0)
+      print "foo:", self.program_counter
+      self.program_counter.pop()
+
+and when executed starting from the initial program counter of ``[0]``
+we see that it prints ``foo: [1, 0]`` and leaves the program counter
+at ``[1]`` after it returns. It is very important that the program
+counter is left changed like this, for this means that the next call
+to :meth:`foo` will print ``foo: [2, 0]`` and increment the program
+counter to ``[2]``.
+
+If we have a method :meth:`bar` which calls :meth:`foo` several times::
+
+  @increment_pc
+  def bar(self):
+      print "bar:", self.program_counter
+      self.foo()
+      print "bar:", self.program_counter
+      self.foo()
+      print "bar:", self.program_counter
+
+then the result of calling :meth:`bar` will be:
+
+.. code-block:: none
+
+   bar: [1, 0]
+   foo: [1, 1, 0]
+   bar: [1, 1]
+   foo: [1, 2, 0]
+   bar: [1, 2]
+
+Notice how each sub-call adds another digit to the counter and how it
+increments the counter used at the level of the caller. This system
+ensures that all program counters are unique.
+
+
+Alternatives
+------------
+
+We have come up with some alternative solutions, which are detailed
+below. More good ideas are of course welcome!
+
+History-based labels
+""""""""""""""""""""
+
+An attractive alternative is to label data sent over the net based on
+its *history*. The idea is that we associate a label ``H(x)`` with
+each variable *x*. The history is defined when new variables are
+defined --- if ``x = a * b``, then we can set ``H(x) = ("mul", H(a),
+H(b))``. To avoid growing the history without bounds we can hash it
+with a cryptographic hash function to bring it down to a fixed size.
+
+The problem with this idea is that we sometimes need to assign a
+history to a variable that depends on no other variables. An example
+of this is the result of a call to :meth:`prss_share
+<viff.runtime.Runtime.prss_share>` which takes no useful arguments. A
+possible solution would be to add some dummy arguments on which the
+history could be based, even though they wont be used by the method.
+So if you would normally call the function :func:`hat` with no
+arguments to get a :class:`Rabbit` object, you have to change your
+code from this::
+
+  rabbit = hat()
+
+to this::
+
+  rabbit = hat(dummy=locals())
+
+where the call to :func:`locals` gives you access to the local
+variables. If the use of :func:`locals` could be hidden this might be
+an acceptable solution.
+
+Using the history of the variables has the big advantage that we label
+each piece of transmitted data with just information that is relevant
+to it: namely its position in the tree formed by the calculation and
+*not* its position in the execution tree formed by the implementation
+in VIFF. This is conceptually cleaner than the current solution.
+
+Program transformation
+""""""""""""""""""""""
+
+Another idea is to solve the labelling problem by having some external
+tool transform the program into one with explicit labels. Each send
+and each receive operation needs to be labelled and the labels much
+match pair-wise.
+
+It is not entirely clear how this should work in the presence of loops
+and if it is possible to implement this in an easier way than the
+current program counters.
