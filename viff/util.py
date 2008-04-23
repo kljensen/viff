@@ -201,7 +201,7 @@ def find_prime(lower_bound, blum=False):
     If a prime is given as the lower bound, then this prime is
     returned:
 
-    >> find_prime(37)
+    >>> find_prime(37)
     37L
 
     The bound can be a Python expression as a string. This makes it

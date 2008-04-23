@@ -124,5 +124,5 @@ applications distributed in the C{apps} directory.
 @see: U{http://viff.dk/}
 """
 
-__version__ = '0.4'
+__version__ = '0.5rc1'
 __license__ = 'GNU GPL'

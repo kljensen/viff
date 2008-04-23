@@ -127,6 +127,7 @@ class Benchmark:
         self.operation = operation
 
         if isinstance(self.rt, ActiveRuntime) and self.operation == operator.mul:
+            # TODO: Make this optional and extend it to other operations.
             print "Starting preprocessing"
             program_desc = {
                 ("generate_triples", (Zp,)):
