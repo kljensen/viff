@@ -173,7 +173,7 @@ class ShareList(Share):
 
     If a threshold less than the full number of shares is used, some
     of the pairs may be missing and C{None} is used instead. In the
-    example above the C{c} Share arrived later than C{a} and C{b}, and
+    example above the C{b} Share arrived later than C{a} and C{c}, and
     so the list contains a C{None} on its place.
     """
 
