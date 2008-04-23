@@ -34,8 +34,9 @@ platforms on which we `test VIFF`_.
 Windows
 -------
 
-This describes installation of VIFF on Windows XP Professional Version
-2002 SP2.
+This describes the installation procedure for VIFF on Windows. It has
+been tested and verified on Windows XP Professional Version 2002 SP2
+and Windows Vista Ultimate SP1.
 
 1) Download and install Python_.
 
@@ -53,7 +54,8 @@ This describes installation of VIFF on Windows XP Professional Version
 
    from the folder where you unzipped the files.
 
-5) Download and install GMPY_.
+5) Download and install GMPY_. If you are using Vista, right-click on
+   the installer and choose the option to run as administrator.
 
 6) In order to secure the channels between the players using TLS, you
    need to download and install python-gnutls_. However, we haven't
@@ -61,7 +63,11 @@ This describes installation of VIFF on Windows XP Professional Version
    to contribute with details about this by sending an email to the
    `VIFF mailing list`_.
 
-7) Proceed to `testing`_.
+7) Download and install VIFF_. Note that if you are using the
+   installer on Vista, you will again need to run it as an
+   administrator.
+
+8) Proceed to `testing`_.
 
 
 Mac OS X
@@ -224,6 +230,7 @@ platforms. Do the following:
 .. _VIFF mailing list:
 .. _let us know: viff-devel@viff.dk
 
+.. _VIFF: http://viff.dk/
 .. _test VIFF: http://buildbot.viff.dk/
 .. _Python: http://python.org/
 .. _Twisted: http://twistedmatrix.com/

@@ -24,10 +24,10 @@ is responsible for sharing inputs, handling communication, and running
 the calculations.
 
 Each player participating in the protocol will instantiate a
-L{Runtime} object and use it for the calculations.
+:class:`Runtime` object and use it for the calculations.
 
-The Runtime returns L{Share} objects for most operations, and these
-can be added, subtracted, and multiplied as normal thanks to
+The Runtime returns :class:`Share` objects for most operations, and
+these can be added, subtracted, and multiplied as normal thanks to
 overloaded arithmetic operators. The runtime will take care of
 scheduling things correctly behind the scenes.
 """
@@ -53,14 +53,15 @@ from twisted.protocols.basic import Int16StringReceiver
 class Share(Deferred):
     """A shared number.
 
-    The L{Runtime} operates on shares, represented by this class.
+    The :class:`Runtime` operates on shares, represented by this class.
     Shares are asynchronous in the sense that they promise to attain a
     value at some point in the future.
 
-    Shares overload the arithmetic operations so that C{x = a + b}
-    will create a new share C{x}, which will eventually contain the
-    sum of C{a} and C{b}. Each share is associated with a L{Runtime}
-    and the arithmetic operations simply call back to that runtime.
+    Shares overload the arithmetic operations so that ``x = a + b``
+    will create a new share *x*, which will eventually contain the
+    sum of *a* and *b*. Each share is associated with a
+    :class:`Runtime` and the arithmetic operations simply call back to
+    that runtime.
     """
 
     def __init__(self, runtime, field, value=None):
@@ -134,8 +135,8 @@ class Share(Deferred):
     def clone(self):
         """Clone a share.
 
-        Works like L{util.clone_deferred} except that it returns a new
-        Share instead of a Deferred.
+        Works like :meth:`util.clone_deferred` except that it returns a new
+        :class:`Share` instead of a :class:`Deferred`.
         """
 
         def split_result(result):
@@ -149,11 +150,12 @@ class Share(Deferred):
 class ShareList(Share):
     """Create a share that waits on a number of other shares.
 
-    Roughly modelled after the Twisted C{DeferredList} class. The
-    advantage of this class is that it is a L{Share} (not just a
-    C{Deferred}) and that it can be made to trigger when a certain
-    threshold of the shares are ready. This example shows how the
-    C{pprint} callback is triggered when C{a} and C{c} are ready:
+    Roughly modelled after the Twisted :class:`DeferredList`
+    class. The advantage of this class is that it is a :class:`Share`
+    (not just a :class:`Deferred`) and that it can be made to trigger
+    when a certain threshold of the shares are ready. This example
+    shows how the :meth:`pprint` callback is triggered when *a* and
+    *c* are ready:
 
     >>> from pprint import pprint
     >>> from viff.field import GF256
@@ -167,17 +169,16 @@ class ShareList(Share):
     >>> c.callback(20)
     [(True, 10), None, (True, 20)]
 
-    The C{pprint} function is called with a list of pairs. The first
+    The :meth:`pprint` function is called with a list of pairs. The first
     component of each pair is a boolean indicating if the callback or
-    errback method was called on the corresponding L{Share}, and the
-    second component is the value given to the callback/errback.
+    errback method was called on the corresponding :class:`Share`, and
+    the second component is the value given to the callback/errback.
 
     If a threshold less than the full number of shares is used, some
-    of the pairs may be missing and C{None} is used instead. In the
-    example above the C{c} Share arrived later than C{a} and C{b}, and
-    so the list contains a C{None} on its place.
+    of the pairs may be missing and :const:`None` is used instead. In
+    the example above the *c* share arrived later than *a* and *b*,
+    and so the list contains a :const:`None` on its place.
     """
-
     def __init__(self, shares, threshold=None):
         """Initialize a share list.
 
@@ -214,10 +215,10 @@ class ShareList(Share):
 def gather_shares(shares):
     """Gather shares.
 
-    Roughly modelled after the Twisted C{gatherResults} function. It
-    takes a list of shares and returns a new L{Share} which will be
-    triggered with a list of values, namely the values from the
-    initial shares:
+    Roughly modelled after the Twisted :meth:`gatherResults`
+    function. It takes a list of shares and returns a new
+    :class:`Share` which will be triggered with a list of values,
+    namely the values from the initial shares:
 
     >>> from pprint import pprint
     >>> from viff.field import GF256
@@ -231,7 +232,7 @@ def gather_shares(shares):
     [10, 20]
 
     @param shares: the shares.
-    @type shares: C{list} of L{Share} objects
+    @type shares: :class:`list` of :class:`Share` objects
     """
 
     def filter_results(results):
@@ -248,8 +249,8 @@ class ShareExchanger(Int16StringReceiver):
     Twisted protocol is one such connection. It is used to send and
     receive shares from one other player.
 
-    The C{marshal} module is used for converting the data to bytes for
-    the network and to convert back again to structured data.
+    The :mod:`marshal` module is used for converting the data to bytes
+    for the network and to convert back again to structured data.
     """
 
     def __init__(self):
@@ -278,10 +279,10 @@ class ShareExchanger(Int16StringReceiver):
 
         The string received is unmarshalled into the program counter,
         and a data part. The data is passed the appropriate Deferred
-        in L{self.incoming_data}.
+        in :class:`self.incoming_data`.
 
         @param string: bytes from the network.
-        @type string: C{(program_counter, data)} in
+        @type string: `(program_counter, data)` in
         marshalled form
         """
         if self.peer_id is None:
@@ -320,9 +321,6 @@ class ShareExchanger(Int16StringReceiver):
 
         The program counter and the share are marshalled and sent to
         the peer.
-
-        @param program_counter: the program counter associated with
-        the share.
         """
         self.sendData(program_counter, "share", share.value)
 
@@ -715,18 +713,20 @@ class BasicRuntime:
 class Runtime(BasicRuntime):
     """The VIFF runtime.
 
-    The runtime is used for sharing values (L{shamir_share} or
-    L{prss_share}) into L{Share} object and opening such shares
-    (L{open}) again. Calculations on shares is normally done through
-    overloaded arithmetic operations, but it is also possible to call
-    L{add}, L{mul}, etc. directly if one prefers.
+    The runtime is used for sharing values (:meth:`shamir_share` or
+    :meth:`prss_share`) into :class:`Share` object and opening such
+    shares (:meth:`open`) again. Calculations on shares is normally
+    done through overloaded arithmetic operations, but it is also
+    possible to call :meth:`add`, :meth:`mul`, etc. directly if one
+    prefers.
 
-    Each player in the protocol uses a Runtime object. To create an
-    instance and connect it correctly with the other players, please
-    use the L{create_runtime} function instead of instantiating a
-    Runtime directly. The L{create_runtime} function will take care of
-    setting up network connections and return a Deferred which
-    triggers with the Runtime object when it is ready.
+    Each player in the protocol uses a :class:`Runtime` object. To
+    create an instance and connect it correctly with the other
+    players, please use the :func:`create_runtime` function instead of
+    instantiating a Runtime directly. The :func:`create_runtime`
+    function will take care of setting up network connections and
+    return a :class:`Deferred` which triggers with the
+    :class:`Runtime` object when it is ready.
     """
 
     def __init__(self, player, threshold, options=None):

@@ -1,0 +1,18 @@
+
+Runtime Module
+==============
+
+.. automodule:: viff.runtime
+
+   .. autoclass:: viff.runtime.Share
+      :members: clone
+
+   .. autoclass:: viff.runtime.ShareList
+
+   .. autofunction viff.runtime.gather_shares
+
+   .. autoclass:: viff.runtime.ShareExchanger
+      :members: sendShare, sendData, loseConnection
+
+   .. autoclass:: viff.runtime.Runtime
+
