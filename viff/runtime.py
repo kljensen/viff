@@ -349,13 +349,11 @@ class ShareExchangerFactory(ServerFactory, ClientFactory):
 
 
 def increment_pc(method):
-    """Make method automatically increment the program counter.
+    """Make *method* automatically increment the program counter.
 
-    Adding this decorator to a L{Runtime} method will ensure that the
-    program counter is incremented correctly when entering the method.
-
-    @param method: the method.
-    @type method: a method of L{Runtime}
+    Adding this decorator to a :class:`Runtime` method will ensure
+    that the program counter is incremented correctly when entering
+    the method.
     """
 
     @wrapper(method)
@@ -373,15 +371,14 @@ def preprocess(generator):
     """Track calls to this method.
 
     The decorated method will be replaced with a proxy method which
-    first tries to get the data needed from C{self._pool}, and if that
-    fails it falls back to the original method.
+    first tries to get the data needed from
+    :attr:`BasicRuntime._pool`, and if that fails it falls back to the
+    original method.
 
-    The C{generator} method is only used to record where the data
-    should be generated from, the method is not actually called.
-
-    @param generator: Use this method as the generator for
-    pre-processed data.
-    @type generator: C{str}
+    The *generator* method is only used to record where the data
+    should be generated from, the method is not actually called. This
+    must be the name of the method (a string) and not the method
+    itself.
     """
 
     def preprocess_decorator(method):
@@ -438,8 +435,8 @@ class BasicRuntime:
         Initialized a runtime owned by the given, the threshold, and
         optionally a set of options. The runtime has no network
         connections and knows of no other players -- the
-        L{create_runtime} function should be used instead to create a
-        usable runtime.
+        :func:`create_runtime` function should be used instead to
+        create a usable runtime.
         """
         #: ID of this player.
         self.id = player.id
@@ -553,9 +550,6 @@ class BasicRuntime:
         """Make the runtime wait for the variables given.
 
         The runtime is shut down when all variables are calculated.
-
-        @param vars: variables to wait for.
-        @type  vars: list of L{Deferred}s
         """
         dl = DeferredList(vars)
         dl.addCallback(lambda _: self.shutdown())
@@ -571,12 +565,7 @@ class BasicRuntime:
         Deferred as usual.
 
         Any extra arguments are passed to the callback as with
-        addCallback.
-
-        @param deferred: the Deferred.
-        @param func: the callback.
-        @param args: extra arguments.
-        @param kwargs: extra keyword arguments.
+        :meth:`addCallback`.
         """
         # TODO, http://tracker.viff.dk/issue22: When several callbacks
         # are scheduled from the same method, they all save the same
@@ -647,25 +636,21 @@ class BasicRuntime:
     def preprocess(self, program):
         """Generate preprocess material.
 
-        The C{program} specifies which methods to call and with which
+        The *program* specifies which methods to call and with which
         arguments. The generator methods called must adhere to the
         following interface:
 
-          - They must return a C{(int, Deferred)} tuple where the
-            C{int} tells us how many items of pre-processed data the
-            Deferred will yield.
+        - They must return a ``(int, Deferred)`` tuple where the
+          ``int`` tells us how many items of pre-processed data the
+          :class:`Deferred` will yield.
 
-          - The Deferred must yield a C{list} of the promissed length.
+        - The Deferred must yield a list of the promissed length.
 
-          - The C{list} contains the actual data. This data can be
-            either a Deferred or a C{tuple} of Deferreds.
+        - The list contains the actual data. This data can be either a
+          Deferred or a tuple of Deferreds.
 
-        The L{ActiveRuntime.generate_triples} method is an example of
-        a method fulfilling this interface.
-
-        @param program: A description of the needed data.
-        @type program: C{dict} mapping C{(str, args)} tuples to
-        program counters
+        The :meth:`ActiveRuntime.generate_triples` method is an
+        example of a method fulfilling this interface.
         """
 
         def update(results, program_counters):
@@ -1054,7 +1039,7 @@ class ActiveRuntime(Runtime):
     """A runtime secure against active adversaries.
 
     This class currently inherits most of its functionality from the
-    normal L{Runtime} class and is thus I{not} yet secure.
+    normal :class:`Runtime` class and is thus **not** yet secure.
     """
 
     def __init__(self, player, threshold, options=None):
@@ -1124,13 +1109,9 @@ class ActiveRuntime(Runtime):
         """Share a random secret.
 
         The guarantee is that a number of shares are made and out of
-        those, the T that are returned by this method will be correct
-        sharings of a random number using C{degree} as the polynomial
-        degree.
-
-        @param T: The number of shares output.
-        @param degree: The degree of the polynomial.
-        @param field: The field over which to share the secret.
+        those, the *T* that are returned by this method will be
+        correct sharings of a random number using *degree* as the
+        polynomial degree.
         """
         # TODO: Move common code between single_share and
         # double_share_random out to their own methods.
@@ -1322,13 +1303,11 @@ class ActiveRuntime(Runtime):
     def generate_triples(self, field):
         """Generate multiplication triples.
 
-        These are random numbers M{a}, M{b}, and M{c} such that M{c =
-        ab}. This function can be used in pre-processing.
+        These are random numbers *a*, *b*, and *c* such that ``c =
+        ab``. This function can be used in pre-processing.
 
-        @return: Number of triples returned and a Deferred which will
-        yield a C{list} of 3-tuples.
-        @returntype: (C{int}, C{list} of Deferred C{(Share, Share,
-        Share)})
+        Returns a tuple with the number of triples generated and a
+        Deferred which will yield a list of 3-tuples.
         """
         n = self.num_players
         t = self.threshold
@@ -1497,7 +1476,7 @@ class ActiveRuntime(Runtime):
 
 
 def create_runtime(id, players, threshold, options=None, runtime_class=Runtime):
-    """Create a L{Runtime} and connect to the other players.
+    """Create a :class:`Runtime` and connect to the other players.
 
     This function should be used in normal programs instead of
     instantiating the Runtime directly. This function makes sure that
