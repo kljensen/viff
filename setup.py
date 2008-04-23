@@ -21,6 +21,10 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with VIFF. If not, see <http://www.gnu.org/licenses/>.
 
+import sys
+if not hasattr(sys, 'version_info') or sys.version_info < (2, 4, 0, 'final'):
+    raise SystemExit, "VIFF requires Python version 2.4 or later."
+
 from distutils.command.sdist import sdist
 from distutils.core import setup
 
