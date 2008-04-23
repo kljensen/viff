@@ -14,5 +14,10 @@ Runtime Module
    .. autoclass:: viff.runtime.ShareExchanger
       :members: sendShare, sendData, loseConnection
 
+   .. autofunction:: viff.runtime.increment_pc
+
+   .. autoclass:: viff.runtime.BasicRuntime
+      :members:
+
    .. autoclass:: viff.runtime.Runtime
 
