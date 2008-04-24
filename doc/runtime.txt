@@ -21,3 +21,4 @@ Runtime Module
 
    .. autoclass:: viff.runtime.Runtime
 
+   .. autoclass:: viff.runtime.ActiveRuntime
