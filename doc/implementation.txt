@@ -5,6 +5,7 @@ Implementation
 VIFF consists of several modules which will be described next.
 
 .. toctree::
+   :maxdepth: 2
 
    field
    shamir
