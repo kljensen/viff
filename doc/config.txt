@@ -4,7 +4,7 @@ Config Module
 
 .. automodule:: viff.config
 
-   .. autoclass:: viff.config.Player
+   .. autoclass:: Player
       :members: prfs, dealer_prfs
 
       .. attribute:: id
@@ -13,6 +13,6 @@ Config Module
 
          ID, hostname, and portnumber of the player.
 
-   .. autofunction:: viff.config.generate_configs
+   .. autofunction:: generate_configs
 
-   .. autofunction:: viff.config.load_config
+   .. autofunction:: load_config
