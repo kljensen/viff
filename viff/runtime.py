@@ -828,7 +828,7 @@ class Runtime(BasicRuntime):
 
     @increment_pc
     def prss_share(self, inputters, field, element=None):
-        u"""Creates pseudo-random secret sharings.
+        """Creates pseudo-random secret sharings.
         
         This protocol creates a secret sharing for each player in the
         subset of players specified in *inputters*. Each inputter
