@@ -254,11 +254,6 @@ class ShareExchanger(Int16StringReceiver):
         self.peer_id = None
 
         #: Data expected to be received in the future.
-        #:
-        #: Data from our peer is put here, either as an empty Deferred
-        #: if we are waiting on input from the player, or the data
-        #: itself if data is received from the other player before we
-        #: are ready to use it.
         self.incoming_data = {}
 
     def connectionMade(self):

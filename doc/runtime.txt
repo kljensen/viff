@@ -14,6 +14,13 @@ Runtime Module
    .. autoclass:: viff.runtime.ShareExchanger
       :members: sendShare, sendData, loseConnection
 
+      .. attribute:: ShareExchanger.incoming_data
+
+         Data from our peer is put here, either as an empty
+         :class:`Deferred` if we are waiting on input from the player,
+         or the data itself if data is received from the other player
+         before we are ready to use it.
+
    .. autofunction:: viff.runtime.increment_pc
 
    .. autofunction:: viff.runtime.create_runtime
