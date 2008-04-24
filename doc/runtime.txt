@@ -16,6 +16,8 @@ Runtime Module
 
    .. autofunction:: viff.runtime.increment_pc
 
+   .. autofunction:: viff.runtime.create_runtime
+
    .. autoclass:: viff.runtime.BasicRuntime
       :members:
 
