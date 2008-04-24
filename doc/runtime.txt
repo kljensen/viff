@@ -28,6 +28,16 @@ Runtime Module
    .. autoclass:: BasicRuntime
       :members:
 
+      .. attribute:: BasicRuntime.id
+
+         Player ID. This is an integer in the range 1--*n* for *n*
+         players.
+
+      .. attribute:: BasicRuntime.threshold
+
+         Default threshold used by :meth:`Runtime.shamir_share`,
+         :meth:`Runtime.open`, and others.
+
       .. attribute:: BasicRuntime.program_counter
 
          Whenever a share is sent over the network, it must be
