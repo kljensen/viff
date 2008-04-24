@@ -19,7 +19,7 @@ bignum arithmetic. You can find these components here:
 VIFF has been successfully tested with the following versions:
 
 :Python:         2.4.1 and 2.5.0
-:Twisted:        2.5.0
+:Twisted:        2.5.0 (there are `problems with 8.0.1`_)
 :python-gnutls:  1.1.4
 :ConfigObj:      4.4.0
 :GMPY:           1.0alpha and 1.0.2
@@ -226,6 +226,7 @@ platforms. Do the following:
    it on the `VIFF mailing list`_. This will help us improve VIFF.
 
 
+.. _problems with 8.0.1: http://tracker.viff.dk/issue37
 .. _report back:
 .. _VIFF mailing list:
 .. _let us know: viff-devel@viff.dk
