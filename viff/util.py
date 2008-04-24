@@ -64,18 +64,18 @@ def wrapper(func):
     order to ensure that they end up with correct C{__name__} and
     C{__doc__} attributes.
 
-    In addition, if the environment variable C{EPYDOC} is defined,
-    then the wrapper functions will be turned into functions that I{do
-    not} wrap -- instead they let their argument function through
-    unchanged. This is done so that epydoc can see the true function
-    arguments when generating documentation. Just remember that your
-    code will break if C{EPYDOC} is set, so it should only be used
-    when epydoc is being run.
+    In addition, if the environment variable C{VIFF_NO_WRAP} is
+    defined, then the wrapper functions will be turned into functions
+    that I{do not} wrap -- instead they let their argument function
+    through unchanged. This is done so that epydoc and Sphinx can see
+    the true function arguments when generating documentation. Just
+    remember that your code will break if C{VIFF_NO_WRAP} is set, so
+    it should only be used when documentation is being generated.
 
     @param func: the function that will be wrapped.
     @type func: callable
     """
-    if os.environ.get('EPYDOC'):
+    if os.environ.get('VIFF_NO_WRAP'):
         # Return a decorator which ignores the functions it is asked
         # to decorate and instead returns func:
         return lambda _: func

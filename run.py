@@ -126,7 +126,7 @@ def epydoc(build):
     target = "%s/api" % build
     ensure_dir(target)
     execute(["epydoc", "-vv", "--config", "epydoc.conf"],
-            {'EPYDOC': 'YES', 'target': target})
+            {'VIFF_NO_WRAP': 'YES', 'target': target})
 
 @command('coverage', 'build')
 def coverage(build):
