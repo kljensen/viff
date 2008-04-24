@@ -20,5 +20,7 @@ Runtime Module
       :members:
 
    .. autoclass:: viff.runtime.Runtime
+      :members:
 
    .. autoclass:: viff.runtime.ActiveRuntime
+      :members: mul, single_share_random, double_share_random, get_triple, generate_triples, broadcast
