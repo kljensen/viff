@@ -19,8 +19,11 @@ import sys
 #sys.path.append('some/directory')
 
 # Ensure we load VIFF from the parent directory.
-import os.path
+import os
 sys.path.insert(0, os.path.abspath('../'))
+
+# Make viff.util.wrapper a no-op.
+os.environ['VIFF_NO_WRAP'] = 'yes'
 
 # General configuration
 # ---------------------
