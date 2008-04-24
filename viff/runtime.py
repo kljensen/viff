@@ -33,6 +33,8 @@ scheduling things correctly behind the scenes.
 """
 from __future__ import division
 
+__docformat__ = "restructuredtext"
+
 import marshal
 from optparse import OptionParser, OptionGroup
 from math import ceil
