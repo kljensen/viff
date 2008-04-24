@@ -1,4 +1,6 @@
 
+.. _program-counters:
+
 Program Counters
 ================
 
