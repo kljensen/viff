@@ -67,9 +67,8 @@ class Share(Deferred):
     def __init__(self, runtime, field, value=None):
         """Initialize a share.
 
-        @param runtime: The L{Runtime} to use.
-        @param field: The field where the value lies.
-        @param value: The initial value of the share (if known).
+        If an initial value is given, it will be passed to
+        :meth:`callback` right away.
         """
         assert field is not None, "Cannot construct share without a field."
         assert callable(field), "The field is not callable, wrong argument?"
@@ -182,10 +181,9 @@ class ShareList(Share):
     def __init__(self, shares, threshold=None):
         """Initialize a share list.
 
-        @param shares: non-empty list of L{Share} objects.
-        @param threshold: number of shares to wait for. This is either
-        a number such that C{0 < threshold <= len(shares)} or C{None}
-        if all shares should be waited for.
+        The list of shares must be non-empty and if a threshold is
+        given, it must hold that ``0 < threshold <= len(shares)``. The
+        default threshold is ``len(shares)``.
         """
         assert len(shares) > 0, "Cannot create empty ShareList"
         assert threshold is None or 0 < threshold <= len(shares), \
@@ -230,9 +228,6 @@ def gather_shares(shares):
     >>> a.callback(10)
     >>> b.callback(20)
     [10, 20]
-
-    @param shares: the shares.
-    @type shares: :class:`list` of :class:`Share` objects
     """
 
     def filter_results(results):
@@ -262,9 +257,6 @@ class ShareExchanger(Int16StringReceiver):
         #: if we are waiting on input from the player, or the data
         #: itself if data is received from the other player before we
         #: are ready to use it.
-        #:
-        #: @type: C{dict} from C{(program_counter, data_type)} to
-        #: deferred data.
         self.incoming_data = {}
 
     def connectionMade(self):
@@ -280,10 +272,6 @@ class ShareExchanger(Int16StringReceiver):
         The string received is unmarshalled into the program counter,
         and a data part. The data is passed the appropriate Deferred
         in :class:`self.incoming_data`.
-
-        @param string: bytes from the network.
-        @type string: `(program_counter, data)` in
-        marshalled form
         """
         if self.peer_id is None:
             # TODO: Handle ValueError if the string cannot be decoded.
@@ -464,60 +452,59 @@ class BasicRuntime:
         #: Whenever a share is sent over the network, it must be
         #: uniquely identified so that the receiving player known what
         #: operation the share is a result of. This is done by
-        #: associating a X{program counter} with each operation.
+        #: associating a :term:`program counter` with each operation.
         #:
         #: Keeping the program counter synchronized between all
         #: players ought to be easy, but because of the asynchronous
         #: nature of network protocols, all players might not reach
         #: the same parts of the program at the same time.
         #:
-        #: Consider two players M{A} and M{B} who are both waiting on
-        #: the variables C{a} and C{b}. Callbacks have been added to
-        #: C{a} and C{b}, and the question is what program counter the
+        #: Consider two players *A* and *B* who are both waiting on
+        #: the variables *a* and *b*. Callbacks have been added to
+        #: *a* and *b*, and the question is what program counter the
         #: callbacks should use when sending data out over the
         #: network.
         #:
-        #: Let M{A} receive input for C{a} and then for C{b} a little
-        #: later, and let M{B} receive the inputs in reversed order so
-        #: that the input for C{b} arrives first. The goal is to keep
+        #: Let *A* receive input for *a* and then for *b* a little
+        #: later, and let *B* receive the inputs in reversed order so
+        #: that the input for *b* arrives first. The goal is to keep
         #: the program counters synchronized so that program counter
-        #: M{x} refers to the same operation on all players. Because
+        #: *x* refers to the same operation on all players. Because
         #: the inputs arrive in different order at different players,
         #: incrementing a simple global counter is not enough.
         #:
-        #: Instead, a I{tree} is made, which follows the tree of
+        #: Instead, a *tree* is made, which follows the tree of
         #: execution. At the top level the program counter starts at
-        #: C{[0]}. At the next operation it becomes C{[1]}, and so on.
-        #: If a callback is scheduled (see L{schedule_callback}) at
-        #: program counter C{[x, y, z]}, any calls it makes will be
-        #: numbered C{[x, y, z, 1]}, then C{[x, y, z, 2]}, and so on.
+        #: ``[0]``. At the next operation it becomes ``[1]``, and so on.
+        #: If a callback is scheduled (see :meth:`schedule_callback`) at
+        #: program counter ``[x, y, z]``, any calls it makes will be
+        #: numbered ``[x, y, z, 1]``, then ``[x, y, z, 2]``, and so on.
         #:
         #: Maintaining such a tree of program counters ensures that
         #: different parts of the program execution never reuses the
         #: same program counter for different variables.
         #:
-        #: The L{increment_pc} decorator is responsible for
+        #: The :func:`increment_pc` decorator is responsible for
         #: dynamically building the tree as the execution unfolds and
-        #: L{schedule_callback} is responsible for scheduling
+        #: :meth:`schedule_callback` is responsible for scheduling
         #: callbacks with the correct program counter.
-        #:
-        #: @type: C{list} of integers.
         self.program_counter = [0]
 
         #: Connections to the other players.
         #:
-        #: @type: C{dict} from Player ID to L{ShareExchanger} objects.
+        #: Mapping from from Player ID to :class:`ShareExchanger`
+        #: objects.
         self.protocols = {}
 
         #: Number of known players.
         #:
-        #: Equal to C{len(players)}, but storing it here is more
+        #: Equal to ``len(self.players)``, but storing it here is more
         #: direct.
         self.num_players = 0
 
         #: Information on players.
         #:
-        #: @type: C{dict} from player_id to L{Player} objects.
+        #: Mapping from Player ID to :class:`Player` objects.
         self.players = {}
         # Add ourselves, but with no protocol since we wont be
         # communicating with ourselves.
@@ -722,24 +709,13 @@ class Runtime(BasicRuntime):
     def open(self, share, receivers=None, threshold=None):
         """Open a secret sharing.
 
+        The *receivers* are the players that will eventually obtain
+        the opened result. The default is to let everybody know the
+        result. By default the :attr:`threshold` + 1 shares are
+        reconstructed, but *threshold* can be used to override this.
+
         Communication cost: every player sends one share to each
         receiving player.
-
-        @param share: the player's private part of the sharing to open.
-        @type share: Share
-
-        @param receivers: the IDs of the players that will eventually
-            obtain the opened result or None if all players should
-            obtain the opened result.
-        @type receivers: None or a C{list} of integers
-
-        @param threshold: the threshold used to open the sharing or None
-            if the runtime default should be used.
-        @type threshold: integer or None
-
-        @return: the result of the opened sharing if the player's ID
-            is in C{receivers}, otherwise None.
-        @returntype: Share or None
         """
         assert isinstance(share, Share)
         # all players receive result by default
@@ -851,30 +827,20 @@ class Runtime(BasicRuntime):
     @increment_pc
     def prss_share(self, inputters, field, element=None):
         u"""Creates pseudo-random secret sharings.
-
+        
         This protocol creates a secret sharing for each player in the
-        subset of players specified in C{inputters}. The protocol uses the
-        pseudo-random secret sharing technique described in the paper "Share
-        Conversion, Pseudorandom Secret-Sharing and Applications to Secure
-        Computation" by Ronald Cramer, Ivan Damgård, and Yuval Ishai in Proc.
-        of TCC 2005, LNCS 3378.
-        U{Download <http://www.cs.technion.ac.il/~yuvali/pubs/CDI05.ps>}.
+        subset of players specified in *inputters*. Each inputter
+        provides an integer. The result is a list of shares, one for
+        each inputter.
+
+        The protocol uses the pseudo-random secret sharing technique
+        described in the paper "Share Conversion, Pseudorandom
+        Secret-Sharing and Applications to Secure Computation" by
+        Ronald Cramer, Ivan Damgård, and Yuval Ishai in Proc. of TCC
+        2005, LNCS 3378. `Download
+        <http://www.cs.technion.ac.il/~yuvali/pubs/CDI05.ps>`__
 
         Communication cost: Each inputter does one broadcast.
-
-        @param inputters: The IDs of the players that will share a secret.
-        @type inputters: C{list} of integers
-
-        @param field: The field over which to share all the secrets.
-        @type field: L{FieldElement}
-
-        @param element: The secret that this player shares or C{None} if this
-            player is not in C{inputters}.
-        @type element: int, long, or None
-
-        @return: A list of shares corresponding to the secrets submitted by
-            the players in C{inputters}.
-        @returntype: C{List} of C{Shares}
         """
         # Verifying parameters.
         if element is None:
@@ -985,10 +951,10 @@ class Runtime(BasicRuntime):
 
     @increment_pc
     def shamir_share(self, inputters, field, number=None, threshold=None):
-        """Secret share C{number} over C{field} using Shamir's method.
+        """Secret share *number* over *field* using Shamir's method.
 
-        The number is shared using polynomial of degree C{threshold}
-        (defaults to L{self.threshold}). Returns a list of shares
+        The number is shared using polynomial of degree *threshold*
+        (defaults to :attr:`threshold`). Returns a list of shares
         unless unless there is only one inputter in which case the
         share is returned directly.
 
@@ -1047,9 +1013,9 @@ class ActiveRuntime(Runtime):
 
         #: A hyper-invertible matrix.
         #:
-        #: It should be suitable for L{self.num_players} players, but
+        #: It should be suitable for :attr:`num_players` players, but
         #: since we don't know the total number of players yet, we set
-        #: it to C{None} here and update it as necessary.
+        #: it to :const:`None` here and update it as necessary.
         self._hyper = None
         Runtime.__init__(self, player, threshold, options)
 
@@ -1192,14 +1158,9 @@ class ActiveRuntime(Runtime):
         """Double-share a random secret using two polynomials.
 
         The guarantee is that a number of shares are made and out of
-        those, the T that are returned by this method will be correct
-        double-sharings of a random number using d1 and d2 as the
+        those, the *T* that are returned by this method will be correct
+        double-sharings of a random number using *d1* and *d2* as the
         polynomial degrees.
-
-        @param T: The number of double-shares output.
-        @param d1: The degree of the first polynomial.
-        @param d2: The degree of the second polynomial.
-        @param field: The field over which to share the secret.
         """
         inputters = range(1, self.num_players + 1)
         if self._hyper is None:
@@ -1345,9 +1306,6 @@ class ActiveRuntime(Runtime):
         the paper "An asynchronous [(n-1)/3]-resilient consensus
         protocol" by G. Bracha in Proc. 3rd ACM Symposium on
         Principles of Distributed Computing, 1984, pages 154-162.
-
-        @param sender: the sender of the broadcast message.
-        @param message: the broadcast message, used only by the sender.
         """
 
         result = Deferred()
@@ -1441,10 +1399,10 @@ class ActiveRuntime(Runtime):
     def broadcast(self, senders, message=None):
         """Perform one or more Bracha broadcast(s).
 
-        The list of senders given will determine the subset of players
+        The list of *senders* given will determine the subset of players
         who wish to broadcast a message. If this player wishes to
         broadcast, its ID must be in the list of senders and the
-        optional message parameter must be used.
+        optional *message* parameter must be used.
 
         If the list of senders consists only of a single sender, the
         result will be a single element, otherwise it will be a list.
@@ -1454,10 +1412,6 @@ class ActiveRuntime(Runtime):
         the paper "An asynchronous [(n-1)/3]-resilient consensus
         protocol" by G. Bracha in Proc. 3rd ACM Symposium on
         Principles of Distributed Computing, 1984, pages 154-162.
-
-        @param senders: the list of senders.
-        @param message: the broadcast message, used if this player is
-        a sender.
         """
         assert message is None or self.id in senders
 
