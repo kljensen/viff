@@ -18,7 +18,7 @@
 # License along with VIFF. If not, see <http://www.gnu.org/licenses/>.
 
 u"""Methods for pseudo-random secret sharing. Normal Shamir sharing
-(see the :mod`viff.shamir` module) requires secure channels between
+(see the :mod:`viff.shamir` module) requires secure channels between
 the players for distributing shares. With pseudo-random secret sharing
 one can share a secret using a single broadcast instead.
 
