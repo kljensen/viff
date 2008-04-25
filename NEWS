@@ -13,9 +13,18 @@ please refer to it for details on the issues:
   http://tracker.viff.dk/
 
 
-Version ?, not yet released
----------------------------
+Version 0.5, not yet released
+-----------------------------
 
+The installation guide was updated for Windows Vista. Fixed minor
+typos in documentation.
+
+
+Version 0.5rc1, released on 2008-04-23
+--------------------------------------
+
+Added preliminary support for preprocessing and an efficient
+multiplication protocol which is secure against active adversaries.
 The Runtime class has been split into several parts and two new mixin
 classes provide different comparison protocols. Several coercion
 problems were fixed. The Runtime.callback method was renamed to
@@ -31,6 +40,9 @@ Details:
   viff.comparison. If you used greater_than_equalII, then use the
   Toft07Runtime from the same module.
 
+* Issue 3: Preprocessing. The runtime will now log the use of certain
+  methods and this log can be used to preprocess the needed data.
+
 * Issue 7: New system for unit tests. The tests now better simulate an
   asynchronous network by randomly delaying the communication between
   the players.
@@ -40,6 +52,10 @@ Details:
   where x is a Share.
 
 * The coercion done by the xor method was also fixed.
+
+* Issue 30: Local multiplication if one operand is a constant. The
+  runtime will now avoid an expensive resharing step when multiplying
+  shares with constants.
 
 * Issue 22: Allow sending data several times in one method. Previously
   one could only send once to a given players in a given method since

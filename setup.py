@@ -21,6 +21,10 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with VIFF. If not, see <http://www.gnu.org/licenses/>.
 
+import sys
+if not hasattr(sys, 'version_info') or sys.version_info < (2, 4, 0, 'final'):
+    raise SystemExit, "VIFF requires Python version 2.4 or later."
+
 from distutils.command.sdist import sdist
 from distutils.core import setup
 
@@ -104,6 +108,7 @@ that an operation starts as soon as the operands are ready.
 # * viff-devel@viff.dk
 # * http://freshmeat.net/projects/viff/
 # * http://pypi.python.org/pypi/viff/
+# * http://directory.fsf.org/project/viff/
 # * http://www.icewalkers.com/Linux/Software/532160/VIFF.html
 # * http://www.hotscripts.com/Detailed/74748.html
 # * http://sourcewell.berlios.de/appbyid.php?id=3572

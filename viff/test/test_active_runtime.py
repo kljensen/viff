@@ -62,54 +62,78 @@ class ActiveRuntimeTest(RuntimeTestCase):
         return gatherResults([x, y, z])
 
     @protocol
+    def test_single_share_random(self, runtime):
+        """Test sharing of random numbers."""
+        T = runtime.num_players - 2 * runtime.threshold
+
+        def check(shares):
+            # Check that we got the expected number of shares.
+            self.assertEquals(len(shares), T)
+
+            results = []
+            for share in shares:
+                self.assert_type(share, Share)
+
+        shares = runtime.single_share_random(T, runtime.threshold, self.Zp)
+        shares.addCallback(check)
+        return shares
+
+    @protocol
     def test_double_share_random(self, runtime):
         """Test double-share random numbers."""
         T = runtime.num_players - 2 * runtime.threshold
-        from viff.field import GF
-        self.Zp = GF(11)
-
-        r_t, r_2t = runtime.double_share_random(T,
-                                                runtime.threshold,
-                                                2*runtime.threshold,
-                                                self.Zp)
-
-        # Check that we got the expected number of shares.
-        self.assertEquals(len(r_t), T)
-        self.assertEquals(len(r_2t), T)
 
         def verify(shares):
             """Verify that the list contains two equal shares."""
             self.assertEquals(shares[0], shares[1])
 
-        results = []
-        for a, b in zip(r_t, r_2t):
-            self.assert_type(a, Share)
-            self.assert_type(b, Share)
-            open_a = runtime.open(a)
-            open_b = runtime.open(b, threshold=2*runtime.threshold)
-            result = gatherResults([open_a, open_b])
-            result.addCallback(verify)
-            results.append(result)
-        return gatherResults(results)
+        def check(double):
+            r_t, r_2t = double
+
+            # Check that we got the expected number of shares.
+            self.assertEquals(len(r_t), T)
+            self.assertEquals(len(r_2t), T)
+
+            results = []
+            for a, b in zip(r_t, r_2t):
+                self.assert_type(a, Share)
+                self.assert_type(b, Share)
+                open_a = runtime.open(a)
+                open_b = runtime.open(b, threshold=2*runtime.threshold)
+                result = gatherResults([open_a, open_b])
+                result.addCallback(verify)
+                results.append(result)
+            return gatherResults(results)
+
+        double = runtime.double_share_random(T, runtime.threshold,
+                                             2*runtime.threshold, self.Zp)
+        double.addCallback(check)
+        return double
 
     @protocol
     def test_generate_triples(self, runtime):
         """Test generation of multiplication triples."""
-        triples = runtime.generate_triples(self.Zp)
 
         def verify(triple):
             """Verify a multiplication triple."""
             self.assertEquals(triple[0] * triple[1], triple[2])
 
-        results = []
-        for a, b, c in triples:
-            self.assert_type(a, Share)
-            self.assert_type(b, Share)
-            self.assert_type(c, Share)
-            open_a = runtime.open(a)
-            open_b = runtime.open(b)
-            open_c = runtime.open(c)
-            result = gatherResults([open_a, open_b, open_c])
-            result.addCallback(verify)
-            results.append(result)
-        return gatherResults(results)
+        def check(triples):
+            results = []
+            for a, b, c in triples:
+                self.assert_type(a, Share)
+                self.assert_type(b, Share)
+                self.assert_type(c, Share)
+                open_a = runtime.open(a)
+                open_b = runtime.open(b)
+                open_c = runtime.open(c)
+                result = gatherResults([open_a, open_b, open_c])
+                result.addCallback(verify)
+                results.append(result)
+            return gatherResults(results)
+
+        count, triples = runtime.generate_triples(self.Zp)
+        self.assertEquals(count, runtime.num_players - 2*runtime.threshold)
+
+        triples.addCallback(check)
+        return triples

@@ -44,7 +44,7 @@ from viff.matrix import Matrix, hyper
 from viff.util import wrapper, rand
 
 from twisted.internet import reactor
-from twisted.internet.defer import Deferred, DeferredList
+from twisted.internet.defer import Deferred, DeferredList, gatherResults, succeed
 from twisted.internet.protocol import ClientFactory, ServerFactory
 from twisted.protocols.basic import Int16StringReceiver
 
@@ -173,7 +173,7 @@ class ShareList(Share):
 
     If a threshold less than the full number of shares is used, some
     of the pairs may be missing and C{None} is used instead. In the
-    example above the C{c} Share arrived later than C{a} and C{b}, and
+    example above the C{b} Share arrived later than C{a} and C{c}, and
     so the list contains a C{None} on its place.
     """
 
@@ -370,6 +370,38 @@ def increment_pc(method):
     return inc_pc_wrapper
 
 
+def preprocess(generator):
+    """Track calls to this method.
+
+    The decorated method will be replaced with a proxy method which
+    first tries to get the data needed from C{self._pool}, and if that
+    fails it falls back to the original method.
+
+    The C{generator} method is only used to record where the data
+    should be generated from, the method is not actually called.
+
+    @param generator: Use this method as the generator for
+    pre-processed data.
+    @type generator: C{str}
+    """
+
+    def preprocess_decorator(method):
+
+        @wrapper(method)
+        def preprocess_wrapper(self, *args, **kwargs):
+            pc = tuple(self.program_counter)
+            try:
+                return self._pool[pc]
+            except KeyError:
+                key = (generator, args)
+                pcs = self._needed_data.setdefault(key, [])
+                pcs.append(pc)
+                return method(self, *args, **kwargs)
+
+        return preprocess_wrapper
+    return preprocess_decorator
+
+
 class BasicRuntime:
     """Basic VIFF runtime with no crypto.
 
@@ -396,9 +428,15 @@ class BasicRuntime:
         group.add_option("--deferred-debug", action="store_true",
                          help="Enable extra debug output for deferreds.")
 
+        try:
+            import gnutls
+            have_gnutls = True
+        except ImportError:
+            have_gnutls = False
+
         parser.set_defaults(bit_length=32,
                             security_parameter=30,
-                            tls=True,
+                            tls=have_gnutls,
                             deferred_debug=False)
 
     def __init__(self, player, threshold, options=None):
@@ -426,6 +464,11 @@ class BasicRuntime:
         if self.options.deferred_debug:
             from twisted.internet import defer
             defer.setDebugging(True)
+
+        #: Pool of preprocessed data.
+        self._pool = {}
+        #: Description of needed preprocessed data.
+        self._needed_data = {}
 
         #: Current program counter.
         #:
@@ -608,6 +651,72 @@ class BasicRuntime:
         self._expect_data(peer_id, "share", share)
         return share
 
+    @increment_pc
+    def preprocess(self, program):
+        """Generate preprocess material.
+
+        The C{program} specifies which methods to call and with which
+        arguments. The generator methods called must adhere to the
+        following interface:
+
+          - They must return a C{(int, Deferred)} tuple where the
+            C{int} tells us how many items of pre-processed data the
+            Deferred will yield.
+
+          - The Deferred must yield a C{list} of the promissed length.
+
+          - The C{list} contains the actual data. This data can be
+            either a Deferred or a C{tuple} of Deferreds.
+
+        The L{ActiveRuntime.generate_triples} method is an example of
+        a method fulfilling this interface.
+
+        @param program: A description of the needed data.
+        @type program: C{dict} mapping C{(str, args)} tuples to
+        program counters
+        """
+
+        def update(results, program_counters):
+            # We concatenate the sub-lists in results.
+            results = sum(results, [])
+
+            wait_list = []
+            for result in results:
+                # We allow pre-processing methods to return tuples of
+                # shares or individual shares as their result. Here we
+                # deconstruct result (if possible) and wait on its
+                # individual parts.
+                if isinstance(result, tuple):
+                    wait_list.extend(result)
+                else:
+                    wait_list.append(result)
+
+            # The pool must map program counters to Deferreds to
+            # present a uniform interface for the functions we
+            # pre-process.
+            results = map(succeed, results)
+
+            # Update the pool with pairs of program counter and data.
+            self._pool.update(zip(program_counters, results))
+            # Return a Deferred that waits on the individual results.
+            # This is important to make it possible for the players to
+            # avoid starting before the pre-processing is complete.
+            return gatherResults(wait_list)
+
+        wait_list = []
+        for ((generator, args), program_counters) in program.iteritems():
+            print "Preprocessing %s (%d items)" % (generator, len(program_counters))
+            func = getattr(self, generator)
+            results = []
+            items = 0
+            while items < len(program_counters):
+                item_count, result = func(*args)
+                items += item_count
+                results.append(result)
+            ready = gatherResults(results)
+            ready.addCallback(update, program_counters)
+            wait_list.append(ready)
+        return DeferredList(wait_list)
 
 class Runtime(BasicRuntime):
     """The VIFF runtime.
@@ -989,26 +1098,123 @@ class ActiveRuntime(Runtime):
 
         # At this point both share_x and share_y must be Share
         # objects. We multiply them via a multiplication triple.
-        a, b, c = self.get_triple(share_x.field)
-        d = self.open(share_x - a)
-        e = self.open(share_y - b)
+        def finish_mul(triple):
+            a, b, c = triple
+            d = self.open(share_x - a)
+            e = self.open(share_y - b)
 
-        # TODO: We ought to be able to simple do
-        #
-        #   return d*e + d*y + e*x + c
-        #
-        # but that leads to infinite recursion since d and e are
-        # Shares, not FieldElements. So we have to do a bit more
-        # work... The following callback also leads to recursion, but
-        # only one level since d and e are FieldElements now, which
-        # means that we return in the above if statements.
-        result = gather_shares([d, e])
-        result.addCallback(lambda (d,e): d*e + d*b + e*a + c)
+            # TODO: We ought to be able to simply do
+            #
+            #   return d*e + d*y + e*x + c
+            #
+            # but that leads to infinite recursion since d and e are
+            # Shares, not FieldElements. So we have to do a bit more
+            # work... The following callback also leads to recursion, but
+            # only one level since d and e are FieldElements now, which
+            # means that we return in the above if statements.
+            result = gather_shares([d, e])
+            result.addCallback(lambda (d,e): d*e + d*b + e*a + c)
+            return result
+
+        # This will be the result, a Share object.
+        result = Share(self, share_x.field)
+        # This is the Deferred we will do processing on.
+        triple = self.get_triple(share_x.field)
+        self.schedule_callback(triple, finish_mul)
+        # We add the result to the chains in triple.
+        triple.chainDeferred(result)
+        return result
+
+    @increment_pc
+    def single_share_random(self, T, degree, field):
+        """Share a random secret.
+
+        The guarantee is that a number of shares are made and out of
+        those, the T that are returned by this method will be correct
+        sharings of a random number using C{degree} as the polynomial
+        degree.
+
+        @param T: The number of shares output.
+        @param degree: The degree of the polynomial.
+        @param field: The field over which to share the secret.
+        """
+        # TODO: Move common code between single_share and
+        # double_share_random out to their own methods.
+        inputters = range(1, self.num_players + 1)
+        if self._hyper is None:
+            self._hyper = hyper(self.num_players, field)
+
+        # Generate a random element.
+        si = rand.randint(0, field.modulus - 1)
+
+        # Every player shares the random value with two thresholds.
+        shares = self.shamir_share(inputters, field, si, degree)
+
+        # Turn the shares into a column vector.
+        svec = Matrix([shares]).transpose()
+
+        # Apply the hyper-invertible matrix to svec1 and svec2.
+        rvec = (self._hyper * svec)
+
+        # Get back to normal lists of shares.
+        svec = svec.transpose().rows[0]
+        rvec = rvec.transpose().rows[0]
+
+        def verify(shares):
+            """Verify shares.
+
+            It is checked that they correspond to polynomial of the
+            expected degree.
+
+            If the verification succeeds, the T shares are returned,
+            otherwise the errback is called.
+            """
+            # TODO: This is necessary since shamir.recombine expects
+            # to receive a list of *pairs* of field elements.
+            shares = map(lambda (i, s): (field(i+1), s), enumerate(shares))
+
+            # Verify the sharings. If any of the assertions fail and
+            # raise an exception, the errbacks will be called on the
+            # share returned by single_share_random.
+            assert shamir.verify_sharing(shares, degree), "Could not verify"
+
+            # If we reach this point the n - T shares were verified
+            # and we can safely return the first T shares.
+            return rvec[:T]
+
+        def exchange(svec):
+            """Exchange and (if possible) verify shares."""
+            pc = tuple(self.program_counter)
+
+            # We send our shares to the verifying players.
+            for offset, share in enumerate(svec):
+                if T+1+offset != self.id:
+                    self.protocols[T+1+offset].sendShare(pc, share)
+
+            if self.id > T:
+                # The other players will send us their shares of si_1
+                # and si_2 and we will verify it.
+                si = []
+                for peer_id in inputters:
+                    if self.id == peer_id:
+                        si.append(Share(self, field, svec[peer_id - T - 1]))
+                    else:
+                        si.append(self._expect_share(peer_id, field))
+                result = gatherResults(si)
+                self.schedule_callback(result, verify)
+                return result
+            else:
+                # We cannot verify anything, so we just return the
+                # first T shares.
+                return rvec[:T]
+
+        result = gather_shares(svec[T:])
+        self.schedule_callback(result, exchange)
         return result
 
     @increment_pc
     def double_share_random(self, T, d1, d2, field):
-        """Double-shares a randoms secret by using two polynomials.
+        """Double-share a random secret using two polynomials.
 
         The guarantee is that a number of shares are made and out of
         those, the T that are returned by this method will be correct
@@ -1036,53 +1242,126 @@ class ActiveRuntime(Runtime):
         svec2 = Matrix([d2_shares]).transpose()
 
         # Apply the hyper-invertible matrix to svec1 and svec2.
-        rvec1 = (self._hyper * svec1).transpose()
-        rvec2 = (self._hyper * svec2).transpose()
+        rvec1 = (self._hyper * svec1)
+        rvec2 = (self._hyper * svec2)
 
-        # TODO: verify sharings
+        # Get back to normal lists of shares.
+        svec1 = svec1.transpose().rows[0]
+        svec2 = svec2.transpose().rows[0]
+        rvec1 = rvec1.transpose().rows[0]
+        rvec2 = rvec2.transpose().rows[0]
 
-        # Return the first T shares (the ones that was not opened in
-        # the verifying step.
-        return rvec1.rows[0][:T], rvec2.rows[0][:T]
+        def verify(shares):
+            """Verify shares.
+
+            It is checked that they correspond to polynomial of the
+            expected degrees and that they can be recombined to the
+            same value.
+
+            If the verification succeeds, the T double shares are
+            returned, otherwise the errback is called.
+            """
+            si_1, si_2 = shares
+
+            # TODO: This is necessary since shamir.recombine expects
+            # to receive a list of *pairs* of field elements.
+            si_1 = map(lambda (i, s): (field(i+1), s), enumerate(si_1))
+            si_2 = map(lambda (i, s): (field(i+1), s), enumerate(si_2))
+
+            # Verify the sharings. If any of the assertions fail and
+            # raise an exception, the errbacks will be called on the
+            # double share returned by double_share_random.
+            assert shamir.verify_sharing(si_1, d1), "Could not verify si_1"
+            assert shamir.verify_sharing(si_2, d2), "Could not verify si_2"
+            assert shamir.recombine(si_1[:d1+1]) == shamir.recombine(si_2[:d2+1]), \
+                "Shares do not recombine to the same value"
+
+            # If we reach this point the n - T shares were verified
+            # and we can safely return the first T shares.
+            return (rvec1[:T], rvec2[:T])
+
+        def exchange(shares):
+            """Exchange and (if possible) verify shares."""
+            svec1, svec2 = shares
+            pc = tuple(self.program_counter)
+
+            # We send our shares to the verifying players.
+            for offset, (s1, s2) in enumerate(zip(svec1, svec2)):
+                if T+1+offset != self.id:
+                    self.protocols[T+1+offset].sendShare(pc, s1)
+                    self.protocols[T+1+offset].sendShare(pc, s2)
+
+            if self.id > T:
+                # The other players will send us their shares of si_1
+                # and si_2 and we will verify it.
+                si_1 = []
+                si_2 = []
+                for peer_id in inputters:
+                    if self.id == peer_id:
+                        si_1.append(Share(self, field, svec1[peer_id - T - 1]))
+                        si_2.append(Share(self, field, svec2[peer_id - T - 1]))
+                    else:
+                        si_1.append(self._expect_share(peer_id, field))
+                        si_2.append(self._expect_share(peer_id, field))
+                result = gatherResults([gatherResults(si_1), gatherResults(si_2)])
+                self.schedule_callback(result, verify)
+                return result
+            else:
+                # We cannot verify anything, so we just return the
+                # first T shares.
+                return (rvec1[:T], rvec2[:T])
+
+        result = gather_shares([gather_shares(svec1[T:]), gather_shares(svec2[T:])])
+        self.schedule_callback(result, exchange)
+        return result
 
     @increment_pc
+    @preprocess("generate_triples")
     def get_triple(self, field):
-        # TODO: This is of course insecure... We should move
-        # generate_triples to a preprocessing step and draw the
-        # triples from a pool instead. Also, using only the first
-        # triple is quite wasteful...
-        return self.generate_triples(field)[0]
+        # This is a waste, but this function is only called if there
+        # are no pre-processed triples left.
+        count, result = self.generate_triples(field)
+        result.addCallback(lambda triples: triples[0])
+        return result
 
     @increment_pc
     def generate_triples(self, field):
         """Generate multiplication triples.
 
         These are random numbers M{a}, M{b}, and M{c} such that M{c =
-        ab}.
+        ab}. This function can be used in pre-processing.
 
-        @return: C{list} of 3-tuples.
-        @returntype: C{list} of C{(Share, Share, Share)}
+        @return: Number of triples returned and a Deferred which will
+        yield a C{list} of 3-tuples.
+        @returntype: (C{int}, C{list} of Deferred C{(Share, Share,
+        Share)})
         """
         n = self.num_players
         t = self.threshold
         T = n - 2*t
 
-        # Generate normal random sharings.
-        a_t = [self.prss_share_random(field) for _ in range(T)]
-        b_t = [self.prss_share_random(field) for _ in range(T)]
-        c_2t = []
-        for i in range(T):
-            # Multiply a[i] and b[i] without resharing.
-            ci = gather_shares([a_t[i], b_t[i]])
-            ci.addCallback(lambda (ai, bi): ai * bi)
-            c_2t.append(ci)
+        def make_triple(shares):
+            a_t, b_t, (r_t, r_2t) = shares
 
-        r_t, r_2t = self.double_share_random(T, t, 2*t, field)
-        d_2t = [c_2t[i] - r_2t[i] for i in range(T)]
-        d = [self.open(d_2t[i], threshold=2*t) for i in range(T)]
-        c_t = [r_t[i] + d[i] for i in range(T)]
+            c_2t = []
+            for i in range(T):
+                # Multiply a[i] and b[i] without resharing.
+                ci = gather_shares([a_t[i], b_t[i]])
+                ci.addCallback(lambda (ai, bi): ai * bi)
+                c_2t.append(ci)
 
-        return zip(a_t, b_t, c_t)
+            d_2t = [c_2t[i] - r_2t[i] for i in range(T)]
+            d = [self.open(d_2t[i], threshold=2*t) for i in range(T)]
+            c_t = [r_t[i] + d[i] for i in range(T)]
+            return zip(a_t, b_t, c_t)
+
+        single_a = self.single_share_random(T, t, field)
+        single_b = self.single_share_random(T, t, field)
+        double_c = self.double_share_random(T, t, 2*t, field)
+
+        result = gatherResults([single_a, single_b, double_c])
+        self.schedule_callback(result, make_triple)
+        return T, result
 
     @increment_pc
     def _broadcast(self, sender, message=None):
