@@ -108,6 +108,7 @@ that an operation starts as soon as the operands are ready.
 # * viff-devel@viff.dk
 # * http://freshmeat.net/projects/viff/
 # * http://pypi.python.org/pypi/viff/
+# * http://directory.fsf.org/project/viff/
 # * http://www.icewalkers.com/Linux/Software/532160/VIFF.html
 # * http://www.hotscripts.com/Detailed/74748.html
 # * http://sourcewell.berlios.de/appbyid.php?id=3572
