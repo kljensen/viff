@@ -212,7 +212,7 @@ if options.parallel:
 else:
     benchmark = SequentialBenchmark
 
-pre_runtime = create_runtime(id, players, (len(players) -1)//3,
+pre_runtime = create_runtime(id, players, max((len(players) -1)//3, 1),
                              options, runtime_class)
 pre_runtime.addCallback(benchmark, operation)
 

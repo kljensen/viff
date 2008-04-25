@@ -410,6 +410,7 @@ class BasicRuntime:
         L{create_runtime} function should be used instead to create a
         usable runtime.
         """
+        assert threshold > 0, "Must use a positive threshold."
         #: ID of this player.
         self.id = player.id
         #: Shamir secret sharing threshold.
