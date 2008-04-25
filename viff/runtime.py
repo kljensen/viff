@@ -428,9 +428,15 @@ class BasicRuntime:
         group.add_option("--deferred-debug", action="store_true",
                          help="Enable extra debug output for deferreds.")
 
+        try:
+            import gnutls
+            have_gnutls = True
+        except ImportError:
+            have_gnutls = False
+
         parser.set_defaults(bit_length=32,
                             security_parameter=30,
-                            tls=True,
+                            tls=have_gnutls,
                             deferred_debug=False)
 
     def __init__(self, player, threshold, options=None):
