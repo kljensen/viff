@@ -1,0 +1,6 @@
+
+Utility Functions Module
+========================
+
+.. automodule:: viff.util
+   :members:
