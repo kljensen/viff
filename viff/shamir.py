@@ -15,10 +15,9 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with VIFF. If not, see <http://www.gnu.org/licenses/>.
 
-"""Shamir secret sharing and recombination.
-
-Based on the paper *How to share a secret* by Adi Shamir in
-*Communications of the ACM* **22** (11): 612-613.
+"""Shamir secret sharing and recombination. Based on the paper *How to
+share a secret* by Adi Shamir in *Communications of the ACM* **22**
+(11): 612-613.
 """
 
 __docformat__ = "restructuredtext"

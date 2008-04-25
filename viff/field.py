@@ -15,11 +15,10 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with VIFF. If not, see <http://www.gnu.org/licenses/>.
 
-"""Modeling of Galois (finite) fields.
-
-The GF function creates classes which implements Galois (finite)
-fields of prime order whereas the :class:`GF256` class implements the
-the GF(2^8) field with characteristic 2.
+"""Modeling of Galois (finite) fields. The GF function creates classes
+which implements Galois (finite) fields of prime order whereas the
+:class:`GF256` class implements the the GF(2^8) field with
+characteristic 2.
 
 All fields work the same: instantiate an object from a field to get
 hold of an element of that field. Elements implement the normal

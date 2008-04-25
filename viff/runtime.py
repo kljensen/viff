@@ -17,11 +17,9 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with VIFF. If not, see <http://www.gnu.org/licenses/>.
 
-"""VIFF runtime.
-
-This is where the virtual ideal functionality is hiding! The runtime
-is responsible for sharing inputs, handling communication, and running
-the calculations.
+"""VIFF runtime. This is where the virtual ideal functionality is
+hiding! The runtime is responsible for sharing inputs, handling
+communication, and running the calculations.
 
 Each player participating in the protocol will instantiate a
 :class:`Runtime` object and use it for the calculations.

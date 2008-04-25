@@ -17,12 +17,10 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with VIFF. If not, see <http://www.gnu.org/licenses/>.
 
-u"""Methods for pseudo-random secret sharing.
-
-Normal Shamir sharing (see the :mod`viff.shamir` module) requires
-secure channels between the players for distributing shares. With
-pseudo-random secret sharing one can share a secret using a single
-broadcast instead.
+u"""Methods for pseudo-random secret sharing. Normal Shamir sharing
+(see the :mod`viff.shamir` module) requires secure channels between
+the players for distributing shares. With pseudo-random secret sharing
+one can share a secret using a single broadcast instead.
 
 PRSS relies on each player having access to a set of previously
 distributed pseudo-random functions (PRFs) --- or rather the seeds for

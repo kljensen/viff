@@ -15,13 +15,11 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with VIFF. If not, see <http://www.gnu.org/licenses/>.
 
-"""Matrix operations.
-
-This module contains basic matrix operations as well as a function to
-build square hyper-invertible matrices. The matrix implementation
-provides operator overloading and works with any type that acts like a
-number, including :class:`viff.field.GF256` and :func:`viff.field.GF`
-elements.
+"""Matrix operations. This module contains basic matrix operations as
+well as a function to build square hyper-invertible matrices. The
+matrix implementation provides operator overloading and works with any
+type that acts like a number, including :class:`viff.field.GF256` and
+:func:`viff.field.GF` elements.
 """
 
 __docformat__ = "restructuredtext"

@@ -15,12 +15,11 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with VIFF. If not, see <http://www.gnu.org/licenses/>.
 
-"""Functions for loading and saving player configurations.
-
-Each player participating in a protocol execution must know some
-information about the other players, namely their hostname and port
-number. The player also needs to know something about itself, namely
-the keys used for pseudo-random secret sharing (PRSS).
+"""Functions for loading and saving player configurations. Each player
+participating in a protocol execution must know some information about
+the other players, namely their hostname and port number. The player
+also needs to know something about itself, namely the keys used for
+pseudo-random secret sharing (PRSS).
 
 The :class:`Player` class encapsulates this information. Generating a
 player configuration is done using the :func:`generate_configs`

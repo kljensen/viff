@@ -15,13 +15,11 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with VIFF. If not, see <http://www.gnu.org/licenses/>.
 
-"""Miscellaneous utility functions.
-
-This module contains various utility functions used in all parts of
-the VIFF code. The most important is the :data:`rand` random generator
-which is seeded with a known seed each time. Using this generator for
-all random numbers ensures that a protocol run can be reproduced at a
-later time.
+"""Miscellaneous utility functions. This module contains various
+utility functions used in all parts of the VIFF code. The most
+important is the :data:`rand` random generator which is seeded with a
+known seed each time. Using this generator for all random numbers
+ensures that a protocol run can be reproduced at a later time.
 """
 
 __docformat__ = "restructuredtext"
