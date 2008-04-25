@@ -429,7 +429,9 @@ class BasicRuntime:
                          help="Enable extra debug output for deferreds.")
 
         try:
-            import gnutls
+            # Using __import__ since we do not use the module, we are
+            # only interested in the side-effect.
+            __import__('gnutls')
             have_gnutls = True
         except ImportError:
             have_gnutls = False
