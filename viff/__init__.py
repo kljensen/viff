@@ -125,4 +125,4 @@ applications distributed in the C{apps} directory.
 """
 
 __version__ = '0.5rc1'
-__license__ = 'GNU GPL'
+__license__ = 'GNU LGPL'
