@@ -70,7 +70,7 @@ Details:
   all communication used the same program counter. The data is now
   correctly buffered on the receiving side.
 
-* Python 2.6 compability. VIFF is now regularly tested on Python 2.6
+* Python 2.6 compatibility. VIFF is now regularly tested on Python 2.6
   via a new build slave.
 
 
