@@ -13,8 +13,8 @@ please refer to it for details on the issues:
   http://tracker.viff.dk/
 
 
-Version 0.5, not yet released
------------------------------
+Version 0.5, released on 2008-04-28
+-----------------------------------
 
 If python-gnutls is unavailable, players now automatically fallback to
 TCP connections. The installation guide was updated for Windows Vista.
