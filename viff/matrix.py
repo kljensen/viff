@@ -15,14 +15,15 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with VIFF. If not, see <http://www.gnu.org/licenses/>.
 
-"""Matrix operations.
-
-This module contains basic matrix operations as well as a function to
-build square hyper-invertible matrices. The matrix implementation
-provides operator overloading and works with any type that acts like a
-number, including L{viff.field.GF256} and L{viff.field.GF} elements.
-
+"""Matrix operations. This module contains basic matrix operations as
+well as a function to build square hyper-invertible matrices. The
+matrix implementation provides operator overloading and works with any
+type that acts like a number, including :class:`viff.field.GF256` and
+:func:`viff.field.GF` elements.
 """
+
+__docformat__ = "restructuredtext"
+
 
 from __future__ import division
 
@@ -31,11 +32,7 @@ class Matrix(object):
     """A matrix."""
 
     def _init_zeros(self, m, n):
-        """Initialize a new m times n matrix containing zeros.
-
-        @param m: The number of rows.
-        @param n: The number of columns.
-        """
+        """Initialize a new zero matrix with *m* rows and *n* columns."""
         self.rows = [[0 for _ in range(n)] for _ in range(m)]
         self.m = m
         self.n = n
@@ -43,7 +40,7 @@ class Matrix(object):
     def _init_set(self, rows):
         """Initializes a matrix to contain specific values.
 
-        @param rows: The rows of the matrix, given as a list of lists.
+        The *rows* is a list of lists.
         """
         self.rows = rows
         self.m = len(rows)
@@ -52,9 +49,9 @@ class Matrix(object):
     def __init__(self, *args):
         """Initializates a matrix.
 
-        @param args: Either a number m and n counting rows and columns
-        of an all-zero matrix, or a list of lists representing the
-        rows of the matrix.
+        The arguments can be either a number *m* and *n* counting rows
+        and columns of an all-zero matrix, or a list of lists
+        representing the rows of the matrix.
         """
         if len(args) == 1:
             self._init_set(*args)
@@ -62,7 +59,7 @@ class Matrix(object):
             self._init_zeros(*args)
 
     def __setitem__(self, (i, j), value):
-        """Allows matrix entry assignment using C{[,]}.
+        """Allows matrix entry assignment using ``[,]``.
 
         The assignment works as follows:
 
@@ -71,24 +68,17 @@ class Matrix(object):
         >>> print M
         [[ 0 42]
          [ 0  0]]
-
-        param i: The entry row.
-        param j: The entry column.
-        param value: The value to store in the entry.
         """
         self.rows[i][j] = value
 
     def __getitem__(self, (i, j)):
-        """Allows matrix entry access using C{[, ]}.
+        """Allows matrix entry access using ``[, ]``.
 
         The access works as follows:
 
         >>> M = Matrix([[1, 2], [3, 4]])
         >>> print M[1,1]
         4
-
-        @param i: The entry row.
-        @param j: The entry column.
         """
         return self.rows[i][j]
 
@@ -108,9 +98,6 @@ class Matrix(object):
         >>> print A + A
         [[0 2]
          [4 6]]
-
-        @param other: The matrix or element to add to this one.
-        @return: The sum.
         """
         # we should check that the two matrices have the same size
         result = Matrix(self.m, self.n)
@@ -133,9 +120,6 @@ class Matrix(object):
         >>> print 10 + Matrix([[0, 1], [2, 3]])
         [[10 11]
          [12 13]]
-
-        @param other: The element to which the matrix will be added.
-        @return: The sum.
         """
         result = Matrix(self.m, self.n)
         for i in range(0, self.m):
@@ -166,9 +150,6 @@ class Matrix(object):
         Traceback (most recent call last):
             ...
         ValueError: Matrix dimensions do not match for multiplication
-
-        @param other: The matrix or element to multiply with this one.
-        @return: The product.
         """
 
         if not isinstance(other, Matrix):
@@ -198,9 +179,6 @@ class Matrix(object):
         >>> print 10 * Matrix([[0, 1], [2, 3]])
         [[ 0 10]
          [20 30]]
-
-        @param other: The element with which the matrix will be multiplied.
-        @return: The product.
         """
         result = Matrix(self.m, self.n)
         for i in range(0, self.m):
@@ -216,8 +194,6 @@ class Matrix(object):
          [ 4  5  6  7]
          [ 8  9 10 11]
          [12 13 14 15]]
-
-        @return: A string representation of the matrix.
         """
         width = max([len(str(elem)) for row in self.rows for elem in row])
         output = [" ".join(["%*s" % (width, e) for e in r]) for r in self.rows]
@@ -236,8 +212,6 @@ class Matrix(object):
         [[0 3 6]
          [1 4 7]
          [2 5 8]]
-
-        @return: The transpose of the matrix.
         """
         result = Matrix(self.n, self.m)
         for i in range(self.m):
@@ -247,11 +221,7 @@ class Matrix(object):
         return result
 
     def determinant(mat):
-        """Calculates the determinant of a matrix.
-
-        @param mat: A square matrix.
-        @return: The determinant of the matrix.
-        """
+        """Calculates the determinant of a square matrix."""
         if mat.m == 1:
             return mat[0, 0]
         if mat.m == 2:
@@ -271,7 +241,8 @@ class Matrix(object):
 
 
 def hyper(n, field):
-    """Makes a hyper-invertible square matrix.
+    """Makes an *n* times *n* hyper-invertible square matrix.
+    The matrix entries will belong to *field*.
 
     A hyper-invertible matrix is a matrix where every sub-matrix is
     invertible. A sub-matrix consists of an arbitrary subset of the
@@ -287,10 +258,6 @@ def hyper(n, field):
     [[ {1} {44}  {3}]
      [ {3} {39}  {6}]
      [ {6} {32} {10}]]
-
-    @param n: The dimension of the matrix (it will be n times n).
-    @param field: The field to use. Expected to be a Zp field.
-    @return: A hyper-invertible square matrix.
     """
     result = Matrix(n, n)
     for i in range(0, n):

@@ -1,0 +1,18 @@
+
+Config Module
+=============
+
+.. automodule:: viff.config
+
+   .. autoclass:: Player
+      :members: prfs, dealer_prfs
+
+      .. attribute:: id
+                     host
+                     port
+
+         ID, hostname, and portnumber of the player.
+
+   .. autofunction:: generate_configs
+
+   .. autofunction:: load_config

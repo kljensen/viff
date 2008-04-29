@@ -1,0 +1,6 @@
+
+Shamir Module
+=============
+
+.. automodule:: viff.shamir
+   :members:

@@ -1,0 +1,10 @@
+
+Matrix Module
+=============
+
+.. automodule:: viff.matrix
+
+   .. autoclass:: Matrix
+      :members: __add__, __mul__, __str__, transpose, determinant
+
+   .. autofunction:: hyper

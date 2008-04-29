@@ -1,5 +1,3 @@
-include doc/design-talk/design-talk.pdf
-
 include doc/api/*.html
 include doc/api/*.gif
 include doc/api/*.png

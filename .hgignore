@@ -25,7 +25,6 @@ profile.data
 
 # LaTeX outputs.
 *.{aux,dvi,log,nav,out,pdf,ps,snm,toc,vrb}
-doc/api/
 
 # Distutils generated files.
 build

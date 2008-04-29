@@ -1,4 +1,5 @@
-# Necessary because of the 'å' in 'Damgård': -*- coding: latin-1 -*-
+# -*- coding: utf-8 -*-
+#
 # Copyright 2007, 2008 VIFF Development Team.
 #
 # This file is part of VIFF, the Virtual Ideal Functionality Framework.
@@ -16,21 +17,21 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with VIFF. If not, see <http://www.gnu.org/licenses/>.
 
-"""VIFF runtime.
-
-This is where the virtual ideal functionality is hiding! The runtime
-is responsible for sharing inputs, handling communication, and running
-the calculations.
+"""VIFF runtime. This is where the virtual ideal functionality is
+hiding! The runtime is responsible for sharing inputs, handling
+communication, and running the calculations.
 
 Each player participating in the protocol will instantiate a
-L{Runtime} object and use it for the calculations.
+:class:`Runtime` object and use it for the calculations.
 
-The Runtime returns L{Share} objects for most operations, and these
-can be added, subtracted, and multiplied as normal thanks to
+The Runtime returns :class:`Share` objects for most operations, and
+these can be added, subtracted, and multiplied as normal thanks to
 overloaded arithmetic operators. The runtime will take care of
 scheduling things correctly behind the scenes.
 """
 from __future__ import division
+
+__docformat__ = "restructuredtext"
 
 import marshal
 from optparse import OptionParser, OptionGroup
@@ -52,22 +53,22 @@ from twisted.protocols.basic import Int16StringReceiver
 class Share(Deferred):
     """A shared number.
 
-    The L{Runtime} operates on shares, represented by this class.
+    The :class:`Runtime` operates on shares, represented by this class.
     Shares are asynchronous in the sense that they promise to attain a
     value at some point in the future.
 
-    Shares overload the arithmetic operations so that C{x = a + b}
-    will create a new share C{x}, which will eventually contain the
-    sum of C{a} and C{b}. Each share is associated with a L{Runtime}
-    and the arithmetic operations simply call back to that runtime.
+    Shares overload the arithmetic operations so that ``x = a + b``
+    will create a new share *x*, which will eventually contain the
+    sum of *a* and *b*. Each share is associated with a
+    :class:`Runtime` and the arithmetic operations simply call back to
+    that runtime.
     """
 
     def __init__(self, runtime, field, value=None):
         """Initialize a share.
 
-        @param runtime: The L{Runtime} to use.
-        @param field: The field where the value lies.
-        @param value: The initial value of the share (if known).
+        If an initial value is given, it will be passed to
+        :meth:`callback` right away.
         """
         assert field is not None, "Cannot construct share without a field."
         assert callable(field), "The field is not callable, wrong argument?"
@@ -133,8 +134,8 @@ class Share(Deferred):
     def clone(self):
         """Clone a share.
 
-        Works like L{util.clone_deferred} except that it returns a new
-        Share instead of a Deferred.
+        Works like :meth:`util.clone_deferred` except that it returns a new
+        :class:`Share` instead of a :class:`Deferred`.
         """
 
         def split_result(result):
@@ -148,11 +149,12 @@ class Share(Deferred):
 class ShareList(Share):
     """Create a share that waits on a number of other shares.
 
-    Roughly modelled after the Twisted C{DeferredList} class. The
-    advantage of this class is that it is a L{Share} (not just a
-    C{Deferred}) and that it can be made to trigger when a certain
-    threshold of the shares are ready. This example shows how the
-    C{pprint} callback is triggered when C{a} and C{c} are ready:
+    Roughly modelled after the Twisted :class:`DeferredList`
+    class. The advantage of this class is that it is a :class:`Share`
+    (not just a :class:`Deferred`) and that it can be made to trigger
+    when a certain threshold of the shares are ready. This example
+    shows how the :meth:`pprint` callback is triggered when *a* and
+    *c* are ready:
 
     >>> from pprint import pprint
     >>> from viff.field import GF256
@@ -166,24 +168,22 @@ class ShareList(Share):
     >>> c.callback(20)
     [(True, 10), None, (True, 20)]
 
-    The C{pprint} function is called with a list of pairs. The first
+    The :meth:`pprint` function is called with a list of pairs. The first
     component of each pair is a boolean indicating if the callback or
-    errback method was called on the corresponding L{Share}, and the
-    second component is the value given to the callback/errback.
+    errback method was called on the corresponding :class:`Share`, and
+    the second component is the value given to the callback/errback.
 
     If a threshold less than the full number of shares is used, some
-    of the pairs may be missing and C{None} is used instead. In the
-    example above the C{b} Share arrived later than C{a} and C{c}, and
-    so the list contains a C{None} on its place.
+    of the pairs may be missing and :const:`None` is used instead. In
+    the example above the *b* share arrived later than *a* and *c*,
+    and so the list contains a :const:`None` on its place.
     """
-
     def __init__(self, shares, threshold=None):
         """Initialize a share list.
 
-        @param shares: non-empty list of L{Share} objects.
-        @param threshold: number of shares to wait for. This is either
-        a number such that C{0 < threshold <= len(shares)} or C{None}
-        if all shares should be waited for.
+        The list of shares must be non-empty and if a threshold is
+        given, it must hold that ``0 < threshold <= len(shares)``. The
+        default threshold is ``len(shares)``.
         """
         assert len(shares) > 0, "Cannot create empty ShareList"
         assert threshold is None or 0 < threshold <= len(shares), \
@@ -213,10 +213,10 @@ class ShareList(Share):
 def gather_shares(shares):
     """Gather shares.
 
-    Roughly modelled after the Twisted C{gatherResults} function. It
-    takes a list of shares and returns a new L{Share} which will be
-    triggered with a list of values, namely the values from the
-    initial shares:
+    Roughly modelled after the Twisted :meth:`gatherResults`
+    function. It takes a list of shares and returns a new
+    :class:`Share` which will be triggered with a list of values,
+    namely the values from the initial shares:
 
     >>> from pprint import pprint
     >>> from viff.field import GF256
@@ -228,9 +228,6 @@ def gather_shares(shares):
     >>> a.callback(10)
     >>> b.callback(20)
     [10, 20]
-
-    @param shares: the shares.
-    @type shares: C{list} of L{Share} objects
     """
 
     def filter_results(results):
@@ -247,22 +244,14 @@ class ShareExchanger(Int16StringReceiver):
     Twisted protocol is one such connection. It is used to send and
     receive shares from one other player.
 
-    The C{marshal} module is used for converting the data to bytes for
-    the network and to convert back again to structured data.
+    The :mod:`marshal` module is used for converting the data to bytes
+    for the network and to convert back again to structured data.
     """
 
     def __init__(self):
         self.peer_id = None
 
         #: Data expected to be received in the future.
-        #:
-        #: Data from our peer is put here, either as an empty Deferred
-        #: if we are waiting on input from the player, or the data
-        #: itself if data is received from the other player before we
-        #: are ready to use it.
-        #:
-        #: @type: C{dict} from C{(program_counter, data_type)} to
-        #: deferred data.
         self.incoming_data = {}
 
     def connectionMade(self):
@@ -277,11 +266,7 @@ class ShareExchanger(Int16StringReceiver):
 
         The string received is unmarshalled into the program counter,
         and a data part. The data is passed the appropriate Deferred
-        in L{self.incoming_data}.
-
-        @param string: bytes from the network.
-        @type string: C{(program_counter, data)} in
-        marshalled form
+        in :class:`self.incoming_data`.
         """
         if self.peer_id is None:
             # TODO: Handle ValueError if the string cannot be decoded.
@@ -319,9 +304,6 @@ class ShareExchanger(Int16StringReceiver):
 
         The program counter and the share are marshalled and sent to
         the peer.
-
-        @param program_counter: the program counter associated with
-        the share.
         """
         self.sendData(program_counter, "share", share.value)
 
@@ -350,13 +332,11 @@ class ShareExchangerFactory(ServerFactory, ClientFactory):
 
 
 def increment_pc(method):
-    """Make method automatically increment the program counter.
+    """Make *method* automatically increment the program counter.
 
-    Adding this decorator to a L{Runtime} method will ensure that the
-    program counter is incremented correctly when entering the method.
-
-    @param method: the method.
-    @type method: a method of L{Runtime}
+    Adding this decorator to a :class:`Runtime` method will ensure
+    that the program counter is incremented correctly when entering
+    the method.
     """
 
     @wrapper(method)
@@ -374,15 +354,14 @@ def preprocess(generator):
     """Track calls to this method.
 
     The decorated method will be replaced with a proxy method which
-    first tries to get the data needed from C{self._pool}, and if that
-    fails it falls back to the original method.
+    first tries to get the data needed from
+    :attr:`BasicRuntime._pool`, and if that fails it falls back to the
+    original method.
 
-    The C{generator} method is only used to record where the data
-    should be generated from, the method is not actually called.
-
-    @param generator: Use this method as the generator for
-    pre-processed data.
-    @type generator: C{str}
+    The *generator* method is only used to record where the data
+    should be generated from, the method is not actually called. This
+    must be the name of the method (a string) and not the method
+    itself.
     """
 
     def preprocess_decorator(method):
@@ -447,8 +426,8 @@ class BasicRuntime:
         Initialized a runtime owned by the given, the threshold, and
         optionally a set of options. The runtime has no network
         connections and knows of no other players -- the
-        L{create_runtime} function should be used instead to create a
-        usable runtime.
+        :func:`create_runtime` function should be used instead to
+        create a usable runtime.
         """
         assert threshold > 0, "Must use a positive threshold."
         #: ID of this player.
@@ -473,64 +452,23 @@ class BasicRuntime:
         self._needed_data = {}
 
         #: Current program counter.
-        #:
-        #: Whenever a share is sent over the network, it must be
-        #: uniquely identified so that the receiving player known what
-        #: operation the share is a result of. This is done by
-        #: associating a X{program counter} with each operation.
-        #:
-        #: Keeping the program counter synchronized between all
-        #: players ought to be easy, but because of the asynchronous
-        #: nature of network protocols, all players might not reach
-        #: the same parts of the program at the same time.
-        #:
-        #: Consider two players M{A} and M{B} who are both waiting on
-        #: the variables C{a} and C{b}. Callbacks have been added to
-        #: C{a} and C{b}, and the question is what program counter the
-        #: callbacks should use when sending data out over the
-        #: network.
-        #:
-        #: Let M{A} receive input for C{a} and then for C{b} a little
-        #: later, and let M{B} receive the inputs in reversed order so
-        #: that the input for C{b} arrives first. The goal is to keep
-        #: the program counters synchronized so that program counter
-        #: M{x} refers to the same operation on all players. Because
-        #: the inputs arrive in different order at different players,
-        #: incrementing a simple global counter is not enough.
-        #:
-        #: Instead, a I{tree} is made, which follows the tree of
-        #: execution. At the top level the program counter starts at
-        #: C{[0]}. At the next operation it becomes C{[1]}, and so on.
-        #: If a callback is scheduled (see L{schedule_callback}) at
-        #: program counter C{[x, y, z]}, any calls it makes will be
-        #: numbered C{[x, y, z, 1]}, then C{[x, y, z, 2]}, and so on.
-        #:
-        #: Maintaining such a tree of program counters ensures that
-        #: different parts of the program execution never reuses the
-        #: same program counter for different variables.
-        #:
-        #: The L{increment_pc} decorator is responsible for
-        #: dynamically building the tree as the execution unfolds and
-        #: L{schedule_callback} is responsible for scheduling
-        #: callbacks with the correct program counter.
-        #:
-        #: @type: C{list} of integers.
         self.program_counter = [0]
 
         #: Connections to the other players.
         #:
-        #: @type: C{dict} from Player ID to L{ShareExchanger} objects.
+        #: Mapping from from Player ID to :class:`ShareExchanger`
+        #: objects.
         self.protocols = {}
 
         #: Number of known players.
         #:
-        #: Equal to C{len(players)}, but storing it here is more
+        #: Equal to ``len(self.players)``, but storing it here is more
         #: direct.
         self.num_players = 0
 
         #: Information on players.
         #:
-        #: @type: C{dict} from player_id to L{Player} objects.
+        #: Mapping from Player ID to :class:`Player` objects.
         self.players = {}
         # Add ourselves, but with no protocol since we wont be
         # communicating with ourselves.
@@ -563,9 +501,6 @@ class BasicRuntime:
         """Make the runtime wait for the variables given.
 
         The runtime is shut down when all variables are calculated.
-
-        @param vars: variables to wait for.
-        @type  vars: list of L{Deferred}s
         """
         dl = DeferredList(vars)
         dl.addCallback(lambda _: self.shutdown())
@@ -581,12 +516,7 @@ class BasicRuntime:
         Deferred as usual.
 
         Any extra arguments are passed to the callback as with
-        addCallback.
-
-        @param deferred: the Deferred.
-        @param func: the callback.
-        @param args: extra arguments.
-        @param kwargs: extra keyword arguments.
+        :meth:`addCallback`.
         """
         # TODO, http://tracker.viff.dk/issue22: When several callbacks
         # are scheduled from the same method, they all save the same
@@ -657,25 +587,21 @@ class BasicRuntime:
     def preprocess(self, program):
         """Generate preprocess material.
 
-        The C{program} specifies which methods to call and with which
+        The *program* specifies which methods to call and with which
         arguments. The generator methods called must adhere to the
         following interface:
 
-          - They must return a C{(int, Deferred)} tuple where the
-            C{int} tells us how many items of pre-processed data the
-            Deferred will yield.
+        - They must return a ``(int, Deferred)`` tuple where the
+          ``int`` tells us how many items of pre-processed data the
+          :class:`Deferred` will yield.
 
-          - The Deferred must yield a C{list} of the promissed length.
+        - The Deferred must yield a list of the promissed length.
 
-          - The C{list} contains the actual data. This data can be
-            either a Deferred or a C{tuple} of Deferreds.
+        - The list contains the actual data. This data can be either a
+          Deferred or a tuple of Deferreds.
 
-        The L{ActiveRuntime.generate_triples} method is an example of
-        a method fulfilling this interface.
-
-        @param program: A description of the needed data.
-        @type program: C{dict} mapping C{(str, args)} tuples to
-        program counters
+        The :meth:`ActiveRuntime.generate_triples` method is an
+        example of a method fulfilling this interface.
         """
 
         def update(results, program_counters):
@@ -723,18 +649,20 @@ class BasicRuntime:
 class Runtime(BasicRuntime):
     """The VIFF runtime.
 
-    The runtime is used for sharing values (L{shamir_share} or
-    L{prss_share}) into L{Share} object and opening such shares
-    (L{open}) again. Calculations on shares is normally done through
-    overloaded arithmetic operations, but it is also possible to call
-    L{add}, L{mul}, etc. directly if one prefers.
+    The runtime is used for sharing values (:meth:`shamir_share` or
+    :meth:`prss_share`) into :class:`Share` object and opening such
+    shares (:meth:`open`) again. Calculations on shares is normally
+    done through overloaded arithmetic operations, but it is also
+    possible to call :meth:`add`, :meth:`mul`, etc. directly if one
+    prefers.
 
-    Each player in the protocol uses a Runtime object. To create an
-    instance and connect it correctly with the other players, please
-    use the L{create_runtime} function instead of instantiating a
-    Runtime directly. The L{create_runtime} function will take care of
-    setting up network connections and return a Deferred which
-    triggers with the Runtime object when it is ready.
+    Each player in the protocol uses a :class:`Runtime` object. To
+    create an instance and connect it correctly with the other
+    players, please use the :func:`create_runtime` function instead of
+    instantiating a Runtime directly. The :func:`create_runtime`
+    function will take care of setting up network connections and
+    return a :class:`Deferred` which triggers with the
+    :class:`Runtime` object when it is ready.
     """
 
     def __init__(self, player, threshold, options=None):
@@ -745,24 +673,13 @@ class Runtime(BasicRuntime):
     def open(self, share, receivers=None, threshold=None):
         """Open a secret sharing.
 
+        The *receivers* are the players that will eventually obtain
+        the opened result. The default is to let everybody know the
+        result. By default the :attr:`threshold` + 1 shares are
+        reconstructed, but *threshold* can be used to override this.
+
         Communication cost: every player sends one share to each
         receiving player.
-
-        @param share: the player's private part of the sharing to open.
-        @type share: Share
-
-        @param receivers: the IDs of the players that will eventually
-            obtain the opened result or None if all players should
-            obtain the opened result.
-        @type receivers: None or a C{list} of integers
-
-        @param threshold: the threshold used to open the sharing or None
-            if the runtime default should be used.
-        @type threshold: integer or None
-
-        @return: the result of the opened sharing if the player's ID
-            is in C{receivers}, otherwise None.
-        @returntype: Share or None
         """
         assert isinstance(share, Share)
         # all players receive result by default
@@ -874,30 +791,20 @@ class Runtime(BasicRuntime):
     @increment_pc
     def prss_share(self, inputters, field, element=None):
         """Creates pseudo-random secret sharings.
-
+        
         This protocol creates a secret sharing for each player in the
-        subset of players specified in C{inputters}. The protocol uses the
-        pseudo-random secret sharing technique described in the paper "Share
-        Conversion, Pseudorandom Secret-Sharing and Applications to Secure
-        Computation" by Ronald Cramer, Ivan Damgård, and Yuval Ishai in Proc.
-        of TCC 2005, LNCS 3378.
-        U{Download <http://www.cs.technion.ac.il/~yuvali/pubs/CDI05.ps>}.
+        subset of players specified in *inputters*. Each inputter
+        provides an integer. The result is a list of shares, one for
+        each inputter.
+
+        The protocol uses the pseudo-random secret sharing technique
+        described in the paper "Share Conversion, Pseudorandom
+        Secret-Sharing and Applications to Secure Computation" by
+        Ronald Cramer, Ivan DamgÃ¥rd, and Yuval Ishai in Proc. of TCC
+        2005, LNCS 3378. `Download
+        <http://www.cs.technion.ac.il/~yuvali/pubs/CDI05.ps>`__
 
         Communication cost: Each inputter does one broadcast.
-
-        @param inputters: The IDs of the players that will share a secret.
-        @type inputters: C{list} of integers
-
-        @param field: The field over which to share all the secrets.
-        @type field: L{FieldElement}
-
-        @param element: The secret that this player shares or C{None} if this
-            player is not in C{inputters}.
-        @type element: int, long, or None
-
-        @return: A list of shares corresponding to the secrets submitted by
-            the players in C{inputters}.
-        @returntype: C{List} of C{Shares}
         """
         # Verifying parameters.
         if element is None:
@@ -1008,10 +915,10 @@ class Runtime(BasicRuntime):
 
     @increment_pc
     def shamir_share(self, inputters, field, number=None, threshold=None):
-        """Secret share C{number} over C{field} using Shamir's method.
+        """Secret share *number* over *field* using Shamir's method.
 
-        The number is shared using polynomial of degree C{threshold}
-        (defaults to L{self.threshold}). Returns a list of shares
+        The number is shared using polynomial of degree *threshold*
+        (defaults to :attr:`threshold`). Returns a list of shares
         unless unless there is only one inputter in which case the
         share is returned directly.
 
@@ -1062,7 +969,7 @@ class ActiveRuntime(Runtime):
     """A runtime secure against active adversaries.
 
     This class currently inherits most of its functionality from the
-    normal L{Runtime} class and is thus I{not} yet secure.
+    normal :class:`Runtime` class and is thus **not** yet secure.
     """
 
     def __init__(self, player, threshold, options=None):
@@ -1070,9 +977,9 @@ class ActiveRuntime(Runtime):
 
         #: A hyper-invertible matrix.
         #:
-        #: It should be suitable for L{self.num_players} players, but
+        #: It should be suitable for :attr:`num_players` players, but
         #: since we don't know the total number of players yet, we set
-        #: it to C{None} here and update it as necessary.
+        #: it to :const:`None` here and update it as necessary.
         self._hyper = None
         Runtime.__init__(self, player, threshold, options)
 
@@ -1132,13 +1039,9 @@ class ActiveRuntime(Runtime):
         """Share a random secret.
 
         The guarantee is that a number of shares are made and out of
-        those, the T that are returned by this method will be correct
-        sharings of a random number using C{degree} as the polynomial
-        degree.
-
-        @param T: The number of shares output.
-        @param degree: The degree of the polynomial.
-        @param field: The field over which to share the secret.
+        those, the *T* that are returned by this method will be
+        correct sharings of a random number using *degree* as the
+        polynomial degree.
         """
         # TODO: Move common code between single_share and
         # double_share_random out to their own methods.
@@ -1219,14 +1122,9 @@ class ActiveRuntime(Runtime):
         """Double-share a random secret using two polynomials.
 
         The guarantee is that a number of shares are made and out of
-        those, the T that are returned by this method will be correct
-        double-sharings of a random number using d1 and d2 as the
+        those, the *T* that are returned by this method will be correct
+        double-sharings of a random number using *d1* and *d2* as the
         polynomial degrees.
-
-        @param T: The number of double-shares output.
-        @param d1: The degree of the first polynomial.
-        @param d2: The degree of the second polynomial.
-        @param field: The field over which to share the secret.
         """
         inputters = range(1, self.num_players + 1)
         if self._hyper is None:
@@ -1330,13 +1228,11 @@ class ActiveRuntime(Runtime):
     def generate_triples(self, field):
         """Generate multiplication triples.
 
-        These are random numbers M{a}, M{b}, and M{c} such that M{c =
-        ab}. This function can be used in pre-processing.
+        These are random numbers *a*, *b*, and *c* such that ``c =
+        ab``. This function can be used in pre-processing.
 
-        @return: Number of triples returned and a Deferred which will
-        yield a C{list} of 3-tuples.
-        @returntype: (C{int}, C{list} of Deferred C{(Share, Share,
-        Share)})
+        Returns a tuple with the number of triples generated and a
+        Deferred which will yield a list of 3-tuples.
         """
         n = self.num_players
         t = self.threshold
@@ -1374,9 +1270,6 @@ class ActiveRuntime(Runtime):
         the paper "An asynchronous [(n-1)/3]-resilient consensus
         protocol" by G. Bracha in Proc. 3rd ACM Symposium on
         Principles of Distributed Computing, 1984, pages 154-162.
-
-        @param sender: the sender of the broadcast message.
-        @param message: the broadcast message, used only by the sender.
         """
 
         result = Deferred()
@@ -1470,10 +1363,10 @@ class ActiveRuntime(Runtime):
     def broadcast(self, senders, message=None):
         """Perform one or more Bracha broadcast(s).
 
-        The list of senders given will determine the subset of players
+        The list of *senders* given will determine the subset of players
         who wish to broadcast a message. If this player wishes to
         broadcast, its ID must be in the list of senders and the
-        optional message parameter must be used.
+        optional *message* parameter must be used.
 
         If the list of senders consists only of a single sender, the
         result will be a single element, otherwise it will be a list.
@@ -1483,10 +1376,6 @@ class ActiveRuntime(Runtime):
         the paper "An asynchronous [(n-1)/3]-resilient consensus
         protocol" by G. Bracha in Proc. 3rd ACM Symposium on
         Principles of Distributed Computing, 1984, pages 154-162.
-
-        @param senders: the list of senders.
-        @param message: the broadcast message, used if this player is
-        a sender.
         """
         assert message is None or self.id in senders
 
@@ -1505,7 +1394,7 @@ class ActiveRuntime(Runtime):
 
 
 def create_runtime(id, players, threshold, options=None, runtime_class=Runtime):
-    """Create a L{Runtime} and connect to the other players.
+    """Create a :class:`Runtime` and connect to the other players.
 
     This function should be used in normal programs instead of
     instantiating the Runtime directly. This function makes sure that

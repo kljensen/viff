@@ -1,0 +1,18 @@
+
+Glossary
+========
+
+.. glossary::
+
+   Ideal functionality
+     An ideal functionality is an uncorruptable party in an ideal
+     protocol.
+
+   Program counter
+     A label associated with an operation, used to identify the data
+     when it is received over the network. Please see :ref:`program-counters`.
+
+   VIFF
+     Abbreviation for *Virtual Ideal Functionality Framework*. VIFF
+     allows you to write programs which behave as if they had access
+     to an :term:`ideal functionality`.

@@ -1,0 +1,23 @@
+
+Finite Fields Module
+====================
+
+.. automodule:: viff.field
+
+   .. autoclass:: FieldElement
+
+   .. autoclass:: GF256
+      :members: __add__, __mul__, __pow__, __div__, __neg__, __invert__, __eq__, __nonzero__
+
+      .. attribute:: GF256.modulus
+
+         Field modulus, always 256.
+
+      .. method:: GF256.__sub__(other)
+                  GF256.__xor__(other)
+
+         Subtraction and exclusive-or. Since GF(2^8) has
+         characteristic 2, these two operations are identical to
+         addition.
+
+   .. autofunction:: GF

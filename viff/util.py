@@ -15,14 +15,14 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with VIFF. If not, see <http://www.gnu.org/licenses/>.
 
-"""Miscellaneous utility functions.
-
-This module contains various utility functions used in all parts of
-the VIFF code. The most important is the L{rand} random generator
-which is seeded with a known seed each time. Using this generator for
-all random numbers ensures that a protocol run can be reproduced at a
-later time.
+"""Miscellaneous utility functions. This module contains various
+utility functions used in all parts of the VIFF code. The most
+important is the :data:`rand` random generator which is seeded with a
+known seed each time. Using this generator for all random numbers
+ensures that a protocol run can be reproduced at a later time.
 """
+
+__docformat__ = "restructuredtext"
 
 import os
 import random
@@ -30,7 +30,7 @@ import warnings
 from twisted.internet.defer import Deferred, succeed, gatherResults
 from gmpy import mpz
 
-#: Seed for L{rand}.
+#: Seed for :data:`rand`.
 _seed = os.environ.get('SEED')
 
 if _seed is None:
@@ -41,8 +41,8 @@ if _seed is None:
     #: Random number generator used by all VIFF code.
     #:
     #: The generator is by default initialized with a random seed,
-    #: unless the environment variable C{SEED} is set to a value, in
-    #: which case that value is used instead. If C{SEED} is defined,
+    #: unless the environment variable :envvar:`SEED` is set to a value, in
+    #: which case that value is used instead. If :envvar:`SEED` is defined,
     #: but empty, then no seed is used and a protocol cannot be
     #: reproduced exactly.
     rand = random.Random(_seed)
@@ -61,21 +61,19 @@ def wrapper(func):
     """Decorator used for wrapper functions.
 
     It is important to use this decorator on any wrapper functions in
-    order to ensure that they end up with correct C{__name__} and
-    C{__doc__} attributes.
+    order to ensure that they end up with correct :attr:`__name__` and
+    :attr:`__doc__` attributes.
 
-    In addition, if the environment variable C{EPYDOC} is defined,
-    then the wrapper functions will be turned into functions that I{do
-    not} wrap -- instead they let their argument function through
-    unchanged. This is done so that epydoc can see the true function
-    arguments when generating documentation. Just remember that your
-    code will break if C{EPYDOC} is set, so it should only be used
-    when epydoc is being run.
-
-    @param func: the function that will be wrapped.
-    @type func: callable
+    In addition, if the environment variable :envvar:`VIFF_NO_WRAP` is
+    defined, then the wrapper functions will be turned into functions
+    that *do not* wrap -- instead they let their argument function
+    through unchanged. This is done so that epydoc and Sphinx can see
+    the true function arguments when generating documentation. Just
+    remember that your code will break if :envvar:`VIFF_NO_WRAP` is
+    set, so it should only be used when documentation is being
+    generated.
     """
-    if os.environ.get('EPYDOC'):
+    if os.environ.get('VIFF_NO_WRAP'):
         # Return a decorator which ignores the functions it is asked
         # to decorate and instead returns func:
         return lambda _: func
@@ -168,10 +166,11 @@ def clone_deferred(original):
     """Clone a Deferred.
 
     The returned clone will fire with the same result as the original
-    Deferred, but will otherwise be independent.
+    :class:`Deferred`, but will otherwise be independent.
 
-    It is an error to call callback on the clone as it will result in
-    an AlreadyCalledError when the original Deferred is triggered.
+    It is an error to call :meth:`callback` on the clone as it will
+    result in an :exc:`AlreadyCalledError` when the original
+    :class:`Deferred` is triggered.
 
     >>> x = Deferred()
     >>> x.addCallback(lambda result: result * 10) # doctest: +ELLIPSIS

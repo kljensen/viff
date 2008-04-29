@@ -15,19 +15,21 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with VIFF. If not, see <http://www.gnu.org/licenses/>.
 
-"""Functions for loading and saving player configurations.
+"""Functions for loading and saving player configurations. Each player
+participating in a protocol execution must know some information about
+the other players, namely their hostname and port number. The player
+also needs to know something about itself, namely the keys used for
+pseudo-random secret sharing (PRSS).
 
-Each player participating in a protocol execution must know some
-information about the other players, namely their hostname and port
-number. The player also needs to know something about itself, namely
-the keys used for pseudo-random secret sharing (PRSS).
-
-The L{Player} class encapsulates this information. Generating a player
-configuration is done using the L{generate_configs} function. The
-C{apps/generate_config_files.py} script uses that function to generate
-a player config and save it in a number of .ini files. Such a .ini
-file can be loaded with the L{load_config} function.
+The :class:`Player` class encapsulates this information. Generating a
+player configuration is done using the :func:`generate_configs`
+function. The :file:`generate_config_files.py` script uses that
+function to generate a player config and save it in a number of
+:file:`.ini` files. Such a :file:`.ini` file can be loaded with the
+:func:`load_config` function.
 """
+
+__docformat__ = "restructuredtext"
 
 from configobj import ConfigObj
 
@@ -53,8 +55,8 @@ class Player:
         of a pseudo-random secret sharing for sharing an element
         random to all players.
 
-        @return: mapping from player subsets to L{PRF} instances.
-        @returntype: L{dict} from L{frozenset} to L{PRF} instances.
+        Return a mapping from player subsets to :class:`viff.prss.PRF`
+        instances.
         """
         prfs = {}
         for subset, key in self.keys.iteritems():
@@ -68,8 +70,8 @@ class Player:
         The pseudo-random functions are used when this player is the
         dealer in a pseudo-random secret sharing.
 
-        @return: mapping from player subsets to L{PRF} instances.
-        @returntype: L{dict} from L{frozenset} to L{PRF} instances.
+        Return a mapping from player subsets to :class:`viff.prss.PRF`
+        instances.
         """
         dealers = {}
         for dealer, keys in self.dealer_keys.iteritems():
@@ -95,8 +97,8 @@ def load_config(source):
     One of the players own the config file and for this player
     additional information on PRSS keys is available.
 
-    @return: owner ID and a mapping of player IDs to players.
-    @returntype: C{int}, C{dict} from C{int} to L{Player} instances.
+    Returns the owner ID and a mapping of player IDs to
+    :class:`Player` instances.
     """
 
     def s_unstr(str):
@@ -149,16 +151,14 @@ def load_config(source):
 def generate_configs(n, t, addresses=None, prefix=None):
     """Generate player configurations.
 
-    The configurations are returned as C{ConfigObj}s and can be saved
-    to disk if desired.
+    Generates *n* configuration objects with a threshold of *t*. The
+    *addresses* is an optional list of ``(host, port)`` pairs and
+    *prefix* is a filename prefix.
 
-    @param n: number of players.
-    @param t: threshold.
-    @param addresses: list of (host, port) pairs.
-    @param prefix: filename prefix.
+    The configurations are returned as :class:`ConfigObj` instances
+    and can be saved to disk if desired.
 
-    @return: mapping from player id to player configuration.
-    @returntype: C{dict} from C{int} to C{ConfigObj}.
+    Returns a mapping from player ID to player configuration.
     """
     players = frozenset(range(1, n+1))
     max_unqualified_subsets = generate_subsets(players, n-t)

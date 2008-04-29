@@ -1,0 +1,247 @@
+.. -*- coding: utf-8 -*-
+.. (Links are marked with underscores, see the bottom of the file.)
+
+====================
+ Installation Guide
+====================
+
+VIFF is written in Python and uses the Twisted framework for
+asynchronous communication, (optionally) python-gnutls for secure
+communication, ConfigObj for configuration files, and GMPY for fast
+bignum arithmetic. You can find these components here:
+
+:Python:         http://python.org/
+:Twisted:        http://twistedmatrix.com/
+:python-gnutls:  http://pypi.python.org/pypi/python-gnutls/
+:ConfigObj:      http://voidspace.org.uk/python/configobj.html
+:GMPY:           http://code.google.com/p/gmpy/
+
+VIFF has been successfully tested with the following versions:
+
+:Python:         2.4.1 and 2.5.0
+:Twisted:        2.5.0 (there are `problems with 8.0.1`_)
+:python-gnutls:  1.1.4
+:ConfigObj:      4.4.0
+:GMPY:           1.0alpha and 1.0.2
+
+Please `report back`_ if you find that VIFF works with other versions
+than the ones listed here.
+
+Below you will find installation instructions for the different
+platforms on which we `test VIFF`_.
+
+
+Windows
+-------
+
+This describes the installation procedure for VIFF on Windows. It has
+been tested and verified on Windows XP Professional Version 2002 SP2
+and Windows Vista Ultimate SP1.
+
+1) Download and install Python_.
+
+2) Include the path to your Python installation (e.g. ``C:\Python25\``)
+   in the ``PATH`` system environment variable. One way to edit this
+   environment variable is by right-clicking My Computer in the Start
+   menu, selecting Properties, Advanced, and then pressing the
+   Environment Variables button.
+
+3) Download and install Twisted_.
+
+4) Download ConfigObj_ and enter::
+
+      python setup.py install
+
+   from the folder where you unzipped the files.
+
+5) Download and install GMPY_. If you are using Vista, right-click on
+   the installer and choose the option to run as administrator.
+
+6) In order to secure the channels between the players using TLS, you
+   need to download and install python-gnutls_. However, we haven't
+   had the time to test installation of this on Windows yet. Feel free
+   to contribute with details about this by sending an email to the
+   `VIFF mailing list`_.
+
+7) Download and install VIFF_. Note that if you are using the
+   installer on Vista, you will again need to run it as an
+   administrator.
+
+8) Proceed to `testing`_.
+
+
+Mac OS X
+--------
+
+This describes installation of VIFF on Max OS X 10.5.
+
+1) Download and install the full MacPython_ version 2.5 (the
+   Python-installation which comes with Mac OS X is not entirely
+   up-to-date).
+
+2) Download and Install Twisted_ from source. Notice again that Mac OS
+   X comes with a pre-installed version of Twisted, but this is not
+   the full Twisted installation. After installation change your
+   ``PYTHONPATH`` (in your ``~/.bash_profile``) to::
+
+      PATH="/Library/Python/2.5/site-packages:${PATH}"
+
+3) You can skip this step if you do not want secure connections.
+   Otherwise install python-gnutls_:
+
+   a) Install XCode_ from Apple which provides the GCC compiler.
+   b) Install gnutls_ (and required packages) from source.
+   c) Install python-gnutls_.
+
+4) Download ConfigObj_ and enter::
+
+      python setup.py install
+
+   from the folder where you unzipped the files.
+
+5) Download and install GMPY_ following the instructions in
+   ``gmpy-1.02.macosx.README.txt`` (under Downloads).
+
+6) Install VIFF from source (see below). If you prefer you can just
+   install it in site-packages, it makes no difference. For
+   developers, it is perhaps a better solution in to create a symbolic
+   link from the site-packages directory to the VIFF Python files
+   (``viff/viff/``), as otherwise you need to re-install VIFF each time
+   the project is modified.
+
+7) Proceed to `testing`_.
+
+
+GNU/Linux
+---------
+
+VIFF was originally developed on GNU/Linux and is well supported
+there. When installing the VIFF dependencies you either have the
+option of using your `package manager`_ or to install from source. VIFF
+itself must be installed `from source`_.
+
+
+Using a Package Manager
+~~~~~~~~~~~~~~~~~~~~~~~
+
+Debian Lenny (testing)
+  You can install all dependencies by the command::
+
+     aptitude install python-twisted-core python-gnutls \
+                      python-configobj python-gmpy
+
+  The backslash indicates that both lines should be typed as a single
+  line in the terminal.
+
+Ubuntu
+  We expect that the instructions for Debian also apply here.
+
+
+If you know how to install using other package managers, please `let
+us know`_.
+
+VIFF itself is not yet packaged for any distribution, so you will have
+to install it from source as described below.
+
+
+Installing from Source
+~~~~~~~~~~~~~~~~~~~~~~
+
+If you do not have permission to use the package manager or simply
+prefer to install from source, then (assuming that Python is already
+installed) one can easily install VIFF and its dependencies by
+downloading and unpacking each of them and executing::
+
+   python setup.py install --home=$HOME/opt
+
+That will install everything under the given prefix. With the above
+command the Python modules are installed into::
+
+   $HOME/opt/lib/python
+
+and some programs are installed into::
+
+   $HOME/opt/bin
+
+You should add the first directory to the ``PYTHONPATH`` environment
+variable and the latter to the ``PATH`` environment variable.
+
+Bash uses can normally do this by adding::
+
+   export PYTHONPATH=$PYTHONPATH:$HOME/opt/lib/python
+   export PATH=$PATH:$HOME/opt/bin
+
+to their ``~/.bash_profile`` file, creating it if it is not already
+there. Consult the documentation for your shell to learn how
+environment variables are set.
+
+
+Testing
+-------
+
+To verify the installation, try out one of the applications. We will
+run the millionaires example with three players and a threshold of
+one. For this test, we will let all players run on localhost: Player 1
+will run on port 9001, player 2 on port 9002, and player 3 on port
+9003. The test is done on Windows, but it works the same on the other
+platforms. Do the following:
+
+1) Go to the ``viff/apps/`` directory and generate the needed
+   configuration files by entering::
+
+     python generate-config-files.py -n 3 -t 1
+     localhost:9001 localhost:9002 localhost:9003
+
+   Both lines should be entered as a single line.
+
+2) Open three separate command prompts and go to the ``viff/apps/``
+   directory in each. In the first, type::
+
+     python millionaires.py --no-tls player-3.ini
+
+   in the second, type::
+
+     python millionaires.py --no-tls player-2.ini
+
+   and in the last, type::
+
+     python millionaires.py --no-tls player-1.ini
+
+   Note that the order in wich you start the players is important: The
+   players must start in reverse order, e.g. the last player first. If
+   the installation works, you should see something like this from
+   e.g. player 3::
+
+      C:\viff\apps> python millionaires.py --no-tls player-3.ini 
+      Seeding random generator with random seed 7416
+      Not using TLS
+      I am Millionaire 3 and I am worth 20 millions.
+      From poorest to richest:
+        Millionaire 2
+        Millionaire 3 (20 millions)
+        Millionaire 1
+      Initiating shutdown sequence.
+
+   If something went wrong, then please `file a bug report`_ or report
+   it on the `VIFF mailing list`_. This will help us improve VIFF.
+
+
+.. _problems with 8.0.1: http://tracker.viff.dk/issue37
+.. _report back:
+.. _VIFF mailing list:
+.. _let us know: viff-devel@viff.dk
+
+.. _VIFF: http://viff.dk/
+.. _test VIFF: http://buildbot.viff.dk/
+.. _Python: http://python.org/
+.. _Twisted: http://twistedmatrix.com/
+.. _ConfigObj: http://voidspace.org.uk/python/configobj.html
+.. _GMPY: http://code.google.com/p/gmpy/
+.. _python-gnutls: http://pypi.python.org/pypi/python-gnutls/
+.. _MacPython: http://www.pythonmac.org
+.. _XCode: http://developer.apple.com/tools/xcode/
+.. _gnutls: http://www.gnu.org/software/gnutls/manual/gnutls.html
+            #Downloading-and-Installing
+.. _package manager: `Using a Package Manager`_
+.. _from source: `Installing from Source`_
+.. _file a bug report: http://tracker.viff.dk/

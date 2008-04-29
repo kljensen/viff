@@ -1,0 +1,88 @@
+
+Runtime Module
+==============
+
+.. automodule:: viff.runtime
+
+   .. autoclass:: Share
+      :members: clone
+
+   .. autoclass:: ShareList
+
+   .. autofunction gather_shares
+
+   .. autoclass:: ShareExchanger
+      :members: sendShare, sendData, loseConnection
+
+      .. attribute:: ShareExchanger.incoming_data
+
+         Data from our peer is put here, either as an empty
+         :class:`Deferred` if we are waiting on input from the player,
+         or the data itself if data is received from the other player
+         before we are ready to use it.
+
+   .. autofunction:: increment_pc
+
+   .. autofunction:: create_runtime
+
+   .. autoclass:: BasicRuntime
+      :members:
+
+      .. attribute:: BasicRuntime.id
+
+         Player ID. This is an integer in the range 1--*n* for *n*
+         players.
+
+      .. attribute:: BasicRuntime.threshold
+
+         Default threshold used by :meth:`Runtime.shamir_share`,
+         :meth:`Runtime.open`, and others.
+
+      .. attribute:: BasicRuntime.program_counter
+
+         Whenever a share is sent over the network, it must be
+         uniquely identified so that the receiving player known what
+         operation the share is a result of. This is done by
+         associating a *program counter* with each operation.
+
+         Keeping the program counter synchronized between all players
+         ought to be easy, but because of the asynchronous nature of
+         network protocols, all players might not reach the same parts
+         of the program at the same time.
+
+         Consider two players *A* and *B* who are both waiting on the
+         variables *a* and *b*. Callbacks have been added to *a* and
+         *b*, and the question is what program counter the callbacks
+         should use when sending data out over the network.
+
+         Let *A* receive input for *a* and then for *b* a little
+         later, and let *B* receive the inputs in reversed order so
+         that the input for *b* arrives first. The goal is to keep the
+         program counters synchronized so that program counter *x*
+         refers to the same operation on all players. Because the
+         inputs arrive in different order at different players,
+         incrementing a simple global counter is not enough.
+
+         Instead, a *tree* is made, which follows the tree of
+         execution. At the top level the program counter starts at
+         ``[0]``. At the next operation it becomes ``[1]``, and so on.
+         If a callback is scheduled (see :meth:`schedule_callback`) at
+         program counter ``[x, y, z]``, any calls it makes will be
+         numbered ``[x, y, z, 1]``, then ``[x, y, z, 2]``, and so on.
+
+         Maintaining such a tree of program counters ensures that
+         different parts of the program execution never reuses the
+         same program counter for different variables.
+
+         The :func:`increment_pc` decorator is responsible for
+         dynamically building the tree as the execution unfolds and
+         :meth:`schedule_callback` is responsible for scheduling
+         callbacks with the correct program counter.
+
+         See :ref:`program-counters` for more background information.
+
+   .. autoclass:: Runtime
+      :members:
+
+   .. autoclass:: ActiveRuntime
+      :members: mul, single_share_random, double_share_random, get_triple, generate_triples, broadcast

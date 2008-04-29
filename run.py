@@ -104,18 +104,12 @@ def build():
     # Generate API docs in doc/api.
     epydoc('doc')
 
-    # First PDFLaTeX run...
-    execute(["pdflatex", "--interaction", "nonstopmode", "design-talk.tex"],
-            work_dir="doc/design-talk")
-    # Second run to update the table of contents.
-    execute(["pdflatex", "--interaction", "nonstopmode", "design-talk.tex"],
-            work_dir="doc/design-talk")
-
     # Retrieve the latest version of install.txt and authors.txt from
     # the website repository, and ship them as INSTALL and AUTHORS.
     for filename in ('install.txt', 'authors.txt'):
         url = 'http://hg.viff.dk/viff.dk/raw-file/tip/%s' % filename
-        print "Fetching %s" % url,
+        print "Fetching %s..." % url,
+        sys.stdout.flush()
         urlretrieve(url, filename[:-4].upper())
         print "done."
 
@@ -132,7 +126,7 @@ def epydoc(build):
     target = "%s/api" % build
     ensure_dir(target)
     execute(["epydoc", "-vv", "--config", "epydoc.conf"],
-            {'EPYDOC': 'YES', 'target': target})
+            {'VIFF_NO_WRAP': 'YES', 'target': target})
 
 @command('coverage', 'build')
 def coverage(build):
