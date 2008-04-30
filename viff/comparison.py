@@ -15,12 +15,12 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with VIFF. If not, see <http://www.gnu.org/licenses/>.
 
-"""Comparison protocols.
-
-The mixin classes defined here provide a C{greater_than_equal} method
-to the L{Runtime} they are mixed with.
-
+"""Comparison protocols. The mixin classes defined here provide a
+:meth:`greater_than_equal` method to the :class:`Runtime
+<viff.runtime.Runtime>` they are mixed with.
 """
+
+__docformat__ = "restructuredtext"
 
 import math
 
@@ -54,7 +54,7 @@ class ComparisonToft05Mixin:
 
     @increment_pc
     def greater_than_equal(self, share_a, share_b):
-        """Compute share_a >= share_b.
+        """Compute ``share_a >= share_b``.
 
         Both arguments must be from the field given. The result is a
         GF256 share.
@@ -140,16 +140,16 @@ class ComparisonToft05Mixin:
 
 
 class Toft05Runtime(ComparisonToft05Mixin, Runtime):
-    """Default mix of L{ComparisonToft05Mixin} and L{Runtime}."""
+    """Default mix of :class:`ComparisonToft05Mixin` and
+    :class:`Runtime <viff.runtime.Runtime>`."""
     pass
 
 
 class ComparisonToft07Mixin:
 
-    """Efficient comparison by Tomas Toft 2007.
-
-    This mixin provides a C{greater_than} method which can compare Zp
-    field elements and gives a secret result shared over Zp.
+    """Efficient comparison by Tomas Toft 2007. This mixin provides a
+    :meth:`greater_than_equal` method which can compare Zp field
+    elements and gives a secret result shared over Zp.
     """
 
     @increment_pc
@@ -235,9 +235,7 @@ class ComparisonToft07Mixin:
 
     @increment_pc
     def greater_than_equal_online(self, share_a, share_b, preproc, field):
-        """Compute share_a >= share_b.
-        Result is shared.
-        """
+        """Compute ``share_a >= share_b``. Result is shared."""
         # increment l as a, b are increased
         l = self.options.bit_length + 1
         # a = 2a+1; b= 2b // ensures inputs not equal
@@ -310,7 +308,7 @@ class ComparisonToft07Mixin:
 
     @increment_pc
     def greater_than_equal(self, share_a, share_b):
-        """Compute share_a >= share_b.
+        """Compute ``share_a >= share_b``.
 
         Both arguments must be of type field. The result is a
         field share.
@@ -332,5 +330,7 @@ class ComparisonToft07Mixin:
 
 
 class Toft07Runtime(ComparisonToft07Mixin, Runtime):
-    """Default mix of L{ComparisonToft07Mixin} and L{Runtime}."""
+    """Default mix of :class:`ComparisonToft07Mixin` and
+    :class:`Runtime <viff.runtime.Runtime>`.
+    """
     pass
