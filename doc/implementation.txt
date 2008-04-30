@@ -12,6 +12,7 @@ VIFF consists of several modules which will be described next.
    shamir
    matrix
    runtime
+   comparison
    prss
    config
    program-counters

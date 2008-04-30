@@ -1,0 +1,23 @@
+
+Comparison protocols
+====================
+
+Two comparison protocols have been implemented in VIFF. They are
+available in the classes :class:`ComparisonToft05Mixin` and
+:class:`ComparisonToft07Mixin`. Both protocols have been designed by
+Tomas Toft.
+
+The classes are *mixin* classes which means that they are meant to be
+used ("mixed") with other classes to build a finished usable class.
+Two standard "flavors" are provided in the :class:`Toft05Runtime` and
+:class:`Toft07Runtime`.
+
+.. autoclass:: viff.comparison.ComparisonToft05Mixin
+   :members: greater_than_equal
+
+.. autoclass:: viff.comparison.Toft05Runtime
+
+.. autoclass:: viff.comparison.ComparisonToft07Mixin
+   :members: greater_than_equal
+
+.. autoclass:: viff.comparison.Toft07Runtime
