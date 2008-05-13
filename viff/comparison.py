@@ -74,20 +74,19 @@ class ComparisonToft05Mixin:
         assert 2**(l+1) + 2**t < field.modulus, "2^(l+1) + 2^t < p must hold"
         assert self.num_players + 2 < 2**l
 
-        int_bits = [self.prss_share_random(field, True) for _ in range(m)]
+        bits = [self.prss_share_bit_double(field) for _ in range(m)]
+
+        int_bits = [a for (a, _) in bits]
+        bit_bits = [b for (_, b) in bits]
+
         # We must use int_bits without adding callbacks to the bits --
         # having int_b wait on them ensures this.
-
         def bits_to_int(bits):
             """Converts a list of bits to an integer."""
             return sum([2**i * b for i, b in enumerate(bits)])
 
         int_b = gather_shares(int_bits)
         int_b.addCallback(bits_to_int)
-
-        # TODO: this changes int_bits! It should be okay since
-        # int_bits is not used any further, but still...
-        bit_bits = [self.convert_bit_share(b, GF256) for b in int_bits]
         # Preprocessing done
 
         a = share_a - share_b + 2**l
