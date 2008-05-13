@@ -75,7 +75,7 @@ def prss(n, j, field, prfs, key):
     {18}
 
     We see that the sharing is consistent because each subset of two
-    players will recombine their shares to ``{29}``.
+    players will recombine their shares to ``{24}``.
     """
     result = 0
     all = frozenset(range(1, n+1))
