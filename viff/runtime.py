@@ -39,7 +39,7 @@ from math import ceil
 from collections import deque
 
 from viff import shamir
-from viff.prss import prss
+from viff.prss import prss, prss_lsb
 from viff.field import GF256, FieldElement
 from viff.matrix import Matrix, hyper
 from viff.util import wrapper, rand
@@ -896,6 +896,26 @@ class Runtime(BasicRuntime):
 
         self.schedule_callback(result, finish, share, binary)
         return result
+
+    @increment_pc
+    def prss_share_bit_double(self, field):
+        """Share a random bit over *field* and GF256."""
+        n = self.num_players
+        k = self.options.security_parameter
+        prfs = self.players[self.id].prfs(2**k)
+        prss_key = tuple(self.program_counter)
+
+        b_p = self.prss_share_random(field, binary=True)
+        r_p, r_lsb = prss_lsb(n, self.id, field, prfs, prss_key)
+
+        b = self.open(b_p + r_p)
+        # Extract least significant bit and change field to GF256.
+        b.addCallback(lambda i: GF256(i.value & 1))
+        b.field = GF256
+
+        # Use r_lsb to flip b as needed.
+        return (b_p, b ^ r_lsb)
+        
 
     @increment_pc
     def _shamir_share(self, number):
