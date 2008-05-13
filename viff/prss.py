@@ -53,6 +53,19 @@ from gmpy import numdigits
 from viff import shamir
 
 
+def random_replicated_sharing(j, prfs, key):
+    """Return a replicated sharing of a random number.
+
+    The shares are for player *j* based on the pseudo-random functions
+    given in *prfs* (a mapping from subsets of players to :class:`PRF`
+    instances). The *key* is used when evaluating the PRFs. The result
+    is a list of ``(subset, share)`` pairs.
+    """
+    # The PRFs contain the subsets we need, plus some extra in the
+    # case of dealer_keys. That is why we have to check that j is in
+    # the subset before using it.
+    return [(s, prf(key)) for (s, prf) in prfs.iteritems() if j in s]
+
 def prss(n, j, field, prfs, key):
     """Return a pseudo-random secret share for a random number.
 
@@ -79,15 +92,11 @@ def prss(n, j, field, prfs, key):
     """
     result = 0
     all = frozenset(range(1, n+1))
-    # The PRFs contain the subsets we need, plus some extra in the
-    # case of dealer_keys. That is why we have to check that j is in
-    # the subset before using it.
-    for subset in prfs.iterkeys():
-        if j in subset:
-            points = [(field(x), 0) for x in all-subset]
-            points.append((0, 1))
-            f_in_j = shamir.recombine(points, j)
-            result += prfs[subset](key) * f_in_j
+    for subset, share in random_replicated_sharing(j, prfs, key):
+        points = [(field(x), 0) for x in all-subset]
+        points.append((0, 1))
+        f_in_j = shamir.recombine(points, j)
+        result += share * f_in_j
 
     return result
 
