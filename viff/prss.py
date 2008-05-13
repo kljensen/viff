@@ -51,7 +51,7 @@ from binascii import hexlify
 from gmpy import numdigits
 
 from viff import shamir
-
+from viff.field import GF256
 
 def random_replicated_sharing(j, prfs, key):
     """Return a replicated sharing of a random number.
@@ -107,6 +107,44 @@ def prss(n, j, field, prfs, key):
     """
     rep_shares = random_replicated_sharing(j, prfs, key)
     return convert_replicated_shamir(n, j, field, rep_shares)
+
+def prss_lsb(n, j, field, prfs, key):
+    """Share a pseudo-random number and its least significant bit.
+
+    The random number is shared over *field* and its least significant
+    bit is shared over :class:`viff.field.GF256`. It is important the
+    *prfs* generate numbers much less than the size of *field* -- we
+    must be able to do an addition for each PRF without overflow in
+    *field*.
+
+    >>> from field import GF
+    >>> Zp = GF(23)
+    >>> prfs = {frozenset([1,2]): PRF("a", 7),
+    ...         frozenset([1,3]): PRF("b", 7),
+    ...         frozenset([2,3]): PRF("c", 7)}
+    >>> prss_lsb(3, 1, Zp, prfs, "key")
+    ({0}, [140])
+    >>> prss_lsb(3, 2, Zp, prfs, "key")
+    ({15}, [3])
+    >>> prss_lsb(3, 3, Zp, prfs, "key")
+    ({7}, [143])
+
+    We see that the random value must be ``{8}`` and so the least
+    significant bit must be ``[0]``. We can check this by recombining
+    any two of the three shares:
+
+    >>> from shamir import recombine
+    >>> recombine([(GF256(1), GF256(140)), (GF256(2), GF256(3))])
+    [0]
+    >>> recombine([(GF256(2), GF256(3)),   (GF256(3), GF256(143))])
+    [0]
+    >>> recombine([(GF256(3), GF256(143)), (GF256(1), GF256(140))])
+    [0]
+    """
+    rep_shares = random_replicated_sharing(j, prfs, key)
+    lsb_shares = [(s, r & 1) for (s, r) in rep_shares]
+    return (convert_replicated_shamir(n, j, field, rep_shares),
+            convert_replicated_shamir(n, j, GF256, lsb_shares))
 
 def generate_subsets(orig_set, size):
     """Generates the set of all subsets of a specific size.
