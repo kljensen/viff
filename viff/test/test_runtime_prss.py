@@ -114,3 +114,17 @@ class RuntimePrssTest(RuntimeTestCase):
         opened_a = runtime.open(a)
         opened_a.addCallback(self.assertIn, [self.Zp(0), self.Zp(1)])
         return opened_a
+
+    @protocol
+    def test_prss_share_bit_double(self, runtime):
+        """Tests sharing a bit over Zp and GF256."""
+        bit_p, bit_b = runtime.prss_share_bit_double(self.Zp)
+
+        self.assert_type(bit_p, Share)
+        self.assertEquals(bit_p.field, self.Zp)
+        self.assert_type(bit_b, Share)
+        self.assertEquals(bit_b.field, GF256)
+
+        result = gather_shares([runtime.open(bit_p), runtime.open(bit_b)])
+        result.addCallback(lambda (a, b): self.assertEquals(a.value, b.value))
+        return result
