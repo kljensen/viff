@@ -66,6 +66,21 @@ def random_replicated_sharing(j, prfs, key):
     # the subset before using it.
     return [(s, prf(key)) for (s, prf) in prfs.iteritems() if j in s]
 
+def convert_replicated_shamir(n, j, field, rep_shares):
+    """Convert a set of replicated shares to a Shamir share.
+
+    The conversion is done for player *j* (out of *n*) and will be
+    done over *field*.
+    """
+    result = 0
+    all = frozenset(range(1, n+1))
+    for subset, share in rep_shares:
+        points = [(field(x), 0) for x in all-subset]
+        points.append((0, 1))
+        f_in_j = shamir.recombine(points, j)
+        result += share * f_in_j
+    return result
+
 def prss(n, j, field, prfs, key):
     """Return a pseudo-random secret share for a random number.
 
@@ -90,16 +105,8 @@ def prss(n, j, field, prfs, key):
     We see that the sharing is consistent because each subset of two
     players will recombine their shares to ``{24}``.
     """
-    result = 0
-    all = frozenset(range(1, n+1))
-    for subset, share in random_replicated_sharing(j, prfs, key):
-        points = [(field(x), 0) for x in all-subset]
-        points.append((0, 1))
-        f_in_j = shamir.recombine(points, j)
-        result += share * f_in_j
-
-    return result
-
+    rep_shares = random_replicated_sharing(j, prfs, key)
+    return convert_replicated_shamir(n, j, field, rep_shares)
 
 def generate_subsets(orig_set, size):
     """Generates the set of all subsets of a specific size.
