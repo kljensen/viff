@@ -112,7 +112,7 @@ def _generate_tables():
     _log_table[0] = 0
 
     #_inv_table[0] = 0
-    for c in range(1, 255):
+    for c in range(1, 256):
         _inv_table[c] = _exp_table[255 - _log_table[c]]
 
 _generate_tables()
