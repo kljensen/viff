@@ -257,6 +257,12 @@ class GF256(FieldElement):
             other = other.value
         return self.value == other
 
+    def __ne__(self, other):
+        """Inequality testing."""
+        if isinstance(other, GF256):
+            other = other.value
+        return self.value != other
+
     def __hash__(self):
         """Hash value."""
         return hash((self.field, self.value))
@@ -462,6 +468,14 @@ def GF(modulus):
                 return self.value == other.value
             except AttributeError:
                 return self.value == other
+
+        def __ne__(self, other):
+            """Inequality test."""
+            try:
+                assert self.field is other.field, "Fields must be identical"
+                return self.value != other.value
+            except AttributeError:
+                return self.value != other
 
         def __cmp__(self, other):
             """Comparison."""
