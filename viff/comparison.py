@@ -49,7 +49,6 @@ class ComparisonToft05Mixin:
         # Must update field on Share when we change the field of the
         # the value within
         tmp.field = dst_field
-
         return reduce(self.xor, dst_shares, tmp)
 
     @increment_pc
@@ -70,12 +69,10 @@ class ComparisonToft05Mixin:
         t = m + 1
 
         # Preprocessing begin
-
         assert 2**(l+1) + 2**t < field.modulus, "2^(l+1) + 2^t < p must hold"
         assert self.num_players + 2 < 2**l
 
         bits = [self.prss_share_bit_double(field) for _ in range(m)]
-
         int_bits = [a for (a, _) in bits]
         bit_bits = [b for (_, b) in bits]
 
