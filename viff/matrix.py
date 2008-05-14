@@ -262,7 +262,7 @@ def hyper(n, field):
         for j in range(0, n):
             product = 1
             for k in range(0, n):
-                if not k == j:
+                if k != j:
                     product *= field(n+i-k)/field(j-k)
             result[i, j] = product
     return result
