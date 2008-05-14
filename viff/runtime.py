@@ -1101,7 +1101,8 @@ class ActiveRuntime(Runtime):
             # Verify the sharings. If any of the assertions fail and
             # raise an exception, the errbacks will be called on the
             # share returned by single_share_random.
-            assert shamir.verify_sharing(shares, degree), "Could not verify"
+            assert shamir.verify_sharing(shares, degree), \
+                   "Could not verify %s, degree %d" % (shares, degree)
 
             # If we reach this point the n - T shares were verified
             # and we can safely return the first T shares.
@@ -1191,8 +1192,10 @@ class ActiveRuntime(Runtime):
             # Verify the sharings. If any of the assertions fail and
             # raise an exception, the errbacks will be called on the
             # double share returned by double_share_random.
-            assert shamir.verify_sharing(si_1, d1), "Could not verify si_1"
-            assert shamir.verify_sharing(si_2, d2), "Could not verify si_2"
+            assert shamir.verify_sharing(si_1, d1), \
+                   "Could not verify %s, degree %d" % (si_1, d1)
+            assert shamir.verify_sharing(si_2, d2), \
+                   "Could not verify %s, degree %d" % (si_2, d2)
             assert shamir.recombine(si_1[:d1+1]) == shamir.recombine(si_2[:d2+1]), \
                 "Shares do not recombine to the same value"
 
