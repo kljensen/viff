@@ -128,10 +128,10 @@ class ComparisonToft05Mixin:
     def _diamond(self, (top_a, bot_a), (top_b, bot_b)):
         """The "diamond-operator".
 
-        Defined by
+        Defined by::
 
-        (x, X) `diamond` (0, Y) = (0, Y)
-        (x, X) `diamond` (1, Y) = (x, X)
+          (x, X) `diamond` (0, Y) = (0, Y)
+          (x, X) `diamond` (1, Y) = (x, X)
         """
         top = top_a * top_b
         bot = top_b * (bot_a ^ bot_b) ^ bot_b
