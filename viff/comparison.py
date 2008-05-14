@@ -76,8 +76,6 @@ class ComparisonToft05Mixin:
         int_bits = [a for (a, _) in bits]
         bit_bits = [b for (_, b) in bits]
 
-        # We must use int_bits without adding callbacks to the bits --
-        # having int_b wait on them ensures this.
         def bits_to_int(bits):
             """Converts a list of bits to an integer."""
             return sum([2**i * b for i, b in enumerate(bits)])
