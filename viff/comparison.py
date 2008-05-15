@@ -26,6 +26,7 @@ import math
 
 from viff.util import rand
 from viff.runtime import Runtime, Share, gather_shares, increment_pc
+from viff.runtime import ActiveRuntime
 from viff.field import GF256, FieldElement
 
 
@@ -136,6 +137,11 @@ class ComparisonToft05Mixin:
 class Toft05Runtime(ComparisonToft05Mixin, Runtime):
     """Default mix of :class:`ComparisonToft05Mixin` and
     :class:`Runtime <viff.runtime.Runtime>`."""
+    pass
+
+class ActiveToft05Runtime(ComparisonToft05Mixin, ActiveRuntime):
+    """Default mix of :class:`ComparisonToft05Mixin` and
+    :class:`ActiveRuntime <viff.runtime.ActiveRuntime>`."""
     pass
 
 
@@ -327,4 +333,9 @@ class Toft07Runtime(ComparisonToft07Mixin, Runtime):
     """Default mix of :class:`ComparisonToft07Mixin` and
     :class:`Runtime <viff.runtime.Runtime>`.
     """
+    pass
+
+class ActiveToft07Runtime(ComparisonToft07Mixin, ActiveRuntime):
+    """Default mix of :class:`ComparisonToft07Mixin` and
+    :class:`ActiveRuntime <viff.runtime.ActiveRuntime>`."""
     pass
