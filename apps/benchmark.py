@@ -61,9 +61,10 @@ from pprint import pprint
 
 from twisted.internet import reactor
 
-from viff.field import GF
+from viff.field import GF, GF256
 from viff.runtime import Runtime, ActiveRuntime, create_runtime, gather_shares
 from viff.comparison import Toft05Runtime, Toft07Runtime
+from viff.comparison import ActiveToft05Runtime, ActiveToft07Runtime
 from viff.config import load_config
 from viff.util import find_prime
 
@@ -92,9 +93,10 @@ parser.add_option("-m", "--modulus",
 parser.add_option("-c", "--count", type="int",
                   help="number of operations")
 parser.add_option("-o", "--operation", type="choice",
-                  choices=["mul", "mul-active", "comp", "compII"],
+                  choices=["mul", "mul-active", "comp", "comp-active",
+                           "compII", "compII-active"],
                   help=("operation to benchmark, one of 'mul', 'mul-active', "
-                        "'comp', 'compII'"))
+                        "'comp', 'comp-active', 'compII', 'compII-active'"))
 parser.add_option("-p", "--parallel", action="store_true",
                   help="execute operations in parallel")
 parser.add_option("-s", "--sequential", action="store_false", dest="parallel",
@@ -126,13 +128,35 @@ class Benchmark:
         self.rt = rt
         self.operation = operation
 
-        if isinstance(self.rt, ActiveRuntime) and self.operation == operator.mul:
-            # TODO: Make this optional and extend it to other operations.
+        if isinstance(self.rt, ActiveRuntime):
+            # TODO: Make this optional and maybe automatic. The
+            # program descriptions below were found by carefully
+            # studying the output reported when the benchmarks were
+            # run with no preprocessing. So they are quite brittle.
             print "Starting preprocessing"
-            program_desc = {
-                ("generate_triples", (Zp,)):
-                    [(i, 1, 0) for i in range(3 + 2*count, 3 + 3*count)]
-                }
+            if self.operation == operator.mul:
+                program_desc = {
+                    ("generate_triples", (Zp,)):
+                        [(i, 1, 0) for i in range(3 + 2*count, 3 + 3*count)]
+                    }
+            elif isinstance(self.rt, ActiveToft05Runtime):
+                program_desc = {
+                    ("generate_triples", (GF256,)):
+                    sum([[(c, 64, i, 1, 1, 0) for i in range(2, 33)] +
+                         [(c, 64, i, 3, 1, 0) for i in range(17, 33)]
+                         for c in range(3 + 2*count, 3 + 3*count)],
+                        [])
+                    }
+            elif isinstance(self.rt, ActiveToft07Runtime):
+                program_desc = {
+                    ("generate_triples", (Zp,)):
+                    sum([[(c, 2, 4, i, 2, 1, 0) for i in range(1, 33)] +
+                         [(c, 2, 4, 99, 2, 1, 0)] +
+                         [(c, 2, 4, i, 1, 0) for i in range(65, 98)]
+                         for c in range(3 + 2*count, 3 + 3*count)],
+                        [])
+                    }
+
             record_start("preprocessing")
             preproc = rt.preprocess(program_desc)
             preproc.addCallback(record_stop, "preprocessing")
@@ -225,9 +249,15 @@ elif options.operation == "mul-active":
 elif options.operation == "comp":
     operation = operator.ge
     runtime_class = Toft05Runtime
+elif options.operation == "comp-active":
+    operation = operator.ge
+    runtime_class = ActiveToft05Runtime
 elif options.operation == "compII":
     operation = operator.ge
     runtime_class = Toft07Runtime
+elif options.operation == "compII-active":
+    operation = operator.ge
+    runtime_class = ActiveToft07Runtime
 
 if options.parallel:
     benchmark = ParallelBenchmark
