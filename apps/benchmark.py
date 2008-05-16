@@ -83,7 +83,7 @@ def record_stop(_, what):
     stop = time.time()
     print
     print "Total time used: %.3f sec" % (stop-start)
-    print "Time per %s operation: %.3f ms" % (what, 1000*float(stop-start) / count)
+    print "Time per %s operation: %.0f ms" % (what, 1000*(stop-start) / count)
     print "*" * 6
 
 
