@@ -915,7 +915,31 @@ class Runtime(BasicRuntime):
 
         # Use r_lsb to flip b as needed.
         return (b_p, b ^ r_lsb)
-        
+
+    @increment_pc
+    def prss_shamir_share_bit_double(self, field):
+        """Shamir share a random bit over *field* and GF256."""
+        n = self.num_players
+        k = self.options.security_parameter
+        prfs = self.players[self.id].prfs(2**k)
+        prss_key = tuple(self.program_counter)
+        inputters = range(1, self.num_players + 1)
+
+        ri = rand.randint(0, 2**k - 1)
+        ri_p = self.shamir_share(inputters, field, ri)
+        ri_lsb = self.shamir_share(inputters, GF256, ri & 1)
+
+        r_p = reduce(self.add, ri_p)
+        r_lsb = reduce(self.add, ri_lsb)
+
+        b_p = self.prss_share_random(field, binary=True)
+        b = self.open(b_p + r_p)
+        # Extract least significant bit and change field to GF256.
+        b.addCallback(lambda i: GF256(i.value & 1))
+        b.field = GF256
+
+        # Use r_lsb to flip b as needed.
+        return (b_p, b ^ r_lsb)
 
     @increment_pc
     def _shamir_share(self, number):
