@@ -288,6 +288,8 @@ class ShareExchanger(Int16StringReceiver):
             deq = self.incoming_data.setdefault(key, deque())
             if deq and isinstance(deq[0], Deferred):
                 deferred = deq.popleft()
+                if not deq:
+                    del self.incoming_data[key]
                 deferred.callback(data)
             else:
                 deq.append(data)
@@ -556,6 +558,8 @@ class BasicRuntime:
         if deq and not isinstance(deq[0], Deferred):
             # We have already received some data from the other side.
             data = deq.popleft()
+            if not deq:
+                del self.protocols[peer_id].incoming_data[key]
             deferred.callback(data)
         else:
             # We have not yet received anything from the other side.
