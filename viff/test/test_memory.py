@@ -15,8 +15,6 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with VIFF. If not, see <http://www.gnu.org/licenses/>.
 
-from viff.field import GF256
-from viff.runtime import Share
 from viff.test.util import RuntimeTestCase, protocol
 
 class MemoryTest(RuntimeTestCase):

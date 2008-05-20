@@ -24,9 +24,7 @@
 # same speed as they are allocated.
 
 import sys
-import gc
 from time import time
-from pprint import pprint
 
 from twisted.internet import reactor
 
