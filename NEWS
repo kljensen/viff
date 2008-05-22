@@ -18,6 +18,7 @@ Version 0.6, not yet released
 
 The average time for a secure comparison was reduced by 60-70%.
 Comparisons now work with an actively secure multiplication protocol.
+A memory leak was fixed.
 
 * A new prss_lsb function in viff.prss efficiently produces a share of
   a random field element together with a GF256 share of its least
@@ -26,6 +27,11 @@ Comparisons now work with an actively secure multiplication protocol.
 * New default flavors has been added to viff.comparison which uses the
   actively secure multiplication protocol. Actively secure comparisons
   take about twice as long as passive secure comparisons.
+
+* When data was sent and received empty deque objects were left behind
+  in the ShareExchanger.incoming_data dictionaries. That caused a
+  memory leak which is now fixed. An example application, gc-test.py,
+  was added to test this and similar problems.
 
 * Fixed a bug that made 'GF256(1) != GF256(1)' return 'True'.
 
