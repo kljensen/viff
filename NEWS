@@ -13,6 +13,16 @@ please refer to it for details on the issues:
   http://tracker.viff.dk/
 
 
+Version 0.6, not yet released
+-----------------------------
+
+The average time for a secure comparison was reduced by 60-70%.
+
+* A new prss_lsb function in viff.prss efficiently produces a share of
+  a random field element together with a GF256 share of its least
+  significant bit. This made comparisons 3-4 times faster.
+
+
 Version 0.5, released on 2008-04-28
 -----------------------------------
 
