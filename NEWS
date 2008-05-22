@@ -27,6 +27,10 @@ Comparisons now work with an actively secure multiplication protocol.
   actively secure multiplication protocol. Actively secure comparisons
   take about twice as long as passive secure comparisons.
 
+* Fixed a bug that made 'GF256(1) != GF256(1)' return 'True'.
+
+* Calling '~GF256(255)' would throw a KeyError, fixed.
+
 
 Version 0.5, released on 2008-04-28
 -----------------------------------
