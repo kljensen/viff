@@ -9,4 +9,10 @@ PRSS Module
 
    .. autofunction:: prss
 
+   .. autofunction:: prss_lsb
+
+   .. autofunction:: random_replicated_sharing
+
+   .. autofunction:: convert_replicated_shamir
+
    .. autofunction:: generate_subsets
