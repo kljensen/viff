@@ -75,47 +75,16 @@ class FieldElement(object):
     """Common base class for elements."""
 
 
-#: Logarithm table.
-#:
-#: Maps a value *x* to *log3(x)*. See `_generate_tables`.
-_log_table = {}
-#: Exponentiation table.
-#:
-#: Maps a value *y* to *3^y*. See `_generate_tables`.
-_exp_table = {}
 #: Inversion table.
 #:
 #: Maps a value *x* to *x^-1*. See `_generate_tables`.
 _inv_table = {}
 
+#: Multiplication table.
+#:
+#: Maps *(x,y)* to *xy*. See `_generate_tables`.
+_mul_table = {}
 
-def _generate_tables():
-    """Generate tables with logarithms, antilogarithms (exponentials)
-    and inverses.
-
-    This updates the `_log_table`, `_exp_table`, and `_inv_table`
-    fields. The generator used is ``0x03``.
-
-    Code adapted from http://www.samiam.org/galois.html.
-    """
-    a = 1
-    for c in range(255):
-        a &= 0xff
-        _exp_table[c] = a
-        d = a & 0x80
-        a <<= 1
-        if d == 0x80:
-            a ^= 0x1b
-        a ^= _exp_table[c]
-        _log_table[_exp_table[c]] = c
-    _exp_table[255] = _exp_table[0]
-    _log_table[0] = 0
-
-    #_inv_table[0] = 0
-    for c in range(1, 256):
-        _inv_table[c] = _exp_table[255 - _log_table[c]]
-
-_generate_tables()
 
 # The class name is slightly wrong since the class instances cannot be
 # said to be represent a field. Instead they represent instances of
@@ -193,11 +162,7 @@ class GF256(FieldElement):
             return NotImplemented
         if isinstance(other, GF256):
             other = other.value
-        if self.value == 0 or other == 0:
-            return GF256(0)
-        else:
-            log_product = (_log_table[self.value] + _log_table[other]) % 255
-            return GF256(_exp_table[log_product])
+        return _mul_table[(self.value, other)]
 
 
     #: Multiply this and another GF256 element (reflected argument version).
@@ -236,7 +201,7 @@ class GF256(FieldElement):
         """
         if self.value == 0:
             raise ZeroDivisionError("Cannot invert zero")
-        return GF256(_inv_table[self.value])
+        return _inv_table[self.value]
 
     def __repr__(self):
         return "[%d]" % self.value
@@ -286,6 +251,43 @@ class GF256(FieldElement):
 # We provide the class here to make the construction of new elements
 # easy in a polymorphic context.
 GF256.field = GF256
+
+
+def _generate_tables():
+    """Generate multiplication and inversion tables.
+
+    This updates the `_mul_table` and `_inv_table`. The generator used
+    is ``0x03``.
+
+    Code adapted from http://www.samiam.org/galois.html.
+    """
+    log_table = {}
+    exp_table = {}
+    a = 1
+    for c in range(255):
+        a &= 0xff
+        exp_table[c] = a
+        d = a & 0x80
+        a <<= 1
+        if d == 0x80:
+            a ^= 0x1b
+        a ^= exp_table[c]
+        log_table[exp_table[c]] = c
+    exp_table[255] = exp_table[0]
+
+    for x in range(256):
+        for y in range(256):
+            if x == 0 or y == 0:
+                z = 0
+            else:
+                log_product = (log_table[x] + log_table[y]) % 255
+                z = exp_table[log_product]
+            _mul_table[(x,y)] = GF256(z)
+
+    for c in range(1, 256):
+        _inv_table[c] = GF256(exp_table[255 - log_table[c]])
+
+_generate_tables()
 
 
 #: Cached fields.
