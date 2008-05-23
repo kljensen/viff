@@ -18,7 +18,7 @@ Version 0.6, not yet released
 
 The average time for a secure comparison was reduced by 60-70%.
 Comparisons now work with an actively secure multiplication protocol.
-A memory leak was fixed.
+A memory leak was fixed. Converted documentation to new Sphinx format.
 
 * A new prss_lsb function in viff.prss efficiently produces a share of
   a random field element together with a GF256 share of its least
@@ -32,6 +32,10 @@ A memory leak was fixed.
   in the ShareExchanger.incoming_data dictionaries. That caused a
   memory leak which is now fixed. An example application, gc-test.py,
   was added to test this and similar problems.
+
+* The documentation is now generated using Sphinx and aims to be more
+  like a manual than purely an API documentation. The extended section
+  on program counters is an example of this.
 
 * Fixed a bug that made 'GF256(1) != GF256(1)' return 'True'.
 
