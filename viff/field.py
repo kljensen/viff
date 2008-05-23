@@ -254,11 +254,10 @@ GF256.field = GF256
 
 
 def _generate_tables():
-    """Generate tables with logarithms, antilogarithms (exponentials)
-    and inverses.
+    """Generate multiplication and inversion tables.
 
-    This updates the `_log_table`, `_exp_table`, and `_inv_table`
-    fields. The generator used is ``0x03``.
+    This updates the `_mul_table` and `_inv_table`. The generator used
+    is ``0x03``.
 
     Code adapted from http://www.samiam.org/galois.html.
     """
