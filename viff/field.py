@@ -274,7 +274,6 @@ def _generate_tables():
         a ^= exp_table[c]
         log_table[exp_table[c]] = c
     exp_table[255] = exp_table[0]
-    log_table[0] = 0
 
     for x in range(256):
         for y in range(256):
@@ -285,7 +284,6 @@ def _generate_tables():
                 z = exp_table[log_product]
             _mul_table[(x,y)] = GF256(z)
 
-    #_inv_table[0] = 0
     for c in range(1, 256):
         _inv_table[c] = GF256(exp_table[255 - log_table[c]])
 
