@@ -88,6 +88,10 @@ _exp_table = {}
 #: Maps a value *x* to *x^-1*. See `_generate_tables`.
 _inv_table = {}
 
+#: Multiplication table.
+#:
+#: Maps *(x,y)* to *xy*. See `_generate_tables`.
+_mul_table = {}
 
 def _generate_tables():
     """Generate tables with logarithms, antilogarithms (exponentials)
@@ -110,6 +114,15 @@ def _generate_tables():
         _log_table[_exp_table[c]] = c
     _exp_table[255] = _exp_table[0]
     _log_table[0] = 0
+
+    for x in range(256):
+        for y in range(256):
+            if x == 0 or y == 0:
+                z = 0
+            else:
+                log_product = (_log_table[x] + _log_table[y]) % 255
+                z = _exp_table[log_product]
+            _mul_table[(x,y)] = z
 
     #_inv_table[0] = 0
     for c in range(1, 256):
@@ -193,11 +206,7 @@ class GF256(FieldElement):
             return NotImplemented
         if isinstance(other, GF256):
             other = other.value
-        if self.value == 0 or other == 0:
-            return GF256(0)
-        else:
-            log_product = (_log_table[self.value] + _log_table[other]) % 255
-            return GF256(_exp_table[log_product])
+        return GF256(_mul_table[(self.value, other)])
 
 
     #: Multiply this and another GF256 element (reflected argument version).
