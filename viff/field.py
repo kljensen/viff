@@ -75,14 +75,6 @@ class FieldElement(object):
     """Common base class for elements."""
 
 
-#: Logarithm table.
-#:
-#: Maps a value *x* to *log3(x)*. See `_generate_tables`.
-_log_table = {}
-#: Exponentiation table.
-#:
-#: Maps a value *y* to *3^y*. See `_generate_tables`.
-_exp_table = {}
 #: Inversion table.
 #:
 #: Maps a value *x* to *x^-1*. See `_generate_tables`.
@@ -270,31 +262,33 @@ def _generate_tables():
 
     Code adapted from http://www.samiam.org/galois.html.
     """
+    log_table = {}
+    exp_table = {}
     a = 1
     for c in range(255):
         a &= 0xff
-        _exp_table[c] = a
+        exp_table[c] = a
         d = a & 0x80
         a <<= 1
         if d == 0x80:
             a ^= 0x1b
-        a ^= _exp_table[c]
-        _log_table[_exp_table[c]] = c
-    _exp_table[255] = _exp_table[0]
-    _log_table[0] = 0
+        a ^= exp_table[c]
+        log_table[exp_table[c]] = c
+    exp_table[255] = exp_table[0]
+    log_table[0] = 0
 
     for x in range(256):
         for y in range(256):
             if x == 0 or y == 0:
                 z = 0
             else:
-                log_product = (_log_table[x] + _log_table[y]) % 255
-                z = _exp_table[log_product]
+                log_product = (log_table[x] + log_table[y]) % 255
+                z = exp_table[log_product]
             _mul_table[(x,y)] = GF256(z)
 
     #_inv_table[0] = 0
     for c in range(1, 256):
-        _inv_table[c] = GF256(_exp_table[255 - _log_table[c]])
+        _inv_table[c] = GF256(exp_table[255 - log_table[c]])
 
 _generate_tables()
 
