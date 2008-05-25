@@ -1,6 +1,10 @@
 graft doc/api
 exclude epydoc.conf
 
+graft doc/html
+prune doc/html/.doctrees
+exclude doc/conf.py
+
 include INSTALL
 include AUTHORS
 
