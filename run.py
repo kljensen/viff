@@ -24,7 +24,7 @@ GNU/Linux and similar systems, we have created this little program to
 run the commands used when building releases of VIFF.
 """
 
-import sys, os
+import sys, os, shutil
 from os.path import isdir, join, getsize
 from subprocess import Popen
 from pprint import pprint
@@ -102,9 +102,11 @@ def build():
     """Build a VIFF distribution."""
 
     # Generate HTML docs in doc/html.
+    shutil.rmtree('doc/html')
     sphinx('doc')
 
     # Generate API docs in doc/api.
+    shutil.rmtree('doc/api')
     epydoc('doc')
 
     # Retrieve the latest version of install.txt and authors.txt from
