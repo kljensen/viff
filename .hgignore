@@ -33,6 +33,9 @@ MANIFEST
 AUTHORS
 INSTALL
 
+# Epydoc and Sphinx generated output.
+doc/{api,html}
+
 # Trace2html.py's standard output directory.
 coverage_dir
 
