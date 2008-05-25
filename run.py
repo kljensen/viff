@@ -101,6 +101,9 @@ def command(name, *required_args):
 def build():
     """Build a VIFF distribution."""
 
+    # Generate HTML docs in doc/html.
+    sphinx('doc')
+
     # Generate API docs in doc/api.
     epydoc('doc')
 
@@ -127,6 +130,13 @@ def epydoc(build):
     ensure_dir(target)
     execute(["epydoc", "-vv", "--config", "epydoc.conf"],
             {'VIFF_NO_WRAP': 'YES', 'target': target})
+
+@command('sphinx', 'build')
+def sphinx(build):
+    """Generate VIFF manual using Sphinx."""
+    target = "%s/html" % build
+    ensure_dir(target)
+    execute(["sphinx-build", "doc", target])
 
 @command('coverage', 'build')
 def coverage(build):
