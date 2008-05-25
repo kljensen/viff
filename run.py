@@ -138,7 +138,7 @@ def sphinx(build):
     """Generate VIFF manual using Sphinx."""
     target = "%s/html" % build
     ensure_dir(target)
-    execute(["sphinx-build", "doc", target])
+    execute(["sphinx-build", "-N", "doc", target])
 
 @command('coverage', 'build')
 def coverage(build):
