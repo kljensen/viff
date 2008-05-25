@@ -1,12 +1,8 @@
-include doc/api/*.html
-include doc/api/*.gif
-include doc/api/*.png
-include doc/api/epydoc.*
-include doc/api/api-objects.txt
+graft doc/api
+exclude epydoc.conf
 
 include INSTALL
 include AUTHORS
 
 exclude MANIFEST.in
 exclude run.py
-exclude epydoc.conf
