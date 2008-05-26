@@ -24,7 +24,7 @@ profile.data
 *.prof
 
 # LaTeX outputs.
-*.{aux,dvi,log,nav,out,pdf,ps,snm,toc,vrb}
+# *.{aux,dvi,log,nav,out,pdf,ps,snm,toc,vrb}
 
 # Distutils generated files.
 build
