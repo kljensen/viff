@@ -1,8 +1,7 @@
 .. -*- coding: utf-8 -*-
 
-==============
- Unit Testing
-==============
+Unit Testing
+============
 
 VIFF employs a set of unit tests to help developers catch regressions
 and to ensure the correctness of the implementation. The code is

@@ -1,8 +1,7 @@
 .. -*- coding: utf-8 -*-
 
-==================
- VIFF Development
-==================
+VIFF Development
+================
 
 This page explains what you need to know if you want to start hacking
 on VIFF. In addition to these instructions you will want to read up on
