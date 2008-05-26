@@ -102,11 +102,13 @@ def build():
     """Build a VIFF distribution."""
 
     # Generate HTML docs in doc/html.
-    shutil.rmtree('doc/html')
+    if isdir('doc/html'):
+        shutil.rmtree('doc/html')
     sphinx('doc')
 
     # Generate API docs in doc/api.
-    shutil.rmtree('doc/api')
+    if isdir('doc/api'):
+        shutil.rmtree('doc/api')
     epydoc('doc')
 
     # Retrieve the latest version of install.txt and authors.txt from
