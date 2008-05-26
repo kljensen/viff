@@ -1,7 +1,7 @@
 .. -*- coding: utf-8 -*-
 
-VIFF Coding Style
-=================
+Coding Style
+============
 
 The VIFF code tries to follow the coding style laid out in `PEP 8`_,
 which you should read or at least skim over. You can check your code
