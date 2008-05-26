@@ -1,0 +1,33 @@
+
+Presentations
+=============
+
+The following VIFF-related presentations are available:
+
+February 21st, 2008:
+  Slides used at a PhD Qualification Exam by Martin Geisler. Like the
+  report they accompany, the second part of the slides are about VIFF
+  and includes benchmark results.
+
+  Available as PDF__.
+
+  .. __: http://viff.dk/files/mg-progress-report-talk.pdf
+
+January 15th, 2008:
+  PhD Progress Report by Martin Geisler. The second part of the report
+  describes the design of VIFF and proves it secure in the Universally
+  Composability security framework by Canetti.
+
+  Available as PDF__.
+
+  .. __: http://viff.dk/files/mg-progress-report.pdf
+
+September 20th, 2007:
+  VIFF Design Talk given by Martin Geisler at a SIMAP_ meeting. The
+  talk describes some of the goals of the VIFF design. It is current
+  to version 0.2 of VIFF.
+
+  Available as PDF__.
+
+  .. _SIMAP: http://simap.dk/
+  .. __: http://viff.dk/files/design-talk.pdf

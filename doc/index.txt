@@ -13,7 +13,9 @@ Contents:
 
    overview
    install
+   presentations
    implementation
+   bibliography
    glossary
 
 

@@ -1,0 +1,160 @@
+.. -*- coding: utf-8 -*-
+
+==================
+ VIFF Development
+==================
+
+This page explains what you need to know if you want to start hacking
+on VIFF. In addition to these instructions you will want to read up on
+the `coding style`_ used by VIFF (it is the normal Python style,
+nothing fancy there).
+
+.. _coding style: coding-style.html
+
+
+Getting the Source Code
+-----------------------
+
+VIFF is developed using Mercurial_ (also known as ``hg`` after its
+command line program). This is a distributed revision control system
+which allows you to participate fully in the development even if you
+do not have what is traditionally known as "commit access". You can
+also work offline and take advantage of the many fast operations
+offered by Mercurial.
+
+.. _Mercurial: http://www.selenic.com/mercurial/
+
+After installing Mercurial you can checkout a copy of the source using
+this command line::
+
+   hg clone http://hg.viff.dk/viff/
+
+This will create a directory called ``viff/`` where you will find the
+source code. Please test that VIFF works as expected on your computer
+by following the instructions on `unit testing`_.
+
+.. _unit testing: unit-testing.html
+
+
+Contributing Changes
+--------------------
+
+When you have created a new feature or fixed a bug, then you need to
+send your changes to one of the VIFF developers. If you share a file
+system with one of the developers, then the easiest way to get your
+changes back into VIFF is to ensure that one of the developers has
+read access on the repository files. He can then simply pull the
+changesets over and eventually push them out to the VIFF repository.
+
+Alternatively, you can setup a Mercurial repository where one of the
+developers can ``hg pull`` from. You can do this by uploading your
+clone on some public web server (any webserver works for this since
+the developers can pull using ``hg pull static-http://...``) or by
+running::
+
+   hg serve -p 8000
+
+which creates a web server on port 8000 just like the one running at
+http://hg.viff.dk/viff/. The default port number is 8000, so you can
+leave that out.
+
+A final option is the patchbomb_ extension for Mercurial, which will
+allow you to use::
+
+   hg email -t viff-devel@viff.dk -o
+
+to send the changesets not present in the VIFF repository (``-o``) to
+the VIFF development list (``-t viff-devel@viff.dk``). You will
+probably want to test using a ``-n`` flag or by sending the patches to
+your own address first to make sure everything looks okay. You can get
+the full list of options using ``hg help email``.
+
+.. _patchbomb: http://www.selenic.com/mercurial/
+                      wiki/index.cgi/PatchbombExtension
+
+The advantage of using patchbomb is that allows everybody to go over
+the code and comment on it before the changesets are pulled into the
+repository. The mails sent out by patchbomb contain all the metadata
+needed (name of committer, date, parent changeset, etc.) for importing
+the changes into the repository, just as if the changesets had been
+pulled using ``hg pull``.
+
+
+Revising Changes
+----------------
+
+When developing your changes you will probably make many commits
+representing contained steps. Even though you have made a commit, you
+can still change it *as long as you have not shared it with anybody*.
+The idea is that you are allowed to rewrite history as you see fit in
+your own private repository, but if your changes have been pulled to
+the outside, then you can no longer change them.
+
+Also, you can only change commits in a linear history back from your
+repository tip. This means that if you pull in changes from the main
+VIFF repository and merge them periodically, then you can no longer
+edit changesets past the last merge. We therefore recommend that you
+develop your feature until you are satisfied with it and only merges
+with whatever new changesets there might be in the VIFF repository
+when the feature is done and debugged.
+
+Now, to change a past commit you use the `Mercurial Queues extension`_
+also known as MQ. It gives you a powerful set of tools to work with
+the past history. The basic concept is that changesets can be
+converted into patches, which depend on each other and form a stack.
+Like any good stack, you can push and pop elements from it. In this
+case you push and pop patches.
+
+To get started you will want to import the normal changesets into MQ.
+Let us suppose you found an error in revision 430 (use ``hg view`` or
+``hg log`` to find the revision numbers). You then want to import
+revision 430 and the following changesets into MQ with this command::
+
+   hg qimport -r 430:tip
+
+Nothing much happened — your working directory is left unchanged. To
+see that the command did something you can check the current patch
+series with ``hg qseries``. When importing changesets revision N is
+called ``N.diff`` in the patch series.
+
+What we want is to pop off the other patches so that ``430.diff`` is
+the topmost patch. This is done with::
+
+   hg qgoto 430.diff
+
+This updates your working directory to look exactly like it did when
+you originally committed revision 430! You can now edit the files to
+correct the error you found, and when you are done you run::
+
+   hg qrefresh
+
+to refresh the patch in ``430.diff``. You can use ``hg qrefresh -e``
+to edit the commit message too. Now comes the fun part — you must now
+push the the other patches back on the stack with::
+
+   hg qpush -a
+
+If this goes well with no complaints, then you can delete the patches
+again with::
+
+   hg qdelete -r qbase:qtip
+
+The end result is a completely normal repository with no sign of this
+surgery. You can repeat this as many times as needed to slowly develop
+your patches until you are satisfied with the results.
+
+
+If the changes you made to the patch are conflicting with other
+patches in your stack, then the pushing will stop where the error was
+encountered, and the conflicting patch hunk is stored in a ``.rej``
+file. There is no need to panic if this happens — all you need to do
+is to determine how the hunk in the ``.rej`` file(s) should be applied
+(if at all) and then run ``hg qrefresh`` to indicate that the current
+patch is okay. Now continue applying patches with ``hg qpush -a`` and
+fix any remaining conflicts.
+
+
+.. _Mercurial Queues extension: http://www.selenic.com/mercurial/
+                                       wiki/index.cgi/MqExtension
+
+.. LocalWords:  changeset changesets

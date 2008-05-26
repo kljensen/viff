@@ -1,0 +1,62 @@
+.. -*- coding: utf-8 -*-
+
+===================
+ VIFF Coding Style
+===================
+
+The VIFF code tries to follow the coding style laid out in `PEP 8`_,
+which you should read or at least skim over. You can check your code
+against by running the pep8.py_ checker.
+
+.. TODO: change PEP 8 link into using the :PEP:`8` role when Sphinx
+.. doesn't crash on it anymore. See
+..
+..   http://groups.google.com/group/sphinx-dev/msg/bc99090aa52b87af
+..
+.. for the bug report.
+
+.. _PEP 8: http://www.python.org/dev/peps/pep-0008
+.. _pep8.py: http://svn.browsershots.org/trunk/devtools/pep8/pep8.py
+
+
+The VIFF Coding Style in Short
+------------------------------
+
+A summary of the rules:
+
+* Use four spaces for indention, never tabs.
+
+* Use a single space around binary operators.
+
+* Name classes using ``CamelCase``.
+
+* Name variables, function, and methods using lowercase words like
+  ``foo_bar``.
+
+* Write docstrings for your functions and methods. Include test for
+  doctest_ if possible.
+
+  .. _doctest: http://docs.python.org/lib/module-doctest.html
+
+* Try to be consistent.
+
+These rules are there to make the source code more readable for both
+old and new people.
+
+The Twisted Coding Style
+------------------------
+
+VIFF uses Twisted_ and their code follows a slightly different coding
+style. Their style is closer to the style used in Java where functions
+and methods are named ``fooBar`` instead of ``foo_bar``.
+
+When writing code which is close to Twisted code, you might want to
+follow that style too. If you subclass a Twisted class to override
+some behavior, you might be forced to follow their style.
+
+If you have a choice, then you should only use the Twisted style if
+you expect people to call both your code and the Twisted code — if
+people will only call your code, then please follow the standard VIFF
+coding style.
+
+.. _Twisted: http://twistedmatrix.com/

@@ -1,0 +1,289 @@
+.. -*- coding: utf-8 -*-
+
+==============
+ Unit Testing
+==============
+
+VIFF employs a set of unit tests to help developers catch regressions
+and to ensure the correctness of the implementation. The code is
+continuously tested using a BuildBot_ and the results are available
+online_. If you see warnings or errors from the unit tests on the
+`BuildBot waterfall page`_, then please take it as an invitation to
+fix them!
+
+.. _BuildBot: http://buildbot.net/
+.. _online: http://buildbot.viff.dk/
+.. _BuildBot waterfall page: http://buildbot.viff.dk/waterfall
+
+When using Twisted it is natural to use its unit testing framework
+called Trial_. Trial has the big advantage over normal testing
+frameworks that it understands Twisted's Deferreds_ — if a unit test
+returns a Deferred, Trial waits for it to trigger before it declares
+the test a success or failure. Please refer to this tutorial_ for more
+information.
+
+.. _Trial: http://twistedmatrix.com/trac/wiki/TwistedTrial
+.. _Deferreds: http://twistedmatrix.com/projects/core/
+               documentation/howto/defer.html
+.. _tutorial: http://twistedmatrix.com/trac/browser/branches/
+              trial-tutorial-2443/doc/core/howto/trial.xhtml?format=raw
+
+Running the Unit Tests
+----------------------
+
+To run the VIFF unit tests you must make sure that ``import viff``
+works correctly in Python. In other words, you must make sure that
+VIFF is installed or that the root of your source tree is in
+``PYTHONPATH``. You can test this by changing to some unrelated
+directory, starting an interactive Python session and run:
+
+.. sourcecode:: pycon
+
+  >>> import viff
+  >>> print viff.__version__
+  0.3
+
+If it fails with an ImportError, then please double-check that your
+``PYTHONPATH`` is setup correctly.
+
+Now simply execute ``trial viff`` to run the unit tests. You should
+get output similar to this::
+
+  % trial viff
+  Seeding random generator with random seed 4658
+  Running 65 tests.
+  viff.test.test_active_runtime
+    ActiveRuntimeTest
+      test_broadcast ...                                           [OK]
+  viff.test.test_basic_runtime
+    ProgramCounterTest
+      test_callback ...                                            [OK]
+      test_complex_operation ...                                   [OK]
+      test_initial_value ...                                       [OK]
+      test_multiple_callbacks ...                             [SKIPPED]
+      test_nested_calls ...                                        [OK]
+      test_simple_operation ...                                    [OK]
+  viff.test.test_field
+    GF256TestCase
+      test_add ...                                                 [OK]
+      test_construct ...                                           [OK]
+      test_div ...                                                 [OK]
+      test_field ...                                               [OK]
+      test_invert ...                                              [OK]
+      test_mul ...                                                 [OK]
+      test_neg ...                                                 [OK]
+      test_pow ...                                                 [OK]
+      test_str ...                                                 [OK]
+      test_sub ...                                                 [OK]
+      test_xor ...                                                 [OK]
+    GFpElementTestCase
+      test_add ...                                                 [OK]
+      test_bit ...                                                 [OK]
+      test_div ...                                                 [OK]
+      test_field ...                                               [OK]
+      test_invert ...                                              [OK]
+      test_mul ...                                                 [OK]
+      test_neg ...                                                 [OK]
+      test_sqrt ...                                                [OK]
+      test_str ...                                                 [OK]
+      test_sub ...                                                 [OK]
+  doctest
+    DocTestCase
+      field ...                                                    [OK]
+      GF ...                                                       [OK]
+      __eq__ ...                                                   [OK]
+      __init__ ...                                                 [OK]
+      __nonzero__ ...                                              [OK]
+      __radd__ ...                                                 [OK]
+      __rmul__ ...                                                 [OK]
+  viff.test.test_prss
+    PRSSTestCase
+      test_generate_subsets ...                                    [OK]
+  doctest
+    DocTestCase
+      PRF ...                                                      [OK]
+      __call__ ...                                                 [OK]
+      __init__ ...                                                 [OK]
+      generate_subsets ...                                         [OK]
+      prss ...                                                     [OK]
+  viff.test.test_runtime
+    RuntimeTest
+      test_add ...                                                 [OK]
+      test_add_coerce ...                                          [OK]
+      test_convert_bit_share ...                                   [OK]
+      test_greater_than ...                                        [OK]
+      test_greater_than_equal ...                                  [OK]
+      test_greater_than_equalII ...                                [OK]
+      test_less_than ...                                           [OK]
+      test_less_than_equal ...                                     [OK]
+      test_mul ...                                                 [OK]
+      test_open ...                                                [OK]
+      test_open_no_mutate ...                                      [OK]
+      test_prss_share_bit ...                                      [OK]
+      test_prss_share_int ...                                      [OK]
+      test_prss_share_random_bit ...                               [OK]
+      test_prss_share_random_int ...                               [OK]
+      test_shamir_share ...                                        [OK]
+      test_shamir_share_asymmetric ...                             [OK]
+      test_sub ...                                                 [OK]
+      test_sub_coerce ...                                          [OK]
+      test_xor ...                                                 [OK]
+  doctest
+    DocTestCase
+      share ...                                                    [OK]
+      clone_deferred ...                                           [OK]
+      dlift ...                                                    [OK]
+      find_prime ...                                               [OK]
+
+  =====================================================================
+  [SKIPPED]: viff.test.test_basic_runtime.ProgramCounterTest.
+  test_multiple_callbacks
+
+  TODO: Scheduling callbacks fails to increment program counter!
+  ---------------------------------------------------------------------
+  Ran 65 tests in 18.305s
+
+  PASSED (skips=1, successes=64)
+
+Lots of success! But one of the tests was skipped — we do this when we
+have a test which represents a known problem. Otherwise every test run
+would be cluttered with long of traceback messages, making it
+difficult to notice new *unexpected* failures.
+
+
+Writing Unit Tests
+------------------
+
+The unit tests live in the ``viff.test`` package. There you will find
+a number of modules, which in turn contain classes inheriting from
+``twisted.trial.unittest.TestCase``. Trial recognizes these classes
+and will execute methods starting with ``test``.
+
+Simple Tests
+~~~~~~~~~~~~
+
+Adding a new unit test can be as simple as defining a new method in a
+suitable class. The method will want to assert certain things during
+the test, and for that Trial offers a large number of convenient
+methods such as ``assertEqual``, ``assertTrue``, and so on. The full
+reference is available `online`__. Notice that they describe the
+methods under names like ``failUnlessSomething`` which is aliased to
+``assertSomething``. So far all the VIFF unit tests use the
+``assertSomething`` style, but you are welcome to use the other if you
+prefer.
+
+.. __: http://twistedmatrix.com/documents/current/api/
+       twisted.trial.unittest._Assertions.html
+
+A simple example of a unit test is ``viff.test.test_field`` which
+looks like this (heavily abbreviated):
+
+.. sourcecode:: python
+
+  """Tests for viff.field."""
+
+  from viff.field import GF, GF256
+  from twisted.trial.unittest import TestCase
+
+  #: Declare doctests for Trial.
+  __doctests__ = ['viff.field']
+
+  class GFpElementTestCase(TestCase):
+      """Tests for elements from a Zp field."""
+
+      def setUp(self):
+          """Initialize Zp to Z31."""
+          self.field = GF(31)
+
+      def test_invert(self):
+          """Test inverse operation, including inverting zero."""
+          self.assertRaises(ZeroDivisionError, lambda: ~self.field(0))
+          self.assertEquals(~self.field(1), self.field(1))
+
+      def test_sqrt(self):
+          """Test extraction of square roots."""
+          square = self.field(4)**2
+          root = square.sqrt()
+          self.assertEquals(root**2, square)
+
+This demonstrates the most important features in a simple unit test:
+
+* First the needed definitions are imported as normal.
+
+* Setting the ``__doctest__`` field makes Trial run the doctests_ in
+  the named module.
+
+* A class is defined which inherit from ``TestCase``.
+
+* A ``setUp`` method is used to collect preperations that are needed
+  for every test.
+
+* Several test methods are defined. They make use of the assertions
+  offered by Trial.
+
+.. _doctests: http://docs.python.org/lib/module-doctest.html
+
+
+Tests Involving a VIFF Runtime
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Trial really shines when it comes to testing that involves networking.
+First, it allows us to forget about the networking — the network
+connections are replaced by direct method calls on the receiver's
+transport. This makes the test repeatable unlike if real network
+connections were used since they may fail if they cannot bind to the
+wanted port number.
+
+In VIFF the ``util.py`` file contains the logic needed to connect a
+number of Runtime instances in this way. All you need to do is to
+create a subclass of RuntimeTestCase and decorate the test methods
+with ``protocol`` like this example (abbreviated from
+``viff.test.test_active_runtime``):
+
+.. sourcecode:: python
+
+  from viff.test.util import RuntimeTestCase, protocol
+
+  class ActiveRuntimeTest(RuntimeTestCase):
+      """Test for active security."""
+
+      #: Number of players.
+      num_players = 4
+
+      @protocol
+      def test_broadcast(self, runtime):
+          """Test Bracha broadcast."""
+          if runtime.id == 1:
+              x = runtime.broadcast([1], "Hello world!")
+          else:
+              x = runtime.broadcast([1])
+          x.addCallback(self.assertEquals, "Hello world!")
+          return x
+
+By decorating ``test_broadcast`` with ``protocol`` we ensure that the
+method will be called with a Runtime instance. Furthermore, the method
+will be called ``num_player`` times, each time with another Runtime
+instance. The net result is that the test behaves just like if four
+players had started four programs containing the method body.
+
+In the method you can branch on ``runtime.id``. This is needed in the
+typical case where you want only one of the parties to input something
+to a calculation.
+
+In this example all four parties get an ``x`` which will eventually
+contain the string "Hello World". Using Trial we can return ``x`` and
+Trial will then wait for ``x`` to trigger before declaring the test a
+success or failure. We have attached ``self.assertEquals`` as a
+callback on ``x`` with an extra argument of "Hello World". This means
+that when ``x`` eventually triggers, the assertion is run and the test
+finishes.
+
+This is the real power of Trial. You can do some calculations and
+finish by returning a Deferred (and remember that Shares are Deferreds
+in VIFF). The value of this Deferred is not important, it is only
+important that it triggers when the test is done. You will often need
+to use ``twisted.internet.defer.gatherResults`` to combine several
+Deferreds into one that you can return to Trial. Just make sure that
+your final Deferred depends on all other Deferreds so that you do not
+leave lingering Deferreds behind. Trial will complain loudly if you
+do, so it should be easy to spot.

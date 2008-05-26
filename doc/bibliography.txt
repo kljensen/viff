@@ -1,0 +1,56 @@
+.. -*- coding: utf-8 -*-
+
+==============
+ Bibliography
+==============
+
+.. note::
+
+   This list is far from complete. If you find more relevant
+   references then please `send us a mail`__ with the information.
+
+   .. __: mailto:viff-devel@viff.dk
+
+The algorighms used by VIFF are published in various academic papers.
+Here we will try to point out which parts of the code uses which
+papers.
+
+* The ``viff.shamir`` module is obviously based on [Shamir79]_.
+
+*  ``apps/millionaires.py``: Inspired by [Yao82]_.
+
+* The default comparison operation (``Runtime.greater_than_equal``) is
+  based on the comparison protocol from [Toft05]_.
+
+* Broadcast (``Runtime.broadcast``) is based on the original paper by
+  [Bracha84]_ and on the explanation by [Cachin05]_.
+
+* The pseudo-random secret sharing (PRSS) in ``viff.prss`` is
+  described in [CDI05]_.
+
+
+.. [Bracha84] G. Bracha, *An asynchronous [(n-1)/3]-resilient
+   consensus protocol*, Proc 3rd ACM Symposium on Principles of
+   Distributed Computing (PODC), 1984, 154-162.
+
+.. [Cachin05] Christian Cachin, *Security and Fault-tolerance in
+   Distributed Systems*, ETHZ, 2005, PDF__.
+
+   .. __: http://www.zurich.ibm.com/~cca/sft05/agreement.pdf
+
+.. [CDI05] Ronald Cramer, Ivan Damgård, and Yuval Ishai, *Share
+   Conversion, Pseudorandom Secret-Sharing and Applications to Secure
+   Computation*, Proc of TCC 2005, LNCS 3378, PS__.
+
+   .. __:  http://www.cs.technion.ac.il/~yuvali/pubs/CDI05.ps
+
+.. [Shamir79] Adi Shamir, *How to share a secret*, Communications of
+   the ACM, 22 (11): 612-613.
+
+.. [Toft05] Tomas Toft, *Secure Integer Computation with Applications
+   in Economics*, PhD Progress Report, July 2005, PDF__.
+
+   .. __: http://www.daimi.au.dk/~tomas/publications/progress.pdf
+
+.. [Yao82] Andrew Chi-Chih Yao, *Protocols for Secure Computations*,
+   FOCS 1982, 160-164.
