@@ -29,7 +29,6 @@ from os.path import isdir, join, getsize
 from subprocess import Popen
 from pprint import pprint
 from textwrap import wrap
-from urllib import urlretrieve
 from base64 import b64decode
 
 from twisted.python.procutils import which
@@ -110,15 +109,6 @@ def build():
     if isdir('doc/api'):
         shutil.rmtree('doc/api')
     epydoc('doc')
-
-    # Retrieve the latest version of install.txt and authors.txt from
-    # the website repository, and ship them as INSTALL and AUTHORS.
-    for filename in ('install.txt', 'authors.txt'):
-        url = 'http://hg.viff.dk/viff.dk/raw-file/tip/%s' % filename
-        print "Fetching %s..." % url,
-        sys.stdout.flush()
-        urlretrieve(url, filename[:-4].upper())
-        print "done."
 
     # Pack everything up with Distutils.
     execute(["python", "setup.py", "sdist", "--force-manifest",
