@@ -1,0 +1,19 @@
+.. -*- coding: utf-8 -*-
+
+VIFF Development Team
+=====================
+
+The following people have contributed to VIFF (ordered by first commit
+to the repository):
+
+* Martin Geisler <mg@daimi.au.dk>
+* Tomas Toft
+* Mikkel Krøigård <mk@daimi.au.dk>
+* Thomas Pelle Jakobsen <mas@daimi.au.dk>
+* Jakob Illeborg Pagter
+
+If you have been forgotten, then please checkout `the repository`_,
+add yourself to the list and `send us a patch`_!
+
+.. _the repository: http://hg.viff.dk/viff/
+.. _send us a patch: mailto:viff-devel@viff.dk

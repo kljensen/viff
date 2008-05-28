@@ -16,6 +16,7 @@ Contents:
    presentations
    implementation
    bibliography
+   authors
    glossary
 
 
