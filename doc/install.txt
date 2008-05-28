@@ -1,9 +1,8 @@
 .. -*- coding: utf-8 -*-
 .. (Links are marked with underscores, see the bottom of the file.)
 
-====================
- Installation Guide
-====================
+Installation Guide
+==================
 
 VIFF is written in Python and uses the Twisted framework for
 asynchronous communication, (optionally) python-gnutls for secure
