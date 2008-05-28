@@ -12,8 +12,8 @@ of the players are corrupted.
 
 VIFF is Free Software licensed under the GNU Lesser General Public
 License (LGPL) version 3 or later. Please see the files COPYING and
-COPYING.LIB for details. Please see the INSTALL file for installation
-instructions.
+COPYING.LIB for details. Please see doc/install.txt or
+doc/html/install.html for installation instructions.
 
 
 Features
