@@ -56,7 +56,7 @@ class ComparisonToft05Mixin:
     def greater_than_equal(self, share_a, share_b):
         """Compute ``share_a >= share_b``.
 
-        Both arguments must be from the field given. The result is a
+        Both arguments must be from the same field. The result is a
         :class:`GF256 <viff.field.GF256>` share.
 
         .. warning::
