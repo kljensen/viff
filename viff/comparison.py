@@ -57,7 +57,13 @@ class ComparisonToft05Mixin:
         """Compute ``share_a >= share_b``.
 
         Both arguments must be from the field given. The result is a
-        GF256 share.
+        :class:`GF256 <viff.field.GF256>` share.
+
+        .. warning::
+
+           The result type (:class:`viff.field.GF256`) is different
+           from the argument types (general field elements).
+
         """
         field = getattr(share_a, "field", getattr(share_b, "field", None))
         if not isinstance(share_a, Share):
