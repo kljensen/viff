@@ -225,6 +225,9 @@ platforms. Do the following:
    If something went wrong, then please `file a bug report`_ or report
    it on the `VIFF mailing list`_. This will help us improve VIFF.
 
+   If things worked as they should, then you are *also* very welcome
+   to send a mail saying so to `VIFF mailing list`_! We would love to
+   hear your feedback.
 
 .. _problems with 8.0.1: http://tracker.viff.dk/issue37
 .. _report back:
