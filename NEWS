@@ -41,6 +41,8 @@ A memory leak was fixed. Converted documentation to new Sphinx format.
 
 * Calling '~GF256(255)' would throw a KeyError, fixed.
 
+* Issue 19: Make Runtime.convert_bit_share actively secure.
+
 
 Version 0.5, released on 2008-04-28
 -----------------------------------
