@@ -160,7 +160,7 @@ class ComparisonToft07Mixin:
 
     @increment_pc
     def convert_bit_share(self, share, dst_field):
-        """Convert a 0/1 share into dst_field."""
+        """Convert a 0/1 share into *dst_field*."""
         l = self.options.security_parameter + math.log(dst_field.modulus, 2)
         # TODO assert field sizes are OK...
 
@@ -187,7 +187,7 @@ class ComparisonToft07Mixin:
 
     @increment_pc
     def greater_than_equal_preproc(self, field, smallField=None):
-        """Preprocessing for greater_than_equal."""
+        """Preprocessing for :meth:`greater_than_equal`."""
         if smallField is None:
             smallField = field
 
@@ -241,7 +241,7 @@ class ComparisonToft07Mixin:
 
     @increment_pc
     def greater_than_equal_online(self, share_a, share_b, preproc, field):
-        """Compute ``share_a >= share_b``. Result is shared."""
+        """Compute ``share_a >= share_b``. Result is secret shared."""
         # increment l as a, b are increased
         l = self.options.bit_length + 1
         # a = 2a+1; b= 2b // ensures inputs not equal
@@ -316,8 +316,8 @@ class ComparisonToft07Mixin:
     def greater_than_equal(self, share_a, share_b):
         """Compute ``share_a >= share_b``.
 
-        Both arguments must be of type field. The result is a
-        field share.
+        Both arguments must be shares from the same field. The result
+        is a new 0/1 share from the field.
         """
         # TODO: Make all input-taking methods do coercion like this.
         field = getattr(share_a, "field", getattr(share_b, "field", None))
