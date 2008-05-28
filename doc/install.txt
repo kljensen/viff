@@ -35,8 +35,8 @@ Windows
 -------
 
 This describes the installation procedure for VIFF on Windows. It has
-been tested and verified on Windows XP Professional Version 2002 SP2
-and Windows Vista Ultimate SP1.
+been tested and verified on Windows XP Professional 2002 SP2 and
+Windows Vista Ultimate SP1.
 
 1) Download and install Python_.
 
