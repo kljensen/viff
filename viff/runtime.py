@@ -903,7 +903,13 @@ class Runtime(BasicRuntime):
 
     @increment_pc
     def prss_share_bit_double(self, field):
-        """Share a random bit over *field* and GF256."""
+        """Share a random bit over *field* and GF256.
+
+        The protocol is described in "Efficient Conversion of
+        Secret-shared Values Between Different Fields" by Ivan Damgård
+        and Rune Thorbek available as `Cryptology ePrint Archive,
+        Report 2008/221 <http://eprint.iacr.org/2008/221>`__.
+        """
         n = self.num_players
         k = self.options.security_parameter
         prfs = self.players[self.id].prfs(2**k)

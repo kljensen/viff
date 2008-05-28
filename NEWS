@@ -13,8 +13,8 @@ please refer to it for details on the issues:
   http://tracker.viff.dk/
 
 
-Version 0.6, not yet released
------------------------------
+Version 0.6, released on 2008-05-28
+-----------------------------------
 
 The average time for a secure comparison was reduced by 60-70%.
 Comparisons now work with an actively secure multiplication protocol.

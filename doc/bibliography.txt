@@ -25,7 +25,9 @@ papers.
   [Bracha84]_ and on the explanation by [Cachin05]_.
 
 * The pseudo-random secret sharing (PRSS) in ``viff.prss`` is
-  described in [CDI05]_.
+  described in [CDI05]_. The
+  :meth:`viff.runtime.Runtime.prss_share_bit_double` method uses a
+  protocol described in [Damgård08]_.
 
 
 .. [Bracha84] G. Bracha, *An asynchronous [(n-1)/3]-resilient
@@ -42,6 +44,12 @@ papers.
    Computation*, Proc of TCC 2005, LNCS 3378, PS__.
 
    .. __:  http://www.cs.technion.ac.il/~yuvali/pubs/CDI05.ps
+
+.. [Damgård08] Ivan Damgård and Rune Thorbek, *Efficient Conversion of
+   Secret-shared Values Between Different Fields*, Cryptology ePrint
+   Archive: `Report 2008/221`__.
+
+   .. __: http://eprint.iacr.org/2008/221
 
 .. [Shamir79] Adi Shamir, *How to share a secret*, Communications of
    the ACM, 22 (11): 612-613.
