@@ -3,18 +3,10 @@
 Coding Style
 ============
 
-The VIFF code tries to follow the coding style laid out in `PEP 8`_,
+The VIFF code tries to follow the coding style laid out in :pep:`8`,
 which you should read or at least skim over. You can check your code
 against by running the pep8.py_ checker.
 
-.. TODO: change PEP 8 link into using the :PEP:`8` role when Sphinx
-.. doesn't crash on it anymore. See
-..
-..   http://groups.google.com/group/sphinx-dev/msg/bc99090aa52b87af
-..
-.. for the bug report.
-
-.. _PEP 8: http://www.python.org/dev/peps/pep-0008
 .. _pep8.py: http://svn.browsershots.org/trunk/devtools/pep8/pep8.py
 
 
