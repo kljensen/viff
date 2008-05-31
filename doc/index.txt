@@ -5,6 +5,13 @@ Welcome to VIFF's documentation!
 The Virtual Ideal Functionality Framework is a general framework for
 doing secure multi-party computation.
 
+This is the documentation for VIFF |version|. Documentation for other
+versions can be found online_. If you have comments and suggestions
+for improvements to the documentation, then please `report them`_.
+
+.. _online:  http://viff.dk/doc/
+.. _report them: viff-devel@viff.dk
+
 
 Contents:
 
