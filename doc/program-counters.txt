@@ -51,7 +51,7 @@ In our example program, :func:`shamir_share` is called twice: once
 when *a* and *b* are ready, and once when *c* and *d* are ready. Most
 of the time *a* and *b* are ready first on all players, and so they
 all agree on the program counter value for this call to
-:func:`shamir_share`. But when we have bad luck, they one player sees
+:func:`shamir_share`. But when we have bad luck, one player sees
 *c* and *d* arrive first and so the two calls to :func:`shamir_share`
 are switched for that player.
 
