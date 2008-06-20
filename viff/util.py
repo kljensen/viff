@@ -235,6 +235,20 @@ def find_prime(lower_bound, blum=False):
     return long(prime)
 
 
+def find_random_prime(k):
+    """Find a random *k* bit prime number.
+
+    The prime may have fewer, but no more, than *k* significant bits:
+
+    >>> 2 <= find_random_prime(10) < 2**10
+    True
+    """
+    p = mpz(1)
+    while not p.is_prime():
+        p = mpz(rand.getrandbits(k))
+    return long(p)
+
+
 if __name__ == "__main__":
     import doctest    #pragma NO COVER
     doctest.testmod() #pragma NO COVER
