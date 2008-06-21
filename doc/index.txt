@@ -7,10 +7,10 @@ doing secure multi-party computation.
 
 This is the documentation for VIFF |version|. Documentation for other
 versions can be found online_. If you have comments and suggestions
-for improvements to the documentation, then please `report them`_.
+for improvements to the documentation, then please `let us know`_.
 
 .. _online:  http://viff.dk/doc/
-.. _report them: viff-devel@viff.dk
+.. _let us know: viff-devel@viff.dk
 
 
 Contents:
