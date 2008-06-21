@@ -35,16 +35,19 @@ from configobj import ConfigObj
 
 from viff.prss import generate_subsets, PRF
 from viff.util import rand
+from viff import paillier
 
 
 class Player:
     """Wrapper for information about a player in the protocol."""
 
-    def __init__(self, id, host, port, keys=None, dealer_keys=None):
+    def __init__(self, id, host, port, pubkey, seckey=None, keys=None, dealer_keys=None):
         """Initialize a player."""
         self.id = id
         self.host = host
         self.port = port
+        self.pubkey = pubkey
+        self.seckey = seckey
         self.keys = keys
         self.dealer_keys = dealer_keys
 
@@ -123,8 +126,10 @@ def load_config(source):
         id = p_unstr(player)
         host = config[player]['host']
         port = int(config[player]['port'])
+        pubkey = tuple(map(int, config[player]['pubkey']))
 
         if 'prss_keys' in config[player]:
+            seckey = tuple(map(int, config[player]['seckey']))
             keys = {}
             for subset in config[player]['prss_keys']:
                 keys[s_unstr(subset)] = config[player]['prss_keys'][subset]
@@ -138,12 +143,12 @@ def load_config(source):
                 for subset in config[player]['prss_dealer_keys'][dealer]:
                     dealer_keys[d][s_unstr(subset)] = config[player]['prss_dealer_keys'][dealer][subset]
 
-            players[id] = Player(id, host, port, keys, dealer_keys)
+            players[id] = Player(id, host, port, pubkey, seckey, keys, dealer_keys)
 
             # ID of player for which this config file was made
             owner_id = id
         else:
-            players[id] = Player(id, host, port)
+            players[id] = Player(id, host, port, pubkey)
 
     return owner_id, players
 
@@ -183,6 +188,9 @@ def generate_configs(n, t, addresses=None, prefix=None):
         """Convert a dealer ID to a string."""
         return "Dealer " + str(dealer)
 
+    # TODO: remove hard-coded key size.
+    key_pairs = dict([(p, paillier.generate_keys(1024)) for p in players])
+
     configs = {}
     for p in players:
         config = ConfigObj(indent_type='  ')
@@ -203,7 +211,11 @@ def generate_configs(n, t, addresses=None, prefix=None):
             # in the configuration file, making it slightly easier to read
             config.comments[p_str(p)] = ['']
 
+            config[p_str(p)]['pubkey'] = key_pairs[p][0]
+
             if player == p:
+                config[p_str(p)]['seckey'] = key_pairs[p][1]
+
                 # Prepare the config file for the keys
                 config[p_str(p)]['prss_keys'] = {}
                 config[p_str(p)]['prss_dealer_keys'] = {}
