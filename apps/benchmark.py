@@ -65,6 +65,7 @@ from viff.field import GF, GF256
 from viff.runtime import Runtime, ActiveRuntime, create_runtime, gather_shares
 from viff.comparison import Toft05Runtime, Toft07Runtime
 from viff.comparison import ActiveToft05Runtime, ActiveToft07Runtime
+from viff.paillier import PaillierRuntime
 from viff.config import load_config
 from viff.util import find_prime
 
@@ -94,7 +95,7 @@ parser.add_option("-c", "--count", type="int",
                   help="number of operations")
 parser.add_option("-o", "--operation", type="choice",
                   choices=["mul", "mul-active", "comp", "comp-active",
-                           "compII", "compII-active"],
+                           "compII", "compII-active", "mul-paillier"],
                   help=("operation to benchmark, one of 'mul', 'mul-active', "
                         "'comp', 'comp-active', 'compII', 'compII-active'"))
 parser.add_option("-p", "--parallel", action="store_true",
@@ -251,6 +252,9 @@ elif options.operation == "compII":
 elif options.operation == "compII-active":
     operation = operator.ge
     runtime_class = ActiveToft07Runtime
+elif options.operation == "mul-paillier":
+    operation = operator.mul
+    runtime_class = PaillierRuntime
 
 if options.parallel:
     benchmark = ParallelBenchmark
