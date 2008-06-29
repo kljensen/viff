@@ -66,6 +66,15 @@ class PaillierRuntime(BasicRuntime):
             self.peer = player
 
     @increment_pc
+    def prss_share_random(self, field):
+        """Generate a share of a uniformly random element."""
+        prfs = self.players[self.id].prfs(field.modulus)
+        # There can only be one PRF in the dictionary.
+        prf = prfs.values()[0]
+        share = field(prf(tuple(self.program_counter)))
+        return Share(self, field, share)
+
+    @increment_pc
     def share(self, inputters, field, number=None):
         """Share *number* additively."""
         assert number is None or self.id in inputters
