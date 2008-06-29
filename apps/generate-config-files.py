@@ -72,9 +72,6 @@ parser.set_defaults(verbose=True, n=3, t=1, prefix='player')
 
 (options, args) = parser.parse_args()
 
-if not options.t < options.n/2:
-    parser.error("must have t < n/2")
-
 if len(args) != options.n:
     parser.error("must supply a hostname:port argument for each player")
 
