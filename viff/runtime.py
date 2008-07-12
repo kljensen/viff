@@ -1492,13 +1492,8 @@ def create_runtime(id, players, threshold, options=None, runtime_class=Runtime):
 
     if options and options.tls:
         print "Using TLS"
-        try:
-            from gnutls.interfaces.twisted import X509Credentials
-            from gnutls.crypto import X509Certificate, X509PrivateKey
-        except ImportError:
-            # TODO: Return a failed Deferred instead.
-            print "Could not import Python GNUTLS module, aborting!"
-            return
+        from gnutls.interfaces.twisted import X509Credentials
+        from gnutls.crypto import X509Certificate, X509PrivateKey
 
         # TODO: Make the file names configurable.
         cert = X509Certificate(open('player-%d.cert' % id).read())
