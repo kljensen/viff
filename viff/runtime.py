@@ -257,10 +257,6 @@ class ShareExchanger(Int16StringReceiver):
 
     def connectionMade(self):
         self.sendString(str(self.factory.runtime.id))
-        try:
-            self.peer_cert = self.transport.socket.peer_certificate
-        except AttributeError:
-            self.peer_cert = None
 
     def connectionLost(self, reason):
         reason.trap(ConnectionDone)
@@ -275,15 +271,18 @@ class ShareExchanger(Int16StringReceiver):
         if self.peer_id is None:
             # TODO: Handle ValueError if the string cannot be decoded.
             self.peer_id = int(string)
-            if self.peer_cert:
+            try:
+                cert = self.transport.getPeerCertificate()
+            except AttributeError:
+                cert = None
+            if cert:
                 # The player ID are stored in the serial number of the
                 # certificate -- this makes it easy to check that the
                 # player is who he claims to be.
-                if self.peer_cert.serial_number != self.peer_id:
+                if cert.get_serial_number() != self.peer_id:
                     print "Peer %s claims to be %d, aborting!" \
-                        % (self.peer_cert.subject, self.peer_id)
+                        % (cert.get_subject(), self.peer_id)
                     self.transport.loseConnection()
-
             self.factory.identify_peer(self)
         else:
             program_counter, data_type, data = marshal.loads(string)
@@ -410,25 +409,25 @@ class BasicRuntime:
         group.add_option("-k", "--security-parameter", type="int", metavar="K",
                          help=("Security parameter. Comparisons will leak "
                                "information with probability 2**-K."))
-        group.add_option("--no-tls", action="store_false", dest="tls",
-                         help="Disable the use of secure TLS connections.")
-        group.add_option("--tls", action="store_true",
-                         help=("Enable the use of secure TLS connections "
-                               "(if the GNUTLS bindings are available)."))
+        group.add_option("--no-ssl", action="store_false", dest="ssl",
+                         help="Disable the use of secure SSL connections.")
+        group.add_option("--ssl", action="store_true",
+                         help=("Enable the use of secure SSL connections "
+                               "(if the OpenSSL bindings are available)."))
         group.add_option("--deferred-debug", action="store_true",
                          help="Enable extra debug output for deferreds.")
 
         try:
             # Using __import__ since we do not use the module, we are
             # only interested in the side-effect.
-            __import__('gnutls')
-            have_gnutls = True
+            __import__('OpenSSL')
+            have_openssl = True
         except ImportError:
-            have_gnutls = False
+            have_openssl = False
 
         parser.set_defaults(bit_length=32,
                             security_parameter=30,
-                            tls=have_gnutls,
+                            ssl=have_openssl,
                             deferred_debug=False)
 
     def __init__(self, player, threshold, options=None):
@@ -1499,27 +1498,40 @@ def create_runtime(id, players, threshold, options=None, runtime_class=Runtime):
     runtime = runtime_class(players[id], threshold, options)
     factory = ShareExchangerFactory(runtime, players, result)
 
-    if options and options.tls:
-        print "Using TLS"
-        from gnutls.interfaces.twisted import X509Credentials
-        from gnutls.crypto import X509Certificate, X509PrivateKey
+    if options and options.ssl:
+        print "Using SSL"
+        from twisted.internet.ssl import ContextFactory, ClientContextFactory
+        from OpenSSL import SSL
 
-        # TODO: Make the file names configurable.
-        cert = X509Certificate(open('player-%d.cert' % id).read())
-        key = X509PrivateKey(open('player-%d.key' % id).read())
-        ca = X509Certificate(open('ca.cert').read())
-        cred = X509Credentials(cert, key, [ca])
-        cred.verify_peer = True
-        reactor.listenTLS(players[id].port, factory, cred)
+        class SSLContextFactory(ContextFactory):
+            def __init__(self, id):
+                """Create new SSL context factory for *id*."""
+                self.id = id
+                ctx = SSL.Context(SSL.SSLv3_METHOD)
+                # TODO: Make the file names configurable.
+                ctx.use_certificate_file('player-%d.cert' % id)
+                ctx.use_privatekey_file('player-%d.key' % id)
+                ctx.check_privatekey()
+
+                ctx.load_verify_locations('ca.cert')
+                ctx.set_verify(SSL.VERIFY_PEER | SSL.VERIFY_FAIL_IF_NO_PEER_CERT,
+                               lambda conn, cert, errnum, depth, ok: ok)
+                self.ctx = ctx
+
+            def getContext(self):
+                return self.ctx
+
+        ctx_factory = SSLContextFactory(id)
+        reactor.listenSSL(players[id].port, factory, ctx_factory)
     else:
-        print "Not using TLS"
+        print "Not using SSL"
         reactor.listenTCP(players[id].port, factory)
 
     for peer_id, player in players.iteritems():
         if peer_id > id:
             print "Will connect to %s" % player
-            if options and options.tls:
-                reactor.connectTLS(player.host, player.port, factory, cred)
+            if options and options.ssl:
+                reactor.connectSSL(player.host, player.port, factory, ctx_factory)
             else:
                 reactor.connectTCP(player.host, player.port, factory)
 
