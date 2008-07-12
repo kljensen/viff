@@ -5,13 +5,13 @@ Installation Guide
 ==================
 
 VIFF is written in Python and uses the Twisted framework for
-asynchronous communication, (optionally) python-gnutls for secure
+asynchronous communication, (optionally) PyOpenSSL for secure
 communication, ConfigObj for configuration files, and GMPY for fast
 bignum arithmetic. You can find these components here:
 
 :Python:         http://python.org/
 :Twisted:        http://twistedmatrix.com/
-:python-gnutls:  http://pypi.python.org/pypi/python-gnutls/
+:PyOpenSSL:      http://pyopenssl.sourceforge.net/
 :ConfigObj:      http://voidspace.org.uk/python/configobj.html
 :GMPY:           http://code.google.com/p/gmpy/
 
@@ -19,7 +19,7 @@ VIFF has been successfully tested with the following versions:
 
 :Python:         2.4.1 and 2.5.0
 :Twisted:        2.5.0 (there are `problems with 8.0.1`_)
-:python-gnutls:  1.1.4
+:PyOpenSSL:      0.7
 :ConfigObj:      4.4.0
 :GMPY:           1.0alpha and 1.0.2
 
@@ -56,11 +56,8 @@ Windows Vista Ultimate SP1.
 5) Download and install GMPY_. If you are using Vista, right-click on
    the installer and choose the option to run as administrator.
 
-6) In order to secure the channels between the players using TLS, you
-   need to download and install python-gnutls_. However, we haven't
-   had the time to test installation of this on Windows yet. Feel free
-   to contribute with details about this by sending an email to the
-   `VIFF mailing list`_.
+6) Download and install PyOpenSSL_. Again, run the installer as
+   adminitrator if you are using Vista.
 
 7) Download and install VIFF_. Note that if you are using the
    installer on Vista, you will again need to run it as an
@@ -85,12 +82,7 @@ This describes installation of VIFF on Max OS X 10.5.
 
       PATH="/Library/Python/2.5/site-packages:${PATH}"
 
-3) You can skip this step if you do not want secure connections.
-   Otherwise install python-gnutls_:
-
-   a) Install XCode_ from Apple which provides the GCC compiler.
-   b) Install gnutls_ (and required packages) from source.
-   c) Install python-gnutls_.
+3) Optionally: download PyOpenSSL_ and tell us if it works!
 
 4) Download ConfigObj_ and enter::
 
@@ -126,7 +118,7 @@ Using a Package Manager
 Debian Lenny (testing)
   You can install all dependencies by the command::
 
-     aptitude install python-twisted-core python-gnutls \
+     aptitude install python-twisted-core python-pyopenssl \
                       python-configobj python-gmpy
 
   The backslash indicates that both lines should be typed as a single
@@ -196,24 +188,24 @@ platforms. Do the following:
 2) Open three separate command prompts and go to the ``viff/apps/``
    directory in each. In the first, type::
 
-     python millionaires.py --no-tls player-3.ini
+     python millionaires.py --no-ssl player-3.ini
 
    in the second, type::
 
-     python millionaires.py --no-tls player-2.ini
+     python millionaires.py --no-ssl player-2.ini
 
    and in the last, type::
 
-     python millionaires.py --no-tls player-1.ini
+     python millionaires.py --no-ssl player-1.ini
 
    Note that the order in wich you start the players is important: The
    players must start in reverse order, e.g. the last player first. If
    the installation works, you should see something like this from
    e.g. player 3::
 
-      C:\viff\apps> python millionaires.py --no-tls player-3.ini 
+      C:\viff\apps> python millionaires.py --no-ssl player-3.ini 
       Seeding random generator with random seed 7416
-      Not using TLS
+      Not using SSL
       I am Millionaire 3 and I am worth 20 millions.
       From poorest to richest:
         Millionaire 2
@@ -239,11 +231,9 @@ platforms. Do the following:
 .. _Twisted: http://twistedmatrix.com/
 .. _ConfigObj: http://voidspace.org.uk/python/configobj.html
 .. _GMPY: http://code.google.com/p/gmpy/
-.. _python-gnutls: http://pypi.python.org/pypi/python-gnutls/
+.. _PyOpenSSL: http://pyopenssl.sourceforge.net/
 .. _MacPython: http://www.pythonmac.org
 .. _XCode: http://developer.apple.com/tools/xcode/
-.. _gnutls: http://www.gnu.org/software/gnutls/manual/gnutls.html
-            #Downloading-and-Installing
 .. _package manager: `Using a Package Manager`_
 .. _from source: `Installing from Source`_
 .. _file a bug report: http://tracker.viff.dk/
