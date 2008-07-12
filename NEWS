@@ -13,6 +13,13 @@ please refer to it for details on the issues:
   http://tracker.viff.dk/
 
 
+Version 0.7, not yet released
+-----------------------------
+
+* Issue 35: Handle error if TLS is requested but python-gnutls is
+  missing. The ImportError is now passed through to the caller.
+
+
 Version 0.6, released on 2008-05-28
 -----------------------------------
 
