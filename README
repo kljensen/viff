@@ -63,10 +63,9 @@ The apps directory contains a number of example applications. They
 require player configuration files to be generated in advance, use
 apps/generate-config-files.py for that.
 
-Unless you are using Windows, you can make the players use secure
-communication. Run apps/generate-certificates to generate the needed
-certificates -- this requires python-gnutls which is unavailable on
-Windows where VIFF will use plain TCP connections instead.
+If you have installed the optional PyOpenSSL library, then run
+apps/generate-certificates.py to generate the keys and certificates
+for the players.
 
 Finally, execute three players, starting with player 3, then player 2,
 and finally player 1.
