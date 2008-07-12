@@ -45,6 +45,7 @@ from viff.matrix import Matrix, hyper
 from viff.util import wrapper, rand
 
 from twisted.internet import reactor
+from twisted.internet.error import ConnectionDone
 from twisted.internet.defer import Deferred, DeferredList, gatherResults, succeed
 from twisted.internet.protocol import ClientFactory, ServerFactory
 from twisted.protocols.basic import Int16StringReceiver
@@ -262,7 +263,7 @@ class ShareExchanger(Int16StringReceiver):
             self.peer_cert = None
 
     def connectionLost(self, reason):
-        print "Connection lost:", reason
+        reason.trap(ConnectionDone)
 
     def stringReceived(self, string):
         """Called when a share is received.
@@ -336,7 +337,7 @@ class ShareExchangerFactory(ServerFactory, ClientFactory):
             self.protocols_ready.callback(self.runtime)
 
     def clientConnectionLost(self, connector, reason):
-        print "Client connection lost:", reason
+        reason.trap(ConnectionDone)
 
     def clientConnectionFailed(self, connector, reason):
         print "Client connection failed:", reason
