@@ -261,6 +261,9 @@ class ShareExchanger(Int16StringReceiver):
         except AttributeError:
             self.peer_cert = None
 
+    def connectionLost(self, reason):
+        print "Connection lost:", reason
+
     def stringReceived(self, string):
         """Called when a share is received.
 
@@ -332,7 +335,12 @@ class ShareExchangerFactory(ServerFactory, ClientFactory):
         if self.needed_protocols == 0:
             self.protocols_ready.callback(self.runtime)
 
+    def clientConnectionLost(self, connector, reason):
+        print "Client connection lost:", reason
 
+    def clientConnectionFailed(self, connector, reason):
+        print "Client connection failed:", reason
+        
 def increment_pc(method):
     """Make *method* automatically increment the program counter.
 
