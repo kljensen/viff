@@ -48,7 +48,7 @@ from twisted.internet import reactor
 from twisted.internet.error import ConnectionDone
 from twisted.internet.defer import Deferred, DeferredList, gatherResults, succeed
 from twisted.internet.defer import maybeDeferred
-from twisted.internet.protocol import ClientFactory, ServerFactory
+from twisted.internet.protocol import ReconnectingClientFactory, ServerFactory
 from twisted.protocols.basic import Int16StringReceiver
 
 
@@ -319,7 +319,7 @@ class ShareExchanger(Int16StringReceiver):
         self.transport.loseConnection()
 
 
-class ShareExchangerFactory(ServerFactory, ClientFactory):
+class ShareExchangerFactory(ReconnectingClientFactory, ServerFactory):
     """Factory for creating ShareExchanger protocols."""
 
     protocol = ShareExchanger
@@ -340,8 +340,6 @@ class ShareExchangerFactory(ServerFactory, ClientFactory):
     def clientConnectionLost(self, connector, reason):
         reason.trap(ConnectionDone)
 
-    def clientConnectionFailed(self, connector, reason):
-        print "Client connection failed:", reason
         
 def increment_pc(method):
     """Make *method* automatically increment the program counter.
