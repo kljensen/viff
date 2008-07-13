@@ -47,6 +47,7 @@ from viff.util import wrapper, rand
 from twisted.internet import reactor
 from twisted.internet.error import ConnectionDone
 from twisted.internet.defer import Deferred, DeferredList, gatherResults, succeed
+from twisted.internet.defer import maybeDeferred
 from twisted.internet.protocol import ClientFactory, ServerFactory
 from twisted.protocols.basic import Int16StringReceiver
 
@@ -251,7 +252,7 @@ class ShareExchanger(Int16StringReceiver):
 
     def __init__(self):
         self.peer_id = None
-
+        self.lost_connection = Deferred()
         #: Data expected to be received in the future.
         self.incoming_data = {}
 
@@ -260,6 +261,7 @@ class ShareExchanger(Int16StringReceiver):
 
     def connectionLost(self, reason):
         reason.trap(ConnectionDone)
+        self.lost_connection.callback(self)
 
     def stringReceived(self, string):
         """Called when a share is received.
@@ -497,15 +499,27 @@ class BasicRuntime:
         All connections are closed and the runtime cannot be used
         again after this has been called.
         """
+        print "Synchronizing shutdown... ",
 
-        def stop(_):
-            print "Initiating shutdown sequence."
+        def close_connections(_):
+            print "done."
+            print "Closing connections... ",
+            results = [maybeDeferred(self.port.stopListening)]
             for protocol in self.protocols.itervalues():
+                results.append(protocol.lost_connection)
                 protocol.loseConnection()
+            return DeferredList(results)
+
+        def stop_reactor(_):
+            print "done."
+            print "Stopping reactor... ",
             reactor.stop()
+            print "done."
 
         sync = self.synchronize()
-        sync.addCallback(stop)
+        sync.addCallback(close_connections) 
+        sync.addCallback(stop_reactor)
+        return sync
 
     def wait_for(self, *vars):
         """Make the runtime wait for the variables given.
@@ -1522,10 +1536,10 @@ def create_runtime(id, players, threshold, options=None, runtime_class=Runtime):
                 return self.ctx
 
         ctx_factory = SSLContextFactory(id)
-        reactor.listenSSL(players[id].port, factory, ctx_factory)
+        runtime.port = reactor.listenSSL(players[id].port, factory, ctx_factory)
     else:
         print "Not using SSL"
-        reactor.listenTCP(players[id].port, factory)
+        runtime.port = reactor.listenTCP(players[id].port, factory)
 
     for peer_id, player in players.iteritems():
         if peer_id > id:
