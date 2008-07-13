@@ -17,13 +17,16 @@ Version 0.7, not yet released
 -----------------------------
 
 PyOpenSSL is now used instead of GnuTLS and this enables secure
-connections on Windows.
+connections on Windows. Stopping players now work correctly.
 
 * Issue 20: Find a python-gnutls replacement. We now use PyOpenSSL.
 
 * Issue 35: Handle error if TLS is requested but python-gnutls is
   missing. The ImportError is now passed through to the caller.
 
+* Issue 37: Players hang while shutting down. The shutdown procedure
+  now correctly waits until all connections are closed before it stops
+  the reactor.
 
 Version 0.6, released on 2008-05-28
 -----------------------------------
