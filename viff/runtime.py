@@ -1534,18 +1534,18 @@ def create_runtime(id, players, threshold, options=None, runtime_class=Runtime):
                 return self.ctx
 
         ctx_factory = SSLContextFactory(id)
-        runtime.port = reactor.listenSSL(players[id].port, factory, ctx_factory)
+        listen = lambda port: reactor.listenSSL(port, factory, ctx_factory)
+        connect = lambda host, port: reactor.connectSSL(host, port, factory, ctx_factory)
     else:
         print "Not using SSL"
-        runtime.port = reactor.listenTCP(players[id].port, factory)
+        listen = lambda port: reactor.listenTCP(port, factory)
+        connect = lambda host, port: reactor.connectTCP(host, port, factory)
 
+    runtime.port = listen(players[id].port)
     for peer_id, player in players.iteritems():
         if peer_id > id:
             print "Will connect to %s" % player
-            if options and options.ssl:
-                reactor.connectSSL(player.host, player.port, factory, ctx_factory)
-            else:
-                reactor.connectTCP(player.host, player.port, factory)
+            connect(player.host, player.port)
 
     return result
 
