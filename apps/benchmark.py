@@ -192,20 +192,13 @@ class Benchmark:
         raise NotImplemented("Override this abstract method in a sub class.")
 
     def finished(self, _):
-        print "Finished, synchronizing shutdown."
         sys.stdout.flush()
 
         if self.rt._needed_data:
             print "Missing pre-processed data:"
             pprint(self.rt._needed_data)
 
-        sync = self.rt.synchronize()
-        sync.addCallback(lambda _: reactor.callLater(5, self.shutdown, None))
-
-    def shutdown(self, _):
-        print "Shutdown."
         self.rt.shutdown()
-        print "Stopped VIFF Runtime."
 
 # This class implements a benchmark where run_test executes all
 # operations in parallel.
