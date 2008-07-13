@@ -91,6 +91,12 @@ class Protocol:
         # These are called in sequence when self.results_ready is
         # finished. The first callback acts like a barrier and makes
         # all players wait on each other.
+        #
+        # The callbacks are always called with an argument equal to
+        # the return value of the preceeding callback. We do not need
+        # the argument (which is None since self.results_ready does
+        # not return anything), so we throw it away using a lambda
+        # expressions which ignores its first argument.
         results.addCallback(lambda _: runtime.synchronize())
         # The next callback shuts the runtime down, killing the
         # connections between the players.
