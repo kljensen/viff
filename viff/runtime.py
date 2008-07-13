@@ -33,6 +33,7 @@ from __future__ import division
 
 __docformat__ = "restructuredtext"
 
+import time
 import marshal
 from optparse import OptionParser, OptionGroup
 from math import ceil
@@ -45,7 +46,7 @@ from viff.matrix import Matrix, hyper
 from viff.util import wrapper, rand
 
 from twisted.internet import reactor
-from twisted.internet.error import ConnectionDone
+from twisted.internet.error import ConnectionDone, CannotListenError
 from twisted.internet.defer import Deferred, DeferredList, gatherResults, succeed
 from twisted.internet.defer import maybeDeferred
 from twisted.internet.protocol import ReconnectingClientFactory, ServerFactory
@@ -1541,7 +1542,21 @@ def create_runtime(id, players, threshold, options=None, runtime_class=Runtime):
         listen = lambda port: reactor.listenTCP(port, factory)
         connect = lambda host, port: reactor.connectTCP(host, port, factory)
 
-    runtime.port = listen(players[id].port)
+    port = players[id].port
+    runtime.port = None
+    delay = 2
+    while runtime.port is None:
+        # We keep trying to listen on the port, but with an
+        # exponentially increasing delay between each attempt.
+        try:
+            runtime.port = listen(port)
+        except CannotListenError, e:
+            delay *= 1 + rand.random()
+            print "Error listening on port %d: %s" % (port, e.socketError[1])
+            print "Will try again in %d seconds" % delay
+            time.sleep(delay)
+    print "Listening on port %d" % port
+
     for peer_id, player in players.iteritems():
         if peer_id > id:
             print "Will connect to %s" % player
