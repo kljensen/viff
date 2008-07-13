@@ -72,19 +72,19 @@ class Protocol:
         # compare them. We compare the worth of the first millionaire
         # with the two others, and compare those two millionaires with
         # each other.
-        m1_gt_m2 = m1 >= m2
-        m1_gt_m3 = m1 >= m3
-        m2_gt_m3 = m2 >= m3
+        m1_ge_m2 = m1 >= m2
+        m1_ge_m3 = m1 >= m3
+        m2_ge_m3 = m2 >= m3
 
         # The results are secret shared, so we must open them before
         # we can do anything usefull with them.
-        open_m1_gt_m2 = runtime.open(m1_gt_m2)
-        open_m1_gt_m3 = runtime.open(m1_gt_m3)
-        open_m2_gt_m3 = runtime.open(m2_gt_m3)
+        open_m1_ge_m2 = runtime.open(m1_ge_m2)
+        open_m1_ge_m3 = runtime.open(m1_ge_m3)
+        open_m2_ge_m3 = runtime.open(m2_ge_m3)
 
         # We will now gather the results and call the
         # self.results_ready method when they have all been received.
-        results = gather_shares([open_m1_gt_m2, open_m1_gt_m3, open_m2_gt_m3])
+        results = gather_shares([open_m1_ge_m2, open_m1_ge_m3, open_m2_ge_m3])
         results.addCallback(self.results_ready)
 
         # We can add more callbacks to the callback chain in results.
@@ -102,21 +102,21 @@ class Protocol:
         # Shares. That makes it very easy to work on them.
 
         # Let us start by unpacking the list.
-        m1_gt_m2 = results[0]
-        m1_gt_m3 = results[1]
-        m2_gt_m3 = results[2]
+        m1_ge_m2 = results[0]
+        m1_ge_m3 = results[1]
+        m2_ge_m3 = results[2]
 
         # We can establish the correct order of Millionaires 2 and 3.
-        if m2_gt_m3:
+        if m2_ge_m3:
             comparison = [3, 2]
         else:
             comparison = [2, 3]
 
         # We only have to insert Millionaire 1 in the correct spot.
-        if m1_gt_m2 and m1_gt_m3:
+        if m1_ge_m2 and m1_ge_m3:
             # Millionaire 1 is largest.
             comparison = comparison + [1]
-        elif not m1_gt_m2 and not m1_gt_m3:
+        elif not m1_ge_m2 and not m1_ge_m3:
             # Millionaire 1 is smallest.
             comparison = [1] + comparison
         else:
