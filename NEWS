@@ -17,7 +17,15 @@ Version 0.7, not yet released
 -----------------------------
 
 PyOpenSSL is now used instead of GnuTLS and this enables secure
-connections on Windows. Stopping players now work correctly.
+connections on Windows. The code dealing with starting a player has
+been made much more robust and players can now be started in any
+order. Player can now also be reliably shutdown.
+
+* Issue 6: More robust handling of port allocation. We now keep
+  retrying until we succeed in binding to the listening port.
+
+* Issue 8: Allow players to be started in any order. Instead of
+  crashing, players now retry if the initial connection fails.
 
 * Issue 20: Find a python-gnutls replacement. We now use PyOpenSSL.
 
