@@ -1513,7 +1513,7 @@ def create_runtime(id, players, threshold, options=None, runtime_class=Runtime):
 
     if options and options.ssl:
         print "Using SSL"
-        from twisted.internet.ssl import ContextFactory, ClientContextFactory
+        from twisted.internet.ssl import ContextFactory
         from OpenSSL import SSL
 
         class SSLContextFactory(ContextFactory):
