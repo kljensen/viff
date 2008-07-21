@@ -126,10 +126,10 @@ def load_config(source):
         id = p_unstr(player)
         host = config[player]['host']
         port = int(config[player]['port'])
-        pubkey = tuple(map(int, config[player]['pubkey']))
+        pubkey = tuple(map(long, config[player]['pubkey']))
 
         if 'prss_keys' in config[player]:
-            seckey = tuple(map(int, config[player]['seckey']))
+            seckey = tuple(map(long, config[player]['seckey']))
             keys = {}
             for subset in config[player]['prss_keys']:
                 keys[s_unstr(subset)] = config[player]['prss_keys'][subset]
