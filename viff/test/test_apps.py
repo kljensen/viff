@@ -99,3 +99,25 @@ class AppsTest(TestCase):
         result = gatherResults([p1, p2, p3])
         result.addCallback(check_outputs)
         return result
+
+    def test_prss_and_open(self):
+        """Test apps/prss-and-open.py."""
+        
+        def check_outputs(outputs):
+            lines = []
+            for o in outputs:
+                for line in o.splitlines():
+                    if line.startswith("bits:"):
+                        lines.append(line)
+                        break
+            self.assertEqual(len(lines), 3)
+            self.assertEqual(lines[0], lines[1])
+            self.assertEqual(lines[1], lines[2])
+
+        p1 = execute('prss-and-open.py', 'player-1.ini')
+        p2 = execute('prss-and-open.py', 'player-2.ini')
+        p3 = execute('prss-and-open.py', 'player-3.ini')
+        
+        result = gatherResults([p1, p2, p3])
+        result.addCallback(check_outputs)
+        return result
