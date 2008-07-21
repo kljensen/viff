@@ -26,6 +26,8 @@ from twisted.internet import reactor
 from twisted.internet.utils import getProcessOutput
 from twisted.internet.defer import Deferred, gatherResults
 
+from viff.field import GF256
+
 def execute(executable, *args):
     """Execute *executable* when the reactor is started."""
     d = Deferred()
@@ -78,5 +80,22 @@ class AppsTest(TestCase):
         m3 = execute('millionaires.py', 'player-3.ini')
         
         result = gatherResults([m1, m2, m3])
+        result.addCallback(check_outputs)
+        return result
+
+    def test_share_open(self):
+        """Test apps/share-open.py."""
+        
+        def check_outputs(outputs):
+            for o in outputs:
+                self.assertIn("opened a: %s" % GF256(17), o)
+                self.assertIn("opened b: %s" % GF256(40), o)
+                self.assertIn("opened c: %s" % GF256(235), o)
+
+        p1 = execute('share-open.py', 'player-1.ini', '17')
+        p2 = execute('share-open.py', 'player-2.ini', '40')
+        p3 = execute('share-open.py', 'player-3.ini', '235')
+        
+        result = gatherResults([p1, p2, p3])
         result.addCallback(check_outputs)
         return result
