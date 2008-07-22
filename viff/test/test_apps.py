@@ -121,3 +121,5 @@ class AppsTest(TestCase):
         result = gatherResults([p1, p2, p3])
         result.addCallback(check_outputs)
         return result
+
+# TODO: add tests for other example applications.
