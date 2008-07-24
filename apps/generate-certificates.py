@@ -53,7 +53,7 @@ def save_key(key, filename):
     fp.write(crypto.dump_privatekey(crypto.FILETYPE_PEM, key))
     fp.close()
 
-def create_cert_request(pk, common_name, digest="sha1"):
+def create_request(pk, common_name, digest="sha1"):
     """Create a certificate request."""
     req = crypto.X509Req()
     subj = req.get_subject()
@@ -82,7 +82,7 @@ def save_cert(cert, filename):
     fp.close()
 
 ca_key = create_key(options.key_size)
-ca_req = create_cert_request(ca_key, "VIFF Certificate Authority")
+ca_req = create_request(ca_key, "VIFF Certificate Authority")
 ca_cert = create_cert(ca_req, ca_req, ca_key, 0)
 
 save_key(ca_key, "ca.key")
@@ -90,7 +90,7 @@ save_cert(ca_cert, "ca.cert")
 
 for i in range(1, options.n + 1):
     key = create_key(options.key_size)
-    req = create_cert_request(key, "VIFF Player %d" % i)
+    req = create_request(key, "VIFF Player %d" % i)
     cert = create_cert(req, ca_cert, ca_key, i)
 
     save_key(key, "%s-%d.key" % (options.prefix, i))
