@@ -26,20 +26,6 @@
 # CA certificate (ca.cert).
 
 from OpenSSL import crypto
-from optparse import OptionParser
-
-parser = OptionParser()
-parser.add_option("-p", "--prefix",
-                  help="output filename prefix")
-parser.add_option("-k", "--key-size", type="int",
-                  help="key size")
-parser.add_option("-n", "--players", dest="n", type="int",
-                  help="number of players")
-
-parser.set_defaults(n=3, key_size=1024, prefix='player')
-
-(options, args) = parser.parse_args()
-
 
 def create_key(bits, type=crypto.TYPE_RSA):
     """Create a public/private key pair."""
@@ -81,17 +67,31 @@ def save_cert(cert, filename):
     fp.write(crypto.dump_certificate(crypto.FILETYPE_PEM, cert))
     fp.close()
 
-ca_key = create_key(options.key_size)
-ca_req = create_request(ca_key, "VIFF Certificate Authority")
-ca_cert = create_cert(ca_req, ca_req, ca_key, 0)
+if __name__ == "__main__":
+    from optparse import OptionParser
 
-save_key(ca_key, "ca.key")
-save_cert(ca_cert, "ca.cert")
+    parser = OptionParser()
+    parser.add_option("-p", "--prefix",
+                      help="output filename prefix")
+    parser.add_option("-k", "--key-size", type="int",
+                      help="key size")
+    parser.add_option("-n", "--players", dest="n", type="int",
+                      help="number of players")
+    parser.set_defaults(n=3, key_size=1024, prefix='player')
 
-for i in range(1, options.n + 1):
-    key = create_key(options.key_size)
-    req = create_request(key, "VIFF Player %d" % i)
-    cert = create_cert(req, ca_cert, ca_key, i)
+    (options, args) = parser.parse_args()
 
-    save_key(key, "%s-%d.key" % (options.prefix, i))
-    save_cert(cert, "%s-%d.cert" % (options.prefix, i))
+    ca_key = create_key(options.key_size)
+    ca_req = create_request(ca_key, "VIFF Certificate Authority")
+    ca_cert = create_cert(ca_req, ca_req, ca_key, 0)
+
+    save_key(ca_key, "ca.key")
+    save_cert(ca_cert, "ca.cert")
+
+    for i in range(1, options.n + 1):
+        key = create_key(options.key_size)
+        req = create_request(key, "VIFF Player %d" % i)
+        cert = create_cert(req, ca_cert, ca_key, i)
+
+        save_key(key, "%s-%d.key" % (options.prefix, i))
+        save_cert(cert, "%s-%d.cert" % (options.prefix, i))
