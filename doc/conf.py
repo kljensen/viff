@@ -31,7 +31,7 @@ os.environ['VIFF_NO_WRAP'] = 'yes'
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = ['sphinx.ext.autodoc']
+extensions = ['sphinx.ext.autodoc', 'sphinx.ext.ifconfig']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = []
@@ -54,7 +54,7 @@ import viff
 # The short X.Y version.
 version = viff.__version__
 # The full version, including alpha/beta/rc tags.
-release = viff.__version__
+release = viff.release()
 
 # There are two options for replacing |today|: either, you set today
 # to some non-false value, then it is used:
