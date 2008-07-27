@@ -179,12 +179,12 @@ img.descending {
     fp.close()
 
 
-@command('upload', 'directory', 'key')
-def upload(directory, key):
-    """Upload directory to http://viff.dk/. This requires an SSH
+@command('upload', 'source', 'target', 'key')
+def upload(source, target, key):
+    """Upload source to http://viff.dk/target. This requires an SSH
     private key that has access to viff.dk."""
-    if not isdir(directory):
-        abort("%s should be a directory", directory)
+    if not isdir(source):
+        abort("%s should be a directory", source)
     if not os.access(key, os.R_OK):
         abort("Cannot read %s", key)
 
@@ -192,7 +192,7 @@ def upload(directory, key):
              '--human-readable', '--stats', '--verbose',
              '--chmod', 'go=rX',
              '-e', 'ssh -l viff -i %s' % key,
-             directory, 'viff.dk:~/viff.dk/'])
+             source, 'viff.dk:~/viff.dk/%s' % target])
 
 @command('size')
 def size():
