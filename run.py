@@ -103,12 +103,12 @@ def build():
     # Generate HTML docs in doc/html.
     if isdir('doc/html'):
         shutil.rmtree('doc/html')
-    sphinx('doc')
+    sphinx('doc/html')
 
     # Generate API docs in doc/api.
     if isdir('doc/api'):
         shutil.rmtree('doc/api')
-    epydoc('doc')
+    epydoc('doc/api')
 
     # Pack everything up with Distutils.
     execute(["python", "setup.py", "sdist", "--force-manifest",
@@ -117,25 +117,22 @@ def build():
     # Generate binary Windows installer (which has no docs, though).
     execute(["python", "setup.py", "bdist", "--formats=wininst"])
 
-@command('epydoc', 'build')
-def epydoc(build):
+@command('epydoc', 'target')
+def epydoc(target):
     """Generate API documentation using epydoc."""
-    target = "%s/api" % build
     ensure_dir(target)
     execute(["epydoc", "-vv", "--config", "epydoc.conf"],
             {'VIFF_NO_WRAP': 'YES', 'target': target})
 
-@command('sphinx', 'build')
-def sphinx(build):
+@command('sphinx', 'target')
+def sphinx(target):
     """Generate VIFF manual using Sphinx."""
-    target = "%s/html" % build
     ensure_dir(target)
     execute(["sphinx-build", "-N", "doc", target])
 
-@command('coverage', 'build')
-def coverage(build):
+@command('coverage', 'target')
+def coverage(target):
     """Run Trial unit tests and collect coverage data."""
-    target = "%s/coverage" % build
     ensure_dir(target)
     trial = find_program("trial")
     execute(["trace2html.py", "-o", target, "-w", "viff", "-b", "viff.test",
