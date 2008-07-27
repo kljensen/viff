@@ -179,12 +179,12 @@ img.descending {
     fp.close()
 
 
-@command('upload', 'build', 'key')
-def upload(build, key):
-    """Upload build directory to http://viff.dk/builds/. This requires
-    access to a SSH private key that has access to viff.dk."""
-    if not isdir(build):
-        abort("%s should be a directory", build)
+@command('upload', 'directory', 'key')
+def upload(directory, key):
+    """Upload directory to http://viff.dk/. This requires an SSH
+    private key that has access to viff.dk."""
+    if not isdir(directory):
+        abort("%s should be a directory", directory)
     if not os.access(key, os.R_OK):
         abort("Cannot read %s", key)
 
@@ -192,7 +192,7 @@ def upload(build, key):
              '--human-readable', '--stats', '--verbose',
              '--chmod', 'go=rX',
              '-e', 'ssh -l viff -i %s' % key,
-             build, 'viff.dk:~/viff.dk/builds/'])
+             directory, 'viff.dk:~/viff.dk/'])
 
 @command('size')
 def size():
