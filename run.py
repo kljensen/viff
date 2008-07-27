@@ -188,7 +188,7 @@ def upload(directory, key):
     if not os.access(key, os.R_OK):
         abort("Cannot read %s", key)
 
-    execute(['rsync', '--recursive',
+    execute(['rsync', '--recursive', '--links',
              '--human-readable', '--stats', '--verbose',
              '--chmod', 'go=rX',
              '-e', 'ssh -l viff -i %s' % key,
