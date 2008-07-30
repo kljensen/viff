@@ -147,6 +147,55 @@ def prss_lsb(n, j, field, prfs, key):
     return (convert_replicated_shamir(n, j, field, rep_shares),
             convert_replicated_shamir(n, j, GF256, lsb_shares))
 
+def prss_zero(n, t, j, field, prfs, key):
+    """Return a pseudo-random secret zero-sharing of degree 2t.
+
+    >>> from field import GF
+    >>> Zp = GF(23)
+    >>> prfs = {frozenset([1,2]): PRF("a", 7),
+    ...         frozenset([1,3]): PRF("b", 7),
+    ...         frozenset([2,3]): PRF("c", 7)}
+    >>> prss_zero(3, 1, 1, Zp, prfs, "key")
+    {4}
+    >>> prss_zero(3, 1, 2, Zp, prfs, "key")
+    {0}
+    >>> prss_zero(3, 1, 3, Zp, prfs, "key")
+    {11}
+
+    If we recombine 2t + 1 = 3 shares we can verify that this is
+    indeed a zero-sharing:
+
+    >>> from shamir import recombine
+    >>> recombine([(Zp(1), Zp(4)), (Zp(2), Zp(0)), (Zp(3), Zp(11))])
+    {0}
+    """    
+    # We start by generating t random numbers for each subset. This is
+    # very similar to calling random_replicated_sharing t times, but
+    # by doing it like this we immediatedly get the nesting we want.
+    rep_shares = [(s, [(i+1, prf((key, i))) for i in range(t)])
+                  for (s, prf) in prfs.iteritems() if j in s]
+
+    # We then proceed with the zero-sharing. The first part is like in
+    # a normal PRSS.
+    result = 0
+    all = frozenset(range(1, n+1))
+    for subset, shares in rep_shares:
+        points = [(field(x), 0) for x in all-subset]
+        points.append((0, 1))
+        f_in_j = shamir.recombine(points, j)
+        # Unlike a normal PRSS we have an inner sum where we use a
+        # degree 2t polynomial g_i which we choose as
+        #
+        #   g_i(x) = f(x) * x**j
+        #
+        # since we already have the degree t polynomial f at hand. The
+        # g_i are all linearly independent as required by the protocol
+        # and can thus be used for the zero-sharing.
+        for i, share in shares:
+            g_i_in_j = f_in_j * j**i
+            result += share * g_i_in_j
+    return result
+
 def generate_subsets(orig_set, size):
     """Generates the set of all subsets of a specific size.
 
