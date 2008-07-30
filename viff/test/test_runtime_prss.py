@@ -116,6 +116,26 @@ class RuntimePrssTest(RuntimeTestCase):
         return opened_a
 
     @protocol
+    def test_prss_share_zero_bit(self, runtime):
+        """Tests the sharing of a zero GF256 element using PRSS."""
+        a = runtime.prss_share_zero(GF256)
+        self.assert_type(a, Share)
+
+        opened_a = runtime.open(a, threshold=2*runtime.threshold)
+        opened_a.addCallback(self.assertEquals, GF256(0))
+        return opened_a
+
+    @protocol
+    def test_prss_share_zero_int(self, runtime):
+        """Tests the sharing of a zero Zp element using PRSS."""
+        a = runtime.prss_share_zero(self.Zp)
+        self.assert_type(a, Share)
+
+        opened_a = runtime.open(a, threshold=2*runtime.threshold)
+        opened_a.addCallback(self.assertEquals, self.Zp(0))
+        return opened_a
+
+    @protocol
     def test_prss_share_bit_double(self, runtime):
         """Tests sharing a bit over Zp and GF256."""
         bit_p, bit_b = runtime.prss_share_bit_double(self.Zp)
