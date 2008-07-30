@@ -40,7 +40,7 @@ from math import ceil
 from collections import deque
 
 from viff import shamir
-from viff.prss import prss, prss_lsb
+from viff.prss import prss, prss_lsb, prss_zero
 from viff.field import GF256, FieldElement
 from viff.matrix import Matrix, hyper
 from viff.util import wrapper, rand
@@ -921,6 +921,19 @@ class Runtime(BasicRuntime):
 
         self.schedule_callback(result, finish, share, binary)
         return result
+
+    @increment_pc
+    def prss_share_zero(self, field):
+        """Generate shares of the zero element from the field given.
+
+        Communication cost: none.
+        """
+        # Key used for PRSS.
+        prss_key = tuple(self.program_counter)
+        prfs = self.players[self.id].prfs(field.modulus)
+        zero_share = prss_zero(self.num_players, self.threshold, self.id,
+                               field, prfs, prss_key)
+        return Share(self, field, zero_share)
 
     @increment_pc
     def prss_share_bit_double(self, field):
