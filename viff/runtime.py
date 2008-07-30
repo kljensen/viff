@@ -936,6 +936,17 @@ class Runtime(BasicRuntime):
         return Share(self, field, zero_share)
 
     @increment_pc
+    def prss_double_share(self, field):
+        """Make a double-sharing using PRSS.
+
+        The pair of shares will have degree t and 2t where t is the
+        default threshold for the runtime.
+        """
+        r_t = self.prss_share_random(field)
+        z_2t = self.prss_share_zero(field)
+        return (r_t, r_t + z_2t)
+
+    @increment_pc
     def prss_share_bit_double(self, field):
         """Share a random bit over *field* and GF256.
 
