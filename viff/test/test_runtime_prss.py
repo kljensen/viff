@@ -136,6 +136,21 @@ class RuntimePrssTest(RuntimeTestCase):
         return opened_a
 
     @protocol
+    def test_prss_double_share(self, runtime):
+        """Test double-sharing of random numbers using PRSS."""
+        r_t, r_2t = runtime.prss_double_share(self.Zp)
+
+        self.assert_type(r_t, Share)
+        self.assertEquals(r_t.field, self.Zp)
+        self.assert_type(r_2t, Share)
+        self.assertEquals(r_2t.field, self.Zp)
+
+        result = gather_shares([runtime.open(r_t),
+                                runtime.open(r_2t, threshold=2 * runtime.threshold)])
+        result.addCallback(lambda (a, b): self.assertEquals(a, b))
+        return result
+
+    @protocol
     def test_prss_share_bit_double(self, runtime):
         """Tests sharing a bit over Zp and GF256."""
         bit_p, bit_b = runtime.prss_share_bit_double(self.Zp)
