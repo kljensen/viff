@@ -1127,7 +1127,7 @@ class ActiveRuntime(Runtime):
         # This will be the result, a Share object.
         result = Share(self, share_x.field)
         # This is the Deferred we will do processing on.
-        triple = self.get_triple(share_x.field)
+        triple = self.prss_get_triple(share_x.field)
         self.schedule_callback(triple, finish_mul)
         # We add the result to the chains in triple.
         triple.chainDeferred(result)
@@ -1362,6 +1362,36 @@ class ActiveRuntime(Runtime):
         result = gatherResults([single_a, single_b, double_c])
         self.schedule_callback(result, make_triple)
         return T, result
+
+    @increment_pc
+    @preprocess("prss_generate_triple")
+    def prss_get_triple(self, field):
+        count, result = self.prss_generate_triple(field)
+        result.addCallback(lambda triples: triples[0])
+        return result
+
+    @increment_pc
+    def prss_generate_triple(self, field):
+        """Generate a multiplication triple using PRSS.
+
+        These are random numbers *a*, *b*, and *c* such that ``c =
+        ab``. This function can be used in pre-processing.
+
+        Returns a tuple with the number of triples generated (1) and a
+        Deferred which will yield a singleton-list with a 3-tuple.
+        """
+        a_t = self.prss_share_random(field)
+        b_t = self.prss_share_random(field)
+        r_t, r_2t = self.prss_double_share(field)
+
+        # Multiply a and b without resharing.
+        c_2t = gather_shares([a_t, b_t])
+        c_2t.addCallback(lambda (a, b): a * b)
+
+        d_2t = c_2t - r_2t
+        d = self.open(d_2t, threshold=2*self.threshold)
+        c_t = r_t + d
+        return 1, succeed([(a_t, b_t, c_t)])
 
     @increment_pc
     def _broadcast(self, sender, message=None):
