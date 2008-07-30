@@ -75,6 +75,7 @@ def convert_replicated_shamir(n, j, field, rep_shares):
     result = 0
     all = frozenset(range(1, n+1))
     for subset, share in rep_shares:
+        # TODO: should we cache the f_in_j values?
         points = [(field(x), 0) for x in all-subset]
         points.append((0, 1))
         f_in_j = shamir.recombine(points, j)
