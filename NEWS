@@ -36,6 +36,10 @@ order. Player can now also be reliably shutdown.
   now correctly waits until all connections are closed before it stops
   the reactor.
 
+* Issue 59: Profiling support. Give a --profile command line argument
+  to make your VIFF programs output profiling info when stopped.
+
+
 Version 0.6, released on 2008-05-28
 -----------------------------------
 
