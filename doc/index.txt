@@ -30,8 +30,13 @@ Contents:
 
    overview
    install
-   presentations
    implementation
+   program-counters
+   preprocessing
+   coding-style
+   development
+   unit-testing
+   presentations
    bibliography
    authors
    glossary
