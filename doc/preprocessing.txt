@@ -1,0 +1,89 @@
+
+Preprocessing
+=============
+
+Some of the protocols in VIFF use auxiliary data which does not depend
+on the protocol inputs. Since the values does not depend on the actual
+inputs we can calculate them in advance in a *pre-processing* step.
+This is also called an *offline* calculation, not because it does not
+require network communication, but because it can be done outside of
+the peek hours.
+
+The best example is the multiplication protocol which is secure
+against active adversaries. It uses random numbers *a*, *b*, and *c*
+where *ab = c*. Since they are random they cannot depend on the inputs
+to the multiplication and we can thus safely calculate them in
+advance.
+
+
+Knowing how much to preprocess
+------------------------------
+
+When a program is invoked for the first time we cannot know how much
+preprocessed data it will need and all data must therefore be produced
+on demand (online). The problem is that there is no parsing step in
+the execution of a program using VIFF, so we have no chance of
+analysing the program in advance and since Python is a general
+Turing-complete programming language doing analysis would probably end
+up either impossible or very conservative meaning that the estimate
+would be higher than the actual need for would preprocessed data.
+
+What we can do is to monitor the program when it runs and note when
+preprocessed data was needed and how much. We then use this data on
+the next run.
+
+We record the following:
+
+* the program counter,
+* the function that produced the data,
+* the arguments used function.
+
+Using this information the next program run can start with a
+preprocessing phase where data is produced and associated with the
+program counters stored.
+
+This will obviously only work if executing the program always produces
+the same trace of program counters. And indeed a secure program must
+behave like this, for if the program counter trace changed depending
+on the (private) inputs to the program, then this would be observable
+from the outside and thus leak information.
+
+One can therefore build a program and test it on toy-input to
+establish the program counter trace. This trace can then be used when
+the program is deployed and used on real data.
+
+Branching programs
+~~~~~~~~~~~~~~~~~~
+
+The above is not entirely true for a program like the double auction.
+This program branches on values opened during the execution and could
+thus potentially produce different traces on each run while still
+being secure.
+
+There is no problem in this particular case since the double auction
+has the same trace in each branch, but this is not true in general. We
+will need to find a better mechanism for dealing with programs that
+intentionally leak information when executing and branch to different
+parts.
+
+
+Implementing preprocessing
+--------------------------
+
+Preprocessing is implemented using two tools: the
+:func:`viff.runtime.preprocess` decorator is used on methods that
+produce data which can be preprocessed. It replaces the methods with
+proxies which will attempt to return preprocessed data. If the data
+could not be satisfied from the pool of preprocessed data, then the
+program counter and function arguments are stored before falling back
+to calculating the data online using the original method.
+
+To generate preprocessed data based on a trace of program counters one
+must call the :meth:`viff.runtime.BasicRuntime.preprocess` method. It
+returns a :class:`Deferred` which triggers when all preprocessed data
+is ready which means that the online part of the computation can
+begin.
+
+Instead of starting the online phase immediately, one could also
+choose to store the preprocessed data for later use, but this has not
+been implemented yet.

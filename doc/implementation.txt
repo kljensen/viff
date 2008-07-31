@@ -16,6 +16,7 @@ VIFF consists of several modules which will be described next.
    prss
    config
    program-counters
+   preprocessing
    coding-style
    development
    unit-testing

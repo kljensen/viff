@@ -23,6 +23,8 @@ Runtime Module
 
    .. autofunction:: increment_pc
 
+   .. autofunction:: preprocess
+
    .. autofunction:: create_runtime
 
    .. autoclass:: BasicRuntime
