@@ -417,6 +417,8 @@ class BasicRuntime:
                                "(if the OpenSSL bindings are available)."))
         group.add_option("--deferred-debug", action="store_true",
                          help="Enable extra debug output for deferreds.")
+        group.add_option("--profile", action="store_true",
+                         help="Collect and print profiling information.")
 
         try:
             # Using __import__ since we do not use the module, we are
@@ -429,7 +431,8 @@ class BasicRuntime:
         parser.set_defaults(bit_length=32,
                             security_parameter=30,
                             ssl=have_openssl,
-                            deferred_debug=False)
+                            deferred_debug=False,
+                            profile=False)
 
     def __init__(self, player, threshold, options=None):
         """Initialize runtime.
@@ -1556,6 +1559,31 @@ def create_runtime(id, players, threshold, options=None, runtime_class=Runtime):
     Please see the example applications for more examples.
 
     """
+    if options and options.profile:
+        # To collect profiling information we monkey patch reactor.run
+        # to do the collecting. It would be nicer to simply start the
+        # profiler here and stop it upon shutdown, but this triggers
+        # http://bugs.python.org/issue1375 since the start and stop
+        # calls are in different stack frames.
+        import hotshot
+        prof = hotshot.Profile("viff-%d.prof" % id)
+        old_run = reactor.run
+        def new_run(*args, **kwargs):
+            print "Starting reactor with profiling"
+            prof.runcall(old_run, *args, **kwargs)
+
+            import sys
+            import hotshot.stats
+            print "Loading profiling statistics...",
+            sys.stdout.flush()
+            stats = hotshot.stats.load("viff-%d.prof" % id)
+            print "done."
+            print
+            stats.strip_dirs()
+            stats.sort_stats("time", "calls")
+            stats.print_stats(40)
+        reactor.run = new_run
+
     # This will yield a Runtime when all protocols are connected.
     result = Deferred()
 
