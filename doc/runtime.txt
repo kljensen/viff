@@ -25,6 +25,8 @@ Runtime Module
 
    .. autofunction:: preprocess
 
+      See also :ref:`preprocessing` for more background information.
+
    .. autofunction:: create_runtime
 
    .. autoclass:: BasicRuntime
