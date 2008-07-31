@@ -1,0 +1,12 @@
+
+Background Information
+======================
+
+The following document will provide some background information on the
+design of VIFF.
+
+.. toctree::
+   :maxdepth: 2
+
+   program-counters
+   preprocessing

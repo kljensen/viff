@@ -31,8 +31,7 @@ Contents:
    overview
    install
    implementation
-   program-counters
-   preprocessing
+   background
    coding-style
    development
    unit-testing
