@@ -137,12 +137,12 @@ class Benchmark:
             print "Starting preprocessing"
             if self.operation == operator.mul:
                 program_desc = {
-                    ("generate_triples", (Zp,)):
+                    ("prss_generate_triple", (Zp,)):
                         [(i, 1, 0) for i in range(3 + 2*count, 3 + 3*count)]
                     }
             elif isinstance(self.rt, ActiveToft05Runtime):
                 program_desc = {
-                    ("generate_triples", (GF256,)):
+                    ("prss_generate_triple", (GF256,)):
                     sum([[(c, 64, i, 1, 1, 0) for i in range(2, 33)] +
                          [(c, 64, i, 3, 1, 0) for i in range(17, 33)]
                          for c in range(3 + 2*count, 3 + 3*count)],
@@ -150,7 +150,7 @@ class Benchmark:
                     }
             elif isinstance(self.rt, ActiveToft07Runtime):
                 program_desc = {
-                    ("generate_triples", (Zp,)):
+                    ("prss_generate_triple", (Zp,)):
                     sum([[(c, 2, 4, i, 2, 1, 0) for i in range(1, 33)] +
                          [(c, 2, 4, 99, 2, 1, 0)] +
                          [(c, 2, 4, i, 1, 0) for i in range(65, 98)]
