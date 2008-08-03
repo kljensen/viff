@@ -105,3 +105,20 @@ internally instead of objects could of course have been solved equally
 well in Java.
 
 .. _Twisted network framework: http://twistedmatrix.com/
+
+
+Current status
+--------------
+
+VIFF supports most if not all the protocols that the SIMAP code
+supports, and extends them in some cases by providing security against
+active adversaries. VIFF started out as 450 lines of code which
+supported arithmetic with Shamir shares and pseudo-random secret
+sharing -- that was all it took to implement the basic ideas using
+Twisted. The code has since grown to a little less than 4,000 lines.
+
+Despite the growth in code size, we believe that VIFF can still be
+considered a light-weight library for secure multi-party computation.
+To the best of our knowledge VIFF is the only library available for
+general SMPC and we hope that it will become *the* standard SMCP
+library and thus a stable test-bed for new cryptographic protocols.
