@@ -42,3 +42,66 @@ is available as :class:`ComparisonToft05Mixin` in VIFF, but people
 might still refer to it as the "SCET comparison" on the mailing list.
 
 .. _SCET: http://sikkerhed.alexandra.dk/uk/projects/scet.htm
+
+
+Problems and solutions
+----------------------
+
+While the foundation for the sugar beet auction was being programmed
+in Java in the SIMAP project, Martin began experimenting with a new
+architecture in Python. The Java implementation was big with about
+8,500 lines of code for some 130 classes and interfaces and while
+implementing the comparison protocol it had become clear that there
+were a number of problems with its design.
+
+Problems
+""""""""
+
+We knew from the beginning that it was important to run things in
+parallel to use the bandwidth in the most efficient way. So a concept
+of "batch jobs" was introduced for grouping parallel operations
+together. The problem was that one had to write code for dealing with
+combinations of different batch jobs so when implementing a new
+operation (such as a comparison protocol) one had to define how a
+batch job would look like for the new operation and how the batch job
+would be combined with all other types of batch jobs. This severely
+limited the modularity since every new piece of code needed to know
+about every old piece.
+
+Another problem was that although the high lever interface manipulated
+secret shared values as first class objects, the runtime system did
+not. Instead the values were kept in a ``HashMap`` and referenced
+using integers by the internal runtime code. So extending the runtime
+system could not be extended in terms of itself, akin to how the
+earliest compilers had to be written in assembler instead of a higher
+level language.
+
+
+Solutions
+"""""""""
+
+The `Twisted network framework`_ turned out to be a both simple and
+elegant solution to the first problem. The key is the
+:class:`Deferred` class which allows the code to treat all operations
+equal: they all take deferred inputs and return a deferred output. All
+time is spend either working on local data or waiting for more inputs
+to arrive over the network. When data arrives the associated callbacks
+are immediately executed without regard to what kind of operation they
+are. This uniform interface means that as many operations as possible
+are executed in parallel. Extending the runtime with new operations is
+also much simpler since the framework will take care of running things
+in parallel -- new operations work the same as old "primitive"
+operations.
+
+It is interesting to note that this design relies heavily on the use
+of function pointers, something which Java lacks. Python also supports
+anonymous functions (lambda expressions) which are very convenient
+with this programming style. It might be possible to design a similar
+system in Java by using objects to represent the callbacks, but it
+would probably be much more cumbersome.
+
+The problem with representing secret shared values by integers
+internally instead of objects could of course have been solved equally
+well in Java.
+
+.. _Twisted network framework: http://twistedmatrix.com/
