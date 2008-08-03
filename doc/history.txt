@@ -8,6 +8,8 @@ for doing secure multi-party computations (SMPC). That name was
 eventually dropped since it is somewhere between difficult and
 impossible pronouncing it in a fluent way. After a vote_ on Martin's
 blog, the name was changed to Virtual Ideal Functionality Framework
-with the much smoother abbreviation VIFF.
+with the much smoother abbreviation VIFF. The idea is that VIFF allows
+you to implement an ideal functionality in software, and can thus be
+seen as a framework for building *virtual* ideal functionalities.
 
 .. _vote: http://mgeisler.net/2007/10/vote-for-your-favorite-name/
