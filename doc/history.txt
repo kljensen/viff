@@ -13,3 +13,32 @@ you to implement an ideal functionality in software, and can thus be
 seen as a framework for building *virtual* ideal functionalities.
 
 .. _vote: http://mgeisler.net/2007/10/vote-for-your-favorite-name/
+
+
+Background
+----------
+
+VIFF grew out of a research project called SIMAP_ which is conducted
+at the University of Aarhus, Denmark in collaboration with the
+University of Copenhagen and industry partners. SIMAP is short for
+*Secure Information Management and Processing* and the main goal of
+the project is to develop tools that can be used to build applications
+which use SMPC to solve real-world problems. The tools are a set of
+efficient cryptographic protocols and a domain-specific language which
+aims to allow normal programmers to use the cryptographic protocols in
+an easy and *secure* manner without being security experts themselves.
+In January 2008 the SIMAP project ran the `first ever large-scale SMPC
+application`_ in which Danish farmers traded sugar beet contracts using
+a secure double auction.
+
+.. _SIMAP: http://sikkerhed.alexandra.dk/uk/projects/simap/
+.. _first ever large-scale SMPC application:
+   http://sikkerhed.alexandra.dk/uk/projects/simap/MPCannouncement.pdf
+
+The SIMAP project is the successor to the SCET_ project (short for
+*Secure Computing Economy and Trust*) which implemented a prototype of
+the secure double auction used in SIMAP. The comparison protocol used
+is available as :class:`ComparisonToft05Mixin` in VIFF, but people
+might still refer to it as the "SCET comparison" on the mailing list.
+
+.. _SCET: http://sikkerhed.alexandra.dk/uk/projects/scet.htm
