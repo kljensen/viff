@@ -1,0 +1,13 @@
+
+The History of VIFF
+===================
+
+VIFF was started by Martin Geisler in March 2007. The original name
+for the project was *PySMPC* since it was, well..., a Python library
+for doing secure multi-party computations (SMPC). That name was
+eventually dropped since it is somewhere between difficult and
+impossible pronouncing it in a fluent way. After a vote_ on Martin's
+blog, the name was changed to Virtual Ideal Functionality Framework
+with the much smoother abbreviation VIFF.
+
+.. _vote: http://mgeisler.net/2007/10/vote-for-your-favorite-name/
