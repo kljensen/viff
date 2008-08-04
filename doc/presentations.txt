@@ -4,6 +4,19 @@ Presentations
 
 The following VIFF-related presentations are available:
 
+June 23rd, 2008:
+  Slides used for a talk at a ECRYPT PROVILAB_ (Protocols Virtual Lab)
+  meeting held in Berlin. Available as PDF__.
+
+  .. _PROVILAB: http://www.ecrypt.eu.org/provilab/
+  .. __: http://viff.dk/files/viff-ecrypt.pdf
+
+June 19th, 2008:
+  Slides used at a Siester Seminar talk held at IBM Zurich Research
+  Lab. Available as PDF__.
+
+  .. __: http://viff.dk/files/viff-ibm.pdf
+
 February 21st, 2008:
   Slides used at a PhD Qualification Exam by Martin Geisler. Like the
   report they accompany, the second part of the slides are about VIFF
