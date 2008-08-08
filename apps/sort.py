@@ -34,9 +34,16 @@
 # comparisons of length n + n/2 + n/4 + ... + 1 = 2n - 1, which is
 # more than the O(log^2 n) stages needed by the Bitonic Sort.
 #
+# TODO: Implement mergesort too to better back this up.
+#
 # See this page for more analysis and a Java implementation:
 #
 # http://iti.fh-flensburg.de/lang/algorithmen/sortieren/bitonic/bitonicen.htm
+#
+# TODO: Predict the number of comparisons and support preprocessing.
+#
+# TODO: With the number comparisons known we could provide a progress
+# bar using this library: http://pypi.python.org/pypi/progressbar/
 
 # Give a player configuration file as a command line argument or run
 # the example with '--help' for help with the command line options.
