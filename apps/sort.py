@@ -74,6 +74,7 @@ class Protocol:
 
     def __init__(self, runtime):
         self.rt = runtime
+        self.comparisons = 0
 
         array = self.make_array()
         sorted = self.sort(array)
@@ -85,6 +86,7 @@ class Protocol:
         dprint("Sorted array:   %s", sorted)
 
         def finish(_):
+            print "Made %d comparisons" % self.comparisons
             runtime.shutdown()
         sorted.addCallback(finish)
 
@@ -123,6 +125,7 @@ class Protocol:
                 bitonic_merge(low + m, n - m, ascending)
 
         def compare(i, j, ascending):
+            self.comparisons += 1
 
             def xor(a, b):
                 # TODO: We use this simple xor until
