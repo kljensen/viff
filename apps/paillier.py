@@ -29,7 +29,7 @@ import sys
 from twisted.internet import reactor
 
 from viff.field import GF
-from viff.runtime import create_runtime, Share
+from viff.runtime import create_runtime
 from viff.paillier import PaillierRuntime
 from viff.config import load_config
 from viff.util import dprint, find_prime

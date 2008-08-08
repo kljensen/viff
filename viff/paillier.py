@@ -20,7 +20,6 @@ import gmpy
 
 from viff.runtime import BasicRuntime, increment_pc, Share, gather_shares
 from viff.util import rand, find_random_prime
-from viff.field import GF
 
 def L(u, n):
     return (u-1)/n
