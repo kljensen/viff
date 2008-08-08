@@ -17,6 +17,27 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with VIFF. If not, see <http://www.gnu.org/licenses/>.
 
+# This example demonstrates how a secure sorting algorithm can be
+# implemented using VIFF. The algorithm used is bitonic sort which was
+# chosen in order to maximize the amount of work (comparisons) done in
+# parallel. Bitonic sort uses 1/2 * log n * (log n + 1) comparator
+# stages and each stage consists of n/2 parallel comparisons. The
+# total number of comparisons is thus in O(n log^2 n).
+#
+# This is larger than the lower bound of O(n log n) for comparison
+# based sorting algorithms, achieved by mergesort and other well known
+# algorithms. The problem with mergesort is its merging step: to merge
+# two sorted arrays of length n/2 one needs up to n comparisons, and
+# what is worse, the comparisons must be made one after another. The
+# mergesort does one merge with lists of size n/2, two merges with
+# lists of size n/4, and so on. This gives a total chain of
+# comparisons of length n + n/2 + n/4 + ... + 1 = 2n - 1, which is
+# more than the O(log^2 n) stages needed by the Bitonic Sort.
+#
+# See this page for more analysis and a Java implementation:
+#
+# http://iti.fh-flensburg.de/lang/algorithmen/sortieren/bitonic/bitonicen.htm
+
 # Give a player configuration file as a command line argument or run
 # the example with '--help' for help with the command line options.
 
