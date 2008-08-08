@@ -24,7 +24,7 @@
 # stages and each stage consists of n/2 parallel comparisons. The
 # total number of comparisons is thus in O(n log^2 n).
 #
-# This is larger than the lower bound of O(n log n) for comparison
+# This is larger than the lower bound of Omega(n log n) for comparison
 # based sorting algorithms, achieved by mergesort and other well known
 # algorithms. The problem with mergesort is its merging step: to merge
 # two sorted arrays of length n/2 one needs up to n comparisons, and
