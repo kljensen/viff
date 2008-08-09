@@ -48,10 +48,10 @@ class AppsTest(TestCase):
             os.environ["PYTHONPATH"] += os.pathsep + root_dir
 
         self.oldcwd = os.getcwd()
-        os.chdir(path.join(root_dir, 'apps'))
+        os.chdir(path.join(root_dir, "apps"))
 
-        p = execute('generate-config-files.py', '-n', '3', '-t', '1',
-                    'localhost:10000', 'localhost:20000', 'localhost:30000')
+        p = execute("generate-config-files.py", "-n", "3", "-t", "1",
+                    "localhost:10000", "localhost:20000", "localhost:30000")
         return p
 
     def tearDown(self):
@@ -79,9 +79,9 @@ class AppsTest(TestCase):
                 subtext = "\n".join(lines)
                 self.assertIn(subtext, o)
 
-        m1 = execute('millionaires.py', 'player-1.ini')
-        m2 = execute('millionaires.py', 'player-2.ini')
-        m3 = execute('millionaires.py', 'player-3.ini')
+        m1 = execute("millionaires.py", "player-1.ini")
+        m2 = execute("millionaires.py", "player-2.ini")
+        m3 = execute("millionaires.py", "player-3.ini")
         
         result = gatherResults([m1, m2, m3])
         result.addCallback(check_outputs)
@@ -96,9 +96,9 @@ class AppsTest(TestCase):
                 self.assertIn("opened b: %s" % GF256(40), o)
                 self.assertIn("opened c: %s" % GF256(235), o)
 
-        p1 = execute('share-open.py', 'player-1.ini', '17')
-        p2 = execute('share-open.py', 'player-2.ini', '40')
-        p3 = execute('share-open.py', 'player-3.ini', '235')
+        p1 = execute("share-open.py", "player-1.ini", "17")
+        p2 = execute("share-open.py", "player-2.ini", "40")
+        p3 = execute("share-open.py", "player-3.ini", "235")
         
         result = gatherResults([p1, p2, p3])
         result.addCallback(check_outputs)
@@ -118,9 +118,9 @@ class AppsTest(TestCase):
             self.assertEqual(lines[0], lines[1])
             self.assertEqual(lines[1], lines[2])
 
-        p1 = execute('prss-and-open.py', 'player-1.ini')
-        p2 = execute('prss-and-open.py', 'player-2.ini')
-        p3 = execute('prss-and-open.py', 'player-3.ini')
+        p1 = execute("prss-and-open.py", "player-1.ini")
+        p2 = execute("prss-and-open.py", "player-2.ini")
+        p3 = execute("prss-and-open.py", "player-3.ini")
         
         result = gatherResults([p1, p2, p3])
         result.addCallback(check_outputs)
