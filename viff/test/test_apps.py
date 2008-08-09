@@ -50,8 +50,8 @@ class AppsTest(TestCase):
         self.oldcwd = os.getcwd()
         os.chdir(path.join(root_dir, "apps"))
 
-        p = execute("generate-config-files.py", "-n", "3", "-t", "1",
-                    "-p", "trial",
+        p = execute("generate-config-files.py", "--prefix", "trial",
+                    "--players", "3", "--threshold", "1",
                     "localhost:10000", "localhost:20000", "localhost:30000")
         return p
 
