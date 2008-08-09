@@ -83,9 +83,13 @@ class AppsTest(TestCase):
                 subtext = "\n".join(lines)
                 self.assertIn(subtext, o)
 
-        m1 = execute("millionaires.py", "trial-1.ini")
-        m2 = execute("millionaires.py", "trial-2.ini")
-        m3 = execute("millionaires.py", "trial-3.ini")
+        # TODO: Enable SSL again when we have a way of specifying the
+        # name of the key and certificate. Right now the files are
+        # always assumed to be named player-X.{key,cert}, but we want
+        # them to be named trial-X.{key,cert} when testing.
+        m1 = execute("millionaires.py", "--no-ssl", "trial-1.ini")
+        m2 = execute("millionaires.py", "--no-ssl", "trial-2.ini")
+        m3 = execute("millionaires.py", "--no-ssl", "trial-3.ini")
         
         result = gatherResults([m1, m2, m3])
         result.addCallback(check_outputs)
