@@ -40,10 +40,11 @@
 #
 # http://iti.fh-flensburg.de/lang/algorithmen/sortieren/bitonic/bitonicen.htm
 #
+# It requires ProgressBar v. 2.2 found on
+# http://pypi.python.org/pypi/progressbar/
+#
 # TODO: Predict the number of comparisons and support preprocessing.
 #
-# TODO: With the number comparisons known we could provide a progress
-# bar using this library: http://pypi.python.org/pypi/progressbar/
 
 # Give a player configuration file as a command line argument or run
 # the example with '--help' for help with the command line options.
@@ -51,6 +52,8 @@
 from math import log, floor
 from optparse import OptionParser
 from twisted.internet import reactor
+
+from progressbar import ProgressBar, Percentage, Bar, ETA, ProgressBarWidget
 
 from viff.field import GF
 from viff.runtime import Runtime, create_runtime, gather_shares
@@ -66,6 +69,9 @@ parser.add_option("-s", "--size", type="int",
                   help="array size")
 parser.add_option("-m", "--max", type="int",
                   help="maximum size of array numbers")
+parser.add_option("-t", "--test", default=False, action="store_true",
+                  help="run doctests on this file")
+
 parser.set_defaults(modulus=2**65, size=8, max=100)
 
 Runtime.add_options(parser)
@@ -77,9 +83,26 @@ if len(args) == 0:
 
 Zp = GF(find_prime(options.modulus, blum=True))
 
+
 class Protocol:
 
+    def setup_progress_bar(self):
+
+        class HowManyWidget(ProgressBarWidget):
+            "Showing the number of finished comparisons/total number"
+
+            def update(self, pbar):
+                return "Comparisons %s/%s" % (pbar.currval, pbar.maxval)
+
+        widgets = ['Sorting: ', Percentage(), ' ',
+                   Bar(marker='0', left='[', right=']'),
+                   ' ', ETA(), ' ', HowManyWidget()]
+        return ProgressBar(
+            widgets = widgets,
+            maxval = Protocol.predict_sort(options.size))
+
     def __init__(self, runtime):
+        self.progressbar = self.setup_progress_bar()
         self.rt = runtime
         self.comparisons = 0
 
@@ -89,19 +112,51 @@ class Protocol:
         array = gather_shares(map(runtime.open, array))
         sorted = gather_shares(map(runtime.open, sorted))
 
-        dprint("Original array: %s", array)
-        dprint("Sorted array:   %s", sorted)
+        self.progressbar.start()
 
-        def finish(_):
+        def finish(result):
+            self.progressbar.finish()
+            print # This line goes on top of the progressbar
+            dprint("Original array: %s", array)
+            dprint("Sorted array:   %s", result)
             print "Made %d comparisons" % self.comparisons
             runtime.shutdown()
+
         sorted.addCallback(finish)
+
+    @staticmethod
+    def predict_sort(array_size):
+        """ Calculate how many comparisons will be made by the bitonic
+        sort
+        >>> predict_sort(8)
+        24
+        >>> predict_sort(10)
+        33
+        """
+
+        def predict_bitonic_sort(n):
+            if n > 1:
+                m = n >> 1
+                return predict_bitonic_sort(m) + \
+                    predict_bitonic_sort(n - m) + predict_bitonic_merge(n)
+            else:
+                return 0
+
+        def predict_bitonic_merge(n):
+            if n > 1:
+                m = 1 << (int(floor(log(n-1, 2))))
+                return n-m + predict_bitonic_merge(m) + \
+                    predict_bitonic_merge(n - m)
+            else:
+                return 0
+
+        return predict_bitonic_sort(array_size)
 
     def make_array(self):
         array = []
         for i in range(options.size):
             inputter = (i % 3) + 1
-            if  inputter == self.rt.id:
+            if inputter == self.rt.id:
                 number = rand.randint(1, options.max)
                 print "Sharing array[%d] = %s" % (i, number)
             else:
@@ -132,12 +187,22 @@ class Protocol:
                 bitonic_merge(low + m, n - m, ascending)
 
         def compare(i, j, ascending):
-            self.comparisons += 1
+
+            def tick_progressbar(dummy):
+                """This is added as a callback to the defered in le, and
+                therefor must pass on the result of the comparison to
+                where it is actually used"""
+                self.comparisons += 1
+                self.progressbar.update(self.comparisons)
+                return dummy
 
             def xor(a, b):
                 # TODO: We use this simple xor until
                 # http://tracker.viff.dk/issue60 is fixed.
                 return a + b - 2*a*b
+
+            le = array[i] <= array[j] # a deferred
+            le.addCallback(tick_progressbar)
 
             # We must swap array[i] and array[j] when they sort in the
             # wrong direction, that is, when ascending is True and
@@ -146,7 +211,7 @@ class Protocol:
             #
             # Using array[i] <= array[j] in both cases we see that
             # this is the exclusive-or:
-            b = xor(ascending, array[i] <= array[j])
+            b = xor(ascending, le)
 
             # We now wish to calculate
             #
@@ -164,15 +229,18 @@ class Protocol:
         bitonic_sort(0, len(array), ascending=True)
         return array
 
+# Run doctests
+if options.test:
+    import doctest                #pragma NO COVER
+    doctest.testmod(verbose=True) #pragma NO COVER
 
 # Load configuration file.
 id, players = load_config(args[0])
 
 # Create a deferred Runtime and ask it to run our protocol when ready.
-pre_runtime = create_runtime(id, players, 1, options, runtime_class=Toft07Runtime)
+pre_runtime = create_runtime(id, players, 1,
+                             options, runtime_class=Toft07Runtime)
 pre_runtime.addCallback(Protocol)
 
 # Start the Twisted event loop.
 reactor.run()
-
-        
