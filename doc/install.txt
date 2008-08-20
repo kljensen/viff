@@ -18,7 +18,7 @@ bignum arithmetic. You can find these components here:
 VIFF has been successfully tested with the following versions:
 
 :Python:         2.4.1 and 2.5.0
-:Twisted:        2.5.0 (there are `problems with 8.0.1`_)
+:Twisted:        8.1.0
 :PyOpenSSL:      0.7
 :ConfigObj:      4.4.0
 :GMPY:           1.0alpha and 1.0.2
