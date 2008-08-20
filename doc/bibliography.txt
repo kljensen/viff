@@ -10,7 +10,7 @@ Bibliography
 
    .. __: mailto:viff-devel@viff.dk
 
-The algorighms used by VIFF are published in various academic papers.
+The algorithms used by VIFF are published in various academic papers.
 Here we will try to point out which parts of the code uses which
 papers.
 
