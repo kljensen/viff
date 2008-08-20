@@ -166,6 +166,11 @@ to their ``~/.bash_profile`` file, creating it if it is not already
 there. Consult the documentation for your shell to learn how
 environment variables are set.
 
+If you are doing development on VIFF, you might prefer to make a
+symlink from the ``viff`` folder in your repository to a place in your
+``PYTHONPATH``, like this::
+
+   sudo ln -s ~/viff/viff /usr/lib/python2.5/site-packages/viff
 
 Testing
 -------
