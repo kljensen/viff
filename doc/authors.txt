@@ -11,6 +11,7 @@ to the repository):
 * Mikkel Krøigård <mk@daimi.au.dk>
 * Thomas Pelle Jakobsen <mas@daimi.au.dk>
 * Jakob Illeborg Pagter
+* Sigurd Meldgaard
 
 If you have been forgotten, then please checkout `the repository`_,
 add yourself to the list and `send us a patch`_!
