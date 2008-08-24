@@ -97,9 +97,8 @@ class Protocol:
         widgets = ['Sorting: ', Percentage(), ' ',
                    Bar(marker='0', left='[', right=']'),
                    ' ', ETA(), ' ', HowManyWidget()]
-        return ProgressBar(
-            widgets = widgets,
-            maxval = Protocol.predict_sort(options.size))
+        return ProgressBar(widgets=widgets,
+                           maxval=Protocol.predict_sort(options.size))
 
     def __init__(self, runtime):
         self.progressbar = self.setup_progress_bar()
