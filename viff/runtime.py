@@ -1019,7 +1019,7 @@ class Runtime(BasicRuntime):
 
         The number is shared using polynomial of degree *threshold*
         (defaults to :attr:`threshold`). Returns a list of shares
-        unless unless there is only one inputter in which case the
+        unless there is only one inputter in which case the
         share is returned directly.
 
         Communication cost: n elements transmitted.
