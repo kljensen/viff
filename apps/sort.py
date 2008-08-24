@@ -69,10 +69,10 @@ parser.add_option("-s", "--size", type="int",
                   help="array size")
 parser.add_option("-m", "--max", type="int",
                   help="maximum size of array numbers")
-parser.add_option("-t", "--test", default=False, action="store_true",
+parser.add_option("-t", "--test", action="store_true",
                   help="run doctests on this file")
 
-parser.set_defaults(modulus=2**65, size=8, max=100)
+parser.set_defaults(modulus=2**65, size=8, max=100, test=False)
 
 Runtime.add_options(parser)
 
