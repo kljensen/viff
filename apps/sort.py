@@ -189,9 +189,9 @@ class Protocol:
         def compare(i, j, ascending):
 
             def tick_progressbar(dummy):
-                """This is added as a callback to the defered in le, and
+                """This is added as a callback to the deferred in le, and
                 therefor must pass on the result of the comparison to
-                where it is actually used"""
+                where it is actually used."""
                 self.comparisons += 1
                 self.progressbar.update(self.comparisons)
                 return dummy
