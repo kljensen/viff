@@ -1,0 +1,21 @@
+
+VIFF Mailinglists
+=================
+
+There are three mailing lists associated with VIFF.
+
+:viff-devel_: This list is for general questions and discussions on
+  the development of VIFF. Unless you have a patch, you should send
+  your question here.
+
+:viff-patches_: This is where you will want to send your patches for
+  VIFF. Don't worry about filling the list with huge patch series --
+  that is why the list is there!
+
+:viff-commits_: This is a read-only list. Whenever something is pushed
+  to the VIFF repository, a mail is sent to this list with a short
+  description of the change.
+
+.. _viff-devel:   http://lists.viff.dk/listinfo.cgi/viff-devel-viff.dk
+.. _viff-patches: http://lists.viff.dk/listinfo.cgi/viff-patches-viff.dk
+.. _viff-commits: http://lists.viff.dk/listinfo.cgi/viff-commits-viff.dk
