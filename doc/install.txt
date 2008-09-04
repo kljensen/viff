@@ -185,10 +185,11 @@ platforms. Do the following:
 1) Go to the ``viff/apps/`` directory and generate the needed
    configuration files by entering::
 
-     python generate-config-files.py -n 3 -t 1
+     python generate-config-files.py -n 3 -t 1 \
      localhost:9001 localhost:9002 localhost:9003
 
-   Both lines should be entered as a single line.
+   The backslash indicates that both lines should be typed as a single
+   line in the terminal.
 
 2) Open three separate command prompts and go to the ``viff/apps/``
    directory in each. In the first, type::
