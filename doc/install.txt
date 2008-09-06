@@ -11,7 +11,7 @@ fast bignum arithmetic. You can find these components here:
 
 :Python:         http://python.org/
 :Twisted:        http://twistedmatrix.com/
-:OpenSSL:	 http://www.openssl.org/
+:OpenSSL:        http://www.openssl.org/
 :PyOpenSSL:      http://pyopenssl.sourceforge.net/
 :ConfigObj:      http://voidspace.org.uk/python/configobj.html
 :GMPY:           http://code.google.com/p/gmpy/
@@ -20,7 +20,7 @@ VIFF has been successfully tested with the following versions:
 
 :Python:         2.4.1 to 2.5.0
 :Twisted:        2.5 to 8.1.0
-:OpenSSL:	 0.9.8g
+:OpenSSL:        0.9.8g
 :PyOpenSSL:      0.7
 :ConfigObj:      4.4.0
 :GMPY:           1.0alpha to 1.0.2
