@@ -51,3 +51,29 @@ people will only call your code, then please follow the standard VIFF
 coding style.
 
 .. _Twisted: http://twistedmatrix.com/
+
+Hints for indexed variables
+---------------------------
+
+When the code is based on a mathematical text, one often sees lots of
+*b*\ :sub:`i` variables. A nice way to deal with those in code is to
+consider them part of a list called ``b`` and create it like this::
+
+  b = [self.rt.prss_share_random(Zp, binary=True)
+       for _ in range(k)]
+
+It is not a good idea to name the list ``bi`` since that is what you
+would want to call the elements in the list::
+
+  x = [bi * bi for bi in b]
+
+If the index of the current element is needed::
+
+  number = sum([2**i * bi for i, bi in enumerate(b)])
+
+If you want to work with the list by index, you get the nice
+correspondence between *b*\ :sub:`i` and ``b[i]``::
+
+  z = 0
+  for in range(k)
+    z += b[i] + x[k - i]
