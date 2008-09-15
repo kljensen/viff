@@ -6,3 +6,6 @@ Actively Secure Protocols
 
    .. autoclass:: ActiveRuntime
       :members:
+
+   .. autoclass:: BrachaBroadcastMixin
+      :members:

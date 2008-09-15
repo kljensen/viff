@@ -21,7 +21,7 @@ from twisted.internet.defer import gatherResults
 
 from viff.test.util import RuntimeTestCase, protocol, BinaryOperatorTestCase
 from viff.runtime import Share
-from viff.active import ActiveRuntime
+from viff.active import ActiveRuntime, BrachaBroadcastMixin
 
 
 class MulTest(BinaryOperatorTestCase, RuntimeTestCase):
@@ -39,28 +39,6 @@ class ActiveRuntimeTest(RuntimeTestCase):
     num_players = 4
 
     runtime_class = ActiveRuntime
-
-    @protocol
-    def test_broadcast(self, runtime):
-        """Test Bracha broadcast."""
-        # TODO: Figure out how to introduce network errors and test
-        # those too.
-        if runtime.id == 1:
-            x = runtime.broadcast([1], "Hello world!")
-        else:
-            x = runtime.broadcast([1])
-
-        if runtime.id == 2:
-            y, z = runtime.broadcast([2, 3], "Hello two!")
-        elif runtime.id == 3:
-            y, z = runtime.broadcast([2, 3], "Hello three!")
-        else:
-            y, z = runtime.broadcast([2, 3])
-
-        x.addCallback(self.assertEquals, "Hello world!")
-        y.addCallback(self.assertEquals, "Hello two!")
-        z.addCallback(self.assertEquals, "Hello three!")
-        return gatherResults([x, y, z])
 
     @protocol
     def test_single_share_random(self, runtime):
@@ -138,3 +116,40 @@ class ActiveRuntimeTest(RuntimeTestCase):
 
         triples.addCallback(check)
         return triples
+
+
+class BrachaBroadcastRuntime(ActiveRuntime, BrachaBroadcastMixin):
+    pass
+
+class BrachaBroadcastTest(RuntimeTestCase):
+    """Test for active security."""
+
+    #: Number of players.
+    #:
+    #: The protocols for active security needs n > 3t+1, so with the
+    #: default threshold of t=1, we need n=4.
+    num_players = 4
+
+    runtime_class = BrachaBroadcastRuntime
+
+    @protocol
+    def test_broadcast(self, runtime):
+        """Test Bracha broadcast."""
+        # TODO: Figure out how to introduce network errors and test
+        # those too.
+        if runtime.id == 1:
+            x = runtime.broadcast([1], "Hello world!")
+        else:
+            x = runtime.broadcast([1])
+
+        if runtime.id == 2:
+            y, z = runtime.broadcast([2, 3], "Hello two!")
+        elif runtime.id == 3:
+            y, z = runtime.broadcast([2, 3], "Hello three!")
+        else:
+            y, z = runtime.broadcast([2, 3])
+
+        x.addCallback(self.assertEquals, "Hello world!")
+        y.addCallback(self.assertEquals, "Hello two!")
+        z.addCallback(self.assertEquals, "Hello three!")
+        return gatherResults([x, y, z])

@@ -29,6 +29,144 @@ from viff.matrix import Matrix, hyper
 from viff.runtime import Runtime, Share, increment_pc, preprocess, gather_shares
 
 
+class BrachaBroadcastMixin:
+    """Bracha broadcast mixin class. This mixin class adds a
+    :meth:`broadcast` method which can be used for a reliable
+    broadcast.
+    """
+
+    @increment_pc
+    def _broadcast(self, sender, message=None):
+        """Perform a Bracha broadcast.
+
+        A Bracha broadcast is reliable against an active adversary
+        corrupting up to t < n/3 of the players. For more details, see
+        the paper "An asynchronous [(n-1)/3]-resilient consensus
+        protocol" by G. Bracha in Proc. 3rd ACM Symposium on
+        Principles of Distributed Computing, 1984, pages 154-162.
+        """
+
+        result = Deferred()
+        pc = tuple(self.program_counter)
+        n = self.num_players
+        t = self.threshold
+
+        # For each distinct message (and program counter) we save a
+        # dictionary for each of the following variables. The reason
+        # is that we need to count for each distinct message how many
+        # echo and ready messages we have received.
+
+        bracha_echo = {}
+        bracha_ready = {}
+        bracha_sent_ready = {}
+        bracha_delivered = {}
+        
+        def unsafe_broadcast(data_type, message):
+            # Performs a regular broadcast without any guarantees. In
+            # other words, it sends the message to each player except
+            # for this one.
+            for protocol in self.protocols.itervalues():
+                protocol.sendData(pc, data_type, message)
+
+        def echo_received(message, peer_id):
+            # This is called when we receive an echo message. It
+            # updates the echo count for the message and enters the
+            # ready state if the count is high enough.
+            ids = bracha_echo.setdefault(message, [])
+            ready = bracha_sent_ready.setdefault(message, False)
+
+            if peer_id not in ids:
+                ids.append(peer_id)
+                if len(ids) >= ceil((n+t+1)/2) and not ready:
+                    bracha_sent_ready[message] = True
+                    unsafe_broadcast("ready", message)
+                    ready_received(message, self.id)
+
+        def ready_received(message, peer_id):
+            # This is called when we receive a ready message. It
+            # updates the ready count for the message. Depending on
+            # the count, we may either stay in the same state or enter
+            # the ready or delivered state.
+            ids = bracha_ready.setdefault(message, [])
+            ready = bracha_sent_ready.setdefault(message, False)
+            delivered = bracha_delivered.setdefault(message, False)
+            if peer_id not in ids:
+                ids.append(peer_id)
+                if len(ids) == t+1 and not ready:
+                    bracha_sent_ready[message] = True
+                    unsafe_broadcast("ready", message)
+                    ready_received(message, self.id)
+
+                elif len(ids) == 2*t+1 and not delivered:
+                    bracha_delivered[message] = True
+                    result.callback(message)
+
+        def send_received(message):
+            # This is called when we receive a send message. We react
+            # by sending an echo message to each player. Since the
+            # unsafe broadcast doesn't send a message to this player,
+            # we simulate it by calling the echo_received function.
+            unsafe_broadcast("echo", message)
+            echo_received(message, self.id)
+
+
+        # In the following we prepare to handle a send message from
+        # the sender and at most one echo and one ready message from
+        # each player.
+        d_send = Deferred().addCallback(send_received)
+        self._expect_data(sender, "send", d_send)
+
+        for peer_id in self.players:
+            if peer_id != self.id:
+                d_echo = Deferred().addCallback(echo_received, peer_id)
+                self._expect_data(peer_id, "echo", d_echo)
+
+                d_ready = Deferred().addCallback(ready_received, peer_id)
+                self._expect_data(peer_id, "ready", d_ready)
+
+        # If this player is the sender, we transmit a send message to
+        # each player. We send one to this player by calling the
+        # send_received function.
+        if self.id == sender:
+            unsafe_broadcast("send", message)
+            send_received(message)
+
+        return result
+
+    @increment_pc
+    def broadcast(self, senders, message=None):
+        """Perform one or more Bracha broadcast(s).
+
+        The list of *senders* given will determine the subset of players
+        who wish to broadcast a message. If this player wishes to
+        broadcast, its ID must be in the list of senders and the
+        optional *message* parameter must be used.
+
+        If the list of senders consists only of a single sender, the
+        result will be a single element, otherwise it will be a list.
+
+        A Bracha broadcast is reliable against an active adversary
+        corrupting up to t < n/3 of the players. For more details, see
+        the paper "An asynchronous [(n-1)/3]-resilient consensus
+        protocol" by G. Bracha in Proc. 3rd ACM Symposium on
+        Principles of Distributed Computing, 1984, pages 154-162.
+        """
+        assert message is None or self.id in senders
+
+        result = []
+
+        for sender in senders:
+            if sender == self.id:
+                result.append(self._broadcast(sender, message))
+            else:
+                result.append(self._broadcast(sender))
+
+        if len(result) == 1:
+            return result[0]
+
+        return result
+
+
 class ActiveRuntime(Runtime):
     """A runtime secure against active adversaries.
 
@@ -358,133 +496,3 @@ class ActiveRuntime(Runtime):
         c_t = r_t + d
         return 1, succeed([(a_t, b_t, c_t)])
 
-    @increment_pc
-    def _broadcast(self, sender, message=None):
-        """Perform a Bracha broadcast.
-
-        A Bracha broadcast is reliable against an active adversary
-        corrupting up to t < n/3 of the players. For more details, see
-        the paper "An asynchronous [(n-1)/3]-resilient consensus
-        protocol" by G. Bracha in Proc. 3rd ACM Symposium on
-        Principles of Distributed Computing, 1984, pages 154-162.
-        """
-
-        result = Deferred()
-        pc = tuple(self.program_counter)
-        n = self.num_players
-        t = self.threshold
-
-        # For each distinct message (and program counter) we save a
-        # dictionary for each of the following variables. The reason
-        # is that we need to count for each distinct message how many
-        # echo and ready messages we have received.
-
-        bracha_echo = {}
-        bracha_ready = {}
-        bracha_sent_ready = {}
-        bracha_delivered = {}
-        
-        def unsafe_broadcast(data_type, message):
-            # Performs a regular broadcast without any guarantees. In
-            # other words, it sends the message to each player except
-            # for this one.
-            for protocol in self.protocols.itervalues():
-                protocol.sendData(pc, data_type, message)
-
-        def echo_received(message, peer_id):
-            # This is called when we receive an echo message. It
-            # updates the echo count for the message and enters the
-            # ready state if the count is high enough.
-            ids = bracha_echo.setdefault(message, [])
-            ready = bracha_sent_ready.setdefault(message, False)
-
-            if peer_id not in ids:
-                ids.append(peer_id)
-                if len(ids) >= ceil((n+t+1)/2) and not ready:
-                    bracha_sent_ready[message] = True
-                    unsafe_broadcast("ready", message)
-                    ready_received(message, self.id)
-
-        def ready_received(message, peer_id):
-            # This is called when we receive a ready message. It
-            # updates the ready count for the message. Depending on
-            # the count, we may either stay in the same state or enter
-            # the ready or delivered state.
-            ids = bracha_ready.setdefault(message, [])
-            ready = bracha_sent_ready.setdefault(message, False)
-            delivered = bracha_delivered.setdefault(message, False)
-            if peer_id not in ids:
-                ids.append(peer_id)
-                if len(ids) == t+1 and not ready:
-                    bracha_sent_ready[message] = True
-                    unsafe_broadcast("ready", message)
-                    ready_received(message, self.id)
-
-                elif len(ids) == 2*t+1 and not delivered:
-                    bracha_delivered[message] = True
-                    result.callback(message)
-
-        def send_received(message):
-            # This is called when we receive a send message. We react
-            # by sending an echo message to each player. Since the
-            # unsafe broadcast doesn't send a message to this player,
-            # we simulate it by calling the echo_received function.
-            unsafe_broadcast("echo", message)
-            echo_received(message, self.id)
-
-
-        # In the following we prepare to handle a send message from
-        # the sender and at most one echo and one ready message from
-        # each player.
-        d_send = Deferred().addCallback(send_received)
-        self._expect_data(sender, "send", d_send)
-
-        for peer_id in self.players:
-            if peer_id != self.id:
-                d_echo = Deferred().addCallback(echo_received, peer_id)
-                self._expect_data(peer_id, "echo", d_echo)
-
-                d_ready = Deferred().addCallback(ready_received, peer_id)
-                self._expect_data(peer_id, "ready", d_ready)
-
-        # If this player is the sender, we transmit a send message to
-        # each player. We send one to this player by calling the
-        # send_received function.
-        if self.id == sender:
-            unsafe_broadcast("send", message)
-            send_received(message)
-
-        return result
-
-    @increment_pc
-    def broadcast(self, senders, message=None):
-        """Perform one or more Bracha broadcast(s).
-
-        The list of *senders* given will determine the subset of players
-        who wish to broadcast a message. If this player wishes to
-        broadcast, its ID must be in the list of senders and the
-        optional *message* parameter must be used.
-
-        If the list of senders consists only of a single sender, the
-        result will be a single element, otherwise it will be a list.
-
-        A Bracha broadcast is reliable against an active adversary
-        corrupting up to t < n/3 of the players. For more details, see
-        the paper "An asynchronous [(n-1)/3]-resilient consensus
-        protocol" by G. Bracha in Proc. 3rd ACM Symposium on
-        Principles of Distributed Computing, 1984, pages 154-162.
-        """
-        assert message is None or self.id in senders
-
-        result = []
-
-        for sender in senders:
-            if sender == self.id:
-                result.append(self._broadcast(sender, message))
-            else:
-                result.append(self._broadcast(sender))
-
-        if len(result) == 1:
-            return result[0]
-
-        return result
