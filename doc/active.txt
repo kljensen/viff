@@ -12,3 +12,6 @@ Actively Secure Protocols
 
    .. autoclass:: TriplesHyperinvertibleMatricesMixin
       :members:
+
+   .. autoclass:: TriplesPRSSMixin
+      :members:

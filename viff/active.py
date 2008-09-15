@@ -408,8 +408,41 @@ class TriplesHyperinvertibleMatricesMixin:
         self.schedule_callback(result, make_triple)
         return T, result
 
+class TriplesPRSSMixin:
+    """Mixin class for generating multiplication triples using PRSS."""
 
-class ActiveRuntime(Runtime):
+    @increment_pc
+    @preprocess("generate_triple")
+    def prss_get_triple(self, field):
+        count, result = self.prss_generate_triple(field)
+        result.addCallback(lambda triples: triples[0])
+        return result
+
+    @increment_pc
+    def prss_generate_triple(self, field):
+        """Generate a multiplication triple using PRSS.
+
+        These are random numbers *a*, *b*, and *c* such that ``c =
+        ab``. This function can be used in pre-processing.
+
+        Returns a tuple with the number of triples generated (1) and a
+        Deferred which will yield a singleton-list with a 3-tuple.
+        """
+        a_t = self.prss_share_random(field)
+        b_t = self.prss_share_random(field)
+        r_t, r_2t = self.prss_double_share(field)
+
+        # Multiply a and b without resharing.
+        c_2t = gather_shares([a_t, b_t])
+        c_2t.addCallback(lambda (a, b): a * b)
+
+        d_2t = c_2t - r_2t
+        d = self.open(d_2t, threshold=2*self.threshold)
+        c_t = r_t + d
+        return 1, succeed([(a_t, b_t, c_t)])
+
+
+class ActiveRuntime(Runtime, TriplesPRSSMixin):
     """A runtime secure against active adversaries.
 
     This class currently inherits most of its functionality from the
@@ -466,34 +499,3 @@ class ActiveRuntime(Runtime):
         # We add the result to the chains in triple.
         triple.chainDeferred(result)
         return result
-
-    @increment_pc
-    @preprocess("generate_triple")
-    def prss_get_triple(self, field):
-        count, result = self.prss_generate_triple(field)
-        result.addCallback(lambda triples: triples[0])
-        return result
-
-    @increment_pc
-    def prss_generate_triple(self, field):
-        """Generate a multiplication triple using PRSS.
-
-        These are random numbers *a*, *b*, and *c* such that ``c =
-        ab``. This function can be used in pre-processing.
-
-        Returns a tuple with the number of triples generated (1) and a
-        Deferred which will yield a singleton-list with a 3-tuple.
-        """
-        a_t = self.prss_share_random(field)
-        b_t = self.prss_share_random(field)
-        r_t, r_2t = self.prss_double_share(field)
-
-        # Multiply a and b without resharing.
-        c_2t = gather_shares([a_t, b_t])
-        c_2t.addCallback(lambda (a, b): a * b)
-
-        d_2t = c_2t - r_2t
-        d = self.open(d_2t, threshold=2*self.threshold)
-        c_t = r_t + d
-        return 1, succeed([(a_t, b_t, c_t)])
-
