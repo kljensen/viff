@@ -7,6 +7,9 @@ Actively Secure Protocols
    .. autoclass:: ActiveRuntime
       :members:
 
+   .. autoclass:: BasicActiveRuntime
+      :members:
+
    .. autoclass:: BrachaBroadcastMixin
       :members:
 

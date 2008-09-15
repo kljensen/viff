@@ -413,13 +413,13 @@ class TriplesPRSSMixin:
 
     @increment_pc
     @preprocess("generate_triple")
-    def prss_get_triple(self, field):
-        count, result = self.prss_generate_triple(field)
+    def get_triple(self, field):
+        count, result = self.generate_triple(field)
         result.addCallback(lambda triples: triples[0])
         return result
 
     @increment_pc
-    def prss_generate_triple(self, field):
+    def generate_triple(self, field):
         """Generate a multiplication triple using PRSS.
 
         These are random numbers *a*, *b*, and *c* such that ``c =
@@ -442,11 +442,15 @@ class TriplesPRSSMixin:
         return 1, succeed([(a_t, b_t, c_t)])
 
 
-class ActiveRuntime(Runtime, TriplesPRSSMixin):
-    """A runtime secure against active adversaries.
+class BasicActiveRuntime(Runtime):
+    """Basic runtime secure against active adversaries.
 
-    This class currently inherits most of its functionality from the
-    normal :class:`Runtime` class and is thus **not** yet secure.
+    This class depends on either
+    :class:`TriplesHyperinvertibleMatricesMixin` or
+    :class:`TriplesPRSSMixin` to provide a :meth:`get_triple` method.
+
+    Instead of using this class directly, one should probably use
+    :class:`ActiveRuntime` instead.
     """
 
     @increment_pc
@@ -494,8 +498,14 @@ class ActiveRuntime(Runtime, TriplesPRSSMixin):
         # This will be the result, a Share object.
         result = Share(self, share_x.field)
         # This is the Deferred we will do processing on.
-        triple = self.prss_get_triple(share_x.field)
+        triple = self.get_triple(share_x.field)
         self.schedule_callback(triple, finish_mul)
         # We add the result to the chains in triple.
         triple.chainDeferred(result)
         return result
+
+
+class ActiveRuntime(BasicActiveRuntime, TriplesPRSSMixin):
+    """Default mix of :class:`BasicActiveRuntime` and
+    :class:`TriplesPRSSMixin`."""
+    pass
