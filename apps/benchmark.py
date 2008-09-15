@@ -63,9 +63,9 @@ from twisted.internet import reactor
 
 from viff.field import GF, GF256
 from viff.runtime import Runtime, create_runtime, gather_shares
-from viff.active import ActiveRuntime
-from viff.comparison import Toft05Runtime, Toft07Runtime
-from viff.comparison import ActiveToft05Runtime, ActiveToft07Runtime
+from viff.active import BasicActiveRuntime, \
+    TriplesHyperinvertibleMatricesMixin, TriplesPRSSMixin
+from viff.comparison import ComparisonToft05Mixin, ComparisonToft07Mixin
 from viff.paillier import PaillierRuntime
 from viff.config import load_config
 from viff.util import find_prime
@@ -89,12 +89,19 @@ def record_stop(_, what):
     print "*" * 6
 
 
-operations = ["mul", "mul-active", "comp", "comp-active",
-              "compII", "compII-active", "mul-paillier"]
+operations = ["mul", "compToft05", "compToft07"]
 
 parser = OptionParser()
 parser.add_option("-m", "--modulus",
                   help="lower limit for modulus (can be an expression)")
+parser.add_option("-a", "--active", action="store_true",
+                  help="use actively secure runtime")
+parser.add_option("-2", "--twoplayer", action="store_true",
+                  help="use twoplayer runtime")
+parser.add_option("--prss", action="store_true",
+                  help="use PRSS for preprocessing")
+parser.add_option("--hyper", action="store_false", dest="prss",
+                  help="use hyperinvertible matrices for preprocessing")
 parser.add_option("-c", "--count", type="int",
                   help="number of operations")
 parser.add_option("-o", "--operation", type="choice", choices=operations,
@@ -105,6 +112,7 @@ parser.add_option("-s", "--sequential", action="store_false", dest="parallel",
                   help="execute operations in sequence")
 
 parser.set_defaults(modulus="30916444023318367583", count=10,
+                    active=False, twoplayer=False, prss=True,
                     operation=operations[0], parallel=True)
 
 # Add standard VIFF options.
@@ -130,7 +138,7 @@ class Benchmark:
         self.rt = rt
         self.operation = operation
 
-        if isinstance(self.rt, ActiveRuntime):
+        if isinstance(self.rt, BasicActiveRuntime):
             # TODO: Make this optional and maybe automatic. The
             # program descriptions below were found by carefully
             # studying the output reported when the benchmarks were
@@ -138,20 +146,20 @@ class Benchmark:
             print "Starting preprocessing"
             if self.operation == operator.mul:
                 program_desc = {
-                    ("prss_generate_triple", (Zp,)):
+                    ("generate_triples", (Zp,)):
                         [(i, 1, 0) for i in range(3 + 2*count, 3 + 3*count)]
                     }
-            elif isinstance(self.rt, ActiveToft05Runtime):
+            elif isinstance(self.rt, ComparisonToft05Mixin):
                 program_desc = {
-                    ("prss_generate_triple", (GF256,)):
+                    ("generate_triples", (GF256,)):
                     sum([[(c, 64, i, 1, 1, 0) for i in range(2, 33)] +
                          [(c, 64, i, 3, 1, 0) for i in range(17, 33)]
                          for c in range(3 + 2*count, 3 + 3*count)],
                         [])
                     }
-            elif isinstance(self.rt, ActiveToft07Runtime):
+            elif isinstance(self.rt, ComparisonToft07Mixin):
                 program_desc = {
-                    ("prss_generate_triple", (Zp,)):
+                    ("generate_triples", (Zp,)):
                     sum([[(c, 2, 4, i, 2, 1, 0) for i in range(1, 33)] +
                          [(c, 2, 4, 99, 2, 1, 0)] +
                          [(c, 2, 4, i, 1, 0) for i in range(65, 98)]
@@ -235,27 +243,41 @@ class SequentialBenchmark(Benchmark):
             record_stop(None, "sequential test")
             self.finished(None)
 
-if options.operation == "mul":
+if options.twoplayer:
+    # Then there is just one possible runtime:
     operation = operator.mul
-    runtime_class = Runtime
-elif options.operation == "mul-active":
-    operation = operator.mul
-    runtime_class = ActiveRuntime
-elif options.operation == "comp":
-    operation = operator.ge
-    runtime_class = Toft05Runtime
-elif options.operation == "comp-active":
-    operation = operator.ge
-    runtime_class = ActiveToft05Runtime
-elif options.operation == "compII":
-    operation = operator.ge
-    runtime_class = Toft07Runtime
-elif options.operation == "compII-active":
-    operation = operator.ge
-    runtime_class = ActiveToft07Runtime
-elif options.operation == "mul-paillier":
-    operation = operator.mul
-    runtime_class = PaillierRuntime
+    bases = [PaillierRuntime]
+else:
+    # There are several options for a multiplayer runtime:
+    if options.active:
+        bases = [BasicActiveRuntime]
+        if options.prss:
+            bases.append(TriplesPRSSMixin)
+        else:
+            bases.append(TriplesHyperinvertibleMatricesMixin)
+    else:
+        bases = [Runtime]
+
+    if options.operation == "mul":
+        operation = operator.mul
+    elif options.operation == "compToft05":
+        operation = operator.ge
+        bases.append(ComparisonToft05Mixin)
+    elif options.operation == "compToft07":
+        operation = operator.ge
+        bases.append(ComparisonToft07Mixin)
+
+print "Constructing runtime from:"
+for base in bases:
+    print "- %s" % base
+
+
+# We must include at least one new-style class in bases. We include it
+# last to avoid overriding __init__ from the other base classes.
+bases.append(object)
+
+# Dynamically created class based on the choices above:
+runtime_class = type("BenchmarkRuntime", tuple(bases), {})
 
 if options.parallel:
     benchmark = ParallelBenchmark
