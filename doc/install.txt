@@ -5,12 +5,13 @@ Installation Guide
 ==================
 
 VIFF is written in Python and uses the Twisted framework for
-asynchronous communication, (optionally) PyOpenSSL for secure
-communication, ConfigObj for configuration files, and GMPY for fast
-bignum arithmetic. You can find these components here:
+asynchronous communication, (optionally) OpenSSL and PyOpenSSL for
+secure communication, ConfigObj for configuration files, and GMPY for
+fast bignum arithmetic. You can find these components here:
 
 :Python:         http://python.org/
 :Twisted:        http://twistedmatrix.com/
+:OpenSSL:        http://www.openssl.org/
 :PyOpenSSL:      http://pyopenssl.sourceforge.net/
 :ConfigObj:      http://voidspace.org.uk/python/configobj.html
 :GMPY:           http://code.google.com/p/gmpy/
@@ -19,6 +20,7 @@ VIFF has been successfully tested with the following versions:
 
 :Python:         2.4.1 to 2.5.0
 :Twisted:        2.5 to 8.1.0
+:OpenSSL:        0.9.8g
 :PyOpenSSL:      0.7
 :ConfigObj:      4.4.0
 :GMPY:           1.0alpha to 1.0.2
@@ -56,14 +58,18 @@ Windows Vista Ultimate SP1.
 5) Download and install GMPY_. If you are using Vista, right-click on
    the installer and choose the option to run as administrator.
 
-6) Download and install PyOpenSSL_. Again, run the installer as
+6) Download and execute an `OpenSSL Win32 Installer`_. Problems have
+   been reported when using the latest release, 0.9.8h, so currently
+   0.9.8g is recommended.
+
+7) Download and install PyOpenSSL_. Again, run the installer as
    administrator if you are using Vista.
 
-7) Download and install VIFF_. Note that if you are using the
+8) Download and install VIFF_. Note that if you are using the
    installer on Vista, you will again need to run it as an
    administrator.
 
-8) Proceed to `testing`_.
+9) Proceed to `testing`_.
 
 
 Mac OS X
@@ -236,6 +242,7 @@ platforms. Do the following:
 .. _Twisted: http://twistedmatrix.com/
 .. _ConfigObj: http://voidspace.org.uk/python/configobj.html
 .. _GMPY: http://code.google.com/p/gmpy/
+.. _OpenSSL Win32 installer: http://www.slproweb.com/products/Win32OpenSSL.html
 .. _PyOpenSSL: http://pyopenssl.sourceforge.net/
 .. _MacPython: http://www.pythonmac.org
 .. _XCode: http://developer.apple.com/tools/xcode/
