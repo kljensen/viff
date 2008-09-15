@@ -412,14 +412,14 @@ class TriplesPRSSMixin:
     """Mixin class for generating multiplication triples using PRSS."""
 
     @increment_pc
-    @preprocess("generate_triple")
+    @preprocess("generate_triples")
     def get_triple(self, field):
-        count, result = self.generate_triple(field)
+        count, result = self.generate_triples(field)
         result.addCallback(lambda triples: triples[0])
         return result
 
     @increment_pc
-    def generate_triple(self, field):
+    def generate_triples(self, field):
         """Generate a multiplication triple using PRSS.
 
         These are random numbers *a*, *b*, and *c* such that ``c =
