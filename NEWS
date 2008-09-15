@@ -39,6 +39,12 @@ order. Player can now also be reliably shutdown.
 * Issue 59: Profiling support. Give a --profile command line argument
   to make your VIFF programs output profiling info when stopped.
 
+* Moved ActiveRuntime and related code to its own module, viff.active.
+  This is an incompatible change compared to VIFF 0.6.
+
+* Created mixin classes for different preprocessing choices for
+  actively secure multiplication protocol.
+
 
 Version 0.6, released on 2008-05-28
 -----------------------------------
