@@ -87,6 +87,3 @@ Runtime Module
 
    .. autoclass:: Runtime
       :members:
-
-   .. autoclass:: ActiveRuntime
-      :members: mul, single_share_random, double_share_random, get_triple, generate_triples, broadcast

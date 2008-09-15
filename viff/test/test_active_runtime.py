@@ -20,7 +20,8 @@ import operator
 from twisted.internet.defer import gatherResults
 
 from viff.test.util import RuntimeTestCase, protocol, BinaryOperatorTestCase
-from viff.runtime import ActiveRuntime, Share
+from viff.runtime import Share
+from viff.active import ActiveRuntime
 
 
 class MulTest(BinaryOperatorTestCase, RuntimeTestCase):

@@ -62,7 +62,8 @@ from pprint import pprint
 from twisted.internet import reactor
 
 from viff.field import GF, GF256
-from viff.runtime import Runtime, ActiveRuntime, create_runtime, gather_shares
+from viff.runtime import Runtime, create_runtime, gather_shares
+from viff.active import ActiveRuntime
 from viff.comparison import Toft05Runtime, Toft07Runtime
 from viff.comparison import ActiveToft05Runtime, ActiveToft07Runtime
 from viff.paillier import PaillierRuntime

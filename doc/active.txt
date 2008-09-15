@@ -1,0 +1,8 @@
+
+Actively Secure Protocols
+=========================
+
+.. automodule:: viff.active
+
+   .. autoclass:: ActiveRuntime
+      :members:

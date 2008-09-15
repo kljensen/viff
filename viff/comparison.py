@@ -26,7 +26,7 @@ import math
 
 from viff.util import rand
 from viff.runtime import Runtime, Share, gather_shares, increment_pc
-from viff.runtime import ActiveRuntime
+from viff.active import ActiveRuntime
 from viff.field import GF256, FieldElement
 
 
