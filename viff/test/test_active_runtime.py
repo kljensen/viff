@@ -21,16 +21,18 @@ from twisted.internet.defer import gatherResults
 
 from viff.test.util import RuntimeTestCase, protocol, BinaryOperatorTestCase
 from viff.runtime import Share
-from viff.active import ActiveRuntime, BrachaBroadcastMixin
-
+from viff.active import ActiveRuntime, BrachaBroadcastMixin, \
+    TriplesHyperinvertibleMatricesMixin
 
 class MulTest(BinaryOperatorTestCase, RuntimeTestCase):
     operator = operator.mul
     runtime_class = ActiveRuntime
 
+class TriplesHyper(ActiveRuntime, TriplesHyperinvertibleMatricesMixin):
+    pass
 
-class ActiveRuntimeTest(RuntimeTestCase):
-    """Test for active security."""
+class TriplesHyperTest(RuntimeTestCase):
+    """Test for preprocessing with hyperinvertible matrices."""
 
     #: Number of players.
     #:
@@ -38,7 +40,7 @@ class ActiveRuntimeTest(RuntimeTestCase):
     #: default threshold of t=1, we need n=4.
     num_players = 4
 
-    runtime_class = ActiveRuntime
+    runtime_class = TriplesHyper
 
     @protocol
     def test_single_share_random(self, runtime):

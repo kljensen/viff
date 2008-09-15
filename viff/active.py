@@ -167,74 +167,16 @@ class BrachaBroadcastMixin:
         return result
 
 
-class ActiveRuntime(Runtime):
-    """A runtime secure against active adversaries.
+class TriplesHyperinvertibleMatricesMixin:
+    """Mixin class which generates multiplication triples using
+    hyperinvertible matrices."""
 
-    This class currently inherits most of its functionality from the
-    normal :class:`Runtime` class and is thus **not** yet secure.
-    """
-
-    def __init__(self, player, threshold, options=None):
-        """Initialize runtime."""
-
-        #: A hyper-invertible matrix.
-        #:
-        #: It should be suitable for :attr:`num_players` players, but
-        #: since we don't know the total number of players yet, we set
-        #: it to :const:`None` here and update it as necessary.
-        self._hyper = None
-        Runtime.__init__(self, player, threshold, options)
-
-    @increment_pc
-    def mul(self, share_x, share_y):
-        """Multiplication of shares.
-
-        Preprocessing: 1 multiplication triple.
-        Communication: 2 openings.
-        """
-        assert isinstance(share_x, Share) or isinstance(share_y, Share), \
-            "At least one of share_x and share_y must be a Share."
-
-        if not isinstance(share_x, Share):
-            # Then share_y must be a Share => local multiplication. We
-            # clone first to avoid changing share_y.
-            result = share_y.clone()
-            result.addCallback(lambda y: share_x * y)
-            return result
-        if not isinstance(share_y, Share):
-            # Likewise when share_y is a constant.
-            result = share_x.clone()
-            result.addCallback(lambda x: x * share_y)
-            return result
-
-        # At this point both share_x and share_y must be Share
-        # objects. We multiply them via a multiplication triple.
-        def finish_mul(triple):
-            a, b, c = triple
-            d = self.open(share_x - a)
-            e = self.open(share_y - b)
-
-            # TODO: We ought to be able to simply do
-            #
-            #   return d*e + d*y + e*x + c
-            #
-            # but that leads to infinite recursion since d and e are
-            # Shares, not FieldElements. So we have to do a bit more
-            # work... The following callback also leads to recursion, but
-            # only one level since d and e are FieldElements now, which
-            # means that we return in the above if statements.
-            result = gather_shares([d, e])
-            result.addCallback(lambda (d,e): d*e + d*b + e*a + c)
-            return result
-
-        # This will be the result, a Share object.
-        result = Share(self, share_x.field)
-        # This is the Deferred we will do processing on.
-        triple = self.prss_get_triple(share_x.field)
-        self.schedule_callback(triple, finish_mul)
-        # We add the result to the chains in triple.
-        triple.chainDeferred(result)
-        return result
+    #: A hyper-invertible matrix.
+    #:
+    #: It should be suitable for :attr:`num_players` players, but
+    #: since we don't know the total number of players yet, we set it
+    #: to :const:`None` here and update it as necessary.
+    _hyper = None
 
     @increment_pc
     def single_share_random(self, T, degree, field):
@@ -465,6 +407,65 @@ class ActiveRuntime(Runtime):
         result = gatherResults([single_a, single_b, double_c])
         self.schedule_callback(result, make_triple)
         return T, result
+
+
+class ActiveRuntime(Runtime):
+    """A runtime secure against active adversaries.
+
+    This class currently inherits most of its functionality from the
+    normal :class:`Runtime` class and is thus **not** yet secure.
+    """
+
+    @increment_pc
+    def mul(self, share_x, share_y):
+        """Multiplication of shares.
+
+        Preprocessing: 1 multiplication triple.
+        Communication: 2 openings.
+        """
+        assert isinstance(share_x, Share) or isinstance(share_y, Share), \
+            "At least one of share_x and share_y must be a Share."
+
+        if not isinstance(share_x, Share):
+            # Then share_y must be a Share => local multiplication. We
+            # clone first to avoid changing share_y.
+            result = share_y.clone()
+            result.addCallback(lambda y: share_x * y)
+            return result
+        if not isinstance(share_y, Share):
+            # Likewise when share_y is a constant.
+            result = share_x.clone()
+            result.addCallback(lambda x: x * share_y)
+            return result
+
+        # At this point both share_x and share_y must be Share
+        # objects. We multiply them via a multiplication triple.
+        def finish_mul(triple):
+            a, b, c = triple
+            d = self.open(share_x - a)
+            e = self.open(share_y - b)
+
+            # TODO: We ought to be able to simply do
+            #
+            #   return d*e + d*y + e*x + c
+            #
+            # but that leads to infinite recursion since d and e are
+            # Shares, not FieldElements. So we have to do a bit more
+            # work... The following callback also leads to recursion, but
+            # only one level since d and e are FieldElements now, which
+            # means that we return in the above if statements.
+            result = gather_shares([d, e])
+            result.addCallback(lambda (d,e): d*e + d*b + e*a + c)
+            return result
+
+        # This will be the result, a Share object.
+        result = Share(self, share_x.field)
+        # This is the Deferred we will do processing on.
+        triple = self.prss_get_triple(share_x.field)
+        self.schedule_callback(triple, finish_mul)
+        # We add the result to the chains in triple.
+        triple.chainDeferred(result)
+        return result
 
     @increment_pc
     @preprocess("generate_triple")
