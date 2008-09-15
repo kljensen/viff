@@ -28,8 +28,8 @@
 #     / \      / \    ...    / \
 #   a1   b1  a2   b2       an   bn
 #
-# Given sufficient bandwidth all operations should be executed in
-# parallel.
+# Given sufficient bandwidth and computational power all operations
+# should be executed in parallel.
 #
 # Sequential execution looks like this:
 #
