@@ -88,23 +88,23 @@ def record_stop(_, what):
     print "*" * 6
 
 
+operations = ["mul", "mul-active", "comp", "comp-active",
+              "compII", "compII-active", "mul-paillier"]
+
 parser = OptionParser()
 parser.add_option("-m", "--modulus",
                   help="lower limit for modulus (can be an expression)")
 parser.add_option("-c", "--count", type="int",
                   help="number of operations")
-parser.add_option("-o", "--operation", type="choice",
-                  choices=["mul", "mul-active", "comp", "comp-active",
-                           "compII", "compII-active", "mul-paillier"],
-                  help=("operation to benchmark, one of 'mul', 'mul-active', "
-                        "'comp', 'comp-active', 'compII', 'compII-active'"))
+parser.add_option("-o", "--operation", type="choice", choices=operations,
+                  help="operation to benchmark")
 parser.add_option("-p", "--parallel", action="store_true",
                   help="execute operations in parallel")
 parser.add_option("-s", "--sequential", action="store_false", dest="parallel",
                   help="execute operations in sequence")
 
 parser.set_defaults(modulus="30916444023318367583", count=10,
-                    operation="mul", parallel=True)
+                    operation=operations[0], parallel=True)
 
 # Add standard VIFF options.
 Runtime.add_options(parser)
