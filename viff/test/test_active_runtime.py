@@ -21,14 +21,14 @@ from twisted.internet.defer import gatherResults
 
 from viff.test.util import RuntimeTestCase, protocol, BinaryOperatorTestCase
 from viff.runtime import Share
-from viff.active import ActiveRuntime, BrachaBroadcastMixin, \
-    TriplesHyperinvertibleMatricesMixin
+from viff.active import BasicActiveRuntime, ActiveRuntime, \
+    BrachaBroadcastMixin, TriplesHyperinvertibleMatricesMixin
 
 class MulTest(BinaryOperatorTestCase, RuntimeTestCase):
     operator = operator.mul
     runtime_class = ActiveRuntime
 
-class TriplesHyper(ActiveRuntime, TriplesHyperinvertibleMatricesMixin):
+class TriplesHyper(BasicActiveRuntime, TriplesHyperinvertibleMatricesMixin):
     pass
 
 class TriplesHyperTest(RuntimeTestCase):
