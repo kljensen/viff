@@ -1073,6 +1073,18 @@ class Runtime(BasicRuntime):
         result.addCallback(shamir.recombine)
         return result
 
+def make_runtime_class(runtime_class=Runtime, mixins=None):
+    """Creates a new runtime class with *runtime_class* as a base
+    class mixing in the *mixins*.
+    """
+    if mixins is None:
+        return runtime_class
+    else:
+        # We must include at least one new-style class in bases. We
+        # include it last to avoid overriding __init__ from the other
+        # base classes.
+        bases = (runtime_class,) + tuple(mixins) + (object,)
+        return type("ExtendedRuntime", bases, {})
 
 def create_runtime(id, players, threshold, options=None, runtime_class=Runtime):
     """Create a :class:`Runtime` and connect to the other players.
