@@ -96,6 +96,8 @@ parser.add_option("-m", "--modulus",
                   help="lower limit for modulus (can be an expression)")
 parser.add_option("-a", "--active", action="store_true",
                   help="use actively secure runtime")
+parser.add_option("--passive", action="store_false", dest="active",
+                  help="use passively secure runtime")
 parser.add_option("-2", "--twoplayer", action="store_true",
                   help="use twoplayer runtime")
 parser.add_option("--prss", action="store_true",
