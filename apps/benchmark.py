@@ -111,7 +111,7 @@ parser.add_option("-p", "--parallel", action="store_true",
 parser.add_option("-s", "--sequential", action="store_false", dest="parallel",
                   help="execute operations in sequence")
 
-parser.set_defaults(modulus="30916444023318367583", count=10,
+parser.set_defaults(modulus=2**65, count=10,
                     active=False, twoplayer=False, prss=True,
                     operation=operations[0], parallel=True)
 
