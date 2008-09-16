@@ -132,6 +132,15 @@ class Share(Deferred):
         # self >= other
         return self.runtime.greater_than_equal(self, other)
 
+    def __eq__(self, other):
+        """Equality testing."""
+        return self.runtime.equal(self, other)
+
+    def __neq__(self, other):
+        """Negated equality testing."""
+        return 1 - self.runtime.equal(self, other)
+
+
     def clone(self):
         """Clone a share.
 
