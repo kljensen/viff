@@ -153,12 +153,14 @@ def load_config(source):
     return owner_id, players
 
 
-def generate_configs(n, t, addresses=None, prefix=None):
+def generate_configs(n, t, addresses=None, prefix=None, skip_prss=False):
     """Generate player configurations.
 
     Generates *n* configuration objects with a threshold of *t*. The
     *addresses* is an optional list of ``(host, port)`` pairs and
-    *prefix* is a filename prefix.
+    *prefix* is a filename prefix. One can avoid generating keys for
+    PRSS by setting *skip_prss* to True. This is useful when the
+    number of players is large.
 
     The configurations are returned as :class:`ConfigObj` instances
     and can be saved to disk if desired.
@@ -166,7 +168,6 @@ def generate_configs(n, t, addresses=None, prefix=None):
     Returns a mapping from player ID to player configuration.
     """
     players = frozenset(range(1, n+1))
-    max_unqualified_subsets = generate_subsets(players, n-t)
 
     def generate_key():
         # TODO: is a 40 byte hex string as good as a 20 byte binary
@@ -223,19 +224,21 @@ def generate_configs(n, t, addresses=None, prefix=None):
                 for d in players:
                     config[p_str(p)]['prss_dealer_keys'][d_str(d)] = {}
 
-    for subset in max_unqualified_subsets:
-        key = generate_key()
-        for player in subset:
-            config = configs[player]
-            config[p_str(player)]['prss_keys'][s_str(subset)] = key
-
-    for dealer in players:
-        d = d_str(dealer)
+    if not skip_prss:
+        max_unqualified_subsets = generate_subsets(players, n-t)
         for subset in max_unqualified_subsets:
-            s = s_str(subset)
             key = generate_key()
-            for player in (subset | set([dealer])):
-                p = p_str(player)
-                configs[player][p]['prss_dealer_keys'][d][s] = key
+            for player in subset:
+                config = configs[player]
+                config[p_str(player)]['prss_keys'][s_str(subset)] = key
+
+        for dealer in players:
+            d = d_str(dealer)
+            for subset in max_unqualified_subsets:
+                s = s_str(subset)
+                key = generate_key()
+                for player in (subset | set([dealer])):
+                    p = p_str(player)
+                    configs[player][p]['prss_dealer_keys'][d][s] = key
 
     return configs
