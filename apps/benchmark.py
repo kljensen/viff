@@ -67,6 +67,7 @@ from viff.runtime import Runtime, create_runtime, gather_shares, \
 from viff.active import BasicActiveRuntime, \
     TriplesHyperinvertibleMatricesMixin, TriplesPRSSMixin
 from viff.comparison import ComparisonToft05Mixin, ComparisonToft07Mixin
+from viff.equality import ProbabilisticEqualityMixin
 from viff.paillier import PaillierRuntime
 from viff.config import load_config
 from viff.util import find_prime
@@ -90,7 +91,7 @@ def record_stop(_, what):
     print "*" * 6
 
 
-operations = ["mul", "compToft05", "compToft07"]
+operations = ["mul", "compToft05", "compToft07", "eq"]
 
 parser = OptionParser()
 parser.add_option("-m", "--modulus",
@@ -268,6 +269,9 @@ else:
     elif options.operation == "compToft07":
         operation = operator.ge
         mixins.append(ComparisonToft07Mixin)
+    elif options.operation == "eq":
+        operation = operator.eq
+        mixins.append(ProbabilisticEqualityMixin)
 
 print "Using the base runtime: %s." % base_runtime_class
 print "With the following mixins:"
