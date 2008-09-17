@@ -62,7 +62,8 @@ from pprint import pprint
 from twisted.internet import reactor
 
 from viff.field import GF, GF256
-from viff.runtime import Runtime, create_runtime, gather_shares
+from viff.runtime import Runtime, create_runtime, gather_shares, \
+    make_runtime_class
 from viff.active import BasicActiveRuntime, \
     TriplesHyperinvertibleMatricesMixin, TriplesPRSSMixin
 from viff.comparison import ComparisonToft05Mixin, ComparisonToft07Mixin
@@ -243,41 +244,37 @@ class SequentialBenchmark(Benchmark):
             record_stop(None, "sequential test")
             self.finished(None)
 
+mixins = []
 if options.twoplayer:
     # Then there is just one possible runtime:
     operation = operator.mul
-    bases = [PaillierRuntime]
+    base_runtime_class = PaillierRuntime
 else:
     # There are several options for a multiplayer runtime:
     if options.active:
-        bases = [BasicActiveRuntime]
+        base_runtime_class = BasicActiveRuntime
         if options.prss:
-            bases.append(TriplesPRSSMixin)
+            mixins.append(TriplesPRSSMixin)
         else:
-            bases.append(TriplesHyperinvertibleMatricesMixin)
+            mixins.append(TriplesHyperinvertibleMatricesMixin)
     else:
-        bases = [Runtime]
+        base_runtime_class = Runtime
 
     if options.operation == "mul":
         operation = operator.mul
     elif options.operation == "compToft05":
         operation = operator.ge
-        bases.append(ComparisonToft05Mixin)
+        mixins.append(ComparisonToft05Mixin)
     elif options.operation == "compToft07":
         operation = operator.ge
-        bases.append(ComparisonToft07Mixin)
+        mixins.append(ComparisonToft07Mixin)
 
-print "Constructing runtime from:"
-for base in bases:
-    print "- %s" % base
+print "Using the base runtime: %s." % base_runtime_class
+print "With the following mixins:"
+for mixin in mixins:
+    print "- %s" % mixin
 
-
-# We must include at least one new-style class in bases. We include it
-# last to avoid overriding __init__ from the other base classes.
-bases.append(object)
-
-# Dynamically created class based on the choices above:
-runtime_class = type("BenchmarkRuntime", tuple(bases), {})
+runtime_class = make_runtime_class(base_runtime_class, mixins)
 
 if options.parallel:
     benchmark = ParallelBenchmark
