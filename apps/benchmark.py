@@ -68,7 +68,7 @@ from viff.active import BasicActiveRuntime, \
 from viff.comparison import ComparisonToft05Mixin, ComparisonToft07Mixin
 from viff.paillier import PaillierRuntime
 from viff.config import load_config
-from viff.util import find_prime
+from viff.util import find_prime, rand
 
 last_timestamp = time.time()
 start = 0
@@ -178,9 +178,18 @@ class Benchmark:
             self.begin(None)
 
     def begin(self, _):
-        print "Runtime ready, starting protocol"
-        self.a_shares = [self.rt.prss_share_random(Zp) for _ in range(count)]
-        self.b_shares = [self.rt.prss_share_random(Zp) for _ in range(count)]
+        print "Runtime ready, generating shares"
+        self.a_shares = []
+        self.b_shares = []
+        for i in range(count):
+            inputter = (i % len(self.rt.players)) + 1
+            if inputter == self.rt.id:
+                a = rand.randint(0, Zp.modulus)
+                b = rand.randint(0, Zp.modulus)
+            else:
+                a, b = None, None
+            self.a_shares.append(self.rt.shamir_share([inputter], Zp, a))
+            self.b_shares.append(self.rt.shamir_share([inputter], Zp, b))
         shares_ready = gather_shares(self.a_shares + self.b_shares)
         shares_ready.addCallback(self.sync_test)
 
