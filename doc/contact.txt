@@ -37,6 +37,13 @@ There are three mailing lists associated with VIFF.
   development.
 
 
+IRC
+---
+
+If you want to discuss something in realtime with the VIFF developers,
+then please join us at the ``#viff`` channel on ``irc.freenode.net``.
+
+
 .. _viff-devel:   http://lists.viff.dk/listinfo.cgi/viff-devel-viff.dk
 .. _viff-patches: http://lists.viff.dk/listinfo.cgi/viff-patches-viff.dk
 .. _viff-commits: http://lists.viff.dk/listinfo.cgi/viff-commits-viff.dk
