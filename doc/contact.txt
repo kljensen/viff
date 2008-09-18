@@ -10,7 +10,8 @@ and all feedback, so please don't be shy :-)
 Mailing lists
 -------------
 
-There are three mailing lists associated with VIFF.
+There are three mailing lists associated with VIFF. They are all very
+low volume with at most a handful of mails per day.
 
 :viff-devel_: This list is for general questions and discussions on
   the development of VIFF. Unless you have a patch, you should send
