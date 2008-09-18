@@ -348,7 +348,7 @@ class ShareExchangerFactory(ReconnectingClientFactory, ServerFactory):
     def clientConnectionLost(self, connector, reason):
         reason.trap(ConnectionDone)
 
-        
+
 def increment_pc(method):
     """Make *method* automatically increment the program counter.
 
@@ -526,7 +526,7 @@ class BasicRuntime:
             print "done."
 
         sync = self.synchronize()
-        sync.addCallback(close_connections) 
+        sync.addCallback(close_connections)
         sync.addCallback(stop_reactor)
         return sync
 
@@ -826,7 +826,7 @@ class Runtime(BasicRuntime):
     @increment_pc
     def prss_share(self, inputters, field, element=None):
         """Creates pseudo-random secret sharings.
-        
+
         This protocol creates a secret sharing for each player in the
         subset of players specified in *inputters*. Each inputter
         provides an integer. The result is a list of shares, one for
