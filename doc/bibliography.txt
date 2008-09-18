@@ -29,6 +29,9 @@ papers.
   :meth:`viff.runtime.Runtime.prss_share_bit_double` method uses a
   protocol described in [Damgård08]_.
 
+* The protocol for equality testing with secret shared result is from
+  [Nishide07]_.
+
 
 .. [Bracha84] G. Bracha, *An asynchronous [(n-1)/3]-resilient
    consensus protocol*, Proc 3rd ACM Symposium on Principles of
@@ -50,6 +53,10 @@ papers.
    Archive: `Report 2008/221`__.
 
    .. __: http://eprint.iacr.org/2008/221
+
+.. [Nishide07] Takashi Nishide and Kazuo Ohta, *Constant-Round
+   Multiparty Computation for Interval Test, Equality Test, and
+   Comparison*, IEICE Transactions, 90-A (5): 960-968.
 
 .. [Shamir79] Adi Shamir, *How to share a secret*, Communications of
    the ACM, 22 (11): 612-613.
