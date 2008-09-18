@@ -37,7 +37,7 @@ Contents:
    unit-testing
    presentations
    bibliography
-   mailinglists
+   contact
    authors
    glossary
 
