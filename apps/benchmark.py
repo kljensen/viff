@@ -70,7 +70,7 @@ from viff.comparison import ComparisonToft05Mixin, ComparisonToft07Mixin
 from viff.equality import ProbabilisticEqualityMixin
 from viff.paillier import PaillierRuntime
 from viff.config import load_config
-from viff.util import find_prime
+from viff.util import find_prime, rand
 
 last_timestamp = time.time()
 start = 0
@@ -98,6 +98,8 @@ parser.add_option("-m", "--modulus",
                   help="lower limit for modulus (can be an expression)")
 parser.add_option("-a", "--active", action="store_true",
                   help="use actively secure runtime")
+parser.add_option("--passive", action="store_false", dest="active",
+                  help="use passively secure runtime")
 parser.add_option("-2", "--twoplayer", action="store_true",
                   help="use twoplayer runtime")
 parser.add_option("--prss", action="store_true",
@@ -113,7 +115,7 @@ parser.add_option("-p", "--parallel", action="store_true",
 parser.add_option("-s", "--sequential", action="store_false", dest="parallel",
                   help="execute operations in sequence")
 
-parser.set_defaults(modulus="30916444023318367583", count=10,
+parser.set_defaults(modulus=2**65, count=10,
                     active=False, twoplayer=False, prss=True,
                     operation=operations[0], parallel=True)
 
@@ -178,9 +180,18 @@ class Benchmark:
             self.begin(None)
 
     def begin(self, _):
-        print "Runtime ready, starting protocol"
-        self.a_shares = [self.rt.prss_share_random(Zp) for _ in range(count)]
-        self.b_shares = [self.rt.prss_share_random(Zp) for _ in range(count)]
+        print "Runtime ready, generating shares"
+        self.a_shares = []
+        self.b_shares = []
+        for i in range(count):
+            inputter = (i % len(self.rt.players)) + 1
+            if inputter == self.rt.id:
+                a = rand.randint(0, Zp.modulus)
+                b = rand.randint(0, Zp.modulus)
+            else:
+                a, b = None, None
+            self.a_shares.append(self.rt.shamir_share([inputter], Zp, a))
+            self.b_shares.append(self.rt.shamir_share([inputter], Zp, b))
         shares_ready = gather_shares(self.a_shares + self.b_shares)
         shares_ready.addCallback(self.sync_test)
 
