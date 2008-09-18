@@ -40,7 +40,14 @@ order. Player can now also be reliably shutdown.
   to make your VIFF programs output profiling info when stopped.
 
 * Moved ActiveRuntime and related code to its own module, viff.active.
-  This is an incompatible change compared to VIFF 0.6.
+  This is an incompatible change compared to VIFF 0.6 and you must
+  update your code by changing
+
+    from viff.runtime import ActiveRuntime
+
+  to
+
+    from viff.active import ActiveRuntime
 
 * Created mixin classes for different preprocessing choices for
   actively secure multiplication protocol.
