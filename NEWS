@@ -19,7 +19,12 @@ Next version, not yet released
 PyOpenSSL is now used instead of GnuTLS and this enables secure
 connections on Windows. The code dealing with starting a player has
 been made much more robust and players can now be started in any
-order. Player can now also be reliably shutdown.
+order. Player can now also be reliably shutdown. Support for twoparty
+computations based on Paillier encryption.
+
+* Added a runtime based on the homomorphic Paillier encryption scheme
+  which supports twoparty computations. It is found in the new
+  viff.paillier module.
 
 * Issue 6: More robust handling of port allocation. We now keep
   retrying until we succeed in binding to the listening port.
