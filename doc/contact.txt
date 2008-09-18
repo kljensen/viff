@@ -1,6 +1,14 @@
 
-VIFF Mailinglists
-=================
+Contact
+=======
+
+If you need help with VIFF or want to comment on anything, then please
+contact us by the channels listed below. We are very interested in any
+and all feedback, so please don't be shy :-)
+
+
+Mailing lists
+-------------
 
 There are three mailing lists associated with VIFF.
 
@@ -8,14 +16,32 @@ There are three mailing lists associated with VIFF.
   the development of VIFF. Unless you have a patch, you should send
   your question here.
 
+  Any question can be sent there --- VIFF is still a little rough
+  around the edges, so please ask for help if you cannot get VIFF
+  working! The list is archived locally_, at Gmane_ (where you can
+  read/post over `NNTP using a newsreader`__) and at `The Mail
+  Archive`__.
+
 :viff-patches_: This is where you will want to send your patches for
   VIFF. Don't worry about filling the list with huge patch series --
   that is why the list is there!
+
+  You should subscribe to this list if you are interested in
+  discussing the latest code before it ends up in the main repository.
 
 :viff-commits_: This is a read-only list. Whenever something is pushed
   to the VIFF repository, a mail is sent to this list with a short
   description of the change.
 
+  Subscribe here if you want to be at the forefront of the
+  development.
+
+
 .. _viff-devel:   http://lists.viff.dk/listinfo.cgi/viff-devel-viff.dk
 .. _viff-patches: http://lists.viff.dk/listinfo.cgi/viff-patches-viff.dk
 .. _viff-commits: http://lists.viff.dk/listinfo.cgi/viff-commits-viff.dk
+
+.. _locally: http://lists.viff.dk/pipermail/viff-devel-viff.dk/
+.. _Gmane: http://dir.gmane.org/gmane.comp.cryptography.viff.devel
+.. __: nntp://news.gmane.org/gmane.comp.cryptography.viff.devel
+.. __: http://www.mail-archive.com/viff-devel@viff.dk/
