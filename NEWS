@@ -22,6 +22,19 @@ been made much more robust and players can now be started in any
 order. Player can now also be reliably shutdown. New runtime based on
 homomorphic Paillier encryption supports just two players.
 
+* Moved ActiveRuntime and related code to its own module, viff.active.
+  This is an incompatible change compared to VIFF 0.6 and you must
+  update your code by changing
+
+    from viff.runtime import ActiveRuntime
+
+  to
+
+    from viff.active import ActiveRuntime
+
+* Created mixin classes for different preprocessing choices for
+  actively secure multiplication protocol.
+
 * Added a runtime based on the homomorphic Paillier encryption scheme
   which supports twoparty computations. It is found in the new
   viff.paillier module.
@@ -43,19 +56,6 @@ homomorphic Paillier encryption supports just two players.
 
 * Issue 59: Profiling support. Give a --profile command line argument
   to make your VIFF programs output profiling info when stopped.
-
-* Moved ActiveRuntime and related code to its own module, viff.active.
-  This is an incompatible change compared to VIFF 0.6 and you must
-  update your code by changing
-
-    from viff.runtime import ActiveRuntime
-
-  to
-
-    from viff.active import ActiveRuntime
-
-* Created mixin classes for different preprocessing choices for
-  actively secure multiplication protocol.
 
 
 Version 0.6, released on 2008-05-28
