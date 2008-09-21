@@ -15,9 +15,9 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with VIFF. If not, see <http://www.gnu.org/licenses/>.
 
-"""Paillier crypto system.
+"""Paillier crypto system and two-party runtime.
 
-The :class:`PaillierRuntime` is a special twoplayer runtime based on
+The :class:`PaillierRuntime` is a special two-player runtime based on
 the homomorphic Paillier crypto system.
 
 From the paper "Public-Key Cryptosystems Based on Composite Degree
@@ -65,7 +65,7 @@ def decrypt(c, (n, g, lm)):
 
 
 class PaillierRuntime(BasicRuntime):
-    """Twoplayer runtime based on the Paillier crypto system."""
+    """Two-player runtime based on the Paillier crypto system."""
 
     def add_player(self, player, protocol):
         BasicRuntime.add_player(self, player, protocol)
