@@ -41,7 +41,7 @@ class hg_sdist(sdist):
             raise DistutilsModuleError("could not import mercurial")
 
         repo = hg.repository(None)
-        changeset = repo.changectx()
+        changeset = repo.changectx(None)
         files = changeset.manifest().keys()
 
         # Add the files *before* the normal manifest magic is done.
