@@ -59,8 +59,7 @@ class ComparisonToft05Mixin:
         Both arguments must be from the same field. The result is a
         :class:`GF256 <viff.field.GF256>` share.
 
-        .. warning::
-
+        :warning:
            The result type (:class:`viff.field.GF256`) is different
            from the argument types (general field elements).
 
