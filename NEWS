@@ -13,8 +13,8 @@ please refer to it for details on the issues:
   http://tracker.viff.dk/
 
 
-Next version, not yet released
-------------------------------
+Version 0.7, released on 2008-09-21
+-----------------------------------
 
 PyOpenSSL is now used instead of GnuTLS and this enables secure
 connections on Windows. The code dealing with starting a player has
