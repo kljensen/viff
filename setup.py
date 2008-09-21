@@ -87,6 +87,7 @@ that an operation starts as soon as the operands are ready.
       platforms=['any'],
       classifiers=[
         'Development Status :: 3 - Alpha',
+        'Development Status :: 4 - Beta',
         'Environment :: Console',
         'Intended Audience :: Developers',
         'Intended Audience :: Information Technology',
