@@ -20,7 +20,8 @@ PyOpenSSL is now used instead of GnuTLS and this enables secure
 connections on Windows. The code dealing with starting a player has
 been made much more robust and players can now be started in any
 order. Player can now also be reliably shutdown. New runtime based on
-homomorphic Paillier encryption supports just two players.
+homomorphic Paillier encryption supports just two players. Added a new
+protocol for equality testing with secret shared result.
 
 * Moved ActiveRuntime and related code to its own module, viff.active.
   This is an incompatible change compared to VIFF 0.6 and you must
@@ -38,6 +39,9 @@ homomorphic Paillier encryption supports just two players.
 * Added a runtime based on the homomorphic Paillier encryption scheme
   which supports twoparty computations. It is found in the new
   viff.paillier module.
+
+* A new probabilistic protocol for equality testing with secret shared
+  resultwas added in the viff.equality module.
 
 * Issue 6: More robust handling of port allocation. We now keep
   retrying until we succeed in binding to the listening port.
