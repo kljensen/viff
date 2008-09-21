@@ -15,6 +15,15 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with VIFF. If not, see <http://www.gnu.org/licenses/>.
 
+"""Paillier crypto system.
+
+The :class:`PaillierRuntime` is a special twoplayer runtime based on
+the homomorphic Paillier crypto system.
+
+From the paper "Public-Key Cryptosystems Based on Composite Degree
+Residuosity Classes" by Pascal Paillier in EUROCRYPT 1999, 223-238.
+"""
+
 from twisted.internet.defer import Deferred, gatherResults
 import gmpy
 
@@ -56,6 +65,7 @@ def decrypt(c, (n, g, lm)):
 
 
 class PaillierRuntime(BasicRuntime):
+    """Twoplayer runtime based on the Paillier crypto system."""
 
     def add_player(self, player, protocol):
         BasicRuntime.add_player(self, player, protocol)

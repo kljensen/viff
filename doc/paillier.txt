@@ -1,0 +1,12 @@
+
+Paillier Crypto System
+======================
+
+.. automodule:: viff.paillier
+
+   .. autoclass:: PaillierRuntime
+      :members:
+
+   .. autofunction:: encrypt
+
+   .. autofunction:: decrypt

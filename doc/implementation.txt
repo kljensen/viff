@@ -13,6 +13,7 @@ VIFF consists of several modules which will be described next.
    matrix
    runtime
    active
+   paillier
    comparison
    prss
    config
