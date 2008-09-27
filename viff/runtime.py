@@ -1140,6 +1140,7 @@ def create_runtime(id, players, threshold, options=None, runtime_class=Runtime):
             stats.strip_dirs()
             stats.sort_stats("time", "calls")
             stats.print_stats(40)
+            stats.dump_stats("player-%d.pstats" % id)
         reactor.run = new_run
 
     # This will yield a Runtime when all protocols are connected.
