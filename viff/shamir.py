@@ -99,8 +99,8 @@ def recombine(shares, x_recomb=0):
     Recombination is done in the optional point *x_recomb*.
     """
     xs, ys = zip(*shares)
+    key = xs + (x_recomb, )
     try:
-        key = tuple(xs) + (x_recomb, )
         vector = _recombination_vectors[key]
     except KeyError:
         vector = []
