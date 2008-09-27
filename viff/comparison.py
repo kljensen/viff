@@ -79,8 +79,7 @@ class ComparisonToft05Mixin:
         assert self.num_players + 2 < 2**l
 
         bits = [self.prss_share_bit_double(field) for _ in range(m)]
-        int_bits = [a for (a, _) in bits]
-        bit_bits = [b for (_, b) in bits]
+        int_bits, bit_bits = zip(*bits)
 
         def bits_to_int(bits):
             """Converts a list of bits to an integer."""
@@ -93,7 +92,7 @@ class ComparisonToft05Mixin:
         a = share_a - share_b + 2**l
         T = self.open(2**t - int_b + a)
 
-        result = gather_shares([T] + bit_bits)
+        result = gather_shares((T,) + bit_bits)
         self.schedule_callback(result, self._finish_greater_than_equal, l)
         return result
 
