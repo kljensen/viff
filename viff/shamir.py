@@ -98,8 +98,7 @@ def recombine(shares, x_recomb=0):
     Shares is a list of *threshold* + 1 ``(player id, share)`` pairs.
     Recombination is done in the optional point *x_recomb*.
     """
-    xs = [x_i for (x_i, _) in shares]
-    ys = [y_i for (_, y_i) in shares]
+    xs, ys = zip(*shares)
     try:
         key = tuple(xs) + (x_recomb, )
         vector = _recombination_vectors[key]
