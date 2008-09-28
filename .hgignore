@@ -22,6 +22,7 @@ _trial_temp
 # Benchmarking data.
 profile.data
 *.prof
+*.pstats
 
 # LaTeX outputs.
 # *.{aux,dvi,log,nav,out,pdf,ps,snm,toc,vrb}
