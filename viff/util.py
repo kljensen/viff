@@ -297,7 +297,8 @@ def profile(method):
 
     @wrapper(method)
     def profile_wrapper(self, *args, **kwargs):
-        label = "%s-%s" % (method.__name__, self.program_counter)
+        label = "%s %s" % (method.__name__,
+                           ".".join(map(str, self.program_counter)))
         begin(None, label)
         result = method(self, *args, **kwargs)
         if isinstance(result, Deferred):
