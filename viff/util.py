@@ -253,10 +253,29 @@ def find_random_prime(k):
 PHASES = {}
 
 def begin(result, phase):
+    """Begin a phase.
+
+    You can define program phases for the purpose of profiling a
+    program execution. Use :func:`end` with a matching *phase* to
+    record the ending of a phase. The :func:`profile` decorator makes
+    it easy to wrap a :class:`Runtime <viff.runtime.Runtime>` method
+    in matching :func:`begin`/:func:`end` calls.
+
+    The *result* argument is passed through, which makes it possible
+    to add this function as a callback for a :class:`Deferred`.
+    """
     PHASES[phase] = time.time()
     return result
 
 def end(result, phase):
+    """End a phase.
+
+    This is the counter-part for :func:`begin`. It prints the name and
+    the duration of the phase.
+
+    The *result* argument is passed through, which makes it possible
+    to add this function as a callback for a :class:`Deferred`.
+    """
     stop = time.time()
     start = PHASES.pop(phase, stop)
     print "%s from %f to %f (%f sec)" % (phase, start, stop, stop - start)
