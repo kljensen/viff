@@ -25,6 +25,7 @@ ensures that a protocol run can be reproduced at a later time.
 __docformat__ = "restructuredtext"
 
 import os
+import time
 import random
 import warnings
 from twisted.internet.defer import Deferred, succeed, gatherResults
@@ -248,6 +249,35 @@ def find_random_prime(k):
         p = mpz(rand.getrandbits(k))
     return long(p)
 
+
+PHASES = {}
+
+def begin(result, phase):
+    PHASES[phase] = time.time()
+    return result
+
+def end(result, phase):
+    stop = time.time()
+    start = PHASES.pop(phase, stop)
+    print "%s from %f to %f (%f sec)" % (phase, start, stop, stop - start)
+    return result
+
+def profile(method):
+    if not os.environ.get('VIFF_PROFILE'):
+        return method
+
+    @wrapper(method)
+    def profile_wrapper(self, *args, **kwargs):
+        label = "%s-%s" % (method.__name__, self.program_counter)
+        begin(None, label)
+        result = method(self, *args, **kwargs)
+        if isinstance(result, Deferred):
+            result.addCallback(end, label)
+        else:
+            end(None, label)
+        return result
+
+    return profile_wrapper
 
 if __name__ == "__main__":
     import doctest    #pragma NO COVER
