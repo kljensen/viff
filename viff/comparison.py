@@ -24,7 +24,7 @@ __docformat__ = "restructuredtext"
 
 import math
 
-from viff.util import rand
+from viff.util import rand, profile
 from viff.runtime import Runtime, Share, gather_shares, increment_pc
 from viff.active import ActiveRuntime
 from viff.field import GF256, FieldElement
@@ -52,6 +52,7 @@ class ComparisonToft05Mixin:
         tmp.field = dst_field
         return reduce(self.xor, dst_shares, tmp)
 
+    @profile
     @increment_pc
     def greater_than_equal(self, share_a, share_b):
         """Compute ``share_a >= share_b``.
@@ -184,6 +185,7 @@ class ComparisonToft07Mixin:
         full_mask = reduce(self.add, dst_shares)
         return tmp - full_mask
 
+    @profile
     @increment_pc
     def greater_than_equal_preproc(self, field, smallField=None):
         """Preprocessing for :meth:`greater_than_equal`."""
@@ -238,6 +240,7 @@ class ComparisonToft07Mixin:
         # Preprocessing done
         ##################################################
 
+    @profile
     @increment_pc
     def greater_than_equal_online(self, share_a, share_b, preproc, field):
         """Compute ``share_a >= share_b``. Result is secret shared."""
