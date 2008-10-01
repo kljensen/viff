@@ -263,6 +263,16 @@ def end(result, phase):
     return result
 
 def profile(method):
+    """Profiling decorator.
+
+    Add this decorator to a method in order to trace method entry and
+    exit. If the method returns a :class:`Deferred`, the method exit
+    is recorded when the :class:`Deferred` fires.
+
+    In addition to adding this decorator, you must run the programs in
+    an environment with :envvar:`VIFF_PROFILE` defined. Otherwise the
+    decorator is a no-op and has no runtime overhead.
+    """
     if not os.environ.get('VIFF_PROFILE'):
         return method
 
