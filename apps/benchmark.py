@@ -142,35 +142,35 @@ class Benchmark:
         self.rt = rt
         self.operation = operation
 
+        program_desc = {}
+
         if isinstance(self.rt, BasicActiveRuntime):
             # TODO: Make this optional and maybe automatic. The
             # program descriptions below were found by carefully
             # studying the output reported when the benchmarks were
             # run with no preprocessing. So they are quite brittle.
-            print "Starting preprocessing"
             if self.operation == operator.mul:
-                program_desc = {
-                    ("generate_triples", (Zp,)):
-                        [(i, 1, 0) for i in range(3 + 2*count, 3 + 3*count)]
-                    }
+                key = ("generate_triples", (Zp,))
+                desc = [(i, 1, 0) for i in range(3 + 2*count, 3 + 3*count)]
+                program_desc.setdefault(key, []).extend(desc)
             elif isinstance(self.rt, ComparisonToft05Mixin):
-                program_desc = {
-                    ("generate_triples", (GF256,)):
-                    sum([[(c, 64, i, 1, 1, 0) for i in range(2, 33)] +
-                         [(c, 64, i, 3, 1, 0) for i in range(17, 33)]
-                         for c in range(3 + 2*count, 3 + 3*count)],
-                        [])
-                    }
+                key = ("generate_triples", (GF256,))
+                desc = sum([[(c, 64, i, 1, 1, 0) for i in range(2, 33)] +
+                            [(c, 64, i, 3, 1, 0) for i in range(17, 33)]
+                            for c in range(3 + 2*count, 3 + 3*count)],
+                           [])
+                program_desc.setdefault(key, []).extend(desc)
             elif isinstance(self.rt, ComparisonToft07Mixin):
-                program_desc = {
-                    ("generate_triples", (Zp,)):
-                    sum([[(c, 2, 4, i, 2, 1, 0) for i in range(1, 33)] +
-                         [(c, 2, 4, 99, 2, 1, 0)] +
-                         [(c, 2, 4, i, 1, 0) for i in range(65, 98)]
-                         for c in range(3 + 2*count, 3 + 3*count)],
-                        [])
-                    }
+                key = ("generate_triples", (Zp,))
+                desc = sum([[(c, 2, 4, i, 2, 1, 0) for i in range(1, 33)] +
+                            [(c, 2, 4, 99, 2, 1, 0)] +
+                            [(c, 2, 4, i, 1, 0) for i in range(65, 98)]
+                            for c in range(3 + 2*count, 3 + 3*count)],
+                           [])
+                program_desc.setdefault(key, []).extend(desc)
 
+        if program_desc:
+            print "Starting preprocessing"
             record_start("preprocessing")
             preproc = rt.preprocess(program_desc)
             preproc.addCallback(record_stop, "preprocessing")
