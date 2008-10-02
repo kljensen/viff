@@ -57,7 +57,7 @@ import sys
 import time
 from optparse import OptionParser
 import operator
-from pprint import pprint
+from pprint import pformat
 
 from twisted.internet import reactor
 
@@ -219,7 +219,9 @@ class Benchmark:
 
         if self.rt._needed_data:
             print "Missing pre-processed data:"
-            pprint(self.rt._needed_data)
+            for (func, args), pcs in self.rt._needed_data.iteritems():
+                print "* %s%s:" % (func, args)
+                print "  " + pformat(pcs).replace("\n", "\n  ")
 
         self.rt.shutdown()
 
