@@ -27,6 +27,7 @@ from twisted.internet.utils import getProcessOutput
 from twisted.internet.defer import Deferred, gatherResults
 
 from viff.field import GF256
+from viff.util import rand
 
 def execute(executable, *args):
     """Execute *executable* when the reactor is started."""
@@ -53,9 +54,12 @@ class AppsTest(TestCase):
         self.oldcwd = os.getcwd()
         os.chdir(path.join(root_dir, "apps"))
 
+        port1, port2, port3 = rand.sample(xrange(10000, 30000), 3)
         p = execute("generate-config-files.py", "--prefix", "trial",
                     "--players", "3", "--threshold", "1",
-                    "localhost:10000", "localhost:20000", "localhost:30000")
+                    "localhost:%d" % port1,
+                    "localhost:%d" % port2,
+                    "localhost:%d" % port3)
         return p
 
     def tearDown(self):
