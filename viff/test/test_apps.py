@@ -44,8 +44,11 @@ class AppsTest(TestCase):
     def setUp(self):
         """Switch to apps/ directory and generate config files."""
         root_dir = path.abspath(path.join(path.dirname(__file__), "..", ".."))
-        if root_dir not in os.environ["PYTHONPATH"]:
-            os.environ["PYTHONPATH"] += os.pathsep + root_dir
+        if root_dir not in os.environ.get("PYTHONPATH", ""):
+            if "PYTHONPATH" in os.environ:
+                os.environ["PYTHONPATH"] += os.pathsep + root_dir
+            else:
+                os.environ["PYTHONPATH"] = root_dir
 
         self.oldcwd = os.getcwd()
         os.chdir(path.join(root_dir, "apps"))
