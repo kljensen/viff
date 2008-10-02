@@ -113,9 +113,6 @@ class BrachaBroadcastMixin:
         # In the following we prepare to handle a send message from
         # the sender and at most one echo and one ready message from
         # each player.
-        d_send = Deferred().addCallback(send_received)
-        self._expect_data(sender, "send", d_send)
-
         for peer_id in self.players:
             if peer_id != self.id:
                 d_echo = Deferred().addCallback(echo_received, peer_id)
@@ -130,6 +127,10 @@ class BrachaBroadcastMixin:
         if self.id == sender:
             unsafe_broadcast("send", message)
             send_received(message)
+        else:
+            d_send = Deferred().addCallback(send_received)
+            self._expect_data(sender, "send", d_send)
+
 
         return result
 
