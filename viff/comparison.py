@@ -52,6 +52,19 @@ class ComparisonToft05Mixin:
         tmp.field = dst_field
         return reduce(self.xor, dst_shares, tmp)
 
+    def decomposed_random_sharing(self, field, bits):
+        bits = [self.prss_share_bit_double(field) for _ in range(bits)]
+        int_bits, bit_bits = zip(*bits)
+
+        def bits_to_int(bits):
+            """Converts a list of bits to an integer."""
+            return sum([2**i * b for i, b in enumerate(bits)])
+
+        int_b = gather_shares(int_bits)
+        int_b.addCallback(bits_to_int)
+
+        return int_b, bit_bits
+
     @profile
     @increment_pc
     def greater_than_equal(self, share_a, share_b):
@@ -75,25 +88,14 @@ class ComparisonToft05Mixin:
         m = l + self.options.security_parameter
         t = m + 1
 
-        # Preprocessing begin
         assert 2**(l+1) + 2**t < field.modulus, "2^(l+1) + 2^t < p must hold"
         assert self.num_players + 2 < 2**l
 
-        bits = [self.prss_share_bit_double(field) for _ in range(m)]
-        int_bits, bit_bits = zip(*bits)
-
-        def bits_to_int(bits):
-            """Converts a list of bits to an integer."""
-            return sum([2**i * b for i, b in enumerate(bits)])
-
-        int_b = gather_shares(int_bits)
-        int_b.addCallback(bits_to_int)
-        # Preprocessing done
-
         a = share_a - share_b + 2**l
-        T = self.open(2**t - int_b + a)
+        b, bits = self.decomposed_random_sharing(field, m)
+        T = self.open(2**t - b + a)
 
-        result = gather_shares((T,) + bit_bits)
+        result = gather_shares((T,) + bits)
         self.schedule_callback(result, self._finish_greater_than_equal, l)
         return result
 
