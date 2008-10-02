@@ -25,6 +25,7 @@ ensures that a protocol run can be reproduced at a later time.
 __docformat__ = "restructuredtext"
 
 import os
+import time
 import random
 import warnings
 from twisted.internet.defer import Deferred, succeed, gatherResults
@@ -248,6 +249,65 @@ def find_random_prime(k):
         p = mpz(rand.getrandbits(k))
     return long(p)
 
+
+PHASES = {}
+
+def begin(result, phase):
+    """Begin a phase.
+
+    You can define program phases for the purpose of profiling a
+    program execution. Use :func:`end` with a matching *phase* to
+    record the ending of a phase. The :func:`profile` decorator makes
+    it easy to wrap a :class:`Runtime <viff.runtime.Runtime>` method
+    in matching :func:`begin`/:func:`end` calls.
+
+    The *result* argument is passed through, which makes it possible
+    to add this function as a callback for a :class:`Deferred`.
+    """
+    PHASES[phase] = time.time()
+    return result
+
+def end(result, phase):
+    """End a phase.
+
+    This is the counter-part for :func:`begin`. It prints the name and
+    the duration of the phase.
+
+    The *result* argument is passed through, which makes it possible
+    to add this function as a callback for a :class:`Deferred`.
+    """
+    stop = time.time()
+    start = PHASES.pop(phase, stop)
+    print "%s from %f to %f (%f sec)" % (phase, start, stop, stop - start)
+    return result
+
+def profile(method):
+    """Profiling decorator.
+
+    Add this decorator to a method in order to trace method entry and
+    exit. If the method returns a :class:`Deferred`, the method exit
+    is recorded when the :class:`Deferred` fires.
+
+    In addition to adding this decorator, you must run the programs in
+    an environment with :envvar:`VIFF_PROFILE` defined. Otherwise the
+    decorator is a no-op and has no runtime overhead.
+    """
+    if not os.environ.get('VIFF_PROFILE'):
+        return method
+
+    @wrapper(method)
+    def profile_wrapper(self, *args, **kwargs):
+        label = "%s %s" % (method.__name__,
+                           ".".join(map(str, self.program_counter)))
+        begin(None, label)
+        result = method(self, *args, **kwargs)
+        if isinstance(result, Deferred):
+            result.addCallback(end, label)
+        else:
+            end(None, label)
+        return result
+
+    return profile_wrapper
 
 if __name__ == "__main__":
     import doctest    #pragma NO COVER

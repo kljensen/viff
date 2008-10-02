@@ -25,3 +25,8 @@ Utility Functions Module
 
       Setting this environment variable to any value will turn
       :func:`wrapper` into a no-op.
+
+   .. envvar:: VIFF_PROFILE
+
+      Defining this variable will change :func:`profile` from a no-op
+      to real decorator.

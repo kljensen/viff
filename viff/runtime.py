@@ -41,7 +41,7 @@ from collections import deque
 from viff import shamir
 from viff.prss import prss, prss_lsb, prss_zero
 from viff.field import GF256, FieldElement
-from viff.util import wrapper, rand
+from viff.util import wrapper, rand, profile
 
 from twisted.internet import reactor
 from twisted.internet.error import ConnectionDone, CannotListenError
@@ -746,6 +746,7 @@ class Runtime(BasicRuntime):
         if self.id in receivers:
             return result
 
+    @profile
     def add(self, share_a, share_b):
         """Addition of shares.
 
@@ -776,6 +777,7 @@ class Runtime(BasicRuntime):
         result.addCallback(lambda (a, b): a - b)
         return result
 
+    @profile
     @increment_pc
     def mul(self, share_a, share_b):
         """Multiplication of shares.

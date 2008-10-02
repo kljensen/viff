@@ -285,9 +285,10 @@ else:
         mixins.append(ProbabilisticEqualityMixin)
 
 print "Using the base runtime: %s." % base_runtime_class
-print "With the following mixins:"
-for mixin in mixins:
-    print "- %s" % mixin
+if mixins:
+    print "With the following mixins:"
+    for mixin in mixins:
+        print "- %s" % mixin
 
 runtime_class = make_runtime_class(base_runtime_class, mixins)
 
