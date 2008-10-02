@@ -33,7 +33,7 @@ def execute(executable, *args):
     d = Deferred()
     def run():
         p = getProcessOutput(path.abspath(executable),
-                             args=args, env=os.environ)
+                             args=args, env=os.environ, errortoo=True)
         p.chainDeferred(d)
     reactor.callLater(0, run)
     return d
