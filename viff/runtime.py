@@ -813,6 +813,20 @@ class Runtime(BasicRuntime):
         # At this point both share_a and share_b must be Share
         # objects. So we wait on them, multiply and reshare.
 
+        def share(number):
+            """Share a FieldElement using Shamir sharing.
+
+            Returns a list of (id, share) pairs.
+            """
+            shares = shamir.share(number, self.threshold, self.num_players)
+
+            result = []
+            for peer_id, share in shares:
+                d = self._exchange_shares(peer_id.value, share)
+                d.addCallback(lambda share, peer_id: (peer_id, share), peer_id)
+                result.append(d)
+            return result
+
         def recombine(shares):
             # Recombine the first 2t+1 shares.
             result = gather_shares(shares[:2*self.threshold+1])
@@ -821,7 +835,7 @@ class Runtime(BasicRuntime):
 
         result = gather_shares([share_a, share_b])
         result.addCallback(lambda (a, b): a * b)
-        self.schedule_callback(result, self._shamir_share)
+        self.schedule_callback(result, share)
         self.schedule_callback(result, recombine)
         return result
 
@@ -1024,22 +1038,6 @@ class Runtime(BasicRuntime):
 
         # Use r_lsb to flip b as needed.
         return (b_p, b ^ r_lsb)
-
-    @increment_pc
-    def _shamir_share(self, number):
-        """Share a FieldElement using Shamir sharing.
-
-        Returns a list of (id, share) pairs.
-        """
-        shares = shamir.share(number, self.threshold, self.num_players)
-
-        result = []
-        for peer_id, share in shares:
-            d = self._exchange_shares(peer_id.value, share)
-            d.addCallback(lambda share, peer_id: (peer_id, share), peer_id)
-            result.append(d)
-
-        return result
 
     @increment_pc
     def shamir_share(self, inputters, field, number=None, threshold=None):
