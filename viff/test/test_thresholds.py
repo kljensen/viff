@@ -19,8 +19,6 @@
 
 import operator
 
-from twisted.internet.defer import gatherResults
-
 from viff.runtime import Share
 from viff.comparison import Toft07Runtime
 from viff.test.util import RuntimeTestCase, protocol
