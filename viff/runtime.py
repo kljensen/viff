@@ -799,11 +799,17 @@ class Runtime(BasicRuntime):
 
         # At this point both share_a and share_b must be Share
         # objects. So we wait on them, multiply and reshare.
+
+        def recombine(shares):
+            # Recombine the first 2t+1 shares.
+            result = gather_shares(shares[:2*self.threshold+1])
+            result.addCallback(shamir.recombine)
+            return result
+
         result = gather_shares([share_a, share_b])
         result.addCallback(lambda (a, b): a * b)
         self.schedule_callback(result, self._shamir_share)
-        self.schedule_callback(result, self._recombine,
-                               threshold=2*self.threshold)
+        self.schedule_callback(result, recombine)
         return result
 
     @increment_pc
