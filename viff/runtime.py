@@ -723,6 +723,19 @@ class Runtime(BasicRuntime):
         if threshold is None:
             threshold = self.threshold
 
+        def filter_good_shares(results):
+            # Filter results, which is a list of (success, share)
+            # pairs.
+            return [result[1] for result in results
+                    if result is not None and result[0]][:threshold+1]
+
+        def recombine(shares):
+            assert len(shares) > threshold
+            result = ShareList(shares, threshold+1)
+            result.addCallback(filter_good_shares)
+            result.addCallback(shamir.recombine)
+            return result
+
         def exchange(share):
             # Send share to all receivers.
             for peer_id in receivers:
@@ -739,7 +752,7 @@ class Runtime(BasicRuntime):
                         d = self._expect_share(peer_id, share.field)
                         self.schedule_callback(d, lambda s, peer_id: (s.field(peer_id), s), peer_id)
                     deferreds.append(d)
-                return self._recombine(deferreds, threshold)
+                return recombine(deferreds)
 
         result = share.clone()
         self.schedule_callback(result, exchange)
@@ -1063,21 +1076,6 @@ class Runtime(BasicRuntime):
         else:
             return results
 
-    @increment_pc
-    def _recombine(self, shares, threshold):
-        """Shamir recombine a list of deferred (id,share) pairs."""
-        assert len(shares) > threshold
-
-        def filter_good_shares(results):
-            # Filter results, which is a list of (success, share)
-            # pairs.
-            return [result[1] for result in results
-                    if result is not None and result[0]][:threshold+1]
-
-        result = ShareList(shares, threshold+1)
-        result.addCallback(filter_good_shares)
-        result.addCallback(shamir.recombine)
-        return result
 
 def make_runtime_class(runtime_class=Runtime, mixins=None):
     """Creates a new runtime class with *runtime_class* as a base
