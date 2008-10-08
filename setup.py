@@ -83,7 +83,7 @@ that an operation starts as soon as the operands are ready.
         'Shamir', 'pseudo-random secret sharing', 'PRSS', 'Bracha broadcast'
         ],
       license=viff.__license__,
-      packages=['viff', 'viff.test'],
+      packages=['viff', 'viff.test', 'viff.libs'],
       platforms=['any'],
       classifiers=[
         'Development Status :: 3 - Alpha',
