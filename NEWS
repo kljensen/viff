@@ -17,7 +17,7 @@ Version 0.7.1, not yet released
 -------------------------------
 
 A major bug was fixed in the passive multiplication protocol in the
-case where 2t + 1 != n.
+case where 2t + 1 != n. Unit tests were updated for Python 2.6.
 
 * Players would do inconsistent recombination of shares in the passive
   multiplication protocol (Runtime.mul). This resulted in wrong
