@@ -16,6 +16,13 @@ please refer to it for details on the issues:
 Version 0.7.1, not yet released
 -------------------------------
 
+A major bug was fixed in the passive multiplication protocol in the
+case where 2t + 1 != n.
+
+* Players would do inconsistent recombination of shares in the passive
+  multiplication protocol (Runtime.mul). This resulted in wrong
+  answers being computed when 2t + 1 != n.
+
 * Fixed unit tests on Python 2.6. The Bracha broadcast let the players
   send data to themselves by mistake, and for some reason this was not
   detected in earlier Python versions.
