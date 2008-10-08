@@ -110,11 +110,7 @@ Using a Package Manager
 Debian Lenny (testing)
   You can install all dependencies by the command::
 
-     aptitude install python-twisted-core python-pyopenssl \
-                      python-gmpy
-
-  The backslash indicates that both lines should be typed as a single
-  line in the terminal.
+     aptitude install python-twisted-core python-pyopenssl python-gmpy
 
 Ubuntu
   We expect that the instructions for Debian also apply here.
