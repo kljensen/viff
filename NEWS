@@ -27,6 +27,12 @@ case where 2t + 1 != n. Unit tests were updated for Python 2.6.
   send data to themselves by mistake, and for some reason this was not
   detected in earlier Python versions.
 
+* Profiling information (from a run with --profile) is dumped in
+  player-X.pstats and player-X.prof files for later analysis.
+
+* Issue 57: Get rid of Runtime._shamir_share. The method was folded
+  into Runtime.mul.
+
 * Issue 69: The installation was simplified by including the ConfigObj
   library in the VIFF source. A system-wide installation of ConfigObj
   (if any) will be ignored.
