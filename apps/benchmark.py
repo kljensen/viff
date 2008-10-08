@@ -106,6 +106,8 @@ parser.add_option("--prss", action="store_true",
                   help="use PRSS for preprocessing")
 parser.add_option("--hyper", action="store_false", dest="prss",
                   help="use hyperinvertible matrices for preprocessing")
+parser.add_option("-t", "--threshold", type="int",
+                  help="corruption threshold")
 parser.add_option("-c", "--count", type="int",
                   help="number of operations")
 parser.add_option("-o", "--operation", type="choice", choices=operations,
@@ -115,7 +117,7 @@ parser.add_option("-p", "--parallel", action="store_true",
 parser.add_option("-s", "--sequential", action="store_false", dest="parallel",
                   help="execute operations in sequence")
 
-parser.set_defaults(modulus=2**65, count=10,
+parser.set_defaults(modulus=2**65, threshold=1, count=10,
                     active=False, twoplayer=False, prss=True,
                     operation=operations[0], parallel=True)
 
@@ -128,6 +130,9 @@ if len(args) == 0:
     parser.error("you must specify a config file")
 
 id, players = load_config(args[0])
+
+if not 1 <= options.threshold <= len(players):
+    parser.error("threshold out of range")
 
 Zp = GF(find_prime(options.modulus))
 count = options.count
@@ -296,7 +301,7 @@ if options.parallel:
 else:
     benchmark = SequentialBenchmark
 
-pre_runtime = create_runtime(id, players, max((len(players) -1)//3, 1),
+pre_runtime = create_runtime(id, players, options.threshold,
                              options, runtime_class)
 pre_runtime.addCallback(benchmark, operation)
 
