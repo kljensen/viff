@@ -15,4 +15,15 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with VIFF. If not, see <http://www.gnu.org/licenses/>.
 
-"""Small third-party libraries included with VIFF."""
+"""Small third-party libraries included with VIFF.
+
+To ease the installation we have decided to ship small libraries
+together with VIFF:
+
+* ConfigObj 4.5.3, distributed under the BSD License with the
+  following copyright notice:
+
+    Copyright (C) 2005-2008 Michael Foord, Nicola Larosa
+
+  See: http://voidspace.org.uk/python/configobj.html.
+"""
