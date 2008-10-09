@@ -13,8 +13,8 @@ please refer to it for details on the issues:
   http://tracker.viff.dk/
 
 
-Version 0.7.1, not yet released
--------------------------------
+Version 0.7.1, released on 2008-10-09
+-------------------------------------
 
 A major bug was fixed in the passive multiplication protocol in the
 case where 2t + 1 != n. Unit tests were updated for Python 2.6.
