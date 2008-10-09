@@ -209,10 +209,17 @@ def size():
 @command('pyflakes')
 def pyflakes():
     """Find static errors using Pyflakes."""
+    pyfiles = []
+    for root, dirs, files in os.walk('.'):
+        pyfiles.extend([join(root, name) for name in files if name.endswith('.py')])
+        if 'libs' in dirs:
+            # Do not recurse into the 'viff/libs' directory.
+            dirs.remove('libs')
+
     if sys.platform == "win32":
-        execute(['pyflakes.bat', '.'])
+        execute(['pyflakes.bat'] + pyfiles)
     else:
-        execute(['pyflakes', '.'])
+        execute(['pyflakes'] + pyfiles)
 
 
 @command('trial', 'python')
