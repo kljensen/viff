@@ -93,7 +93,7 @@ def record_stop(_, what):
 
 operations = ["mul", "compToft05", "compToft07", "eq"]
 
-parser = OptionParser()
+parser = OptionParser(usage="Usage: %prog [options] config_file")
 parser.add_option("-m", "--modulus",
                   help="lower limit for modulus (can be an expression)")
 parser.add_option("-a", "--active", action="store_true",
