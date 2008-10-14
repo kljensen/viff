@@ -195,6 +195,31 @@ def clone_deferred(original):
     return clone
 
 
+class deep_wait(Deferred):
+
+    def __init__(self, result):
+        Deferred.__init__(self)
+        self._wait(result)
+
+    def _wait(self, value):
+        deferreds = []
+
+        def collect(value):
+            if isinstance(value, Deferred):
+                deferreds.append(value)
+            if isinstance(value, (tuple, list)):
+                map(collect, value)
+
+        collect(value)
+
+        if deferreds:
+            # There are one or more Deferreds to wait on.
+            gatherResults(deferreds).addCallback(self._wait)
+        else:
+            # Found no Deferreds -- there is nothing to wait on and so
+            # we are done!
+            self.callback(None)
+
 def find_prime(lower_bound, blum=False):
     """Find a prime above a lower bound.
 
