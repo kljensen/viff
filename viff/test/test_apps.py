@@ -27,13 +27,14 @@ from twisted.internet.utils import getProcessOutput
 from twisted.internet.defer import Deferred, gatherResults
 
 from viff.field import GF256
+from viff.util import rand
 
 def execute(executable, *args):
     """Execute *executable* when the reactor is started."""
     d = Deferred()
     def run():
         p = getProcessOutput(path.abspath(executable),
-                             args=args, env=os.environ)
+                             args=args, env=os.environ, errortoo=True)
         p.chainDeferred(d)
     reactor.callLater(0, run)
     return d
@@ -44,15 +45,21 @@ class AppsTest(TestCase):
     def setUp(self):
         """Switch to apps/ directory and generate config files."""
         root_dir = path.abspath(path.join(path.dirname(__file__), "..", ".."))
-        if root_dir not in os.environ["PYTHONPATH"]:
-            os.environ["PYTHONPATH"] += os.pathsep + root_dir
+        if root_dir not in os.environ.get("PYTHONPATH", ""):
+            if "PYTHONPATH" in os.environ:
+                os.environ["PYTHONPATH"] += os.pathsep + root_dir
+            else:
+                os.environ["PYTHONPATH"] = root_dir
 
         self.oldcwd = os.getcwd()
         os.chdir(path.join(root_dir, "apps"))
 
+        port1, port2, port3 = rand.sample(xrange(10000, 30000), 3)
         p = execute("generate-config-files.py", "--prefix", "trial",
                     "--players", "3", "--threshold", "1",
-                    "localhost:10000", "localhost:20000", "localhost:30000")
+                    "localhost:%d" % port1,
+                    "localhost:%d" % port2,
+                    "localhost:%d" % port3)
         return p
 
     def tearDown(self):

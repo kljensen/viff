@@ -31,8 +31,7 @@ function to generate a player config and save it in a number of
 
 __docformat__ = "restructuredtext"
 
-from configobj import ConfigObj
-
+from viff.libs.configobj import ConfigObj
 from viff.prss import generate_subsets, PRF
 from viff.util import rand
 from viff import paillier

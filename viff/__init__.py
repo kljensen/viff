@@ -124,7 +124,7 @@ applications distributed in the C{apps} directory.
 @see: U{http://viff.dk/}
 """
 
-__version__ = '0.7'
+__version__ = '0.7.1'
 __license__ = 'GNU LGPL'
 
 def release():
