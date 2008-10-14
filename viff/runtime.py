@@ -1165,14 +1165,19 @@ def create_runtime(id, players, threshold, options=None, runtime_class=Runtime):
                 self.id = id
                 ctx = SSL.Context(SSL.SSLv3_METHOD)
                 # TODO: Make the file names configurable.
-                ctx.use_certificate_file('player-%d.cert' % id)
-                ctx.use_privatekey_file('player-%d.key' % id)
-                ctx.check_privatekey()
-
-                ctx.load_verify_locations('ca.cert')
-                ctx.set_verify(SSL.VERIFY_PEER | SSL.VERIFY_FAIL_IF_NO_PEER_CERT,
-                               lambda conn, cert, errnum, depth, ok: ok)
-                self.ctx = ctx
+                try:
+                    ctx.use_certificate_file('player-%d.cert' % id)
+                    ctx.use_privatekey_file('player-%d.key' % id)
+                    ctx.check_privatekey()
+                    ctx.load_verify_locations('ca.cert')
+                    ctx.set_verify(SSL.VERIFY_PEER | SSL.VERIFY_FAIL_IF_NO_PEER_CERT,
+                                   lambda conn, cert, errnum, depth, ok: ok)
+                    self.ctx = ctx
+                except SSL.Error, e:
+                    print "SSL errors - did you forget to generate certificates?"
+                    for (lib, func, reason) in e.args[0]:
+                        print "* %s in %s: %s" % (func, lib, reason)
+                    raise SystemExit("Stopping program")
 
             def getContext(self):
                 return self.ctx
