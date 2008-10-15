@@ -20,7 +20,7 @@
 from viff.util import deep_wait
 
 from twisted.trial.unittest import TestCase
-from twisted.internet.defer import Deferred, gatherResults, succeed
+from twisted.internet.defer import Deferred
 
 #: Declare doctests for Trial.
 __doctests__ = ['viff.util']
