@@ -5,7 +5,7 @@ Utility Functions Module
 .. automodule:: viff.util
    :members:
 
-   .. envvar:: SEED
+   .. envvar:: VIFF_SEED
 
       The :data:`rand` random generator is seeded using this
       environment variable, if it is defined.
@@ -16,10 +16,10 @@ Utility Functions Module
       randomness needed.
 
       The generator is by default initialized with a random seed,
-      unless the environment variable :envvar:`SEED` is set to a
+      unless the environment variable :envvar:`VIFF_SEED` is set to a
       value, in which case that value is used instead. If
-      :envvar:`SEED` is defined, but empty, then no seed is used and a
-      protocol run cannot be reproduced exactly.
+      :envvar:`VIFF_SEED` is defined, but empty, then no seed is used
+      and a protocol run cannot be reproduced exactly.
 
    .. envvar:: VIFF_NO_WRAP
 
