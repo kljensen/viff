@@ -12,6 +12,11 @@ please refer to it for details on the issues:
 
   http://tracker.viff.dk/
 
+Next version, not yet released
+------------------------------
+
+* Renamed random seed environment variable from SEED to VIFF_SEED.
+
 
 Version 0.7.1, released on 2008-10-09
 -------------------------------------

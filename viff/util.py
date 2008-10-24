@@ -32,7 +32,7 @@ from twisted.internet.defer import Deferred, succeed, gatherResults
 from gmpy import mpz
 
 #: Seed for :data:`rand`.
-_seed = os.environ.get('SEED')
+_seed = os.environ.get('VIFF_SEED')
 
 if _seed is None:
     # If the environment variable is not set, then a random seed is
@@ -42,14 +42,14 @@ if _seed is None:
     #: Random number generator used by all VIFF code.
     #:
     #: The generator is by default initialized with a random seed,
-    #: unless the environment variable :envvar:`SEED` is set to a value, in
-    #: which case that value is used instead. If :envvar:`SEED` is defined,
-    #: but empty, then no seed is used and a protocol cannot be
-    #: reproduced exactly.
+    #: unless the environment variable :envvar:`VIFF_SEED` is set to a
+    #: value, in which case that value is used instead. If
+    #: :envvar:`VIFF_SEED` is defined, but empty, then no seed is used
+    #: and a protocol cannot be reproduced exactly.
     rand = random.Random(_seed)
 elif _seed == '':
-    # If it is set, but set to the empty string (SEED=), then no seed
-    # is used.
+    # If it is set, but set to the empty string (VIFF_SEED=), then no
+    # seed is used.
     rand = random.SystemRandom()
 else:
     # Otherwise use the seed given, which must be an integer.
