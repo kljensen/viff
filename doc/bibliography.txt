@@ -14,6 +14,10 @@ The algorithms used by VIFF are published in various academic papers.
 Here we will try to point out which parts of the code uses which
 papers.
 
+* The primary reference is [DGKN]_. This paper describes the
+  asynchronous protocol secure against active adversaries implemented
+  in VIFF.
+
 * The ``viff.shamir`` module is obviously based on [Shamir79]_.
 
 *  ``apps/millionaires.py``: Inspired by [Yao82]_.
@@ -53,6 +57,12 @@ papers.
    Archive: `Report 2008/221`__.
 
    .. __: http://eprint.iacr.org/2008/221
+
+.. [DGKN] Ivan Damgård, Martin Geisler, Mikkel Krøigaard, Jesper Buus
+   Nielsen, *Asynchronous Multiparty Computation: Theory and
+   Implementation*, Cryptology ePrint Archive: `Report 2008/415`__.
+
+   .. __: http://eprint.iacr.org/2008/415
 
 .. [Nishide07] Takashi Nishide and Kazuo Ohta, *Constant-Round
    Multiparty Computation for Interval Test, Equality Test, and
