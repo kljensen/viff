@@ -26,7 +26,8 @@ from twisted.internet.defer import gatherResults, Deferred, succeed
 from viff import shamir
 from viff.util import rand
 from viff.matrix import Matrix, hyper
-from viff.runtime import Runtime, Share, increment_pc, preprocess, gather_shares
+from viff.passive import PassiveRuntime
+from viff.runtime import Share, increment_pc, preprocess, gather_shares
 
 
 class BrachaBroadcastMixin:
@@ -443,7 +444,7 @@ class TriplesPRSSMixin:
         return 1, succeed([(a_t, b_t, c_t)])
 
 
-class BasicActiveRuntime(Runtime):
+class BasicActiveRuntime(PassiveRuntime):
     """Basic runtime secure against active adversaries.
 
     This class depends on either

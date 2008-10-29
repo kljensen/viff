@@ -35,7 +35,7 @@ from optparse import OptionParser
 from twisted.internet import reactor
 
 from viff.field import GF
-from viff.runtime import Runtime, create_runtime, gather_shares
+from viff.runtime import create_runtime, gather_shares
 from viff.comparison import Toft05Runtime
 from viff.config import load_config
 from viff.util import rand, find_prime
@@ -138,7 +138,7 @@ class Protocol:
 
 # Parse command line arguments.
 parser = OptionParser()
-Runtime.add_options(parser)
+Toft05Runtime.add_options(parser)
 options, args = parser.parse_args()
 
 if len(args) == 0:

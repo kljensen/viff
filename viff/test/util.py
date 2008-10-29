@@ -20,7 +20,8 @@
 from twisted.internet.defer import Deferred, gatherResults, maybeDeferred
 from twisted.trial.unittest import TestCase
 
-from viff.runtime import Runtime, Share, ShareExchanger, ShareExchangerFactory
+from viff.passive import PassiveRuntime
+from viff.runtime import Share, ShareExchanger, ShareExchangerFactory
 from viff.field import GF
 from viff.config import generate_configs, load_config
 from viff.util import rand
@@ -91,7 +92,7 @@ class RuntimeTestCase(TestCase):
     #: Shamir sharing threshold.
     threshold = 1
     #: Default Runtime class to instantiate.
-    runtime_class = Runtime
+    runtime_class = PassiveRuntime
 
     #: A dictionary mapping player ids to pseudorandom generators.
     #:

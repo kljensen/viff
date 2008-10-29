@@ -25,7 +25,8 @@ __docformat__ = "restructuredtext"
 import math
 
 from viff.util import rand, profile
-from viff.runtime import Runtime, Share, gather_shares, increment_pc
+from viff.runtime import Share, gather_shares, increment_pc
+from viff.passive import PassiveRuntime
 from viff.active import ActiveRuntime
 from viff.field import GF256, FieldElement
 
@@ -141,7 +142,7 @@ class ComparisonToft05Mixin:
         return (top, bot)
 
 
-class Toft05Runtime(ComparisonToft05Mixin, Runtime):
+class Toft05Runtime(ComparisonToft05Mixin, PassiveRuntime):
     """Default mix of :class:`ComparisonToft05Mixin` and
     :class:`Runtime <viff.runtime.Runtime>`."""
     pass
@@ -338,7 +339,7 @@ class ComparisonToft07Mixin:
                                               field)
 
 
-class Toft07Runtime(ComparisonToft07Mixin, Runtime):
+class Toft07Runtime(ComparisonToft07Mixin, PassiveRuntime):
     """Default mix of :class:`ComparisonToft07Mixin` and
     :class:`Runtime <viff.runtime.Runtime>`.
     """

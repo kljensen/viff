@@ -62,8 +62,9 @@ from pprint import pformat
 from twisted.internet import reactor
 
 from viff.field import GF, GF256
-from viff.runtime import Runtime, create_runtime, gather_shares, \
+from viff.runtime import BasicRuntime, create_runtime, gather_shares, \
     make_runtime_class
+from viff.passive import PassiveRuntime
 from viff.active import BasicActiveRuntime, \
     TriplesHyperinvertibleMatricesMixin, TriplesPRSSMixin
 from viff.comparison import ComparisonToft05Mixin, ComparisonToft07Mixin
@@ -122,7 +123,7 @@ parser.set_defaults(modulus=2**65, threshold=1, count=10,
                     operation=operations[0], parallel=True)
 
 # Add standard VIFF options.
-Runtime.add_options(parser)
+BasicRuntime.add_options(parser)
 
 (options, args) = parser.parse_args()
 
@@ -277,7 +278,7 @@ else:
         else:
             mixins.append(TriplesHyperinvertibleMatricesMixin)
     else:
-        base_runtime_class = Runtime
+        base_runtime_class = PassiveRuntime
 
     if options.operation == "mul":
         operation = operator.mul
