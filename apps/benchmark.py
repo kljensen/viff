@@ -55,6 +55,7 @@
 
 import sys
 import time
+from math import log
 from optparse import OptionParser
 import operator
 from pprint import pformat
@@ -139,8 +140,10 @@ if not 1 <= options.threshold <= len(players):
 
 if options.fake:
     Zp = FakeFieldElement
+    print "Using fake field elements"
 else:
     Zp = GF(find_prime(options.modulus))
+    print "Using real field elements (%d bit modulus)" % log(Zp.modulus, 2)
 count = options.count
 print "I am player %d, will %s %d numbers" % (id, options.operation, count)
 
