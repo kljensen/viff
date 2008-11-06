@@ -38,10 +38,8 @@ import marshal
 from optparse import OptionParser, OptionGroup
 from collections import deque
 
-from viff import shamir
-from viff.prss import prss, prss_lsb, prss_zero
 from viff.field import GF256, FieldElement
-from viff.util import wrapper, rand, profile, deep_wait
+from viff.util import wrapper, rand, deep_wait
 
 from twisted.internet import reactor
 from twisted.internet.error import ConnectionDone, CannotListenError
