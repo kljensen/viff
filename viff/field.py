@@ -515,21 +515,47 @@ def GF(modulus):
     return GFElement
 
 class FakeFieldElement(FieldElement):
+    """Fake field which does no computations.
+
+    This class should only be used in benchmarking. It works like any
+    other :class:`FieldElement` except that all computations will give
+    ``1`` as the result:
+
+    >>> a = FakeFieldElement(123)
+    >>> b = FakeFieldElement(234)
+    >>> a + b
+    {{1}}
+    >>> a * b
+    {{1}}
+    >>> a.bit(100)
+    1
+    >>> a.sqrt()
+    {{1}}
+    """
+
     def __init__(self, value):
-        # We store the value passed in order to make the objects take
-        # up some meomry space.
+        """Create a fake field element.
+
+        The element will store *value* in order to take up a realistic
+        amount of RAM, but any further computation will yield the
+        value ``1``.
+        """
         self.value = value
 
+    # Binary operations.
     __add__ = __radd__ = __sub__ = __rsub__ \
         = __mul__ = __rmul__ = __div__ = __rdiv__ \
         = __truediv__ = __rtruediv__ = __floordiv__ = __rfloordiv__ \
         = __pow__ = __neg__ \
         = lambda self, other: FakeFieldElement(1)
 
+    # Unary operations.
     __invert__ = sqrt = lambda self: FakeFieldElement(1)
 
+    # Bit extraction. We pretend that the number is *very* big.
     bit = lambda self, index: 1
 
+    # Fake field elements are printed with double curly brackets.
     __repr__ = __str__ = lambda self: "{{%d}}" % self.value
 
 FakeFieldElement.field = FakeFieldElement

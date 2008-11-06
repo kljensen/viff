@@ -21,3 +21,5 @@ Finite Fields Module
          addition.
 
    .. autofunction:: GF
+
+   .. autoclass:: FakeFieldElement
