@@ -514,6 +514,30 @@ def GF(modulus):
     _field_cache[modulus] = GFElement
     return GFElement
 
+class FakeFieldElement(FieldElement):
+    def __init__(self, value):
+        # We store the value passed in order to make the objects take
+        # up some meomry space.
+        self.value = value
+
+    __add__ = __radd__ = __sub__ = __rsub__ \
+        = __mul__ = __rmul__ = __div__ = __rdiv__ \
+        = __truediv__ = __rtruediv__ = __floordiv__ = __rfloordiv__ \
+        = __pow__ = __neg__ \
+        = lambda self, other: FakeFieldElement(1)
+
+    __invert__ = sqrt = lambda self: FakeFieldElement(1)
+
+    bit = lambda self, index: 1
+
+    __repr__ = __str__ = lambda self: "{{%d}}" % self.value
+
+FakeFieldElement.field = FakeFieldElement
+# Fix the modulus to a fairly large number -- this is used in various
+# places when protocols want to generate a random element from the
+# interval {0, 1, ..., modulus-1}.
+FakeFieldElement.modulus = 987654321
+
 
 if __name__ == "__main__":
     import doctest    #pragma NO COVER
