@@ -15,6 +15,12 @@ please refer to it for details on the issues:
 Next version, not yet released
 ------------------------------
 
+The central class named Runtime was renamed to PassiveRuntime.
+
+* Renamed viff.runtime.Runtime to viff.passive.PassiveRuntime. This is
+  a backwards incompatible change. Please update your import
+  statements accordingly.
+
 * Renamed random seed environment variable from SEED to VIFF_SEED.
 
 
