@@ -23,6 +23,10 @@ The central class named Runtime was renamed to PassiveRuntime.
 
 * Renamed random seed environment variable from SEED to VIFF_SEED.
 
+* Added a FakeFieldElement class which has the interface of a
+  FieldElement but does not computation. A new --fake flag for
+  benchmark.py enables these elements.
+
 
 Version 0.7.1, released on 2008-10-09
 -------------------------------------
