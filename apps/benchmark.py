@@ -61,7 +61,7 @@ from pprint import pformat
 
 from twisted.internet import reactor
 
-from viff.field import GF, GF256
+from viff.field import GF, GF256, FakeFieldElement
 from viff.runtime import BasicRuntime, create_runtime, gather_shares, \
     make_runtime_class
 from viff.passive import PassiveRuntime
@@ -117,10 +117,12 @@ parser.add_option("-p", "--parallel", action="store_true",
                   help="execute operations in parallel")
 parser.add_option("-s", "--sequential", action="store_false", dest="parallel",
                   help="execute operations in sequence")
+parser.add_option("-f", "--fake", action="store_true",
+                  help="skip local computations using fake field elements")
 
 parser.set_defaults(modulus=2**65, threshold=1, count=10,
                     active=False, twoplayer=False, prss=True,
-                    operation=operations[0], parallel=True)
+                    operation=operations[0], parallel=True, fake=False)
 
 # Add standard VIFF options.
 BasicRuntime.add_options(parser)
@@ -135,7 +137,10 @@ id, players = load_config(args[0])
 if not 1 <= options.threshold <= len(players):
     parser.error("threshold out of range")
 
-Zp = GF(find_prime(options.modulus))
+if options.fake:
+    Zp = FakeFieldElement
+else:
+    Zp = GF(find_prime(options.modulus))
 count = options.count
 print "I am player %d, will %s %d numbers" % (id, options.operation, count)
 
