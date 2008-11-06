@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+#
 # Copyright 2008 VIFF Development Team.
 #
 # This file is part of VIFF, the Virtual Ideal Functionality Framework.
@@ -206,7 +208,7 @@ class PassiveRuntime(BasicRuntime):
         The protocol uses the pseudo-random secret sharing technique
         described in the paper "Share Conversion, Pseudorandom
         Secret-Sharing and Applications to Secure Computation" by
-        Ronald Cramer, Ivan Damgård, and Yuval Ishai in Proc. of TCC
+        Ronald Cramer, Ivan DamgÃ¥rd, and Yuval Ishai in Proc. of TCC
         2005, LNCS 3378. `Download
         <http://www.cs.technion.ac.il/~yuvali/pubs/CDI05.ps>`__
 
@@ -332,7 +334,7 @@ class PassiveRuntime(BasicRuntime):
         """Share a random bit over *field* and GF256.
 
         The protocol is described in "Efficient Conversion of
-        Secret-shared Values Between Different Fields" by Ivan Damgård
+        Secret-shared Values Between Different Fields" by Ivan DamgÃ¥rd
         and Rune Thorbek available as `Cryptology ePrint Archive,
         Report 2008/221 <http://eprint.iacr.org/2008/221>`__.
         """
