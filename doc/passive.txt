@@ -1,0 +1,8 @@
+
+Passive Secure Protocols
+========================
+
+.. automodule:: viff.passive
+
+   .. autoclass:: PassiveRuntime
+      :members:

@@ -84,6 +84,3 @@ Runtime Module
          callbacks with the correct program counter.
 
          See :ref:`program-counters` for more background information.
-
-   .. autoclass:: Runtime
-      :members:
