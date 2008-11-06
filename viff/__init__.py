@@ -77,18 +77,20 @@ yet been done.
 Architecture
 ============
 
-VIFF consists of several modules. The L{runtime} module contains the
-L{Runtime} and L{Share} classes, in which the main functionality is
-implemented. The L{field} module contains implementations of finite
-fields --- these are the values inside the shares. Other modules
-provide support functions.
+VIFF consists of several modules. The L{passive} and L{active} modules
+contain the L{PassiveRuntime} and L{ActiveRuntime} classes in which
+the main functionality is implemented. The L{runtime} module contain
+the L{Share} class and other infrastructure for the two runtime
+classes. The L{field} module contains implementations of finite fields
+--- these are the values inside the shares. Other modules provide
+support functions.
 
 Layers
 ------
 
-The main functionality in VIFF is implemented in the L{Runtime} class.
-This class offers methods to do addition, multiplication, etc. These
-methods operate on L{Share} instances.
+The main functionality in VIFF is implemented in the L{PassiveRuntime}
+class. This class offers methods to do addition, multiplication, etc.
+These methods operate on L{Share} instances.
 
 Shares hold either L{field.GF} or L{GF256} elements and are created
 from the C{shamir_share} or C{prss_share} Runtime methods. Shares
@@ -116,9 +118,10 @@ So in a nutshell, VIFF has these layers:
 Getting into VIFF
 =================
 
-As explained above, the main functionality in VIFF is the L{Runtime}
-class, so please start there. Also, be sure to checkout the example
-applications distributed in the C{apps} directory.
+As explained above, the main functionality in VIFF is the
+L{PassiveRuntime} class, so please start there. Also, be sure to
+checkout the example applications distributed in the C{apps}
+directory.
 
 @authors: U{VIFF Development Team <mailto:viff-devel@viff.dk>}
 @see: U{http://viff.dk/}
