@@ -104,11 +104,12 @@ def main():
     def run(runtime):
         print "Connected."
 
-        print "My number: %d." % options.number
         # Players 1 and 2 are doing a sharing over the field Zp.
         # Our input is options.number (none for other players).
         if runtime.id == 3:
-            options.number = None
+            print "I have no number"
+        else:
+            print "My number: %d." % options.number
         (x, y) = runtime.shamir_share([1, 2], Zp, options.number)
 
         # Do the secret computation.
