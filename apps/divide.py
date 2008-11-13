@@ -35,7 +35,7 @@ from optparse import OptionParser
 from twisted.internet import reactor
 
 from viff.field import GF
-from viff.runtime import Runtime, create_runtime
+from viff.runtime import BasicRuntime, create_runtime
 from viff.runtime import make_runtime_class
 from viff.comparison import ComparisonToft07Mixin
 from viff.config import load_config
@@ -83,7 +83,7 @@ def main():
 
     parser.set_defaults(modulus=2**65, number=None)
 
-    Runtime.add_options(parser)
+    BasicRuntime.add_options(parser)
 
     options, args = parser.parse_args()
     if len(args)==2:
