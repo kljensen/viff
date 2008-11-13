@@ -80,15 +80,15 @@ def main():
     parser.add_option("--modulus",
                      help="lower limit for modulus (can be an expression)")
 
-    parser.set_defaults(modulus=2**65, number=None)
+    parser.set_defaults(modulus=2**65)
 
     BasicRuntime.add_options(parser)
 
     options, args = parser.parse_args()
     if len(args)==2:
-        options.number = int(args[1])
+        number = int(args[1])
     else:
-        options.number = None
+        number = None
 
     if len(args) == 0:
         parser.error("you must specify a config file")
@@ -105,12 +105,12 @@ def main():
         print "Connected."
 
         # Players 1 and 2 are doing a sharing over the field Zp.
-        # Our input is options.number (none for other players).
+        # Our input is number (none for other players).
         if runtime.id == 3:
             print "I have no number"
         else:
-            print "My number: %d." % options.number
-        (x, y) = runtime.shamir_share([1, 2], Zp, options.number)
+            print "My number: %d." % number
+        (x, y) = runtime.shamir_share([1, 2], Zp, number)
 
         # Do the secret computation.
         result = divide(x, y, 10) # 10 bits for the result.
