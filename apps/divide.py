@@ -105,7 +105,7 @@ def main():
         print "Connected."
 
         # Players 1 and 2 are doing a sharing over the field Zp.
-        # Our input is number (none for other players).
+        # Our input is number (None for other players).
         if runtime.id == 3:
             print "I have no number"
         else:
