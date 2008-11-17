@@ -115,6 +115,13 @@ Debian Lenny (testing)
 Ubuntu
   We expect that the instructions for Debian also apply here.
 
+Gentoo
+  The following command will install the dependencies::
+
+     emerge -av twisted gmpy
+
+  Make sure to have the ``crypt`` use flag enabled, otherwise SSL
+  might not be available.
 
 If you know how to install using other package managers, please `let
 us know`_.
