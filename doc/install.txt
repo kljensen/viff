@@ -113,7 +113,9 @@ Debian Lenny (testing)
      aptitude install python-twisted-core python-pyopenssl python-gmpy
 
 Ubuntu
-  We expect that the instructions for Debian also apply here.
+  Install the ``python-twisted-core`` and ``python-gmpy`` using
+  Synaptic package manager. This will automatically pull in
+  ``python-pyopenssl`` as a dependency.
 
 Gentoo
   The following command will install the dependencies::
