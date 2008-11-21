@@ -45,7 +45,6 @@ __docformat__ = "restructuredtext"
 
 import sha
 from math import ceil
-from struct import pack
 from binascii import hexlify
 
 from gmpy import numdigits
@@ -156,11 +155,11 @@ def prss_zero(n, t, j, field, prfs, key):
     ...         frozenset([1,3]): PRF("b", 7),
     ...         frozenset([2,3]): PRF("c", 7)}
     >>> prss_zero(3, 1, 1, Zp, prfs, "key")
-    {4}
+    {16}
     >>> prss_zero(3, 1, 2, Zp, prfs, "key")
-    {0}
+    {13}
     >>> prss_zero(3, 1, 3, Zp, prfs, "key")
-    {11}
+    {14}
 
     If we recombine 2t + 1 = 3 shares we can verify that this is
     indeed a zero-sharing:
@@ -250,11 +249,11 @@ class PRF(object):
     Calling f return values between zero and the given maximum:
 
     >>> f(1)
-    246L
+    26L
     >>> f(2)
-    254L
+    69L
     >>> f(3)
-    13L
+    217L
     """
 
     def __init__(self, key, max):
@@ -334,30 +333,27 @@ class PRF(object):
 
         >>> prf = PRF("key", 1000)
         >>> prf(1), prf(2), prf(3)
-        (714L, 80L, 617L)
+        (501L, 432L, 133L)
 
         Since prf is a function we can of course evaluate the same
         input to get the same output:
 
         >>> prf(1)
-        714L
+        501L
 
         The prf can take arbitrary input:
 
         >>> prf(("input", 123))
-        474L
+        284L
 
-        but it must be hashable:
-
-        >>> prf(["input", 123])   # doctest: +IGNORE_EXCEPTION_DETAIL
-        Traceback (most recent call last):
-            ...
-        TypeError: list objects are unhashable
+        Non-string input will be converted with ``str``, which means
+        that the input must have a deterministic ``__str__``
+        method. This means that hashable instances are probably best.
         """
         # We can only feed str data to sha1 instance, so we must
         # convert the input.
         if not isinstance(input, str):
-            input = pack("l", hash(input))
+            input = str(input)
 
         # There is a chance that we generate a number that is too big,
         # so we must keep trying until we succeed.
