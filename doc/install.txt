@@ -107,7 +107,7 @@ itself must be installed `from source`_.
 Using a Package Manager
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-Debian Lenny (testing)
+Debian
   You can install all dependencies by the command::
 
      aptitude install python-twisted-core python-pyopenssl python-gmpy
