@@ -88,6 +88,28 @@ def wrapper(func):
             return f
         return decorator
 
+def fake(replacement):
+    """Replace a function with a fake version.
+
+    This decorator is meant to be used for profiling where specific
+    functions can be replaced with fake versions that are faster. The
+    fake version should take the same input as the original function
+    and deliver output of the correct type.
+
+    The environment variable :envvar:`VIFF_FAKE` must be set to enable
+    this decorator. The variable is treated as a list of function
+    names, separated on whitespace. Setting :envvar:`VIFF_FAKE` to the
+    special value ``*`` will enable all fake replacements known.
+    """
+
+    def decorator(func):
+        fakes = os.environ.get('VIFF_FAKE', '')
+        if fakes == '*' or func.__name__ in fakes.split():
+            return replacement
+        else:
+            return func
+
+    return decorator
 
 def deprecation(message):
     """Issue a deprecation warning."""
