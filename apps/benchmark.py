@@ -204,8 +204,8 @@ class Benchmark:
                 b = rand.randint(0, Zp.modulus)
             else:
                 a, b = None, None
-            self.a_shares.append(self.rt.shamir_share([inputter], Zp, a))
-            self.b_shares.append(self.rt.shamir_share([inputter], Zp, b))
+            self.a_shares.append(self.rt.input([inputter], Zp, a))
+            self.b_shares.append(self.rt.input([inputter], Zp, b))
         shares_ready = gather_shares(self.a_shares + self.b_shares)
         shares_ready.addCallback(self.sync_test)
 
