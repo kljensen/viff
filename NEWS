@@ -15,11 +15,16 @@ please refer to it for details on the issues:
 Next version, not yet released
 ------------------------------
 
-The central class named Runtime was renamed to PassiveRuntime.
+The central class named Runtime was renamed to PassiveRuntime. Inputs
+can now be provided using the a common method named input.
 
 * Renamed viff.runtime.Runtime to viff.passive.PassiveRuntime. This is
   a backwards incompatible change. Please update your import
   statements accordingly.
+
+* Introduced input method in PassiveRuntime and PaillierRuntime. This
+  method should be used instead of shamir_share and share unless there
+  is a particular reason to select a secret sharing strategy.
 
 * Renamed random seed environment variable from SEED to VIFF_SEED.
 
