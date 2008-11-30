@@ -83,6 +83,13 @@ class PaillierRuntime(BasicRuntime):
         share = field(prf(tuple(self.program_counter)))
         return Share(self, field, share)
 
+    def input(self, inputters, field, number=None):
+        """Input *number* to the computation.
+
+        The input is shared using the :meth:`share` method.
+        """
+        return self.share(inputters, field, number)
+
     @increment_pc
     def share(self, inputters, field, number=None):
         """Share *number* additively."""

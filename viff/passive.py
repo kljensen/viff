@@ -379,6 +379,13 @@ class PassiveRuntime(BasicRuntime):
         # Use r_lsb to flip b as needed.
         return (b_p, b ^ r_lsb)
 
+    def input(self, inputters, field, number=None, threshold=None):
+        """Input *number* to the computation.
+
+        The input is shared using the :meth:`shamir_share` method.
+        """
+        return self.shamir_share(inputters, field, number, threshold)
+
     @increment_pc
     def shamir_share(self, inputters, field, number=None, threshold=None):
         """Secret share *number* over *field* using Shamir's method.
