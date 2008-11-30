@@ -24,9 +24,10 @@ __docformat__ = "restructuredtext"
 
 
 import operator
-from viff.util import rand
+from viff.util import rand, fake
 
 
+@fake(lambda s, t, n: [(s.field(i+1), s) for i in range(n)])
 def share(secret, threshold, num_players):
     """Shamir share secret.
 
@@ -92,6 +93,7 @@ def share(secret, threshold, num_players):
 _recombination_vectors = {}
 
 
+@fake(lambda s, x=0: s[0][1])
 def recombine(shares, x_recomb=0):
     """Recombines list of ``(xi, yi)`` pairs.
 
