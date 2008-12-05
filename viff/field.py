@@ -515,31 +515,31 @@ def GF(modulus):
     return GFElement
 
 def FakeGF(modulus):
-    """Construct a fake field."""
+    """Construct a fake field.
+
+    These fields should only be used in benchmarking. They work like
+    any other field except that all computations will give ``-1`` as
+    the result:
+
+    >>> F = FakeGF(1031)
+    >>> a = F(123)
+    >>> b = F(234)
+    >>> a + b
+    {{1030}}
+    >>> a * b
+    {{1030}}
+    >>> a.sqrt()
+    {{1030}}
+    >>> a.bit(100)
+    1
+    """
 
     # Return value of all operations on FakeFieldElements. We choose
     # this value to maximize the communication complexity.
     return_value = modulus - 1
 
     class FakeFieldElement(FieldElement):
-        """Fake field which does no computations.
-
-        This class should only be used in benchmarking. It works like any
-        other :class:`FieldElement` except that all computations will give
-        ``-1`` as the result:
-
-        >>> F = FakeGF(1031)
-        >>> a = F(123)
-        >>> b = F(234)
-        >>> a + b
-        {{1030}}
-        >>> a * b
-        {{1030}}
-        >>> a.sqrt()
-        {{1030}}
-        >>> a.bit(100)
-        1
-        """
+        """Fake field which does no computations."""
 
         def __init__(self, value):
             """Create a fake field element.
