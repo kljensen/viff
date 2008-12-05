@@ -4,6 +4,13 @@ Presentations
 
 The following VIFF-related presentations are available:
 
+December 3rd, 2008:
+  Slides on possible performance improvements in VIFF, used in the
+  CACE_ WP4 meeting in Amsterdam. Available as PDF__.
+
+  .. _CACE: http://cace-project.eu/
+  .. __: http://viff.dk/files/cace-wp4-amsterdam-2008.pdf
+
 June 23rd, 2008:
   Slides used for a talk at a ECRYPT PROVILAB_ (Protocols Virtual Lab)
   meeting held in Berlin. Available as PDF__.
