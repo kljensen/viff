@@ -514,56 +514,61 @@ def GF(modulus):
     _field_cache[modulus] = GFElement
     return GFElement
 
-class FakeFieldElement(FieldElement):
-    """Fake field which does no computations.
+def FakeGF(modulus):
+    """Construct a fake field."""
 
-    This class should only be used in benchmarking. It works like any
-    other :class:`FieldElement` except that all computations will give
-    ``1`` as the result:
+    # Return value of all operations on FakeFieldElements. We choose
+    # this value to maximize the communication complexity.
+    return_value = modulus - 1
 
-    >>> a = FakeFieldElement(123)
-    >>> b = FakeFieldElement(234)
-    >>> a + b
-    {{1}}
-    >>> a * b
-    {{1}}
-    >>> a.bit(100)
-    1
-    >>> a.sqrt()
-    {{1}}
-    """
+    class FakeFieldElement(FieldElement):
+        """Fake field which does no computations.
 
-    def __init__(self, value):
-        """Create a fake field element.
+        This class should only be used in benchmarking. It works like any
+        other :class:`FieldElement` except that all computations will give
+        ``-1`` as the result:
 
-        The element will store *value* in order to take up a realistic
-        amount of RAM, but any further computation will yield the
-        value ``1``.
+        >>> F = FakeGF(1031)
+        >>> a = F(123)
+        >>> b = F(234)
+        >>> a + b
+        {{1030}}
+        >>> a * b
+        {{1030}}
+        >>> a.sqrt()
+        {{1030}}
+        >>> a.bit(100)
+        1
         """
-        self.value = value
 
-    # Binary operations.
-    __add__ = __radd__ = __sub__ = __rsub__ \
-        = __mul__ = __rmul__ = __div__ = __rdiv__ \
-        = __truediv__ = __rtruediv__ = __floordiv__ = __rfloordiv__ \
-        = __pow__ = __neg__ \
-        = lambda self, other: FakeFieldElement(1)
+        def __init__(self, value):
+            """Create a fake field element.
 
-    # Unary operations.
-    __invert__ = sqrt = lambda self: FakeFieldElement(1)
+            The element will store *value* in order to take up a realistic
+            amount of RAM, but any further computation will yield the
+            value ``-1``.
+            """
+            self.value = value
 
-    # Bit extraction. We pretend that the number is *very* big.
-    bit = lambda self, index: 1
+        # Binary operations.
+        __add__ = __radd__ = __sub__ = __rsub__ \
+            = __mul__ = __rmul__ = __div__ = __rdiv__ \
+            = __truediv__ = __rtruediv__ = __floordiv__ = __rfloordiv__ \
+            = __pow__ = __neg__ \
+            = lambda self, other: FakeFieldElement(return_value)
 
-    # Fake field elements are printed with double curly brackets.
-    __repr__ = __str__ = lambda self: "{{%d}}" % self.value
+        # Unary operations.
+        __invert__ = sqrt = lambda self: FakeFieldElement(return_value)
 
-FakeFieldElement.field = FakeFieldElement
-# Fix the modulus to a fairly large number -- this is used in various
-# places when protocols want to generate a random element from the
-# interval {0, 1, ..., modulus-1}.
-FakeFieldElement.modulus = 987654321
+        # Bit extraction. We pretend that the number is *very* big.
+        bit = lambda self, index: 1
 
+        # Fake field elements are printed with double curly brackets.
+        __repr__ = __str__ = lambda self: "{{%d}}" % self.value
+
+    FakeFieldElement.field = FakeFieldElement
+    FakeFieldElement.modulus = modulus
+    return FakeFieldElement
 
 if __name__ == "__main__":
     import doctest    #pragma NO COVER

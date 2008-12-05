@@ -62,7 +62,7 @@ from pprint import pformat
 
 from twisted.internet import reactor
 
-from viff.field import GF, GF256, FakeFieldElement
+from viff.field import GF, GF256, FakeGF
 from viff.runtime import BasicRuntime, create_runtime, gather_shares, \
     make_runtime_class
 from viff.passive import PassiveRuntime
@@ -139,11 +139,12 @@ if not 1 <= options.threshold <= len(players):
     parser.error("threshold out of range")
 
 if options.fake:
-    Zp = FakeFieldElement
     print "Using fake field elements"
-else:
-    Zp = GF(find_prime(options.modulus))
-    print "Using real field elements (%d bit modulus)" % log(Zp.modulus, 2)
+    GF = FakeGF
+
+Zp = GF(find_prime(options.modulus))
+print "Using field elements (%d bit modulus)" % log(Zp.modulus, 2)
+
 count = options.count
 print "I am player %d, will %s %d numbers" % (id, options.operation, count)
 
