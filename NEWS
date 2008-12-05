@@ -28,6 +28,9 @@ can now be provided using the a common method named input.
 
 * Renamed random seed environment variable from SEED to VIFF_SEED.
 
+* Made viff.prss.PRF produce consistent output on both 32-bit and
+  64-bit systems.
+
 * Issue 75: Test without local computations. The new FakeFieldElement
   class has the interface of a FieldElement but does no computations.
   A new --fake flag for benchmark.py enables these elements.
