@@ -22,4 +22,4 @@ Finite Fields Module
 
    .. autofunction:: GF
 
-   .. autoclass:: FakeFieldElement
+   .. autofunction:: FakeGF
