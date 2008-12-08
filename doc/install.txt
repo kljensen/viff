@@ -17,11 +17,11 @@ find these components here:
 
 VIFF has been successfully tested with the following versions:
 
-:Python:         2.4.1 to 2.5.0
+:Python:         2.4.1 to 2.6.0
 :Twisted:        2.5 to 8.1.0
 :OpenSSL:        0.9.8g
-:PyOpenSSL:      0.7
-:GMPY:           1.0alpha to 1.0.2
+:PyOpenSSL:      0.7 to 0.8
+:GMPY:           1.0alpha to 1.0.3
 
 Please `report back`_ if you find that VIFF works with other versions
 than the ones listed here.
