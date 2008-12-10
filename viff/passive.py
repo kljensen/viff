@@ -179,6 +179,20 @@ class PassiveRuntime(BasicRuntime):
         self.schedule_callback(result, share_recombine)
         return result
 
+    def pow(self, share, exponent):
+        """Exponentation of a share to an integer by square-and-multiply."""
+
+        assert isinstance(exponent, int), "Exponent must be an integer"
+        assert exponent >= 0, "Exponent must be non-negative"
+
+        if exponent == 0:
+            return 1
+        elif exponent % 2 == 0:
+            tmp = share ** (exponent / 2)
+            return tmp * tmp
+        else:
+            return share * (share ** (exponent-1))
+    
     @increment_pc
     def xor(self, share_a, share_b):
         field = getattr(share_a, "field", getattr(share_b, "field", None))

@@ -50,6 +50,26 @@ class MulTest(BinaryOperatorTestCase, RuntimeTestCase):
     operator = operator.mul
 
 
+class PowTest(RuntimeTestCase):
+    """Tests power to known integer"""
+
+    a = 1337
+    b = 123
+    
+    def _verify(self, runtime, result, expected):
+        self.assert_type(result, Share)
+        opened = runtime.open(result)
+        opened.addCallback(self.assertEquals, expected)
+        return opened
+
+    @protocol
+    def test_pow(self, runtime):
+        share_a = Share(runtime, self.Zp, self.Zp(self.a))
+        return self._verify(runtime,
+                            share_a ** self.b,
+                            pow(self.a, self.b, self.Zp.modulus))
+
+
 class XorTest(BinaryOperatorTestCase, RuntimeTestCase):
     a = 0
     b = 1

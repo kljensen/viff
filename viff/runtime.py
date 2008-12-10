@@ -102,6 +102,10 @@ class Share(Deferred):
         """Multiplication (reflected argument version)."""
         return self.runtime.mul(other, self)
 
+    def __pow__(self, exponent):
+        """Exponentation to open integer exponents."""
+        return self.runtime.pow(self, exponent)
+
     def __xor__(self, other):
         """Exclusive-or."""
         return self.runtime.xor(self, other)
