@@ -103,7 +103,7 @@ class Share(Deferred):
         return self.runtime.mul(other, self)
 
     def __pow__(self, exponent):
-        """Exponentation to open integer exponents."""
+        """Exponentation to known integer exponents."""
         return self.runtime.pow(self, exponent)
 
     def __xor__(self, other):
