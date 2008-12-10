@@ -48,8 +48,7 @@ changesets over and eventually push them out to the VIFF repository.
 Alternatively, you can setup a Mercurial repository where one of the
 developers can ``hg pull`` from. You can do this by uploading your
 clone on some public web server (any webserver works for this since
-the developers can pull using ``hg pull static-http://...``) or by
-running::
+the developers can pull using ``hg pull http://...``) or by running::
 
    hg serve -p 8000
 
