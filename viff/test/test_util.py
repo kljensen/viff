@@ -20,8 +20,9 @@
 import os
 
 from viff.util import deep_wait
-from viff.field import GF
+from viff.field import GF, GF256
 import viff.shamir
+import viff.prss
 
 from twisted.trial.unittest import TestCase
 from twisted.internet.defer import Deferred
@@ -35,7 +36,7 @@ class FakeTest(TestCase):
 
     # Modules which will be reloaded with and without VIFF_FAKE set in
     # the environment.
-    _modules = [viff.shamir]
+    _modules = [viff.shamir, viff.prss]
 
     def setUp(self):
         self.field = GF(1031)
@@ -61,6 +62,20 @@ class FakeTest(TestCase):
         from viff.shamir import recombine
         shares = [(1, 1), (2, 10), (3, 1)]
         self.assertEquals(recombine(shares), 1)
+
+    def test_prss(self):
+        share = viff.prss.prss(None, None, self.field, None, None)
+        self.assertEquals(share, self.field(7))
+
+    def test_prss_lsb(self):
+        (share, bit) = viff.prss.prss_lsb(None, None, self.field, None, None)
+        self.assertEquals(share, self.field(7))
+        self.assertEquals(bit, GF256(1))
+
+    def test_prss_zero(self):
+        share = viff.prss.prss_zero(None, None, None, self.field, None, None)
+        self.assertEquals(share, self.field(0))
+
 
 class DeepWaitTest(TestCase):
     """Tests for :func:`viff.util.deep_wait`."""

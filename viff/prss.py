@@ -51,6 +51,7 @@ from gmpy import numdigits
 
 from viff import shamir
 from viff.field import GF256
+from viff.util import fake
 
 def random_replicated_sharing(j, prfs, key):
     """Return a replicated sharing of a random number.
@@ -81,6 +82,7 @@ def convert_replicated_shamir(n, j, field, rep_shares):
         result += share * f_in_j
     return result
 
+@fake(lambda n, j, field, prfs, key: field(7))
 def prss(n, j, field, prfs, key):
     """Return a pseudo-random secret share for a random number.
 
@@ -108,6 +110,7 @@ def prss(n, j, field, prfs, key):
     rep_shares = random_replicated_sharing(j, prfs, key)
     return convert_replicated_shamir(n, j, field, rep_shares)
 
+@fake(lambda n, j, field, prfs, key: (field(7), GF256(1)))
 def prss_lsb(n, j, field, prfs, key):
     """Share a pseudo-random number and its least significant bit.
 
@@ -146,6 +149,7 @@ def prss_lsb(n, j, field, prfs, key):
     return (convert_replicated_shamir(n, j, field, rep_shares),
             convert_replicated_shamir(n, j, GF256, lsb_shares))
 
+@fake(lambda n, t, j, field, prfs, key: field(0))
 def prss_zero(n, t, j, field, prfs, key):
     """Return a pseudo-random secret zero-sharing of degree 2t.
 
