@@ -60,10 +60,10 @@ leave that out.
 A final option is the patchbomb_ extension for Mercurial, which will
 allow you to use::
 
-   hg email -t viff-devel@viff.dk -o
+   hg email -t viff-patches@viff.dk -o
 
 to send the changesets not present in the VIFF repository (``-o``) to
-the VIFF development list (``-t viff-devel@viff.dk``). You will
+the VIFF patches list (``-t viff-patches@viff.dk``). You will
 probably want to test using a ``-n`` flag or by sending the patches to
 your own address first to make sure everything looks okay. You can get
 the full list of options using ``hg help email``.
