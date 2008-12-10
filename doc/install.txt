@@ -17,7 +17,7 @@ find these components here:
 
 VIFF has been successfully tested with the following versions:
 
-:Python:         2.4.1 -- 2.6.0
+:Python:         2.4.1 -- 2.6.0 (3.0 is not yet supported)
 :Twisted:        2.5 -- 8.1.0
 :OpenSSL:        0.9.8g
 :PyOpenSSL:      0.7 -- 0.8
