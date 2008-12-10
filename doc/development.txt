@@ -133,10 +133,10 @@ push the the other patches back on the stack with::
 
    hg qpush -a
 
-If this goes well with no complaints, then you can delete the patches
+If this goes well with no complaints, then you can finish the patches
 again with::
 
-   hg qdelete -r qbase:qtip
+   hg qfinish -a
 
 The end result is a completely normal repository with no sign of this
 surgery. You can repeat this as many times as needed to slowly develop
