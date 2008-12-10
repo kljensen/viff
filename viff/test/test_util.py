@@ -17,7 +17,11 @@
 
 """Tests for viff.util."""
 
+import os
+
 from viff.util import deep_wait
+from viff.field import GF
+import viff.shamir
 
 from twisted.trial.unittest import TestCase
 from twisted.internet.defer import Deferred
@@ -25,6 +29,38 @@ from twisted.internet.defer import Deferred
 #: Declare doctests for Trial.
 __doctests__ = ['viff.util']
 
+
+class FakeTest(TestCase):
+    """Tests for :func:`viff.util.fake`."""
+
+    # Modules which will be reloaded with and without VIFF_FAKE set in
+    # the environment.
+    _modules = [viff.shamir]
+
+    def setUp(self):
+        self.field = GF(1031)
+
+        os.environ['VIFF_FAKE'] = "*"
+        for module in self._modules:
+            reload(module)        
+
+    def tearDown(self):
+        del os.environ['VIFF_FAKE']
+        for module in self._modules:
+            reload(module)        
+
+    def test_shamir_share(self):
+        from viff.shamir import share
+        secret = self.field(17)
+        shares = share(secret, 1, 3)
+        self.assertEquals(shares[0][1], secret)
+        self.assertEquals(shares[1][1], secret)
+        self.assertEquals(shares[2][1], secret)
+
+    def test_shamir_recombine(self):
+        from viff.shamir import recombine
+        shares = [(1, 1), (2, 10), (3, 1)]
+        self.assertEquals(recombine(shares), 1)
 
 class DeepWaitTest(TestCase):
     """Tests for :func:`viff.util.deep_wait`."""
