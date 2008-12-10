@@ -60,7 +60,7 @@ class FakeTest(TestCase):
 
     def test_shamir_recombine(self):
         from viff.shamir import recombine
-        shares = [(1, 1), (2, 10), (3, 1)]
+        shares = [(1, 1), None, None]
         self.assertEquals(recombine(shares), 1)
 
     def test_prss(self):
