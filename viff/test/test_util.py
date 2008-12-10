@@ -43,12 +43,12 @@ class FakeTest(TestCase):
 
         os.environ['VIFF_FAKE'] = "*"
         for module in self._modules:
-            reload(module)        
+            reload(module)
 
     def tearDown(self):
         del os.environ['VIFF_FAKE']
         for module in self._modules:
-            reload(module)        
+            reload(module)
 
     def test_shamir_share(self):
         from viff.shamir import share
@@ -139,7 +139,7 @@ class DeepWaitTest(TestCase):
             """Callbacks which return a Deferred."""
             self.calls.append("return_b")
             return b
-        
+
         a.addCallback(self.calls.append)
         a.addCallback(return_b)
 
@@ -164,7 +164,7 @@ class DeepWaitTest(TestCase):
             """Callbacks which return a Deferred and an integer."""
             self.calls.append("return_mix")
             return (b, 42)
-        
+
         a.addCallback(self.calls.append)
         a.addCallback(return_mix)
 

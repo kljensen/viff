@@ -63,7 +63,7 @@ class Protocol:
     def share_next(self, n):
         if isinstance(n, self.Zp):
             n = n.value
-        
+
         if n % 100 == 0:
             now = time()
             memory = memory_usage()

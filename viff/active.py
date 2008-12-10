@@ -61,7 +61,7 @@ class BrachaBroadcastMixin:
         bracha_ready = {}
         bracha_sent_ready = {}
         bracha_delivered = {}
-        
+
         def unsafe_broadcast(data_type, message):
             # Performs a regular broadcast without any guarantees. In
             # other words, it sends the message to each player except

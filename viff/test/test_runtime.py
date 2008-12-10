@@ -55,7 +55,7 @@ class PowTest(RuntimeTestCase):
 
     a = 1337
     b = 123
-    
+
     def _verify(self, runtime, result, expected):
         self.assert_type(result, Share)
         opened = runtime.open(result)

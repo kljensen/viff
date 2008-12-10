@@ -192,7 +192,7 @@ class PassiveRuntime(BasicRuntime):
             return tmp * tmp
         else:
             return share * (share ** (exponent-1))
-    
+
     @increment_pc
     def xor(self, share_a, share_b):
         field = getattr(share_a, "field", getattr(share_b, "field", None))

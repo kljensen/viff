@@ -171,7 +171,7 @@ def prss_zero(n, t, j, field, prfs, key):
     >>> from shamir import recombine
     >>> recombine([(Zp(1), Zp(4)), (Zp(2), Zp(0)), (Zp(3), Zp(11))])
     {0}
-    """    
+    """
     # We start by generating t random numbers for each subset. This is
     # very similar to calling random_replicated_sharing t times, but
     # by doing it like this we immediatedly get the nesting we want.

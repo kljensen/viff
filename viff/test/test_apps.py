@@ -97,14 +97,14 @@ class AppsTest(TestCase):
         m1 = execute("millionaires.py", "--no-ssl", "trial-1.ini")
         m2 = execute("millionaires.py", "--no-ssl", "trial-2.ini")
         m3 = execute("millionaires.py", "--no-ssl", "trial-3.ini")
-        
+
         result = gatherResults([m1, m2, m3])
         result.addCallback(check_outputs)
         return result
 
     def test_share_open(self):
         """Test apps/share-open.py."""
-        
+
         def check_outputs(outputs):
             for o in outputs:
                 self.assertIn("opened a: %s" % GF256(17), o)
@@ -114,14 +114,14 @@ class AppsTest(TestCase):
         p1 = execute("share-open.py", "trial-1.ini", "17")
         p2 = execute("share-open.py", "trial-2.ini", "40")
         p3 = execute("share-open.py", "trial-3.ini", "235")
-        
+
         result = gatherResults([p1, p2, p3])
         result.addCallback(check_outputs)
         return result
 
     def test_prss_and_open(self):
         """Test apps/prss-and-open.py."""
-        
+
         def check_outputs(outputs):
             lines = []
             for o in outputs:
@@ -136,7 +136,7 @@ class AppsTest(TestCase):
         p1 = execute("prss-and-open.py", "trial-1.ini")
         p2 = execute("prss-and-open.py", "trial-2.ini")
         p3 = execute("prss-and-open.py", "trial-3.ini")
-        
+
         result = gatherResults([p1, p2, p3])
         result.addCallback(check_outputs)
         return result
