@@ -12,6 +12,7 @@ to the repository):
 * Thomas Pelle Jakobsen <mas@daimi.au.dk>
 * Jakob Illeborg Pagter
 * Sigurd Meldgaard
+* Marcel Keller <mkeller@cs.au.dk>
 
 If you have been forgotten, then please checkout `the repository`_,
 add yourself to the list and `send us a patch`_!
