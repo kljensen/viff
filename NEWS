@@ -35,6 +35,8 @@ can now be provided using the a common method named input.
   class has the interface of a FieldElement but does no computations.
   A new --fake flag for benchmark.py enables these elements.
 
+* Exponentiation of shares by square-and-multiply.
+
 
 Version 0.7.1, released on 2008-10-09
 -------------------------------------
