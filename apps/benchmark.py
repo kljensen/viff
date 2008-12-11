@@ -156,7 +156,15 @@ class Benchmark:
     def __init__(self, rt, operation):
         self.rt = rt
         self.operation = operation
+        self.sync_preprocess()
 
+    def sync_preprocess(self):
+        print "Synchronizing preprocessing"
+        sys.stdout.flush()
+        sync = self.rt.synchronize()
+        sync.addCallback(self.preprocess)
+
+    def preprocess(self, _):
         program_desc = {}
 
         if isinstance(self.rt, BasicActiveRuntime):
