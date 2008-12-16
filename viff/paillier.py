@@ -114,6 +114,9 @@ class PaillierRuntime(Runtime):
         else:
             return results
 
+    def output(self, share, receivers=None):
+        return self.open(share, receivers)
+
     @increment_pc
     def open(self, share, receivers=None):
         """Open *share* to *receivers* (defaults to both players)."""

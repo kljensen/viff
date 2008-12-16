@@ -49,6 +49,9 @@ class PassiveRuntime(Runtime):
         """Initialize runtime."""
         Runtime.__init__(self, player, threshold, options)
 
+    def output(self, share, receivers=None, threshold=None):
+        return self.open(share, receivers, threshold)
+
     @increment_pc
     def open(self, share, receivers=None, threshold=None):
         """Open a secret sharing.
