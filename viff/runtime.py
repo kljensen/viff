@@ -574,6 +574,13 @@ class Runtime:
 
     @increment_pc
     def synchronize(self):
+        """Introduce a synchronization point.
+
+        Returns a :class:`Deferred` which will trigger if and when all
+        other players have made their calls to :meth:`synchronize`. By
+        adding callbacks to the returned :class:`Deferred`, one can
+        divide a protocol execution into disjoint phases.
+        """
         shares = [self._exchange_shares(player, GF256(0))
                   for player in self.players]
         result = gather_shares(shares)
