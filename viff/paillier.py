@@ -27,7 +27,7 @@ Residuosity Classes" by Pascal Paillier in EUROCRYPT 1999, 223-238.
 from twisted.internet.defer import Deferred, gatherResults
 import gmpy
 
-from viff.runtime import BasicRuntime, increment_pc, Share, gather_shares
+from viff.runtime import Runtime, increment_pc, Share, gather_shares
 from viff.util import rand, find_random_prime
 
 def L(u, n):
@@ -64,11 +64,11 @@ def decrypt(c, (n, g, lm)):
     return (numer*gmpy.invert(denom, n)) % n
 
 
-class PaillierRuntime(BasicRuntime):
+class PaillierRuntime(Runtime):
     """Two-player runtime based on the Paillier crypto system."""
 
     def add_player(self, player, protocol):
-        BasicRuntime.add_player(self, player, protocol)
+        Runtime.add_player(self, player, protocol)
         if player.id == self.id:
             self.player = player
         else:

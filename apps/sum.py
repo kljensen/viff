@@ -21,11 +21,11 @@ from optparse import OptionParser
 from twisted.internet import reactor
 
 from viff.field import GF
-from viff.runtime import create_runtime, BasicRuntime
+from viff.runtime import create_runtime, Runtime
 from viff.config import load_config
 
 parser = OptionParser()
-BasicRuntime.add_options(parser)
+Runtime.add_options(parser)
 (options, args) = parser.parse_args()
 
 Zp = GF(1031)

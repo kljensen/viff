@@ -375,7 +375,7 @@ def preprocess(generator):
 
     The decorated method will be replaced with a proxy method which
     first tries to get the data needed from
-    :attr:`BasicRuntime._pool`, and if that fails it falls back to the
+    :attr:`Runtime._pool`, and if that fails it falls back to the
     original method.
 
     The *generator* method is only used to record where the data
@@ -401,7 +401,7 @@ def preprocess(generator):
     return preprocess_decorator
 
 
-class BasicRuntime:
+class Runtime:
     """Basic VIFF runtime with no crypto.
 
     This runtime contains only the most basic operations needed such

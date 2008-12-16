@@ -20,13 +20,13 @@
 """Passively secure VIFF runtime."""
 
 from viff import shamir
-from viff.runtime import BasicRuntime, increment_pc, Share, ShareList, gather_shares
+from viff.runtime import Runtime, increment_pc, Share, ShareList, gather_shares
 from viff.prss import prss, prss_lsb, prss_zero
 from viff.field import GF256, FieldElement
 from viff.util import rand, profile
 
 
-class PassiveRuntime(BasicRuntime):
+class PassiveRuntime(Runtime):
     """The VIFF runtime.
 
     The runtime is used for sharing values (:meth:`shamir_share` or
@@ -47,7 +47,7 @@ class PassiveRuntime(BasicRuntime):
 
     def __init__(self, player, threshold, options=None):
         """Initialize runtime."""
-        BasicRuntime.__init__(self, player, threshold, options)
+        Runtime.__init__(self, player, threshold, options)
 
     @increment_pc
     def open(self, share, receivers=None, threshold=None):

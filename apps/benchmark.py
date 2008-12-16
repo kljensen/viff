@@ -63,7 +63,7 @@ from pprint import pformat
 from twisted.internet import reactor
 
 from viff.field import GF, GF256, FakeGF
-from viff.runtime import BasicRuntime, create_runtime, gather_shares, \
+from viff.runtime import Runtime, create_runtime, gather_shares, \
     make_runtime_class
 from viff.passive import PassiveRuntime
 from viff.active import BasicActiveRuntime, \
@@ -126,7 +126,7 @@ parser.set_defaults(modulus=2**65, threshold=1, count=10,
                     operation=operations[0], parallel=True, fake=False)
 
 # Add standard VIFF options.
-BasicRuntime.add_options(parser)
+Runtime.add_options(parser)
 
 (options, args) = parser.parse_args()
 
