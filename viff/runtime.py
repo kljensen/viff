@@ -680,6 +680,41 @@ class Runtime:
             wait_list.append(ready)
         return DeferredList(wait_list)
 
+    def input(self, inputters, field, number=None):
+        """Input *number* to the computation.
+
+        The players listed in *inputters* must provide an input
+        number, everybody will receive a list with :class:`Share`
+        objects, one from each *inputter*. If only a single player is
+        listed in *inputters*, then a :class:`Share` is given back
+        directly.
+        """
+        raise NotImplemented("Override this abstract method in a subclass.")
+
+    def output(self, share, receivers=None):
+        """Open *share* to *receivers* (defaults to all players).
+
+        Returns a :class:`Share` to players with IDs in *receivers*
+        and :const:`None` to the remaining players.
+        """
+        raise NotImplemented("Override this abstract method in a subclass.")
+
+    def add(self, share_a, share_b):
+        """Secure addition.
+        
+        At least one of the arguments must be a :class:`Share`, the
+        other can be a :class:`FieldElement` or a (possible long)
+        Python integer."""
+        raise NotImplemented("Override this abstract method in a subclass.")
+
+    def mul(self, share_a, share_b):
+        """Secure multiplication.
+        
+        At least one of the arguments must be a :class:`Share`, the
+        other can be a :class:`FieldElement` or a (possible long)
+        Python integer."""
+        raise NotImplemented("Override this abstract method in a subclass.")
+
 
 def make_runtime_class(runtime_class=None, mixins=None):
     """Creates a new runtime class with *runtime_class* as a base
