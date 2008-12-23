@@ -127,4 +127,18 @@ class AES:
             for j in range(offsets[i]):
                 row.append(row.pop(0))
 
-    
+    # matrix for mix_column
+    C = [[2, 3, 1, 1],
+         [1, 2, 3, 1],
+         [1, 1, 2, 3],
+         [3, 1, 1, 2]]
+
+    for row in C:
+        for i in xrange(len(row)):
+            row[i] = GF256(row[i])
+
+    C = Matrix(C)
+
+    def mix_column(self, state):
+        state[:] = (AES.C * Matrix(state)).rows
+
