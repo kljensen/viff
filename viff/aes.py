@@ -116,3 +116,15 @@ class AES:
 
                 row[i] = reduce(lambda x,y: x + y, 
                                 [bits[j] * 2**j for j in range(len(bits))])
+
+    def shift_row(self, state):
+        if self.n_b in [4,6]:
+            offsets = [0, 1, 2, 3]
+        else:
+            offsets = [0, 1, 3, 4]
+
+        for i, row in enumerate(state):
+            for j in range(offsets[i]):
+                row.append(row.pop(0))
+
+    
