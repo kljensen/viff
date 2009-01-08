@@ -195,7 +195,7 @@ class Benchmark:
         if program_desc:
             print "Starting preprocessing"
             record_start("preprocessing")
-            preproc = rt.preprocess(program_desc)
+            preproc = self.rt.preprocess(program_desc)
             preproc.addCallback(record_stop, "preprocessing")
             preproc.addCallback(self.begin)
         else:
