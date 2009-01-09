@@ -114,6 +114,12 @@ class AES:
                                 [bits[j] * 2**j for j in range(len(bits))])
 
     def shift_row(self, state):
+        """AES ShiftRow.
+
+        State should be a list of 4 rows."""
+
+        assert len(state) == 4, "Wrong state size."
+
         if self.n_b in [4,6]:
             offsets = [0, 1, 2, 3]
         else:
@@ -136,6 +142,12 @@ class AES:
     C = Matrix(C)
 
     def mix_column(self, state):
+        """Rijndael MixColumn.
+
+        Input should be a list of 4 rows."""
+
+        assert len(state) == 4, "Wrong state size."
+
         state[:] = (AES.C * Matrix(state)).rows
 
     def add_round_key(self, state, round_key):
