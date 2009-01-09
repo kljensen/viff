@@ -24,7 +24,7 @@ from viff.field import GF256
 from viff.runtime import gather_shares, Share
 from viff.aes import bit_decompose, AES
 
-from viff.test.rijndael import S
+from viff.test.rijndael import S, rijndael
 
 
 __doctest__ = ["viff.aes"]
@@ -86,3 +86,33 @@ class AESTestCase(RuntimeTestCase):
 
         aes.byte_sub(results)
         self.verify(runtime, results, expected_results)
+
+    @protocol
+    def test_key_expansion(self, runtime):
+        aes = AES(runtime, 256)
+        key = []
+        ascii_key = []
+
+        for i in xrange(8):
+            key.append([])
+
+            for j in xrange(4):
+                b = 15 * i + j
+                key[i].append(Share(runtime, GF256, GF256(b)))
+                ascii_key.append(chr(b))
+
+        result = aes.key_expansion(key)
+
+        r = rijndael(ascii_key)
+        expected_result = []
+
+        for round_key in r.Ke:
+            for word in round_key:
+                split_word = []
+                expected_result.append(split_word)
+
+                for j in xrange(4):
+                    split_word.insert(0, word % 256)
+                    word /= 256
+
+        self.verify(runtime, result, expected_result)

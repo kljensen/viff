@@ -71,11 +71,7 @@ class AES:
         """ByteSub operation of Rijndael.
 
         The first argument should be a matrix consisting of elements
-        of GF(2^8) or shares thereof with 4 rows and block_size / 32
-        elements."""
-
-        assert len(state) == 4, "State must have 4 rows."
-        assert len(state[0]) == self.n_b, "State must have block_size / 32 columns"
+        of GF(2^8)."""
 
         for h in range(len(state)):
             row = state[h]
@@ -142,3 +138,42 @@ class AES:
     def mix_column(self, state):
         state[:] = (AES.C * Matrix(state)).rows
 
+    def add_round_key(self, state, round_key):
+        """Rijndael AddRoundKey.
+
+        State should be a list of 4 rows and round_key a list of
+        4-byte columns (words)."""
+
+        assert len(round_key) == self.n_k, "Wrong key size."
+        assert len(round_key[0]) == 4, "Key must consist of 4-byte words."
+
+        state[:] = (Matrix(state) + Matrix(zip(*round_key))).rows
+
+    def key_expansion(self, key):
+        """Rijndael key expansion.
+
+        Input and output are lists of 4-byte columns (words)."""
+
+        assert len(key) == self.n_k, "Wrong key size."
+        assert len(key[0]) == 4, "Key must consist of 4-byte words."
+
+        expanded_key = list(key)
+
+        for i in xrange(self.n_k, self.n_b * (self.rounds + 1)):
+            temp = list(expanded_key[i - 1])
+
+            if (i % self.n_k == 0):
+                temp.append(temp.pop(0))
+                self.byte_sub([temp])
+                temp[0] += GF256(2) ** (i / self.n_k - 1)
+            elif (self.n_k > 6 and i % self.n_k == 4):
+                self.byte_sub([temp])
+
+            new_word = []
+
+            for j in xrange(4):
+                new_word.append(expanded_key[i - self.n_k][j] + temp[j])
+
+            expanded_key.append(new_word)
+
+        return expanded_key
