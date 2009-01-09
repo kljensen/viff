@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright 2007, 2008 VIFF Development Team.
+# Copyright 2007, 2008, 2009 VIFF Development Team.
 #
 # This file is part of VIFF, the Virtual Ideal Functionality Framework.
 #
@@ -39,9 +39,10 @@ from optparse import OptionParser, OptionGroup
 from collections import deque
 
 from viff.field import GF256, FieldElement
-from viff.util import wrapper, rand, deep_wait
+from viff.util import wrapper, rand, deep_wait, track_memory_usage
 
 from twisted.internet import reactor
+from twisted.internet.task import LoopingCall
 from twisted.internet.error import ConnectionDone, CannotListenError
 from twisted.internet.defer import Deferred, DeferredList, gatherResults, succeed
 from twisted.internet.defer import maybeDeferred
@@ -428,6 +429,8 @@ class Runtime:
                          help="Enable extra debug output for deferreds.")
         group.add_option("--profile", action="store_true",
                          help="Collect and print profiling information.")
+        group.add_option("--track-memory", action="store_true",
+                         help="Track memory usage over time.")
 
         try:
             # Using __import__ since we do not use the module, we are
@@ -441,7 +444,8 @@ class Runtime:
                             security_parameter=30,
                             ssl=have_openssl,
                             deferred_debug=False,
-                            profile=False)
+                            profile=False,
+                            track_memory=False)
 
     def __init__(self, player, threshold, options=None):
         """Initialize runtime.
@@ -766,6 +770,13 @@ def create_runtime(id, players, threshold, options=None, runtime_class=None):
     Please see the example applications for more examples.
 
     """
+    if options and options.track_memory:
+        lc = LoopingCall(track_memory_usage)
+        # Five times per second seems like a fair value. Besides, the
+        # kernel will track the peak memory usage for us anyway.
+        lc.start(0.2)
+        reactor.addSystemEventTrigger("after", "shutdown", track_memory_usage)
+
     if runtime_class is None:
         # The import is put here because of circular depencencies
         # between viff.runtime and viff.passive.

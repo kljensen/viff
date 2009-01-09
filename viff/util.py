@@ -1,4 +1,4 @@
-# Copyright 2007, 2008 VIFF Development Team.
+# Copyright 2007, 2008, 2009 VIFF Development Team.
 #
 # This file is part of VIFF, the Virtual Ideal Functionality Framework.
 #
@@ -355,6 +355,38 @@ def profile(method):
         return result
 
     return profile_wrapper
+
+
+def memory_usage():
+    """Read memory usage of the current process."""
+    status = None
+    result = {'peak': 0, 'rss': 0}
+    try:
+        # This will only work on systems with a /proc file system
+        # (like Linux).
+        status = open('/proc/self/status', 'r')
+        for line in status:
+            parts = line.split()
+            key = parts[0][2:-1].lower()
+            if key in result:
+                result[key] = int(parts[1])
+    finally:
+        if status is not None:
+            status.close()
+    return result
+
+
+_last_memory_usage = None
+
+
+def track_memory_usage():
+    """Print memory usage if changed since last time."""
+    global _last_memory_usage
+    usage = memory_usage()
+    if usage != _last_memory_usage:
+        print ", ".join(["%s: %.1f MiB" % (key, value/1024.0)
+                         for key, value in usage.iteritems()])
+        _last_memory_usage = usage
 
 if __name__ == "__main__":
     import doctest    #pragma NO COVER
