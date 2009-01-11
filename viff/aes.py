@@ -89,10 +89,20 @@ class AES:
                 # b == 1 if byte is 0, b == 0 else
                 b = bits[0]
 
-                r = self.runtime.prss_share_random(GF256)
-                c = self.runtime.open((byte + b) * r)
-                
-                c.addCallback(lambda c: ~c)
+                r = Share(self.runtime, GF256)
+                c = Share(self.runtime, GF256)
+
+                def get_masked_byte(c_opened, r_related, c, r, byte):
+                    if (c_opened == 0):
+                        r_trial = self.runtime.prss_share_random(GF256)
+                        c_trial = self.runtime.open((byte + b) * r_trial)
+                        c_trial.addCallback(get_masked_byte, r_trial,
+                                            c, r, byte)
+                    else:
+                        r_related.addCallback(r.callback)
+                        c.callback(~c_opened)
+
+                get_masked_byte(0, None, c, r, byte)
                 inverted_byte = c * r - b
 
                 bits = bit_decompose(inverted_byte)
