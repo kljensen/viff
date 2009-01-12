@@ -166,7 +166,7 @@ class AES:
         State should be a list of 4 rows and round_key a list of
         4-byte columns (words)."""
 
-        assert len(round_key) == self.n_k, "Wrong key size."
+        assert len(round_key) == self.n_b, "Wrong key size."
         assert len(round_key[0]) == 4, "Key must consist of 4-byte words."
 
         state[:] = (Matrix(state) + Matrix(zip(*round_key))).rows
