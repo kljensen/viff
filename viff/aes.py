@@ -67,6 +67,16 @@ class AES:
         self.rounds = max(self.n_k, self.n_b) + 6
         self.runtime = runtime
 
+    # matrix for byte_sub
+    A = Matrix([[1,0,0,0,1,1,1,1],
+                [1,1,0,0,0,1,1,1],
+                [1,1,1,0,0,0,1,1],
+                [1,1,1,1,0,0,0,1],
+                [1,1,1,1,1,0,0,0],
+                [0,1,1,1,1,1,0,0],
+                [0,0,1,1,1,1,1,0],
+                [0,0,0,1,1,1,1,1]])
+
     def byte_sub(self, state):
         """ByteSub operation of Rijndael.
 
@@ -107,17 +117,8 @@ class AES:
 
                 bits = bit_decompose(inverted_byte)
 
-                A = Matrix([[1,0,0,0,1,1,1,1],
-                            [1,1,0,0,0,1,1,1],
-                            [1,1,1,0,0,0,1,1],
-                            [1,1,1,1,0,0,0,1],
-                            [1,1,1,1,1,0,0,0],
-                            [0,1,1,1,1,1,0,0],
-                            [0,0,1,1,1,1,1,0],
-                            [0,0,0,1,1,1,1,1]])
-
                 # caution: order is lsb first
-                vector = A * Matrix(zip(bits)) + Matrix(zip([1,1,0,0,0,1,1,0]))
+                vector = AES.A * Matrix(zip(bits)) + Matrix(zip([1,1,0,0,0,1,1,0]))
                 bits = zip(*vector.rows)[0]
 
                 row[i] = reduce(lambda x,y: x + y, 
