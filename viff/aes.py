@@ -199,3 +199,45 @@ class AES:
             expanded_key.append(new_word)
 
         return expanded_key
+
+    def preprocess(self, input):
+        if (isinstance(input, str)):
+            return [Share(self.runtime, GF256, GF256(ord(c))) 
+                    for c in input]
+        else:
+            for byte in input:
+                assert byte.field == GF256, \
+                    "Input must be a list of GF256 elements " \
+                    "or of shares thereof."
+            return input
+
+    def encrypt(self, cleartext, key):
+        """Rijndael encryption.
+
+        Cleartext and key should be either a string or a list of bytes 
+        (possibly shared as elements of GF256)."""
+
+        assert len(cleartext) == 4 * self.n_b, "Wrong length of cleartext."
+        assert len(key) == 4 * self.n_k, "Wrong length of key."
+
+        cleartext = self.preprocess(cleartext)
+        key = self.preprocess(key)
+
+        state = [cleartext[i::4] for i in xrange(4)]
+        key = [key[4*i:4*i+4] for i in xrange(self.n_k)]
+
+        expanded_key = self.key_expansion(key)
+
+        self.add_round_key(state, expanded_key[0:self.n_b])
+
+        for i in xrange(1, self.rounds):
+            self.byte_sub(state)
+            self.shift_row(state)
+            self.mix_column(state)
+            self.add_round_key(state, expanded_key[i*self.n_b:(i+1)*self.n_b])
+
+        self.byte_sub(state)
+        self.shift_row(state)
+        self.add_round_key(state, expanded_key[self.rounds*self.n_b:])
+
+        return [byte for word in zip(*state) for byte in word]

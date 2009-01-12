@@ -116,3 +116,16 @@ class AESTestCase(RuntimeTestCase):
                     word /= 256
 
         self.verify(runtime, result, expected_result)
+
+    @protocol
+    def test_encrypt(self, runtime):
+        cleartext = "Encrypt this!!!!"
+        key = "Supposed to be secret!?!"
+
+        aes = AES(runtime, 192)
+        r = rijndael(key)
+
+        result = aes.encrypt(cleartext, key)
+        expected = [ord(c) for c in r.encrypt(cleartext)]
+
+        return self.verify(runtime, [result], [expected])
