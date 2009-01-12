@@ -54,7 +54,7 @@ class AES:
     def __init__(self, runtime, key_size, block_size=128):
         """Initialize Rijndael.
 
-        AES(runtime, key_size, block_size), whereas keys ize and block
+        AES(runtime, key_size, block_size), whereas key size and block
         size must be given in bits. Block size defaults to 128."""
 
         assert key_size in [128, 192, 256], \
