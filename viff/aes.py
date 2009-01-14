@@ -212,7 +212,7 @@ class AES:
                     "or of shares thereof."
             return input
 
-    def encrypt(self, cleartext, key):
+    def encrypt(self, cleartext, key, benchmark=False):
         """Rijndael encryption.
 
         Cleartext and key should be either a string or a list of bytes 
@@ -227,16 +227,20 @@ class AES:
         state = [cleartext[i::4] for i in xrange(4)]
         key = [key[4*i:4*i+4] for i in xrange(self.n_k)]
 
-        import time
-        start = time.time()
+        if (benchmark):
+            import time
+            start = time.time()
 
-        def progress(x, i):
-            print "Round %d: %f" % (i, time.time() - start)
-            return x
+            def progress(x, i):
+                print "Round %2d: %f" % (i, time.time() - start)
+                return x
+        else:
+            progress = lambda x, i: x
 
         expanded_key = self.key_expansion(key)
 
-        print "Key expansion preparation: %f" % (time.time() - start)
+        if (benchmark):
+            print "Key expansion preparation: %f" % (time.time() - start)
 
         self.add_round_key(state, expanded_key[0:self.n_b])
 
@@ -258,7 +262,8 @@ class AES:
             else:
                 get_trigger(state).addCallback(final_round, state)
 
-            print "Round %d preparation: %f" % (i, time.time() - start)
+            if (benchmark):
+                print "Round %2d preparation: %f" % (i, time.time() - start)
 
             return _
 
@@ -271,7 +276,9 @@ class AES:
 
             get_trigger(state).addCallback(finish, state)
 
-            print "Round %d preparation: %f" % (self.rounds, time.time() - start)
+            if (benchmark):
+                print "Round %2d preparation: %f" % (self.rounds, 
+                                                     time.time() - start)
 
             return _
 
