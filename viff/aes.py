@@ -231,7 +231,7 @@ class AES:
         start = time.time()
 
         def progress(x, i):
-            print "Round %2d: %f" % (i, time.time() - start)
+            print "Round %d: %f" % (i, time.time() - start)
             return x
 
         expanded_key = self.key_expansion(key)
@@ -240,22 +240,50 @@ class AES:
 
         self.add_round_key(state, expanded_key[0:self.n_b])
 
-        state[0][0].addCallback(progress, 0)
+        def get_trigger(state):
+            return state[3][self.n_b-1]
 
-        for i in xrange(1, self.rounds):
+        state[3][self.n_b-1].addCallback(progress, 0)
+
+        def round(_, state, i):
             self.byte_sub(state)
             self.shift_row(state)
             self.mix_column(state)
             self.add_round_key(state, expanded_key[i*self.n_b:(i+1)*self.n_b])
 
-            state[0][0].addCallback(progress, i)
+            state[3][self.n_b-1].addCallback(progress, i)
+
+            if (i < self.rounds - 1):
+                get_trigger(state).addCallback(round, state, i + 1)
+            else:
+                get_trigger(state).addCallback(final_round, state)
+
             print "Round %d preparation: %f" % (i, time.time() - start)
 
-        self.byte_sub(state)
-        self.shift_row(state)
-        self.add_round_key(state, expanded_key[self.rounds*self.n_b:])
+            return _
 
-        state[0][0].addCallback(progress, self.rounds)
-        print "Preparation: %f" % (time.time() - start)
+        def final_round(_, state):
+            self.byte_sub(state)
+            self.shift_row(state)
+            self.add_round_key(state, expanded_key[self.rounds*self.n_b:])
 
-        return [byte for word in zip(*state) for byte in word]
+            state[3][self.n_b-1].addCallback(progress, self.rounds)
+
+            get_trigger(state).addCallback(finish, state)
+
+            print "Round %d preparation: %f" % (self.rounds, time.time() - start)
+
+            return _
+
+        def finish(_, state):
+            actual_result = [byte for word in zip(*state) for byte in word]
+
+            for a, b in zip(actual_result, result):
+                a.addCallback(b.callback)
+
+            return _
+
+        round(None, state, 1)
+
+        result = [Share(self.runtime, GF256) for i in xrange(4 * self.n_b)]
+        return result
