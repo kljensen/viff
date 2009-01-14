@@ -212,7 +212,7 @@ class AES:
                     "or of shares thereof."
             return input
 
-    def encrypt(self, cleartext, key):
+    def encrypt(self, cleartext, key, benchmark=False):
         """Rijndael encryption.
 
         Cleartext and key should be either a string or a list of bytes 
@@ -227,20 +227,23 @@ class AES:
         state = [cleartext[i::4] for i in xrange(4)]
         key = [key[4*i:4*i+4] for i in xrange(self.n_k)]
 
-        import time
-        start = time.time()
+        if (benchmark):
+            import time
+            start = time.time()
 
-        def progress(x, i):
-            print "Round %2d: %f" % (i, time.time() - start)
-            return x
+            def progress(x, i):
+                print "Round %2d: %f" % (i, time.time() - start)
+                return x
 
         expanded_key = self.key_expansion(key)
 
-        print "Key expansion preparation: %f" % (time.time() - start)
+        if (benchmark):
+            print "Key expansion preparation: %f" % (time.time() - start)
 
         self.add_round_key(state, expanded_key[0:self.n_b])
 
-        state[0][0].addCallback(progress, 0)
+        if (benchmark):
+            state[0][0].addCallback(progress, 0)
 
         for i in xrange(1, self.rounds):
             self.byte_sub(state)
@@ -248,14 +251,16 @@ class AES:
             self.mix_column(state)
             self.add_round_key(state, expanded_key[i*self.n_b:(i+1)*self.n_b])
 
-            state[0][0].addCallback(progress, i)
-            print "Round %d preparation: %f" % (i, time.time() - start)
+            if (benchmark):
+                state[0][0].addCallback(progress, i)
+                print "Round %2d preparation: %f" % (i, time.time() - start)
 
         self.byte_sub(state)
         self.shift_row(state)
         self.add_round_key(state, expanded_key[self.rounds*self.n_b:])
 
-        state[0][0].addCallback(progress, self.rounds)
-        print "Preparation: %f" % (time.time() - start)
+        if (benchmark):
+            state[0][0].addCallback(progress, self.rounds)
+            print "Preparation: %f" % (time.time() - start)
 
         return [byte for word in zip(*state) for byte in word]
