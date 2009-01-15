@@ -69,9 +69,7 @@ class AESTestCase(RuntimeTestCase):
 
         return gather_shares(opened_results)
 
-    @protocol
-    def test_byte_sub(self, runtime):
-        aes = AES(runtime, 128)
+    def _test_byte_sub(self, runtime, aes):
         results = []
         expected_results = []
 
@@ -81,11 +79,21 @@ class AESTestCase(RuntimeTestCase):
 
             for j in range(4):
                 b = 60 * i + j
-                results[i].append(Share(runtime, GF256, b))
+                results[i].append(Share(runtime, GF256, GF256(b)))
                 expected_results[i].append(S[b])
 
         aes.byte_sub(results)
         self.verify(runtime, results, expected_results)
+
+    @protocol
+    def test_byte_sub_with_masking(self, runtime):
+        self._test_byte_sub(runtime, AES(runtime, 128, 
+                                         use_exponentiation=False))
+
+    @protocol
+    def test_byte_sub_with_exponentiation(self, runtime):
+        self._test_byte_sub(runtime, AES(runtime, 128, 
+                                         use_exponentiation=True))
 
     @protocol
     def test_key_expansion(self, runtime):
