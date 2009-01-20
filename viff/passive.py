@@ -135,6 +135,34 @@ class PassiveRuntime(BasicRuntime):
         result.addCallback(lambda (a, b): a - b)
         return result
 
+    def lin_comb(self, coefficients, shares):
+        """Linear combination of shares.
+
+        Communication cost: none. Saves the construction of unnecessary shares
+        compared to using add() and mul()."""
+
+        for coeff in coefficients:
+            assert not isinstance(coeff, Share), \
+                "Coefficients should not be shares."
+
+        assert len(coefficients) == len(shares), \
+            "Number of coefficients and shares should be equal."
+
+        field = None
+        for share in shares:
+            field = getattr(share, "field", field)
+        for i, share in enumerate(shares):
+            if not isinstance(share, Share):
+                shares[i] = Share(self, field, share)
+
+        def computation(shares, coefficients):
+            summands = [shares[i] * coefficients[i] for i in range(len(shares))]
+            return reduce(lambda x, y: x + y, summands)
+
+        result = gather_shares(shares)
+        result.addCallback(computation, coefficients)
+        return result
+
     @profile
     @increment_pc
     def mul(self, share_a, share_b):
