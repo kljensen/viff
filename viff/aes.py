@@ -25,7 +25,7 @@ from viff.runtime import Share
 from viff.matrix import Matrix
 
 
-def bit_decompose(share):
+def bit_decompose(share, use_lin_comb=True):
     """Bit decomposition for GF256 shares."""
 
     assert isinstance(share, Share) and share.field == GF256, \
@@ -33,8 +33,13 @@ def bit_decompose(share):
 
     r_bits = [share.runtime.prss_share_random(GF256, binary=True) \
                   for i in range(8)]
-    r = reduce(lambda x,y: x + y, [r_bits[i] * 2 ** i for i in range(8)])
     
+    if (use_lin_comb):
+        r = share.runtime.lin_comb([2 ** i for i in range(8)], r_bits)
+    else:
+        r = reduce(lambda x,y: x + y, 
+                   [r_bits[i] * 2 ** i for i in range(8)])
+
     c = share.runtime.open(share + r)
     c_bits = [Share(share.runtime, GF256) for i in range(8)]
     
