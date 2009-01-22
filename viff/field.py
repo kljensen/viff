@@ -74,6 +74,15 @@ from gmpy import mpz
 class FieldElement(object):
     """Common base class for elements."""
 
+    def __int__(self):
+        """Extract integer value from the field element.
+
+        >>> int(GF256(10))
+        10
+        """
+        return self.value
+
+    __long__ = __int__
 
 #: Inversion table.
 #:
