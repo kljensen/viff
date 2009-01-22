@@ -20,6 +20,8 @@
 __docformat__ = "restructuredtext"
 
 
+import time
+
 from viff.field import GF256
 from viff.runtime import Share
 from viff.matrix import Matrix
@@ -254,57 +256,72 @@ class AES:
         key = [key[4*i:4*i+4] for i in xrange(self.n_k)]
 
         if (benchmark):
-            import time
             start = time.time()
+            global preparation, communication
+            preparation = 0
+            communication = 0
 
-            def progress(x, i):
-                print "Round %2d: %f" % (i, time.time() - start)
+            def progress(x, i, start_round):
+                time_diff = time.time() - start_round
+                global communication
+                communication += time_diff
+                print "Round %2d: %f, %f" % \
+                    (i, time_diff, time.time() - start)
                 return x
+
+            def prep_progress(i, start_round):
+                time_diff = time.time() - start_round
+                global preparation
+                preparation += time_diff
+                print "Round %2d preparation: %f, %f" % \
+                    (i, time_diff, time.time() - start)
         else:
-            progress = lambda x, i: x
+            progress = lambda x, i, start_round: x
+            prep_progress = lambda i, start_round: None
 
         expanded_key = self.key_expansion(key)
 
-        if (benchmark):
-            print "Key expansion preparation: %f" % (time.time() - start)
-
         self.add_round_key(state, expanded_key[0:self.n_b])
+
+        prep_progress(0, start)
 
         def get_trigger(state):
             return state[3][self.n_b-1]
 
-        state[3][self.n_b-1].addCallback(progress, 0)
+        def get_last(state):
+            return state[3][self.n_b-1]
 
         def round(_, state, i):
+            start_round = time.time()
+            
             self.byte_sub(state)
             self.shift_row(state)
             self.mix_column(state)
             self.add_round_key(state, expanded_key[i*self.n_b:(i+1)*self.n_b])
 
-            state[3][self.n_b-1].addCallback(progress, i)
+            get_last(state).addCallback(progress, i, time.time())
 
             if (i < self.rounds - 1):
                 get_trigger(state).addCallback(round, state, i + 1)
             else:
                 get_trigger(state).addCallback(final_round, state)
 
-            if (benchmark):
-                print "Round %2d preparation: %f" % (i, time.time() - start)
+            prep_progress(i, start_round)
 
             return _
 
         def final_round(_, state):
+            start_round = time.time()
+
             self.byte_sub(state)
             self.shift_row(state)
             self.add_round_key(state, expanded_key[self.rounds*self.n_b:])
 
-            state[3][self.n_b-1].addCallback(progress, self.rounds)
+            get_last(state).addCallback(progress, self.rounds, time.time())
 
             get_trigger(state).addCallback(finish, state)
 
-            if (benchmark):
-                print "Round %2d preparation: %f" % (self.rounds, 
-                                                     time.time() - start)
+            prep_progress(self.rounds, start_round)
 
             return _
 
@@ -313,6 +330,10 @@ class AES:
 
             for a, b in zip(actual_result, result):
                 a.addCallback(b.callback)
+
+            if (benchmark):
+                print "Total preparation time: %f" % preparation
+                print "Total communication time: %f" % communication
 
             return _
 
