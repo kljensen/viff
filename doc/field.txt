@@ -7,7 +7,8 @@ Finite Fields Module
    .. autoclass:: FieldElement
 
    .. autoclass:: GF256
-      :members: __add__, __mul__, __pow__, __div__, __neg__, __invert__, __eq__, __nonzero__
+      :members: __add__, __mul__, __pow__, __div__, __neg__,
+                __invert__, __eq__, __nonzero__, __int__
 
       .. attribute:: GF256.modulus
 
