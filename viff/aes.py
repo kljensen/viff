@@ -96,7 +96,8 @@ class AES:
             bits = bit_decompose(byte)
 
             for j in range(len(bits)):
-                bits[j] = 1 - bits[j]
+                bits[j].addCallback(lambda x: GF256(1) - x)
+#                bits[j] = 1 - bits[j]
 
             while(len(bits) > 1):
                 bits.append(bits.pop() * bits.pop())
