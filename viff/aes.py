@@ -247,6 +247,8 @@ class AES:
         Cleartext and key should be either a string or a list of bytes 
         (possibly shared as elements of GF256)."""
 
+        start = time.time()
+
         assert len(cleartext) == 4 * self.n_b, "Wrong length of cleartext."
         assert len(key) == 4 * self.n_k, "Wrong length of key."
 
@@ -257,7 +259,6 @@ class AES:
         key = [key[4*i:4*i+4] for i in xrange(self.n_k)]
 
         if (benchmark):
-            start = time.time()
             global preparation, communication
             preparation = 0
             communication = 0
