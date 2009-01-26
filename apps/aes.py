@@ -26,6 +26,7 @@ from optparse import OptionParser
 
 from twisted.internet import reactor
 
+from viff.field import GF256
 from viff.runtime import BasicRuntime, create_runtime, gather_shares
 from viff.config import load_config
 
@@ -50,38 +51,38 @@ if len(args) == 0:
 
 id, players = load_config(args[0])
 
-def encrypt(_, rt):
+def encrypt(_, rt, key):
     start = time.time()
     print "Started at %f." % start
 
     aes = AES(rt, 192, use_exponentiation=options.exponentiation)
-    ciphertext = aes.encrypt("a" * 16, "b" * 24, True)
+    ciphertext = aes.encrypt("a" * 16, key, True)
 
-    opened = []
-    result = [0] * 16
+    opened_ciphertext = [rt.open(c) for c in ciphertext]
 
-    for i, c in enumerate(ciphertext):
-        o = rt.open(c)
-        
-        def res(x, i):
-            result[i] = hex(x.value)
-
-        o.addCallback(res, i)
-        opened.append(o)
-
-    def fin(g, result):
+    def fin(ciphertext):
         print "Finished after %f sec." % (time.time() - start)
-        print result
+        print "Ciphertext:", [hex(c.value) for c in ciphertext]
         rt.shutdown()
 
-    g = gather_shares(opened)
-    g.addCallback(fin, result)
+    g = gather_shares(opened_ciphertext)
+    g.addCallback(fin)
 
-def sync(rt):
+def share_key(rt):
+    key =  []
+
+    for i in range(24):
+        inputter = i % 3 + 1
+        
+        if (inputter == id):
+            key.append(rt.input([inputter], GF256, ord("b")))
+        else:
+            key.append(rt.input([inputter], GF256))
+
     s = rt.synchronize()
-    s.addCallback(encrypt, rt)
+    s.addCallback(encrypt, rt, key)
 
 rt = create_runtime(id, players, 1, options)
-rt.addCallback(sync)
+rt.addCallback(share_key)
 
 reactor.run()
