@@ -86,7 +86,7 @@ class AES:
                 [0,0,1,1,1,1,1,0],
                 [0,0,0,1,1,1,1,1]])
 
-    def byte_sub(self, state):
+    def byte_sub(self, state, use_lin_comb=True):
         """ByteSub operation of Rijndael.
 
         The first argument should be a matrix consisting of elements
@@ -150,8 +150,12 @@ class AES:
                 vector = AES.A * Matrix(zip(bits)) + Matrix(zip([1,1,0,0,0,1,1,0]))
                 bits = zip(*vector.rows)[0]
 
-                row[i] = reduce(lambda x,y: x + y, 
-                                [bits[j] * 2**j for j in range(len(bits))])
+                if (use_lin_comb):
+                    row[i] = self.runtime.lin_comb(
+                        [2**j for j in range(len(bits))], bits)
+                else:
+                    row[i] = reduce(lambda x,y: x + y, 
+                                    [bits[j] * 2**j for j in range(len(bits))])
 
     def shift_row(self, state):
         """AES ShiftRow.
