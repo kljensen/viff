@@ -44,6 +44,8 @@ providing data to and retrieving data from the computation.
 * Exponentiation of shares by square-and-multiply for public
   exponents. This means that if x is a Share, x**7 now works.
 
+* Added multi-party AES encryption.
+
 
 Version 0.7.1, released on 2008-10-09
 -------------------------------------
