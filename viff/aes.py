@@ -58,6 +58,18 @@ def bit_decompose(share, use_lin_comb=True):
 
 
 class AES:
+    """AES instantiation:
+
+    >>> aes = AES(runtime, 192)
+    >>> cleartext = [Share(runtime, GF256, GF256(0)) for i in range(128/8)]
+    >>> key = [runtime.prss_share_random(GF256) for i in range(192/8)]
+    >>> ciphertext = aes.encrypt("abcdefghijklmnop", key)
+    >>> ciphertext = aes.encrypt(cleartext, "keykeykeykeykeykeykeykey")
+    >>> ciphertext = aes.encrypt(cleartext, key)
+
+    In every case *ciphertext* will be a list of shares over GF256.
+    """
+
     def __init__(self, runtime, key_size, block_size=128, 
                  use_exponentiation=False):
         """Initialize Rijndael.
@@ -158,7 +170,7 @@ class AES:
                                     [bits[j] * 2**j for j in range(len(bits))])
 
     def shift_row(self, state):
-        """AES ShiftRow.
+        """Rijndael ShiftRow.
 
         State should be a list of 4 rows."""
 
