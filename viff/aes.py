@@ -88,15 +88,15 @@ class AES:
         self.runtime = runtime
         self.use_exponentiation = use_exponentiation
 
-    # matrix for byte_sub
-    A = Matrix([[1,0,0,0,1,1,1,1],
-                [1,1,0,0,0,1,1,1],
-                [1,1,1,0,0,0,1,1],
-                [1,1,1,1,0,0,0,1],
-                [1,1,1,1,1,0,0,0],
-                [0,1,1,1,1,1,0,0],
-                [0,0,1,1,1,1,1,0],
-                [0,0,0,1,1,1,1,1]])
+    # matrix for byte_sub, the last column is the translation vector
+    A = Matrix([[1,0,0,0,1,1,1,1, 1],
+                [1,1,0,0,0,1,1,1, 1],
+                [1,1,1,0,0,0,1,1, 0],
+                [1,1,1,1,0,0,0,1, 0],
+                [1,1,1,1,1,0,0,0, 0],
+                [0,1,1,1,1,1,0,0, 1],
+                [0,0,1,1,1,1,1,0, 1],
+                [0,0,0,1,1,1,1,1, 0]])
 
     def byte_sub(self, state, use_lin_comb=True):
         """ByteSub operation of Rijndael.
@@ -158,14 +158,19 @@ class AES:
             for i in range(len(row)):
                 bits = bit_decompose(invert(row[i]))
 
-                # caution: order is lsb first
-                vector = AES.A * Matrix(zip(bits)) + Matrix(zip([1,1,0,0,0,1,1,0]))
-                bits = zip(*vector.rows)[0]
+                # include the translation in the matrix multiplication
+                # (see definition of AES.A)
+                bits.append(GF256(1))
 
                 if (use_lin_comb):
+                    bits = [self.runtime.lin_comb(AES.A.rows[j], bits) 
+                            for j in range(len(bits) - 1)]
                     row[i] = self.runtime.lin_comb(
                         [2**j for j in range(len(bits))], bits)
                 else:
+                    # caution: order is lsb first
+                    vector = AES.A * Matrix(zip(bits))
+                    bits = zip(*vector.rows)[0]
                     row[i] = reduce(lambda x,y: x + y, 
                                     [bits[j] * 2**j for j in range(len(bits))])
 
