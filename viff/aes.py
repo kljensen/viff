@@ -202,14 +202,21 @@ class AES:
 
     C = Matrix(C)
 
-    def mix_column(self, state):
+    def mix_column(self, state, use_lin_comb=True):
         """Rijndael MixColumn.
 
         Input should be a list of 4 rows."""
 
         assert len(state) == 4, "Wrong state size."
 
-        state[:] = (AES.C * Matrix(state)).rows
+        if (use_lin_comb):
+            columns = zip(*state)
+
+            for i, row in enumerate(state):
+                row[:] = [self.runtime.lin_comb(AES.C.rows[i], column)
+                          for column in columns]
+        else:
+            state[:] = (AES.C * Matrix(state)).rows
 
     def add_round_key(self, state, round_key):
         """Rijndael AddRoundKey.
