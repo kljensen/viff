@@ -58,14 +58,17 @@ def bit_decompose(share, use_lin_comb=True):
 
 
 class AES:
-    """AES instantiation:
+    """AES instantiation.
 
-    >>> aes = AES(runtime, 192)
-    >>> cleartext = [Share(runtime, GF256, GF256(0)) for i in range(128/8)]
-    >>> key = [runtime.prss_share_random(GF256) for i in range(192/8)]
-    >>> ciphertext = aes.encrypt("abcdefghijklmnop", key)
-    >>> ciphertext = aes.encrypt(cleartext, "keykeykeykeykeykeykeykey")
-    >>> ciphertext = aes.encrypt(cleartext, key)
+    This class is used together with a :class:`viff.runtime.Runtime`
+    object::
+
+        aes = AES(runtime, 192)
+        cleartext = [Share(runtime, GF256, GF256(0)) for i in range(128/8)]
+        key = [runtime.prss_share_random(GF256) for i in range(192/8)]
+        ciphertext = aes.encrypt("abcdefghijklmnop", key)
+        ciphertext = aes.encrypt(cleartext, "keykeykeykeykeykeykeykey")
+        ciphertext = aes.encrypt(cleartext, key)
 
     In every case *ciphertext* will be a list of shares over GF256.
     """
