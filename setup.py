@@ -4,7 +4,7 @@
 # For a local install into ~/opt, use:  python setup.py --home=~/opt
 # For more options, use:                python setup.py --help
 
-# Copyright 2007, 2008 VIFF Development Team.
+# Copyright 2007, 2008, 2009 VIFF Development Team.
 #
 # This file is part of VIFF, the Virtual Ideal Functionality Framework.
 #
@@ -33,22 +33,22 @@ import viff
 class hg_sdist(sdist):
     def get_file_list(self):
         try:
-            # Attempt the import here so that users can run the other
-            # Distutils commands without needing Mercurial.
-            from mercurial import hg
-        except ImportError:
             from distutils.errors import DistutilsModuleError
-            raise DistutilsModuleError("could not import mercurial")
+            import subprocess
+            p = subprocess.Popen(['hg', 'manifest'], stdout=subprocess.PIPE)
+            exitcode = p.wait()
+            if exitcode != 0:
+                raise DistutilsModuleError("Mercurial exited with non-zero "
+                                           "exit code: %d" % exitcode)
+            files = p.stdout.read().strip().split('\n')
 
-        repo = hg.repository(None)
-        changeset = repo.changectx(None)
-        files = changeset.manifest().keys()
-
-        # Add the files *before* the normal manifest magic is done.
-        # That allows the manifest template to exclude some files
-        # tracked by hg and to include others.
-        self.filelist.extend(files)
-        sdist.get_file_list(self)
+            # Add the files *before* the normal manifest magic is
+            # done. That allows the manifest template to exclude some
+            # files tracked by hg and to include others.
+            self.filelist.extend(files)
+            sdist.get_file_list(self)
+        except OSError, e:
+            raise DistutilsModuleError("could not execute Mercurial: %s" % e)
 
 setup(name='viff',
       version=viff.__version__,
