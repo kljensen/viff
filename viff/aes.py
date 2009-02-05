@@ -112,7 +112,7 @@ class AES:
 #                bits[j] = 1 - bits[j]
 
             while(len(bits) > 1):
-                bits.append(bits.pop() * bits.pop())
+                bits.append(bits.pop(0) * bits.pop(0))
 
             # b == 1 if byte is 0, b == 0 else
             b = bits[0]
