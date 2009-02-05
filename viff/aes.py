@@ -71,7 +71,7 @@ class AES:
     """
 
     def __init__(self, runtime, key_size, block_size=128, 
-                 use_exponentiation=False):
+                 use_exponentiation=False, use_square_and_multiply=False):
         """Initialize Rijndael.
 
         AES(runtime, key_size, block_size), whereas key size and block
@@ -87,6 +87,7 @@ class AES:
         self.rounds = max(self.n_k, self.n_b) + 6
         self.runtime = runtime
         self.use_exponentiation = use_exponentiation
+        self.use_square_and_multiply = use_square_and_multiply
 
     # matrix for byte_sub, the last column is the translation vector
     A = Matrix([[1,0,0,0,1,1,1,1, 1],
@@ -148,7 +149,10 @@ class AES:
             return byte_254
 
         if (self.use_exponentiation):
-            invert = invert_by_exponentiation
+            if (self.use_square_and_multiply):
+                invert = lambda byte: byte ** 254
+            else:
+                invert = invert_by_exponentiation
         else:
             invert = invert_by_masking
 
