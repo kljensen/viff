@@ -440,6 +440,32 @@ class PassiveRuntime(Runtime):
         unless there is only one inputter in which case the
         share is returned directly.
 
+        In code it is used like this::
+
+            a, b, c = runtime.shamir_share([1, 2, 3], Zp, x)
+
+        where ``Zp`` is a field and ``x`` is a Python integer holding
+        the input of each player (three inputs in total).
+
+        If only a subset of the players provide input it looks like
+        this::
+
+            if runtime.id == 1:
+                a = runtime.shamir_share([1], Zp, x)
+            else:
+                a = runtime.shamir_share([1], Zp)
+
+        Instead of branching when calling :meth:`shamir_share`, one
+        can give ``None`` as input::
+
+            if runtime.id == 1:
+                x = int(raw_input("Input x: "))
+            else:
+                x = None
+            a = runtime.shamir_share([1], Zp, x)
+
+        which might be practical in some cases.
+
         Communication cost: n elements transmitted.
         """
         assert number is None or self.id in inputters
