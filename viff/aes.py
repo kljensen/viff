@@ -23,7 +23,7 @@ __docformat__ = "restructuredtext"
 import time
 
 from viff.field import GF256
-from viff.runtime import Share
+from viff.runtime import Share, gather_shares
 from viff.matrix import Matrix
 
 
@@ -131,7 +131,12 @@ class AES:
                     c.callback(~c_opened)
 
             get_masked_byte(0, None, c, r, byte)
-            return c * r - b
+
+            # necessary to avoid communication in multiplication
+            # was: return c * r - b
+            result = gather_shares([c, r, b])
+            result.addCallback(lambda (c, r, b): c * r - b)
+            return result
 
         def invert_by_exponentiation(byte):
             byte_2 = byte * byte
