@@ -21,6 +21,7 @@ __docformat__ = "restructuredtext"
 
 
 import time
+import operator
 
 from viff.field import GF256
 from viff.runtime import Share
@@ -350,21 +351,20 @@ class AES:
 
             get_last(state).addCallback(progress, self.rounds, time.time())
 
-            get_trigger(state).addCallback(finish, state)
+            if (benchmark):
+                get_trigger(state).addCallback(finish, state)
+
+            # connect to final result
+            for a, b in zip(reduce(operator.add, zip(*state)), result):
+                a.addCallback(b.callback)
 
             prep_progress(self.rounds, start_round)
 
             return _
 
         def finish(_, state):
-            actual_result = [byte for word in zip(*state) for byte in word]
-
-            for a, b in zip(actual_result, result):
-                a.addCallback(b.callback)
-
-            if (benchmark):
-                print "Total preparation time: %f" % preparation
-                print "Total communication time: %f" % communication
+            print "Total preparation time: %f" % preparation
+            print "Total communication time: %f" % communication
 
             return _
 
