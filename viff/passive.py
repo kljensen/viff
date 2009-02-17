@@ -213,7 +213,7 @@ class PassiveRuntime(Runtime):
     def pow(self, share, exponent):
         """Exponentation of a share to an integer by square-and-multiply."""
 
-        assert isinstance(exponent, int), "Exponent must be an integer"
+        assert isinstance(exponent, (int, long)), "Exponent must be an integer"
         assert exponent >= 0, "Exponent must be non-negative"
 
         if exponent == 0:
