@@ -514,11 +514,11 @@ class Runtime:
         All connections are closed and the runtime cannot be used
         again after this has been called.
         """
-        print "Synchronizing shutdown... ",
+        print "Synchronizing shutdown...",
 
         def close_connections(_):
             print "done."
-            print "Closing connections... ",
+            print "Closing connections...",
             results = [maybeDeferred(self.port.stopListening)]
             for protocol in self.protocols.itervalues():
                 results.append(protocol.lost_connection)
@@ -527,7 +527,7 @@ class Runtime:
 
         def stop_reactor(_):
             print "done."
-            print "Stopping reactor... ",
+            print "Stopping reactor...",
             reactor.stop()
             print "done."
 
