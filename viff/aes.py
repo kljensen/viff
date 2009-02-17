@@ -21,6 +21,7 @@ __docformat__ = "restructuredtext"
 
 
 import time
+import operator
 
 from viff.field import GF256
 from viff.runtime import Share, gather_shares
@@ -278,7 +279,7 @@ class AES:
                     "or of shares thereof."
             return input
 
-    def encrypt(self, cleartext, key, benchmark=False):
+    def encrypt(self, cleartext, key, benchmark=False, prepare_at_once=False):
         """Rijndael encryption.
 
         Cleartext and key should be either a string or a list of bytes 
@@ -338,12 +339,13 @@ class AES:
             self.mix_column(state)
             self.add_round_key(state, expanded_key[i*self.n_b:(i+1)*self.n_b])
 
-            get_last(state).addCallback(progress, i, time.time())
+            if (not prepare_at_once):
+                get_last(state).addCallback(progress, i, time.time())
 
-            if (i < self.rounds - 1):
-                get_trigger(state).addCallback(round, state, i + 1)
-            else:
-                get_trigger(state).addCallback(final_round, state)
+                if (i < self.rounds - 1):
+                    get_trigger(state).addCallback(round, state, i + 1)
+                else:
+                    get_trigger(state).addCallback(final_round, state)
 
             prep_progress(i, start_round)
 
@@ -358,25 +360,31 @@ class AES:
 
             get_last(state).addCallback(progress, self.rounds, time.time())
 
-            get_trigger(state).addCallback(finish, state)
+            if (benchmark):
+                get_trigger(state).addCallback(finish, state)
+
+            # connect to final result
+            for a, b in zip(reduce(operator.add, zip(*state)), result):
+                a.addCallback(b.callback)
 
             prep_progress(self.rounds, start_round)
 
             return _
 
         def finish(_, state):
-            actual_result = [byte for word in zip(*state) for byte in word]
-
-            for a, b in zip(actual_result, result):
-                a.addCallback(b.callback)
-
-            if (benchmark):
-                print "Total preparation time: %f" % preparation
-                print "Total communication time: %f" % communication
+            print "Total preparation time: %f" % preparation
+            print "Total communication time: %f" % communication
 
             return _
 
-        round(None, state, 1)
-
         result = [Share(self.runtime, GF256) for i in xrange(4 * self.n_b)]
+
+        if (prepare_at_once):
+            for i in range(1, self.rounds):
+                round(None, state, i)
+
+            final_round(None, state)
+        else:
+            round(None, state, 1)
+
         return result
