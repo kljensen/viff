@@ -34,12 +34,20 @@ from viff.aes import bit_decompose,AES
 
 
 parser = OptionParser(usage="Usage: %prog [options] config_file")
-parser.add_option("-e", "--exponentiation", action="store_true",
-                  help="Use exponentiation to invert bytes (default).")
+parser.add_option("-e", "--exponentiation", action="store", type="int",
+                  metavar="variant", 
+                  help="Use exponentiation to invert bytes. "
+                  "Default is the shortest sequential chain. "
+                  "Possibilities:                             " +
+                  "\n".join(["%d: %s                           " % 
+                             (i, s) for (i, s) 
+                             in enumerate(AES.exponentiation_variants)]))
 parser.add_option("-m", "--masking", action="store_false", 
                   dest="exponentiation", 
                   help="Use masking to invert bytes.")
-parser.set_defaults(exponentiation=True)
+parser.set_defaults(exponentiation=1)
+parser.add_option("-o", "--at-once", action="store_true",help="Prepare "
+                  "the whole computation at once instead of round-wise.")
 
 # Add standard VIFF options.
 Runtime.add_options(parser)
@@ -56,7 +64,8 @@ def encrypt(_, rt, key):
     print "Started at %f." % start
 
     aes = AES(rt, 192, use_exponentiation=options.exponentiation)
-    ciphertext = aes.encrypt("a" * 16, key, True)
+    ciphertext = aes.encrypt("a" * 16, key, True, 
+                             prepare_at_once=options.at_once)
 
     opened_ciphertext = [rt.open(c) for c in ciphertext]
 
