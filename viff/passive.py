@@ -138,6 +138,7 @@ class PassiveRuntime(Runtime):
         result.addCallback(lambda (a, b): a - b)
         return result
 
+    @profile
     def lin_comb(self, coefficients, shares):
         """Linear combination of shares.
 
