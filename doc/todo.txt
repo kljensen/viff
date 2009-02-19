@@ -1,0 +1,35 @@
+
+Planned Work on VIFF
+====================
+
+This document collects the bigger pieces of work we plan to do on
+VIFF --- pieces too big for the bug tracker.
+
+
+Active Security
+---------------
+
+The protocol implemented in :mod:`viff.active` is (believed to be)
+secure against active adversaries, but only as long as they don't
+actually try to cheat! In other words, the players will crash in bad
+ways if malformed data is received or too few shares are received.
+
+The following points should be addressed:
+
+* Error correction. The honest players must tolerate being sent wrong
+  shares or no shares at all from the corrupt players.
+
+  This is related to Issue4_, Issue29_, and Issue70_.
+
+  .. _Issue4: http://tracker.viff.dk/issue4
+  .. _Issue29: http://tracker.viff.dk/issue29
+  .. _Issue70: http://tracker.viff.dk/issue70
+
+* Byzantine agreement. After the preprocessing phase a Byzantime
+  agreement protocol should be run in order to determine if all honest
+  players are ready to continue.
+
+  At the moment an honest players simply aborts the protocol if it
+  detects any form of cheating --- the "idea" being that this will
+  make the other honest players crash too, thereby effectively halting
+  the protocol.
