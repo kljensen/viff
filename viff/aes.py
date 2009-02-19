@@ -72,7 +72,7 @@ class AES:
     """
 
     def __init__(self, runtime, key_size, block_size=128, 
-                 use_exponentiation=False):
+                 use_exponentiation=False, quiet=False):
         """Initialize Rijndael.
 
         AES(runtime, key_size, block_size), whereas key size and block
@@ -96,8 +96,9 @@ class AES:
             elif (use_exponentiation not in AES.exponentation_variants):
                 use_exponentiation = "shortest_sequential_chain"
 
-            print "Use %s for inversion by exponentiation." % \
-                use_exponentiation
+            if (not quiet):
+                print "Use %s for inversion by exponentiation." % \
+                    use_exponentiation
 
             if (use_exponentiation == "standard_square_and_multiply"):
                 self.invert = lambda byte: byte ** 254
@@ -107,7 +108,9 @@ class AES:
                 self.invert = self.invert_by_exponentiation
         else:
             self.invert = self.invert_by_masking
-            print "Use inversion by masking."
+
+            if (not quiet):
+                print "Use inversion by masking."
 
     exponentiation_variants = ["standard_square_and_multiply",
                                "shortest_sequential_chain",
