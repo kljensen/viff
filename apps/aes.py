@@ -20,7 +20,6 @@
 # This example shows how to use multi-party AES encryption.
 
 
-import sys
 import time
 from optparse import OptionParser
 
@@ -30,7 +29,7 @@ from viff.field import GF256
 from viff.runtime import Runtime, create_runtime, gather_shares
 from viff.config import load_config
 
-from viff.aes import bit_decompose,AES
+from viff.aes import AES
 
 
 parser = OptionParser(usage="Usage: %prog [options] config_file")
