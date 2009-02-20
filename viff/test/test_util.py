@@ -21,8 +21,7 @@ import os
 
 from viff.util import deep_wait
 from viff.field import GF, GF256
-import viff.shamir
-import viff.prss
+from viff import shamir, prss
 
 from twisted.trial.unittest import TestCase
 from twisted.internet.defer import Deferred
@@ -36,7 +35,7 @@ class FakeTest(TestCase):
 
     # Modules which will be reloaded with and without VIFF_FAKE set in
     # the environment.
-    _modules = [viff.shamir, viff.prss]
+    _modules = [shamir, prss]
 
     def setUp(self):
         self.field = GF(1031)
@@ -51,29 +50,27 @@ class FakeTest(TestCase):
             reload(module)
 
     def test_shamir_share(self):
-        from viff.shamir import share
         secret = self.field(17)
-        shares = share(secret, 1, 3)
+        shares = shamir.share(secret, 1, 3)
         self.assertEquals(shares[0][1], secret)
         self.assertEquals(shares[1][1], secret)
         self.assertEquals(shares[2][1], secret)
 
     def test_shamir_recombine(self):
-        from viff.shamir import recombine
         shares = [(1, 1), None, None]
-        self.assertEquals(recombine(shares), 1)
+        self.assertEquals(shamir.recombine(shares), 1)
 
     def test_prss(self):
-        share = viff.prss.prss(None, None, self.field, None, None)
+        share = prss.prss(None, None, self.field, None, None)
         self.assertEquals(share, self.field(7))
 
     def test_prss_lsb(self):
-        (share, bit) = viff.prss.prss_lsb(None, None, self.field, None, None)
+        (share, bit) = prss.prss_lsb(None, None, self.field, None, None)
         self.assertEquals(share, self.field(7))
         self.assertEquals(bit, GF256(1))
 
     def test_prss_zero(self):
-        share = viff.prss.prss_zero(None, None, None, self.field, None, None)
+        share = prss.prss_zero(None, None, None, self.field, None, None)
         self.assertEquals(share, self.field(0))
 
 

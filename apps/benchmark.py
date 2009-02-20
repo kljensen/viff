@@ -140,9 +140,11 @@ if not 1 <= options.threshold <= len(players):
 
 if options.fake:
     print "Using fake field elements"
-    GF = FakeGF
+    Field = FakeGF
+else:
+    Field = GF
 
-Zp = GF(find_prime(options.modulus))
+Zp = Field(find_prime(options.modulus))
 print "Using field elements (%d bit modulus)" % log(Zp.modulus, 2)
 
 count = options.count
