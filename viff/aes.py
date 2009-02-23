@@ -358,10 +358,7 @@ class AES:
         prep_progress(0, start)
 
         def get_trigger(state):
-            return state[3][self.n_b-1]
-
-        def get_last(state):
-            return state[3][self.n_b-1]
+            return gather_shares(reduce(operator.add, state))
 
         def round(_, state, i):
             start_round = time.time()
@@ -372,14 +369,13 @@ class AES:
             self.add_round_key(state, expanded_key[i*self.n_b:(i+1)*self.n_b])
 
             if (not prepare_at_once):
-                get_last(state).addCallback(progress, i, time.time())
+                trigger = get_trigger(state)
+                trigger.addCallback(progress, i, time.time())
 
                 if (i < self.rounds - 1):
-                    self.runtime.schedule_callback(get_trigger(state),
-                                                   round, state, i + 1)
+                    self.runtime.schedule_callback(trigger, round, state, i + 1)
                 else:
-                    self.runtime.schedule_callback(get_trigger(state),
-                                                   final_round, state)
+                    self.runtime.schedule_callback(trigger, final_round, state)
 
             prep_progress(i, start_round)
 
@@ -392,10 +388,11 @@ class AES:
             self.shift_row(state)
             self.add_round_key(state, expanded_key[self.rounds*self.n_b:])
 
-            get_last(state).addCallback(progress, self.rounds, time.time())
+            trigger = get_trigger(state)
+            trigger.addCallback(progress, self.rounds, time.time())
 
             if (benchmark):
-                get_trigger(state).addCallback(finish, state)
+                trigger.addCallback(finish, state)
 
             # connect to final result
             for a, b in zip(reduce(operator.add, zip(*state)), result):
