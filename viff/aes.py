@@ -136,8 +136,8 @@ class AES:
             if (c_opened == 0):
                 r_trial = self.runtime.prss_share_random(GF256)
                 c_trial = self.runtime.open((byte + b) * r_trial)
-                c_trial.addCallback(get_masked_byte, r_trial,
-                                    c, r, byte)
+                self.runtime.schedule_callback(c_trial, get_masked_byte,
+                                               r_trial, c, r, byte)
             else:
                 r_related.addCallback(r.callback)
                 c.callback(~c_opened)
@@ -375,9 +375,11 @@ class AES:
                 get_last(state).addCallback(progress, i, time.time())
 
                 if (i < self.rounds - 1):
-                    get_trigger(state).addCallback(round, state, i + 1)
+                    self.runtime.schedule_callback(get_trigger(state),
+                                                   round, state, i + 1)
                 else:
-                    get_trigger(state).addCallback(final_round, state)
+                    self.runtime.schedule_callback(get_trigger(state),
+                                                   final_round, state)
 
             prep_progress(i, start_round)
 
