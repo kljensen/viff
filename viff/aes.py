@@ -24,7 +24,7 @@ import time
 import operator
 
 from viff.field import GF256
-from viff.runtime import Share, gather_shares
+from viff.runtime import Share, gather_shares, increment_pc
 from viff.matrix import Matrix
 
 
@@ -87,6 +87,7 @@ class AES:
         self.n_b = block_size / 32
         self.rounds = max(self.n_k, self.n_b) + 6
         self.runtime = runtime
+        self.program_counter = runtime.program_counter
 
         if (use_exponentiation is not False):
             if (isinstance(use_exponentiation, int) and
@@ -311,6 +312,7 @@ class AES:
                     "or of shares thereof."
             return input
 
+    @increment_pc
     def encrypt(self, cleartext, key, benchmark=False, prepare_at_once=False):
         """Rijndael encryption.
 
