@@ -49,6 +49,8 @@ class Player:
         self.seckey = seckey
         self.keys = keys
         self.dealer_keys = dealer_keys
+        self.prfs_cache = {}
+        self.dealers_cache = {}
 
     def prfs(self, modulus):
         """Retrieve PRSS PRFs.
@@ -60,10 +62,15 @@ class Player:
         Return a mapping from player subsets to :class:`viff.prss.PRF`
         instances.
         """
-        prfs = {}
-        for subset, key in self.keys.iteritems():
-            prfs[subset] = PRF(key, modulus)
+        if (modulus in self.prfs_cache):
+            prfs = self.prfs_cache[modulus]
+        else:
+            prfs = {}
+            for subset, key in self.keys.iteritems():
+                prfs[subset] = PRF(key, modulus)
+            self.prfs_cache[modulus] = prfs
         # TODO: the PRFs ought to be cached
+        # Yes, they probably should.
         return prfs
 
     def dealer_prfs(self, modulus):
@@ -75,13 +82,16 @@ class Player:
         Return a mapping from player subsets to :class:`viff.prss.PRF`
         instances.
         """
-        dealers = {}
-        for dealer, keys in self.dealer_keys.iteritems():
-            prfs = {}
-            for subset, key in keys.iteritems():
-                prfs[subset] = PRF(key, modulus)
-                dealers[dealer] = prfs
-        # TODO: the PRFs ought to be cached
+        if (modulus in self.dealers_cache):
+            dealers = self.dealers_cache[modulus]
+        else:
+            dealers = {}
+            for dealer, keys in self.dealer_keys.iteritems():
+                prfs = {}
+                for subset, key in keys.iteritems():
+                    prfs[subset] = PRF(key, modulus)
+                    dealers[dealer] = prfs
+                    self.dealers_cache[modulus] = dealers
         return dealers
 
     def __repr__(self):
