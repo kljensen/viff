@@ -66,19 +66,29 @@ def random_replicated_sharing(j, prfs, key):
     # the subset before using it.
     return [(s, prf(key)) for (s, prf) in prfs.iteritems() if j in s]
 
+#: Cache the coefficients used to construct the share. They depend on the field,
+#: the player concerned, the total number of players, and the subset.
+_f_in_j_cache = {}
+
 def convert_replicated_shamir(n, j, field, rep_shares):
     """Convert a set of replicated shares to a Shamir share.
 
     The conversion is done for player *j* (out of *n*) and will be
     done over *field*.
     """
+    global _f_in_j_cache
     result = 0
     all = frozenset(range(1, n+1))
     for subset, share in rep_shares:
         # TODO: should we cache the f_in_j values?
-        points = [(field(x), 0) for x in all-subset]
-        points.append((0, 1))
-        f_in_j = shamir.recombine(points, j)
+        # Yes, we probably should.
+        if ((field, n, j, subset) in _f_in_j_cache):
+            f_in_j = _f_in_j_cache[(field, n, j, subset)]
+        else:
+            points = [(field(x), 0) for x in all-subset]
+            points.append((0, 1))
+            f_in_j = shamir.recombine(points, j)
+            _f_in_j_cache[(field, n, j, subset)] = f_in_j
         result += share * f_in_j
     return result
 
