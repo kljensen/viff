@@ -21,7 +21,7 @@
 
 from viff import shamir
 from viff.runtime import Runtime, increment_pc, Share, ShareList, gather_shares
-from viff.prss import prss, prss_lsb, prss_zero
+from viff.prss import prss, prss_lsb, prss_zero, prss_multi
 from viff.field import GF256, FieldElement
 from viff.util import rand, profile
 
@@ -350,6 +350,29 @@ class PassiveRuntime(Runtime):
 
         self.schedule_callback(result, finish, share, binary)
         return result
+
+    @increment_pc
+    def prss_share_random_multi(self, field, quantity, binary=False):
+        """Does the same as calling *quantity* times :meth:`prss_share_random`,
+        but with less calls to the PRF. Sampling of a binary element is only
+        possible if the field is :class:`GF256`.
+
+        Communication cost: none.
+        """
+        assert not binary or field == GF256, "Binary sampling not possible " \
+            "for this field, use prss_share_random()."
+
+        if field is GF256 and binary:
+            modulus = 2
+        else:
+            modulus = field.modulus
+
+        # Key used for PRSS.
+        prss_key = tuple(self.program_counter)
+        prfs = self.players[self.id].prfs(modulus ** quantity)
+        shares = prss_multi(self.num_players, self.id, field, prfs, prss_key,
+                            modulus, quantity)
+        return [Share(self, field, share) for share in shares]
 
     @increment_pc
     def prss_share_zero(self, field):

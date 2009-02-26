@@ -116,6 +116,18 @@ class RuntimePrssTest(RuntimeTestCase):
         return opened_a
 
     @protocol
+    def test_prss_share_random_multi_bit(self, runtime):
+        """Tests the sharing of several 0/1 GF256 elements using PRSS."""
+        a_list = runtime.prss_share_random_multi(field=GF256, quantity=8, binary=True)
+
+        for a in a_list:
+            self.assert_type(a, Share)
+            opened_a = runtime.open(a)
+            opened_a.addCallback(self.assertIn, [GF256(0), GF256(1)])
+
+        return gather_shares(a_list)
+
+    @protocol
     def test_prss_share_zero_bit(self, runtime):
         """Tests the sharing of a zero GF256 element using PRSS."""
         a = runtime.prss_share_zero(GF256)

@@ -34,9 +34,8 @@ def bit_decompose(share, use_lin_comb=True):
     assert isinstance(share, Share) and share.field == GF256, \
         "Parameter must be GF256 share."
 
-    r_bits = [share.runtime.prss_share_random(GF256, binary=True) \
-                  for i in range(8)]
-    
+    r_bits = share.runtime.prss_share_random_multi(GF256, 8, binary=True)
+
     if (use_lin_comb):
         r = share.runtime.lin_comb([2 ** i for i in range(8)], r_bits)
     else:
