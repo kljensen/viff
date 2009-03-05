@@ -90,17 +90,17 @@ class FieldElement(object):
 
         >>> Zp = GF(29)
         >>> Zp(3).split()
-        [1, 1, 0, 0, 0]
+        [{1}, {1}, {0}, {0}, {0}]
         >>> Zp(28).split()
-        [0, 0, 1, 1, 1]
+        [{0}, {0}, {1}, {1}, {1}]
         >>> GF256(8).split()
-        [0, 0, 0, 1, 0, 0, 0, 0]
+        [[0], [0], [0], [1], [0], [0], [0], [0]]
         """
         length = int(ceil(log(self.modulus,2)))
         result = [0] * length
         temp = self.value
         for i in range(length):
-            result[i] = temp % 2
+            result[i] = self.field(temp % 2)
             temp = temp // 2
         return result
 
