@@ -162,7 +162,7 @@ class Benchmark:
         print "Synchronizing preprocessing"
         sys.stdout.flush()
         sync = self.rt.synchronize()
-        sync.addCallback(self.preprocess)
+        self.rt.schedule_callback(sync, self.preprocess)
 
     def preprocess(self, _):
         program_desc = {}
@@ -174,7 +174,7 @@ class Benchmark:
             # run with no preprocessing. So they are quite brittle.
             if self.operation == operator.mul:
                 key = ("generate_triples", (Zp,))
-                desc = [(i, 1, 0) for i in range(3 + 2*count, 3 + 3*count)]
+                desc = [(i, 1, 0) for i in range(2, 2 + count)]
                 program_desc.setdefault(key, []).extend(desc)
             elif isinstance(self.rt, ComparisonToft05Mixin):
                 key = ("generate_triples", (GF256,))
@@ -197,7 +197,7 @@ class Benchmark:
             record_start("preprocessing")
             preproc = self.rt.preprocess(program_desc)
             preproc.addCallback(record_stop, "preprocessing")
-            preproc.addCallback(self.begin)
+            self.rt.schedule_callback(preproc, self.begin)
         else:
             print "Need no preprocessing"
             self.begin(None)
@@ -216,13 +216,13 @@ class Benchmark:
             self.a_shares.append(self.rt.input([inputter], Zp, a))
             self.b_shares.append(self.rt.input([inputter], Zp, b))
         shares_ready = gather_shares(self.a_shares + self.b_shares)
-        shares_ready.addCallback(self.sync_test)
+        self.rt.schedule_callback(shares_ready, self.sync_test)
 
     def sync_test(self, _):
         print "Synchronizing test start."
         sys.stdout.flush()
         sync = self.rt.synchronize()
-        sync.addCallback(self.countdown, 3)
+        self.rt.schedule_callback(sync, self.countdown, 3)
 
     def countdown(self, _, seconds):
         if seconds > 0:
@@ -262,7 +262,7 @@ class ParallelBenchmark(Benchmark):
 
         done = gather_shares(c_shares)
         done.addCallback(record_stop, "parallel test")
-        done.addCallback(self.finished)
+        self.rt.schedule_callback(done, self.finished)
 
 # A benchmark where the operations are executed one after each other.
 class SequentialBenchmark(Benchmark):
@@ -276,7 +276,7 @@ class SequentialBenchmark(Benchmark):
             a = self.a_shares.pop()
             b = self.b_shares.pop()
             c = self.operation(a, b)
-            c.addCallback(self.single_operation)
+            self.rt.schedule_callback(c, self.single_operation)
         else:
             record_stop(None, "sequential test")
             self.finished(None)
