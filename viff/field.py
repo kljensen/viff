@@ -69,6 +69,7 @@ __docformat__ = "restructuredtext"
 
 
 from gmpy import mpz
+from math import log, ceil
 
 
 class FieldElement(object):
@@ -83,6 +84,23 @@ class FieldElement(object):
         return self.value
 
     __long__ = __int__
+
+    def split(self):
+        """Splits self into bit array LSB first.
+
+        >>> Zp = GF(29)
+        >>> Zp(3).split()
+        [1, 1, 0, 0, 0]
+        >>> Zp(28).split()
+        [0, 0, 1, 1, 1]
+        """
+        length = int(ceil(log(self.modulus,2)))
+        result = [0] * length
+        temp = self.value
+        for i in range(length):
+            result[i] = temp % 2
+            temp = temp // 2
+        return result
 
 #: Inversion table.
 #:
