@@ -388,6 +388,16 @@ def track_memory_usage():
                          for key, value in usage.iteritems()])
         _last_memory_usage = usage
 
+def if_then(cond, a, b):
+    """If then else operator works both for integers and for shares.
+
+    >>> if_then(0, 3, 6)
+    6
+    >>> if_then(1, 3, 6)
+    3
+    """
+    return b + cond * (a - b)
+
 if __name__ == "__main__":
     import doctest    #pragma NO COVER
     doctest.testmod() #pragma NO COVER
