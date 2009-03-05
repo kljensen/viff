@@ -93,6 +93,8 @@ class FieldElement(object):
         [1, 1, 0, 0, 0]
         >>> Zp(28).split()
         [0, 0, 1, 1, 1]
+        >>> GF256(8).split()
+        [0, 0, 0, 1, 0, 0, 0, 0]
         """
         length = int(ceil(log(self.modulus,2)))
         result = [0] * length
