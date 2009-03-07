@@ -13,6 +13,8 @@ to the repository):
 * Jakob Illeborg Pagter
 * Sigurd Meldgaard
 * Marcel Keller <mkeller@cs.au.dk>
+* Tord Reistad
+* Ivan Damgård
 
 If you have been forgotten, then please checkout `the repository`_,
 add yourself to the list and `send us a patch`_!
