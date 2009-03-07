@@ -35,8 +35,8 @@ from viff.aes import AES
 parser = OptionParser(usage="Usage: %prog [options] config_file")
 parser.add_option("-e", "--exponentiation", action="store_true",
                   help="Use exponentiation to invert bytes (default).")
-parser.add_option("-m", "--masking", action="store_false", 
-                  dest="exponentiation", 
+parser.add_option("-m", "--masking", action="store_false",
+                  dest="exponentiation",
                   help="Use masking to invert bytes.")
 parser.set_defaults(exponentiation=True)
 
@@ -72,7 +72,6 @@ def share_key(rt):
 
     for i in range(24):
         inputter = i % 3 + 1
-        
         if (inputter == id):
             key.append(rt.input([inputter], GF256, ord("b")))
         else:

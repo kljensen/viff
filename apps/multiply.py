@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# Copyright 2008 VIFF Development Team.
+# Copyright 2008, 2009 VIFF Development Team.
 #
 # This file is part of VIFF, the Virtual Ideal Functionality Framework.
 #
@@ -24,9 +24,12 @@ from viff.field import GF
 from viff.runtime import create_runtime, Runtime
 from viff.config import load_config
 
-parser = OptionParser()
+parser = OptionParser("%prog config input")
 Runtime.add_options(parser)
 (options, args) = parser.parse_args()
+
+if len(args) != 2:
+    parser.error("please supply a config file and an integer")
 
 Zp = GF(1031)
 
