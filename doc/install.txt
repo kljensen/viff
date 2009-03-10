@@ -97,7 +97,7 @@ This describes installation of VIFF on Max OS X 10.5.
 6) Install VIFF from source (see below). If you prefer you can just
   install it in site-packages, it makes no difference.
 
-  For developers, either add VIFF to the PYTHONPATH:
+  For developers, either add VIFF to the PYTHONPATH::
 
     export PYTHONPATH=$PYTHONPATH:$HOME/path-to-viff/viff
 
