@@ -73,27 +73,40 @@ This describes installation of VIFF on Max OS X 10.5.
    Python-installation which comes with Mac OS X is not entirely
    up-to-date).
 
-2) Download and Install Twisted_ from source. Notice again that Mac OS
-   X comes with a pre-installed version of Twisted, but this is not
-   the full Twisted installation. After installation change your
-   ``PYTHONPATH`` (in your ``~/.bash_profile``) to::
+2) Download and Install Twisted_ from source. There is an installer
+  For Mac OS X 10.5 which can be used if you use Mac OS X 10.5. Notice
+  again that Mac OS X comes with a pre-installed version of Twisted,
+  but this is not the full Twisted installation. After installation
+  change your ``PYTHONPATH`` (in your ``~/.bash_profile``) to::
 
-      PATH="/Library/Python/2.5/site-packages:${PATH}"
+      export PYTHONPATH="/Library/Python/2.5/site-packages:${PYTHONPATH}"
+
+      export PYTHONPATH=$PYTHONPATH:$HOME/opt/lib/python
 
 3) Optionally: download PyOpenSSL_ and tell us if it works!
 
-4) Download and install GMPY_ following the instructions in
+4) Download and install GMP_. you can preferably use the Macports or
+  Fink package utilities. If you download the other dependencies from
+  either Macports or Fink, they might depend on Python 2.4 which is
+  not preferable, you should use Python 2.5, unless you have good
+  reasons not to.
+
+5) Download and install GMPY_ following the instructions in
    ``gmpy-1.02.macosx.README.txt`` (under Downloads).
 
-5) Install VIFF from source (see below). If you prefer you can just
-   install it in site-packages, it makes no difference. For
-   developers, it is perhaps a better solution in to create a symbolic
-   link from the site-packages directory to the VIFF Python files
-   (``viff/viff/``), as otherwise you need to re-install VIFF each time
-   the project is modified.
+6) Install VIFF from source (see below). If you prefer you can just
+  install it in site-packages, it makes no difference.
 
-6) Proceed to `testing`_.
+  For developers, either add VIFF to the PYTHONPATH:
 
+    export PYTHONPATH=$PYTHONPATH:$HOME/path-to-viff/viff
+
+  or create a symbolic link from the site-packages directory to the
+  VIFF Python files (``viff/viff/``), as otherwise you need to
+  re-install VIFF each time the project is modified.
+
+
+7) Proceed to `testing`_.
 
 GNU/Linux
 ---------
