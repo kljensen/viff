@@ -188,7 +188,6 @@ def generate_configs(n, t, keysize=1024, addresses=None, prefix=None, skip_prss=
         """Convert a dealer ID to a string."""
         return "Dealer " + str(dealer)
 
-    # TODO: remove hard-coded key size.
     key_pairs = dict([(p, paillier.generate_keys(keysize)) for p in players])
 
     configs = {}
