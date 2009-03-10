@@ -65,14 +65,15 @@ parser.add_option("-q", "--quiet", dest="verbose", action="store_false",
                   help="be quiet")
 parser.add_option("-n", "--players", dest="n", type="int",
                   help="number of players")
-parser.add_option("-k", "--keysize", dest="keysize", type="int", default=1024,
+parser.add_option("-k", "--keysize", type="int",
                   help="Specify the key-size")
 parser.add_option("-t", "--threshold", dest="t", type="int",
                   help="threshold (it must hold that t < n/2)")
 parser.add_option("--skip-prss", action="store_true",
                   help="do not generate PRSS keys")
 
-parser.set_defaults(verbose=True, n=3, t=1, prefix='player', skip_prss=False)
+parser.set_defaults(verbose=True, n=3, t=1, prefix='player', skip_prss=False,
+                    keysize=1024)
 
 (options, args) = parser.parse_args()
 
@@ -80,8 +81,8 @@ if len(args) != options.n:
     parser.error("must supply a hostname:port argument for each player")
 
 addresses = [arg.split(':', 1) for arg in args]
-configs = generate_configs(options.n, options.t, options.keysize, addresses, options.prefix,
-                           options.skip_prss)
+configs = generate_configs(options.n, options.t, options.keysize, addresses,
+                           options.prefix, options.skip_prss)
 
 for config in configs.itervalues():
     config.write()

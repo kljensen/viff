@@ -152,7 +152,7 @@ def load_config(source):
     return owner_id, players
 
 
-def generate_configs(n, t, keysize, addresses=None, prefix=None, skip_prss=False):
+def generate_configs(n, t, keysize=1024, addresses=None, prefix=None, skip_prss=False):
     """Generate player configurations.
 
     Generates *n* configuration objects with a threshold of *t*. The
@@ -188,7 +188,6 @@ def generate_configs(n, t, keysize, addresses=None, prefix=None, skip_prss=False
         """Convert a dealer ID to a string."""
         return "Dealer " + str(dealer)
 
-    # TODO: remove hard-coded key size.
     key_pairs = dict([(p, paillier.generate_keys(keysize)) for p in players])
 
     configs = {}
