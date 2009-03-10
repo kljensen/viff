@@ -74,7 +74,7 @@ This describes installation of VIFF on Max OS X 10.5.
    up-to-date).
 
 2) Download and Install Twisted_ from source. There is an installer
-  For Mac OS X 10.5 which can be used if you use Mac OS X 10.5. Notice
+  for Mac OS X 10.5 which can be used if you use Mac OS X 10.5. Notice
   again that Mac OS X comes with a pre-installed version of Twisted,
   but this is not the full Twisted installation. After installation
   change your ``PYTHONPATH`` (in your ``~/.bash_profile``) to::
@@ -85,7 +85,7 @@ This describes installation of VIFF on Max OS X 10.5.
 
 3) Optionally: download PyOpenSSL_ and tell us if it works!
 
-4) Download and install GMP_. you can preferably use the Macports or
+4) Download and install GMP_. You can preferably use the Macports or
   Fink package utilities. If you download the other dependencies from
   either Macports or Fink, they might depend on Python 2.4 which is
   not preferable, you should use Python 2.5, unless you have good
@@ -104,7 +104,6 @@ This describes installation of VIFF on Max OS X 10.5.
   or create a symbolic link from the site-packages directory to the
   VIFF Python files (``viff/viff/``), as otherwise you need to
   re-install VIFF each time the project is modified.
-
 
 7) Proceed to `testing`_.
 
