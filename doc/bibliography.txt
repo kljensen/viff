@@ -74,7 +74,7 @@ papers.
 .. [Toft05] Tomas Toft, *Secure Integer Computation with Applications
    in Economics*, PhD Progress Report, July 2005, PDF__.
 
-   .. __: http://www.daimi.au.dk/~tomas/publications/progress.pdf
+   .. __: http://www.daimi.au.dk/~ttoft/publications/progress.pdf
 
 .. [Yao82] Andrew Chi-Chih Yao, *Protocols for Secure Computations*,
    FOCS 1982, 160-164.
