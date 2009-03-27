@@ -118,7 +118,7 @@ def prss(n, j, field, prfs, key):
     return convert_replicated_shamir(n, j, field, rep_shares)
 
 def prss_multi(n, j, field, prfs, key, modulus, quantity):
-    """Does the same as :meth:`prss`, but multiple times in order to 
+    """Does the same as :meth:`prss`, but multiple times in order to
     call the PRFs less frequently.
     """
     prf_results = random_replicated_sharing(j, prfs, key)
@@ -127,7 +127,7 @@ def prss_multi(n, j, field, prfs, key, modulus, quantity):
         for i in range(quantity):
             rep_shares_list[i].append((subset, result % modulus))
             result /= modulus
-    return [convert_replicated_shamir(n, j, field, rep_shares) 
+    return [convert_replicated_shamir(n, j, field, rep_shares)
             for rep_shares in rep_shares_list]
 
 @fake(lambda n, j, field, prfs, key: (field(7), GF256(1)))
