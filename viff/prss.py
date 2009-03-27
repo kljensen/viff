@@ -80,8 +80,6 @@ def convert_replicated_shamir(n, j, field, rep_shares):
     result = 0
     all = frozenset(range(1, n+1))
     for subset, share in rep_shares:
-        # TODO: should we cache the f_in_j values?
-        # Yes, we probably should.
         if ((field, n, j, subset) in _f_in_j_cache):
             f_in_j = _f_in_j_cache[(field, n, j, subset)]
         else:

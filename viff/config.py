@@ -69,8 +69,6 @@ class Player:
             for subset, key in self.keys.iteritems():
                 prfs[subset] = PRF(key, modulus)
             self.prfs_cache[modulus] = prfs
-        # TODO: the PRFs ought to be cached
-        # Yes, they probably should.
         return prfs
 
     def dealer_prfs(self, modulus):
