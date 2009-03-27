@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright 2007, 2008 VIFF Development Team.
+# Copyright 2007, 2008, 2009 VIFF Development Team.
 #
 # This file is part of VIFF, the Virtual Ideal Functionality Framework.
 #
@@ -76,7 +76,6 @@ def convert_replicated_shamir(n, j, field, rep_shares):
     The conversion is done for player *j* (out of *n*) and will be
     done over *field*.
     """
-    global _f_in_j_cache
     result = 0
     all = frozenset(range(1, n+1))
     for subset, share in rep_shares:
