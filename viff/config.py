@@ -62,14 +62,13 @@ class Player:
         Return a mapping from player subsets to :class:`viff.prss.PRF`
         instances.
         """
-        if (modulus in self.prfs_cache):
-            prfs = self.prfs_cache[modulus]
-        else:
-            prfs = {}
+        try:
+            return self.prfs_cache[modulus]
+        except KeyError:
+            self.prfs_cache[modulus] = prfs = {}
             for subset, key in self.keys.iteritems():
                 prfs[subset] = PRF(key, modulus)
-            self.prfs_cache[modulus] = prfs
-        return prfs
+            return prfs
 
     def dealer_prfs(self, modulus):
         """Retrieve dealer PRSS PRFs.
@@ -80,17 +79,16 @@ class Player:
         Return a mapping from player subsets to :class:`viff.prss.PRF`
         instances.
         """
-        if (modulus in self.dealers_cache):
-            dealers = self.dealers_cache[modulus]
-        else:
-            dealers = {}
+        try:
+            return self.dealers_cache[modulus]
+        except KeyError:
+            self.dealers_cache[modulus] = dealers = {}
             for dealer, keys in self.dealer_keys.iteritems():
                 prfs = {}
                 for subset, key in keys.iteritems():
                     prfs[subset] = PRF(key, modulus)
                 dealers[dealer] = prfs
-            self.dealers_cache[modulus] = dealers
-        return dealers
+            return dealers
 
     def __repr__(self):
         """Simple string representation of the player."""
