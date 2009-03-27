@@ -1,4 +1,4 @@
-# Copyright 2007, 2008 VIFF Development Team.
+# Copyright 2007, 2008, 2009 VIFF Development Team.
 #
 # This file is part of VIFF, the Virtual Ideal Functionality Framework.
 #
@@ -88,8 +88,8 @@ class Player:
                 prfs = {}
                 for subset, key in keys.iteritems():
                     prfs[subset] = PRF(key, modulus)
-                    dealers[dealer] = prfs
-                    self.dealers_cache[modulus] = dealers
+                dealers[dealer] = prfs
+            self.dealers_cache[modulus] = dealers
         return dealers
 
     def __repr__(self):
