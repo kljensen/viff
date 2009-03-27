@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright 2007, 2008 VIFF Development Team.
+# Copyright 2007, 2008, 2009 VIFF Development Team.
 #
 # This file is part of VIFF, the Virtual Ideal Functionality Framework.
 #
@@ -66,6 +66,10 @@ def random_replicated_sharing(j, prfs, key):
     # the subset before using it.
     return [(s, prf(key)) for (s, prf) in prfs.iteritems() if j in s]
 
+#: Cache the coefficients used to construct the share. They depend on the field,
+#: the player concerned, the total number of players, and the subset.
+_f_in_j_cache = {}
+
 def convert_replicated_shamir(n, j, field, rep_shares):
     """Convert a set of replicated shares to a Shamir share.
 
@@ -75,10 +79,13 @@ def convert_replicated_shamir(n, j, field, rep_shares):
     result = 0
     all = frozenset(range(1, n+1))
     for subset, share in rep_shares:
-        # TODO: should we cache the f_in_j values?
-        points = [(field(x), 0) for x in all-subset]
-        points.append((0, 1))
-        f_in_j = shamir.recombine(points, j)
+        try:
+            f_in_j = _f_in_j_cache[(field, n, j, subset)]
+        except KeyError:
+            points = [(field(x), 0) for x in all-subset]
+            points.append((0, 1))
+            f_in_j = shamir.recombine(points, j)
+            _f_in_j_cache[(field, n, j, subset)] = f_in_j
         result += share * f_in_j
     return result
 
@@ -109,6 +116,19 @@ def prss(n, j, field, prfs, key):
     """
     rep_shares = random_replicated_sharing(j, prfs, key)
     return convert_replicated_shamir(n, j, field, rep_shares)
+
+def prss_multi(n, j, field, prfs, key, modulus, quantity):
+    """Does the same as :meth:`prss`, but multiple times in order to 
+    call the PRFs less frequently.
+    """
+    prf_results = random_replicated_sharing(j, prfs, key)
+    rep_shares_list = [[] for i in range(quantity)]
+    for subset, result in prf_results:
+        for i in range(quantity):
+            rep_shares_list[i].append((subset, result % modulus))
+            result /= modulus
+    return [convert_replicated_shamir(n, j, field, rep_shares) 
+            for rep_shares in rep_shares_list]
 
 @fake(lambda n, j, field, prfs, key: (field(7), GF256(1)))
 def prss_lsb(n, j, field, prfs, key):

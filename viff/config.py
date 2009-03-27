@@ -1,4 +1,4 @@
-# Copyright 2007, 2008 VIFF Development Team.
+# Copyright 2007, 2008, 2009 VIFF Development Team.
 #
 # This file is part of VIFF, the Virtual Ideal Functionality Framework.
 #
@@ -49,6 +49,8 @@ class Player:
         self.seckey = seckey
         self.keys = keys
         self.dealer_keys = dealer_keys
+        self.prfs_cache = {}
+        self.dealers_cache = {}
 
     def prfs(self, modulus):
         """Retrieve PRSS PRFs.
@@ -60,11 +62,13 @@ class Player:
         Return a mapping from player subsets to :class:`viff.prss.PRF`
         instances.
         """
-        prfs = {}
-        for subset, key in self.keys.iteritems():
-            prfs[subset] = PRF(key, modulus)
-        # TODO: the PRFs ought to be cached
-        return prfs
+        try:
+            return self.prfs_cache[modulus]
+        except KeyError:
+            self.prfs_cache[modulus] = prfs = {}
+            for subset, key in self.keys.iteritems():
+                prfs[subset] = PRF(key, modulus)
+            return prfs
 
     def dealer_prfs(self, modulus):
         """Retrieve dealer PRSS PRFs.
@@ -75,14 +79,16 @@ class Player:
         Return a mapping from player subsets to :class:`viff.prss.PRF`
         instances.
         """
-        dealers = {}
-        for dealer, keys in self.dealer_keys.iteritems():
-            prfs = {}
-            for subset, key in keys.iteritems():
-                prfs[subset] = PRF(key, modulus)
+        try:
+            return self.dealers_cache[modulus]
+        except KeyError:
+            self.dealers_cache[modulus] = dealers = {}
+            for dealer, keys in self.dealer_keys.iteritems():
+                prfs = {}
+                for subset, key in keys.iteritems():
+                    prfs[subset] = PRF(key, modulus)
                 dealers[dealer] = prfs
-        # TODO: the PRFs ought to be cached
-        return dealers
+            return dealers
 
     def __repr__(self):
         """Simple string representation of the player."""

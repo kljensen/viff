@@ -79,7 +79,7 @@ class ProbabilisticEqualityMixin:
         # Take the product (this is here the same as the "and") of all
         # the x'es
         while len(x) > 1:
-            x.append(x.pop() * x.pop())
+            x.append(x.pop(0) * x.pop(0))
 
         return x[0]
 

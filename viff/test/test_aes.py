@@ -88,16 +88,16 @@ class AESTestCase(RuntimeTestCase):
     @protocol
     def test_byte_sub_with_masking(self, runtime):
         self._test_byte_sub(runtime, AES(runtime, 128, 
-                                         use_exponentiation=False))
+                                         use_exponentiation=False, quiet=True))
 
     @protocol
     def test_byte_sub_with_exponentiation(self, runtime):
         self._test_byte_sub(runtime, AES(runtime, 128, 
-                                         use_exponentiation=True))
+                                         use_exponentiation=True, quiet=True))
 
     @protocol
     def test_key_expansion(self, runtime):
-        aes = AES(runtime, 256)
+        aes = AES(runtime, 256, quiet=True)
         key = []
         ascii_key = []
 
@@ -130,7 +130,7 @@ class AESTestCase(RuntimeTestCase):
         cleartext = "Encrypt this!!!!"
         key = "Supposed to be secret!?!"
 
-        aes = AES(runtime, 192)
+        aes = AES(runtime, 192, quiet=True)
         r = rijndael(key)
 
         result = aes.encrypt(cleartext, key)

@@ -568,11 +568,11 @@ class Runtime:
         def callback_wrapper(*args, **kwargs):
             """Wrapper for a callback which ensures a correct PC."""
             try:
-                current_pc = self.program_counter
-                self.program_counter = saved_pc
+                current_pc = self.program_counter[:]
+                self.program_counter[:] = saved_pc
                 return func(*args, **kwargs)
             finally:
-                self.program_counter = current_pc
+                self.program_counter[:] = current_pc
 
         deferred.addCallback(callback_wrapper, *args, **kwargs)
 
