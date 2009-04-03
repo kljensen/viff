@@ -203,7 +203,7 @@ platforms. Do the following:
 2) Open three separate command prompts and go to the ``viff/apps/``
    directory in each. In the first, type::
 
-     python millionaires.py --no-ssl player-3.ini
+     python millionaires.py --no-ssl player-1.ini
 
    in the second, type::
 
@@ -211,10 +211,13 @@ platforms. Do the following:
 
    and in the last, type::
 
-     python millionaires.py --no-ssl player-1.ini
+     python millionaires.py --no-ssl player-3.ini
 
-   The order in which you start the players does not matter. If
-   the installation works, you should see something like this from
+   The order in which you start the players does not matter. They
+   should find each other within a couple of seconds after you have
+   started the final player.
+
+   If the installation works, you should see something like this from
    e.g. player 3::
 
       C:\viff\apps> python millionaires.py --no-ssl player-3.ini
