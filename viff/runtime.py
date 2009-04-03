@@ -334,6 +334,8 @@ class ShareExchangerFactory(ReconnectingClientFactory, ServerFactory):
     """Factory for creating ShareExchanger protocols."""
 
     protocol = ShareExchanger
+    maxDelay = 3
+    factor = 1.234567 # About half of the Twisted default
 
     def __init__(self, runtime, players, protocols_ready):
         """Initialize the factory."""
