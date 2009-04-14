@@ -305,7 +305,7 @@ class ShareExchanger(Int16StringReceiver):
             # TODO: we cannot handle the empty string
             # also note that we cannot handle pcs longer than 256
             pc_size = ord(string[0])
-            fmt = (pc_size + 1)*'i'
+            fmt = "%di" % (pc_size + 1)
             predata_size = struct.calcsize(fmt) + 1
             fmt = "%s%is" % (fmt, len(string)-predata_size)
 
@@ -327,7 +327,7 @@ class ShareExchanger(Int16StringReceiver):
 
     def sendData(self, program_counter, data_type, data):
         pc_size = len(program_counter)
-        fmt = "%s%is" % ((pc_size + 1)*'i', len(data))
+        fmt = "%di%ds" % (pc_size + 1, len(data))
         data_tuple = program_counter + (data_type, data)
 
         self.sendString(chr(pc_size) + struct.pack(fmt, *data_tuple))
