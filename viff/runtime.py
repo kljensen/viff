@@ -302,17 +302,13 @@ class ShareExchanger(Int16StringReceiver):
                     self.transport.loseConnection()
             self.factory.identify_peer(self)
         else:
-            # TODO: we cannot handle the empty string
-            # also note that we cannot handle pcs longer than 256
-            pc_size = ord(string[0])
-            fmt = "%di" % (pc_size + 1)
-            predata_size = struct.calcsize(fmt) + 1
-            fmt = "%s%is" % (fmt, len(string)-predata_size)
-
-            unpacked = struct.unpack(fmt, string[1:])
+            # TODO: We cannot handle the empty string.
+            pc_size, data_size, data_type = struct.unpack("!HHB", string[:5])
+            fmt = "!%dI%ds" % (pc_size, data_size)
+            unpacked = struct.unpack(fmt, string[5:])
 
             program_counter = unpacked[:pc_size]
-            data_type, data = unpacked[-2:]
+            data = unpacked[-1]
 
             key = (program_counter, data_type)
 
@@ -327,10 +323,10 @@ class ShareExchanger(Int16StringReceiver):
 
     def sendData(self, program_counter, data_type, data):
         pc_size = len(program_counter)
-        fmt = "%di%ds" % (pc_size + 1, len(data))
-        data_tuple = program_counter + (data_type, data)
-
-        self.sendString(chr(pc_size) + struct.pack(fmt, *data_tuple))
+        data_size = len(data)
+        fmt = "!HHB%dI%ds" % (pc_size, data_size)
+        t = (pc_size, data_size, data_type) + program_counter + (data,)
+        self.sendString(struct.pack(fmt, *t))
 
     def sendShare(self, program_counter, share):
         """Send a share.
