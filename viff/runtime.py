@@ -670,7 +670,7 @@ class Runtime:
           ``int`` tells us how many items of pre-processed data the
           :class:`Deferred` will yield.
 
-        - The Deferred must yield a list of the promissed length.
+        - The Deferred must yield a list of the promised length.
 
         - The list contains the actual data. This data can be either a
           Deferred or a tuple of Deferreds.
