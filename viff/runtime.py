@@ -34,7 +34,7 @@ from __future__ import division
 __docformat__ = "restructuredtext"
 
 import time
-import marshal
+import struct
 from optparse import OptionParser, OptionGroup
 from collections import deque
 
@@ -305,7 +305,18 @@ class ShareExchanger(Int16StringReceiver):
                     self.transport.loseConnection()
             self.factory.identify_peer(self)
         else:
-            program_counter, data_type, data = marshal.loads(string)
+            # TODO: we cannot handle the empty string
+            # also note that we cannot handle pcs longer than 256
+            pc_size = ord(string[0])
+            fmt = (pc_size + 1)*'i'
+            predata_size = struct.calcsize(fmt) + 1
+            fmt = "%s%is" % (fmt, len(string)-predata_size)
+
+            unpacked = struct.unpack(fmt, string[1:])
+
+            program_counter = unpacked[:pc_size]
+            data_type, data = unpacked[-2:]
+
             key = (program_counter, data_type)
 
             deq = self.incoming_data.setdefault(key, deque())
@@ -321,8 +332,11 @@ class ShareExchanger(Int16StringReceiver):
             # TypeError. They should be handled somehow.
 
     def sendData(self, program_counter, data_type, data):
-        send_data = (program_counter, data_type, data)
-        self.sendString(marshal.dumps(send_data))
+        pc_size = len(program_counter)
+        fmt = "%s%is" % ((pc_size + 1)*'i', len(data))
+        data_tuple = program_counter + (data_type, data)
+
+        self.sendString(chr(pc_size) + struct.pack(fmt, *data_tuple))
 
     def sendShare(self, program_counter, share):
         """Send a share.
@@ -330,7 +344,7 @@ class ShareExchanger(Int16StringReceiver):
         The program counter and the share are marshalled and sent to
         the peer.
         """
-        self.sendData(program_counter, SHARE, share.value)
+        self.sendData(program_counter, SHARE, hex(share.value))
 
     def loseConnection(self):
         """Disconnect this protocol instance."""
@@ -635,8 +649,12 @@ class Runtime:
             return share
 
     def _expect_share(self, peer_id, field):
+
+        def unpack_share(value_string):
+            return field(long(value_string, 16))
+
         share = Share(self, field)
-        share.addCallback(lambda value: field(value))
+        share.addCallback(unpack_share)
         self._expect_data(peer_id, SHARE, share)
         return share
 

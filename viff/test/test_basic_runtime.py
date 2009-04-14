@@ -1,4 +1,4 @@
-# Copyright 2008 VIFF Development Team.
+# Copyright 2008, 2009 VIFF Development Team.
 #
 # This file is part of VIFF, the Virtual Ideal Functionality Framework.
 #
@@ -140,17 +140,17 @@ class ProgramCounterTest(RuntimeTestCase):
         for peer_id in range(1, self.num_players+1):
             if peer_id != runtime.id:
                 pc = tuple(runtime.program_counter)
-                runtime.protocols[peer_id].sendData(pc, 42, 100)
-                runtime.protocols[peer_id].sendData(pc, 42, 200)
-                runtime.protocols[peer_id].sendData(pc, 42, 300)
+                runtime.protocols[peer_id].sendData(pc, 42, "100")
+                runtime.protocols[peer_id].sendData(pc, 42, "200")
+                runtime.protocols[peer_id].sendData(pc, 42, "300")
 
         # Then receive the data.
         deferreds = []
         for peer_id in range(1, self.num_players+1):
             if peer_id != runtime.id:
-                d100 = Deferred().addCallback(self.assertEquals, 100)
-                d200 = Deferred().addCallback(self.assertEquals, 200)
-                d300 = Deferred().addCallback(self.assertEquals, 300)
+                d100 = Deferred().addCallback(self.assertEquals, "100")
+                d200 = Deferred().addCallback(self.assertEquals, "200")
+                d300 = Deferred().addCallback(self.assertEquals, "300")
                 runtime._expect_data(peer_id, 42, d100)
                 runtime._expect_data(peer_id, 42, d200)
                 runtime._expect_data(peer_id, 42, d300)
