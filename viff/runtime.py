@@ -263,9 +263,6 @@ class ShareExchanger(Int16StringReceiver):
     All players are connected by pair-wise connections and this
     Twisted protocol is one such connection. It is used to send and
     receive shares from one other player.
-
-    The :mod:`marshal` module is used for converting the data to bytes
-    for the network and to convert back again to structured data.
     """
 
     def __init__(self):
@@ -284,9 +281,9 @@ class ShareExchanger(Int16StringReceiver):
     def stringReceived(self, string):
         """Called when a share is received.
 
-        The string received is unmarshalled into the program counter,
-        and a data part. The data is passed the appropriate Deferred
-        in :class:`self.incoming_data`.
+        The string received is unpacked into the program counter, and
+        a data part. The data is passed the appropriate Deferred in
+        :class:`self.incoming_data`.
         """
         if self.peer_id is None:
             # TODO: Handle ValueError if the string cannot be decoded.
@@ -328,9 +325,6 @@ class ShareExchanger(Int16StringReceiver):
             else:
                 deq.append(data)
 
-            # TODO: marshal.loads can raise EOFError, ValueError, and
-            # TypeError. They should be handled somehow.
-
     def sendData(self, program_counter, data_type, data):
         pc_size = len(program_counter)
         fmt = "%s%is" % ((pc_size + 1)*'i', len(data))
@@ -341,8 +335,8 @@ class ShareExchanger(Int16StringReceiver):
     def sendShare(self, program_counter, share):
         """Send a share.
 
-        The program counter and the share are marshalled and sent to
-        the peer.
+        The program counter and the share are converted to bytes and
+        sent to the peer.
         """
         self.sendData(program_counter, SHARE, hex(share.value))
 
