@@ -246,6 +246,7 @@ platforms. Do the following:
 .. _test VIFF: http://buildbot.viff.dk/
 .. _Python: http://python.org/
 .. _Twisted: http://twistedmatrix.com/
+.. _GMP: http://gmplib.org/
 .. _GMPY: http://code.google.com/p/gmpy/
 .. _OpenSSL Win32 installer: http://www.slproweb.com/products/Win32OpenSSL.html
 .. _PyOpenSSL: http://pyopenssl.sourceforge.net/
