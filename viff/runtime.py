@@ -322,6 +322,21 @@ class ShareExchanger(Int16StringReceiver):
                 deq.append(data)
 
     def sendData(self, program_counter, data_type, data):
+        """Send data to the peer.
+
+        The *program_counter* is a tuple of unsigned integers, the
+        *data_type* is an unsigned byte and *data* is a string.
+
+        The data is encoded as follows::
+
+          +---------+-----------+-----------+--------+--------------+
+          | pc_size | data_size | data_type |   pc   |     data     |
+          +---------+-----------+-----------+--------+--------------+
+            2 bytes   2 bytes     1 byte      varies      varies
+
+        The program counter takes up 4 * ``pc_size`` bytes, the data
+        takes up ``data_size`` bytes.
+        """
         pc_size = len(program_counter)
         data_size = len(data)
         fmt = "!HHB%dI%ds" % (pc_size, data_size)
