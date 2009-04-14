@@ -28,6 +28,7 @@ from viff.util import rand
 from viff.matrix import Matrix, hyper
 from viff.passive import PassiveRuntime
 from viff.runtime import Share, increment_pc, preprocess, gather_shares
+from viff.runtime import ECHO, READY, SEND
 
 
 class BrachaBroadcastMixin:
@@ -80,7 +81,7 @@ class BrachaBroadcastMixin:
                 ids.append(peer_id)
                 if len(ids) >= ceil((n+t+1)/2) and not ready:
                     bracha_sent_ready[message] = True
-                    unsafe_broadcast("ready", message)
+                    unsafe_broadcast(READY, message)
                     ready_received(message, self.id)
 
         def ready_received(message, peer_id):
@@ -95,7 +96,7 @@ class BrachaBroadcastMixin:
                 ids.append(peer_id)
                 if len(ids) == t+1 and not ready:
                     bracha_sent_ready[message] = True
-                    unsafe_broadcast("ready", message)
+                    unsafe_broadcast(READY, message)
                     ready_received(message, self.id)
 
                 elif len(ids) == 2*t+1 and not delivered:
@@ -107,7 +108,7 @@ class BrachaBroadcastMixin:
             # by sending an echo message to each player. Since the
             # unsafe broadcast doesn't send a message to this player,
             # we simulate it by calling the echo_received function.
-            unsafe_broadcast("echo", message)
+            unsafe_broadcast(ECHO, message)
             echo_received(message, self.id)
 
 
@@ -117,20 +118,20 @@ class BrachaBroadcastMixin:
         for peer_id in self.players:
             if peer_id != self.id:
                 d_echo = Deferred().addCallback(echo_received, peer_id)
-                self._expect_data(peer_id, "echo", d_echo)
+                self._expect_data(peer_id, ECHO, d_echo)
 
                 d_ready = Deferred().addCallback(ready_received, peer_id)
-                self._expect_data(peer_id, "ready", d_ready)
+                self._expect_data(peer_id, READY, d_ready)
 
         # If this player is the sender, we transmit a send message to
         # each player. We send one to this player by calling the
         # send_received function.
         if self.id == sender:
-            unsafe_broadcast("send", message)
+            unsafe_broadcast(SEND, message)
             send_received(message)
         else:
             d_send = Deferred().addCallback(send_received)
-            self._expect_data(sender, "send", d_send)
+            self._expect_data(sender, SEND, d_send)
 
 
         return result

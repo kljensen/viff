@@ -140,9 +140,9 @@ class ProgramCounterTest(RuntimeTestCase):
         for peer_id in range(1, self.num_players+1):
             if peer_id != runtime.id:
                 pc = tuple(runtime.program_counter)
-                runtime.protocols[peer_id].sendData(pc, "test", 100)
-                runtime.protocols[peer_id].sendData(pc, "test", 200)
-                runtime.protocols[peer_id].sendData(pc, "test", 300)
+                runtime.protocols[peer_id].sendData(pc, 42, 100)
+                runtime.protocols[peer_id].sendData(pc, 42, 200)
+                runtime.protocols[peer_id].sendData(pc, 42, 300)
 
         # Then receive the data.
         deferreds = []
@@ -151,9 +151,9 @@ class ProgramCounterTest(RuntimeTestCase):
                 d100 = Deferred().addCallback(self.assertEquals, 100)
                 d200 = Deferred().addCallback(self.assertEquals, 200)
                 d300 = Deferred().addCallback(self.assertEquals, 300)
-                runtime._expect_data(peer_id, "test", d100)
-                runtime._expect_data(peer_id, "test", d200)
-                runtime._expect_data(peer_id, "test", d300)
+                runtime._expect_data(peer_id, 42, d100)
+                runtime._expect_data(peer_id, 42, d200)
+                runtime._expect_data(peer_id, 42, d300)
                 deferreds.extend([d100, d200, d300])
 
         return gatherResults(deferreds)

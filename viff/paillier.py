@@ -28,6 +28,7 @@ from twisted.internet.defer import Deferred, gatherResults
 import gmpy
 
 from viff.runtime import Runtime, increment_pc, Share, gather_shares
+from viff.runtime import PAILLIER
 from viff.util import rand, find_random_prime
 
 def L(u, n):
@@ -170,11 +171,11 @@ class PaillierRuntime(Runtime):
                 a1, b1 = a, b
                 enc_a1 = encrypt(a1.value, self.player.pubkey)
                 enc_b1 = encrypt(b1.value, self.player.pubkey)
-                send_data(pc, "paillier", enc_a1)
-                send_data(pc, "paillier", enc_b1)
+                send_data(pc, PAILLIER, enc_a1)
+                send_data(pc, PAILLIER, enc_b1)
 
                 enc_c1 = Share(self, field)
-                self._expect_data(self.peer.id, "paillier", enc_c1)
+                self._expect_data(self.peer.id, PAILLIER, enc_c1)
                 c1 = enc_c1.addCallback(decrypt, self.player.seckey)
                 c1.addCallback(lambda c: long(c) + a1 * b1)
                 return c1
@@ -182,9 +183,9 @@ class PaillierRuntime(Runtime):
                 # We play the role of P2.
                 a2, b2 = a, b
                 enc_a1 = Deferred()
-                self._expect_data(self.peer.id, "paillier", enc_a1)
+                self._expect_data(self.peer.id, PAILLIER, enc_a1)
                 enc_b1 = Deferred()
-                self._expect_data(self.peer.id, "paillier", enc_b1)
+                self._expect_data(self.peer.id, PAILLIER, enc_b1)
 
                 nsq = self.peer.pubkey[0]**2
                 # Calculate a1 * b2 and b1 * a2 inside the encryption.
@@ -197,7 +198,7 @@ class PaillierRuntime(Runtime):
 
                 c1 = gatherResults([enc_a1_b2, enc_b1_a2])
                 c1.addCallback(lambda (a,b): a * b * enc_r)
-                c1.addCallback(lambda c: send_data(pc, "paillier", c))
+                c1.addCallback(lambda c: send_data(pc, PAILLIER, c))
 
                 c2 = a2 * b2 - r
                 return Share(self, field, c2)

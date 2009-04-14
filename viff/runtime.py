@@ -49,6 +49,13 @@ from twisted.internet.defer import maybeDeferred
 from twisted.internet.protocol import ReconnectingClientFactory, ServerFactory
 from twisted.protocols.basic import Int16StringReceiver
 
+# Constants used by ShareExchanger.
+SHARE    = 0
+ECHO     = 1
+READY    = 2
+SEND     = 3
+PAILLIER = 4
+
 
 class Share(Deferred):
     """A shared number.
@@ -323,7 +330,7 @@ class ShareExchanger(Int16StringReceiver):
         The program counter and the share are marshalled and sent to
         the peer.
         """
-        self.sendData(program_counter, "share", share.value)
+        self.sendData(program_counter, SHARE, share.value)
 
     def loseConnection(self):
         """Disconnect this protocol instance."""
@@ -630,7 +637,7 @@ class Runtime:
     def _expect_share(self, peer_id, field):
         share = Share(self, field)
         share.addCallback(lambda value: field(value))
-        self._expect_data(peer_id, "share", share)
+        self._expect_data(peer_id, SHARE, share)
         return share
 
     @increment_pc
