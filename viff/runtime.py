@@ -334,7 +334,7 @@ class ShareExchanger(Int16StringReceiver):
           +---------+-----------+-----------+--------+--------------+
             2 bytes   2 bytes      1 byte     varies      varies
 
-        The program counter takes up 4 * ``pc_size`` bytes, the data
+        The program counter takes up ``4 * pc_size`` bytes, the data
         takes up ``data_size`` bytes.
         """
         pc_size = len(program_counter)
