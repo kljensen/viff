@@ -654,12 +654,8 @@ class Runtime:
             return share
 
     def _expect_share(self, peer_id, field):
-
-        def unpack_share(value_string):
-            return field(long(value_string, 16))
-
         share = Share(self, field)
-        share.addCallback(unpack_share)
+        share.addCallback(lambda value: field(long(value, 16)))
         self._expect_data(peer_id, SHARE, share)
         return share
 
