@@ -302,24 +302,26 @@ class ShareExchanger(Int16StringReceiver):
                     self.transport.loseConnection()
             self.factory.identify_peer(self)
         else:
-            # TODO: We cannot handle the empty string.
-            pc_size, data_size, data_type = struct.unpack("!HHB", string[:5])
-            fmt = "!%dI%ds" % (pc_size, data_size)
-            unpacked = struct.unpack(fmt, string[5:])
+            try:
+                pc_size, data_size, data_type = struct.unpack("!HHB", string[:5])
+                fmt = "!%dI%ds" % (pc_size, data_size)
+                unpacked = struct.unpack(fmt, string[5:])
 
-            program_counter = unpacked[:pc_size]
-            data = unpacked[-1]
+                program_counter = unpacked[:pc_size]
+                data = unpacked[-1]
 
-            key = (program_counter, data_type)
+                key = (program_counter, data_type)
 
-            deq = self.incoming_data.setdefault(key, deque())
-            if deq and isinstance(deq[0], Deferred):
-                deferred = deq.popleft()
-                if not deq:
-                    del self.incoming_data[key]
-                deferred.callback(data)
-            else:
-                deq.append(data)
+                deq = self.incoming_data.setdefault(key, deque())
+                if deq and isinstance(deq[0], Deferred):
+                    deferred = deq.popleft()
+                    if not deq:
+                        del self.incoming_data[key]
+                    deferred.callback(data)
+                else:
+                    deq.append(data)
+            except struct.error, e:
+                print "*** bad data: %s" % e
 
     def sendData(self, program_counter, data_type, data):
         """Send data to the peer.
