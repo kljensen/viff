@@ -321,7 +321,7 @@ class ShareExchanger(Int16StringReceiver):
                 else:
                     deq.append(data)
             except struct.error, e:
-                print "*** bad data: %s" % e
+                print "*** bad data from Player %d: %s" % (self.peer_id, e)
 
     def sendData(self, program_counter, data_type, data):
         """Send data to the peer.
