@@ -321,7 +321,7 @@ class ShareExchanger(Int16StringReceiver):
                 else:
                     deq.append(data)
             except struct.error, e:
-                print "*** bad data from Player %d: %s" % (self.peer_id, e)
+                self.factory.runtime.abort(self, e)
 
     def sendData(self, program_counter, data_type, data):
         """Send data to the peer.
@@ -565,6 +565,19 @@ class Runtime:
         sync.addCallback(close_connections)
         sync.addCallback(stop_reactor)
         return sync
+
+    def abort(self, protocol, exc):
+        """Abort the execution due to an exception.
+
+        The *protocol* received bad data which resulted in *exc* being
+        raised when unpacking.
+        """
+        print "*** bad data from Player %d: %s" % (protocol.peer_id, exc)
+        print "*** aborting!"
+        for p in self.protocols.itervalues():
+            p.loseConnection()
+        reactor.stop()
+        print "*** all protocols disconnected"
 
     def wait_for(self, *vars):
         """Make the runtime wait for the variables given.
