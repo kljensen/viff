@@ -817,19 +817,15 @@ def create_runtime(id, players, threshold, options=None, runtime_class=None):
         # profiler here and stop it upon shutdown, but this triggers
         # http://bugs.python.org/issue1375 since the start and stop
         # calls are in different stack frames.
-        import hotshot
-        prof = hotshot.Profile("player-%d.prof" % id)
+        import cProfile
+        prof = cProfile.Profile()
         old_run = reactor.run
         def new_run(*args, **kwargs):
             print "Starting reactor with profiling"
             prof.runcall(old_run, *args, **kwargs)
 
-            import sys
-            import hotshot.stats
-            print "Loading profiling statistics...",
-            sys.stdout.flush()
-            stats = hotshot.stats.load("player-%d.prof" % id)
-            print "done."
+            import pstats
+            stats = pstats.Stats(prof)
             print
             stats.strip_dirs()
             stats.sort_stats("time", "calls")
