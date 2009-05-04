@@ -62,13 +62,13 @@ class ProgramCounterTest(RuntimeTestCase):
         """
 
         def verify_program_counter(_):
-            self.assertEquals(runtime.program_counter, [0])
+            self.assertEquals(runtime.program_counter, [1, 0])
 
         d = Deferred()
         runtime.schedule_callback(d, verify_program_counter)
 
         runtime.synchronize()
-        self.assertEquals(runtime.program_counter, [1])
+        self.assertEquals(runtime.program_counter, [2])
 
         # Now trigger verify_program_counter.
         d.callback(None)
@@ -129,8 +129,6 @@ class ProgramCounterTest(RuntimeTestCase):
         d2.callback(None)
 
         return gatherResults([d1, d2])
-    test_multiple_callbacks.skip = ("TODO: Scheduling callbacks fails to "
-                                    "increment program counter!")
 
     @protocol
     def test_multi_send(self, runtime):

@@ -502,6 +502,7 @@ class BasicActiveRuntime(PassiveRuntime):
         result = Share(self, share_x.field)
         # This is the Deferred we will do processing on.
         triple = self.get_triple(share_x.field)
+        triple.addCallback(gather_shares)
         self.schedule_callback(triple, finish_mul)
         # We add the result to the chains in triple.
         triple.chainDeferred(result)

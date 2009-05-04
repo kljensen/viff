@@ -572,6 +572,7 @@ class Runtime:
         dl = DeferredList(vars)
         dl.addCallback(lambda _: self.shutdown())
 
+    @increment_pc
     def schedule_callback(self, deferred, func, *args, **kwargs):
         """Schedule a callback on a deferred with the correct program
         counter.

@@ -98,7 +98,7 @@ class PassiveRuntime(Runtime):
                         d = Share(self, share.field, (share.field(peer_id), share))
                     else:
                         d = self._expect_share(peer_id, share.field)
-                        self.schedule_callback(d, lambda s, peer_id: (s.field(peer_id), s), peer_id)
+                        d.addCallback(lambda s, peer_id: (s.field(peer_id), s), peer_id)
                     deferreds.append(d)
                 return recombine(deferreds)
 
