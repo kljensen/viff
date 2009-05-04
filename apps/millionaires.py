@@ -97,10 +97,10 @@ class Protocol:
         # the argument (which is None since self.results_ready does
         # not return anything), so we throw it away using a lambda
         # expressions which ignores its first argument.
-        results.addCallback(lambda _: runtime.synchronize())
+        runtime.schedule_callback(results, lambda _: runtime.synchronize())
         # The next callback shuts the runtime down, killing the
         # connections between the players.
-        results.addCallback(lambda _: runtime.shutdown())
+        runtime.schedule_callback(results, lambda _: runtime.shutdown())
 
     def results_ready(self, results):
         # Since this method is called as a callback above, the results

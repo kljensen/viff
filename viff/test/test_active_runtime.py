@@ -88,7 +88,7 @@ class TriplesHyperTest(RuntimeTestCase):
 
         double = runtime.double_share_random(T, runtime.threshold,
                                              2*runtime.threshold, self.Zp)
-        double.addCallback(check)
+        runtime.schedule_callback(double, check)
         return double
 
     @protocol
@@ -116,7 +116,7 @@ class TriplesHyperTest(RuntimeTestCase):
         count, triples = runtime.generate_triples(self.Zp)
         self.assertEquals(count, runtime.num_players - 2*runtime.threshold)
 
-        triples.addCallback(check)
+        runtime.schedule_callback(triples, check)
         return triples
 
 

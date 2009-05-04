@@ -570,7 +570,7 @@ class Runtime:
         The runtime is shut down when all variables are calculated.
         """
         dl = DeferredList(vars)
-        dl.addCallback(lambda _: self.shutdown())
+        self.schedule_callback(dl, lambda _: self.shutdown())
 
     @increment_pc
     def schedule_callback(self, deferred, func, *args, **kwargs):
@@ -603,7 +603,7 @@ class Runtime:
             finally:
                 self.program_counter[:] = current_pc
 
-        deferred.addCallback(callback_wrapper, *args, **kwargs)
+        return deferred.addCallback(callback_wrapper, *args, **kwargs)
 
     @increment_pc
     def synchronize(self):

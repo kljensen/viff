@@ -74,7 +74,7 @@ class ProbabilisticEqualityMixin:
                 xj = (-1) * (1/Zp(2)) * (bj - 1)
             return xj
 
-        x = [cj.addCallback(finish, bj) for cj, bj in zip(c, b)]
+        x = [self.schedule_callback(cj, finish, bj) for cj, bj in zip(c, b)]
 
         # Take the product (this is here the same as the "and") of all
         # the x'es

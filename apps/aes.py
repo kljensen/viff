@@ -81,7 +81,7 @@ def encrypt(_, rt, key):
         rt.shutdown()
 
     g = gather_shares(opened_ciphertext)
-    g.addCallback(fin)
+    rt.schedule_callback(g, fin)
 
 def share_key(rt):
     key =  []
