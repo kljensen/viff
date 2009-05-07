@@ -302,24 +302,26 @@ class ShareExchanger(Int16StringReceiver):
                     self.transport.loseConnection()
             self.factory.identify_peer(self)
         else:
-            # TODO: We cannot handle the empty string.
-            pc_size, data_size, data_type = struct.unpack("!HHB", string[:5])
-            fmt = "!%dI%ds" % (pc_size, data_size)
-            unpacked = struct.unpack(fmt, string[5:])
+            try:
+                pc_size, data_size, data_type = struct.unpack("!HHB", string[:5])
+                fmt = "!%dI%ds" % (pc_size, data_size)
+                unpacked = struct.unpack(fmt, string[5:])
 
-            program_counter = unpacked[:pc_size]
-            data = unpacked[-1]
+                program_counter = unpacked[:pc_size]
+                data = unpacked[-1]
 
-            key = (program_counter, data_type)
+                key = (program_counter, data_type)
 
-            deq = self.incoming_data.setdefault(key, deque())
-            if deq and isinstance(deq[0], Deferred):
-                deferred = deq.popleft()
-                if not deq:
-                    del self.incoming_data[key]
-                deferred.callback(data)
-            else:
-                deq.append(data)
+                deq = self.incoming_data.setdefault(key, deque())
+                if deq and isinstance(deq[0], Deferred):
+                    deferred = deq.popleft()
+                    if not deq:
+                        del self.incoming_data[key]
+                    deferred.callback(data)
+                else:
+                    deq.append(data)
+            except struct.error, e:
+                self.factory.runtime.abort(self, e)
 
     def sendData(self, program_counter, data_type, data):
         """Send data to the peer.
@@ -563,6 +565,19 @@ class Runtime:
         sync.addCallback(close_connections)
         sync.addCallback(stop_reactor)
         return sync
+
+    def abort(self, protocol, exc):
+        """Abort the execution due to an exception.
+
+        The *protocol* received bad data which resulted in *exc* being
+        raised when unpacking.
+        """
+        print "*** bad data from Player %d: %s" % (protocol.peer_id, exc)
+        print "*** aborting!"
+        for p in self.protocols.itervalues():
+            p.loseConnection()
+        reactor.stop()
+        print "*** all protocols disconnected"
 
     def wait_for(self, *vars):
         """Make the runtime wait for the variables given.

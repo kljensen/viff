@@ -505,6 +505,20 @@ def GF(modulus):
             """Extract a bit (index is counted from zero)."""
             return (self.value >> index) & 1
 
+        def signed(self):
+            """Return a signed integer representation of the value.
+
+            If x > floor(p/2) then subtract p to obtain negative integer.
+            """
+            if self.value > ((self.modulus-1)/2):
+                return self.value - self.modulus
+            else:
+                return self.value
+
+        def unsigned(self):
+            """Return a unsigned representation of the value"""
+            return self.value
+
         def __repr__(self):
             return "{%d}" % self.value
             #return "GFElement(%d)" % self.value
@@ -514,7 +528,7 @@ def GF(modulus):
 
             This is simply the value enclosed in curly braces.
             """
-            return "{%d}" % self.value
+            return "{%d}" % self.unsigned()
 
         def __eq__(self, other):
             """Equality test."""
@@ -626,3 +640,4 @@ def FakeGF(modulus):
 if __name__ == "__main__":
     import doctest    #pragma NO COVER
     doctest.testmod() #pragma NO COVER
+
