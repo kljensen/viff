@@ -270,6 +270,7 @@ class ShareExchanger(Int16StringReceiver):
         self.lost_connection = Deferred()
         #: Data expected to be received in the future.
         self.incoming_data = {}
+        self.waiting_deferreds = {}
 
     def connectionMade(self):
         self.sendString(str(self.factory.runtime.id))
@@ -312,13 +313,14 @@ class ShareExchanger(Int16StringReceiver):
 
                 key = (program_counter, data_type)
 
-                deq = self.incoming_data.setdefault(key, deque())
-                if deq and isinstance(deq[0], Deferred):
+                if key in self.waiting_deferreds:
+                    deq = self.waiting_deferreds[key]
                     deferred = deq.popleft()
                     if not deq:
-                        del self.incoming_data[key]
+                        del self.waiting_deferreds[key]
                     deferred.callback(data)
                 else:
+                    deq = self.incoming_data.setdefault(key, deque())
                     deq.append(data)
             except struct.error, e:
                 self.factory.runtime.abort(self, e)
@@ -637,15 +639,16 @@ class Runtime:
         pc = tuple(self.program_counter)
         key = (pc, data_type)
 
-        deq = self.protocols[peer_id].incoming_data.setdefault(key, deque())
-        if deq and not isinstance(deq[0], Deferred):
+        if key in self.protocols[peer_id].incoming_data:
             # We have already received some data from the other side.
+            deq = self.protocols[peer_id].incoming_data[key]
             data = deq.popleft()
             if not deq:
                 del self.protocols[peer_id].incoming_data[key]
             deferred.callback(data)
         else:
             # We have not yet received anything from the other side.
+            deq = self.protocols[peer_id].waiting_deferreds.setdefault(key, deque())
             deq.append(deferred)
 
     def _exchange_shares(self, peer_id, field_element):
