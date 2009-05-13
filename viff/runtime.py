@@ -601,11 +601,6 @@ class Runtime:
         Any extra arguments are passed to the callback as with
         :meth:`addCallback`.
         """
-        # TODO, http://tracker.viff.dk/issue22: When several callbacks
-        # are scheduled from the same method, they all save the same
-        # program counter. Simply decorating callback with increase_pc
-        # does not seem to work (the multiplication benchmark hangs).
-        # This should be fixed.
         saved_pc = self.program_counter[:]
 
         @wrapper(func)
