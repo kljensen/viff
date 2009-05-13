@@ -92,7 +92,7 @@ class Share(Deferred):
 
     def __radd__(self, other):
         """Addition (reflected argument version)."""
-        return self.runtime.add(other, self)
+        return self.runtime.add(self, other)
 
     def __sub__(self, other):
         """Subtraction."""
@@ -108,7 +108,7 @@ class Share(Deferred):
 
     def __rmul__(self, other):
         """Multiplication (reflected argument version)."""
-        return self.runtime.mul(other, self)
+        return self.runtime.mul(self, other)
 
     def __pow__(self, exponent):
         """Exponentation to known integer exponents."""
@@ -120,7 +120,7 @@ class Share(Deferred):
 
     def __rxor__(self, other):
         """Exclusive-or (reflected argument version)."""
-        return self.runtime.xor(other, self)
+        return self.runtime.xor(self, other)
 
     def __lt__(self, other):
         """Strictly less-than comparison."""

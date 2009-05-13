@@ -113,12 +113,14 @@ class PassiveRuntime(Runtime):
 
         Communication cost: none.
         """
-        field = getattr(share_a, "field", getattr(share_b, "field", None))
-        if not isinstance(share_a, Share):
-            share_a = Share(self, field, share_a)
         if not isinstance(share_b, Share):
-            share_b = Share(self, field, share_b)
-
+            # Addition with constant. share_a always is a Share by
+            # operator overloading in Share. Clone share_a to avoid
+            # changing it.
+            result = share_a.clone()
+            result.addCallback(lambda a, b: a + b, share_b)
+            return result
+        
         result = gather_shares([share_a, share_b])
         result.addCallback(lambda (a, b): a + b)
         return result
@@ -149,15 +151,12 @@ class PassiveRuntime(Runtime):
             assert not isinstance(coeff, Share), \
                 "Coefficients should not be shares."
 
+        for share in shares:
+            assert isinstance(share, Share), \
+                "Shares should be shares."
+
         assert len(coefficients) == len(shares), \
             "Number of coefficients and shares should be equal."
-
-        field = None
-        for share in shares:
-            field = getattr(share, "field", field)
-        for i, share in enumerate(shares):
-            if not isinstance(share, Share):
-                shares[i] = Share(self, field, share)
 
         def computation(shares, coefficients):
             summands = [shares[i] * coefficients[i] for i in range(len(shares))]
@@ -174,17 +173,13 @@ class PassiveRuntime(Runtime):
 
         Communication cost: 1 Shamir sharing.
         """
-        assert isinstance(share_a, Share) or isinstance(share_b, Share), \
-            "At least one of share_a and share_b must be a Share."
+        assert isinstance(share_a, Share), \
+            "share_a must be a Share."
 
-        if not isinstance(share_a, Share):
-            # Then share_b must be a Share => local multiplication. We
-            # clone first to avoid changing share_b.
-            result = share_b.clone()
-            result.addCallback(lambda b: share_a * b)
-            return result
         if not isinstance(share_b, Share):
-            # Likewise when share_b is a constant.
+            # Local multiplication. share_a always is a Share by
+            # operator overloading in Share. We clone share_a first
+            # to avoid changing it.
             result = share_a.clone()
             result.addCallback(lambda a: a * share_b)
             return result
@@ -227,11 +222,7 @@ class PassiveRuntime(Runtime):
 
     @increment_pc
     def xor(self, share_a, share_b):
-        field = getattr(share_a, "field", getattr(share_b, "field", None))
-        if not isinstance(share_a, Share):
-            if not isinstance(share_a, FieldElement):
-                share_a = field(share_a)
-            share_a = Share(self, field, share_a)
+        field = share_a.field
         if not isinstance(share_b, Share):
             if not isinstance(share_b, FieldElement):
                 share_b = field(share_b)
