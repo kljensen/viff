@@ -77,9 +77,9 @@ def protocol(method):
             except AttributeError:
                 return failure
 
-        result = gatherResults(self.runtimes)
+        result = gatherResults(self.runtimes + self.close_sentinels)
         result.addErrback(unpack)
-        return gatherResults(self.close_sentinels)
+        return result
 
     wrapper.func_name = method.func_name
     return wrapper
