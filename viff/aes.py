@@ -205,7 +205,7 @@ class AES:
 
                 # include the translation in the matrix multiplication
                 # (see definition of AES.A)
-                bits.append(GF256(1))
+                bits.append(Share(self.runtime, GF256, GF256(1)))
 
                 if (use_lin_comb):
                     bits = [self.runtime.lin_comb(AES.A.rows[j], bits) 

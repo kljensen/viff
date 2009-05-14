@@ -92,7 +92,7 @@ class Share(Deferred):
 
     def __radd__(self, other):
         """Addition (reflected argument version)."""
-        return self.runtime.add(other, self)
+        return self.runtime.add(self, other)
 
     def __sub__(self, other):
         """Subtraction."""
@@ -108,7 +108,7 @@ class Share(Deferred):
 
     def __rmul__(self, other):
         """Multiplication (reflected argument version)."""
-        return self.runtime.mul(other, self)
+        return self.runtime.mul(self, other)
 
     def __pow__(self, exponent):
         """Exponentation to known integer exponents."""
@@ -120,7 +120,7 @@ class Share(Deferred):
 
     def __rxor__(self, other):
         """Exclusive-or (reflected argument version)."""
-        return self.runtime.xor(other, self)
+        return self.runtime.xor(self, other)
 
     def __lt__(self, other):
         """Strictly less-than comparison."""
@@ -270,6 +270,7 @@ class ShareExchanger(Int16StringReceiver):
         self.lost_connection = Deferred()
         #: Data expected to be received in the future.
         self.incoming_data = {}
+        self.waiting_deferreds = {}
 
     def connectionMade(self):
         self.sendString(str(self.factory.runtime.id))
@@ -312,13 +313,14 @@ class ShareExchanger(Int16StringReceiver):
 
                 key = (program_counter, data_type)
 
-                deq = self.incoming_data.setdefault(key, deque())
-                if deq and isinstance(deq[0], Deferred):
+                if key in self.waiting_deferreds:
+                    deq = self.waiting_deferreds[key]
                     deferred = deq.popleft()
                     if not deq:
-                        del self.incoming_data[key]
+                        del self.waiting_deferreds[key]
                     deferred.callback(data)
                 else:
+                    deq = self.incoming_data.setdefault(key, deque())
                     deq.append(data)
             except struct.error, e:
                 self.factory.runtime.abort(self, e)
@@ -601,11 +603,6 @@ class Runtime:
         Any extra arguments are passed to the callback as with
         :meth:`addCallback`.
         """
-        # TODO, http://tracker.viff.dk/issue22: When several callbacks
-        # are scheduled from the same method, they all save the same
-        # program counter. Simply decorating callback with increase_pc
-        # does not seem to work (the multiplication benchmark hangs).
-        # This should be fixed.
         saved_pc = self.program_counter[:]
 
         @wrapper(func)
@@ -642,15 +639,16 @@ class Runtime:
         pc = tuple(self.program_counter)
         key = (pc, data_type)
 
-        deq = self.protocols[peer_id].incoming_data.setdefault(key, deque())
-        if deq and not isinstance(deq[0], Deferred):
+        if key in self.protocols[peer_id].incoming_data:
             # We have already received some data from the other side.
+            deq = self.protocols[peer_id].incoming_data[key]
             data = deq.popleft()
             if not deq:
                 del self.protocols[peer_id].incoming_data[key]
             deferred.callback(data)
         else:
             # We have not yet received anything from the other side.
+            deq = self.protocols[peer_id].waiting_deferreds.setdefault(key, deque())
             deq.append(deferred)
 
     def _exchange_shares(self, peer_id, field_element):

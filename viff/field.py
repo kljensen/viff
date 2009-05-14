@@ -168,16 +168,21 @@ class GF256(FieldElement):
             other = other.value
         return GF256(self.value ^ other)
 
-    #: Add this and another GF256 element (reflected argument version).
-    __radd__ = __add__
+    def __radd__(self, other):
+        """Add this and another number (reflected argument version).
 
+        other is not Share, otherwise Share.__add__() would have been
+        called, and other is not a GF256, otherwise GF256.__add__()
+        would have been called."""
+        return GF256(self.value ^ other)
+    
     #: Subtract this and another GF256 element.
     #:
     #: Addition is its own inverse in GF(2^8) and so this is the same
     #: as `__add__`.
     __sub__ = __add__
     #: Subtract this and another GF256 element (reflected argument version).
-    __rsub__ = __sub__
+    __rsub__ = __radd__
 
     #: Exclusive-or.
     #:
@@ -185,7 +190,7 @@ class GF256(FieldElement):
     __xor__ = __add__
 
     #: Exclusive-or (reflected argument version).
-    __rxor__ = __xor__
+    __rxor__ = __radd__
 
     def __mul__(self, other):
         """Multiply this and another GF256.
@@ -204,8 +209,14 @@ class GF256(FieldElement):
         return _mul_table[(self.value, other)]
 
 
-    #: Multiply this and another GF256 element (reflected argument version).
-    __rmul__ = __mul__
+    def __rmul__(self, other):
+        """Multiply this and another number (reflected argument
+        version).
+
+        other is not Share, otherwise Share.__mul__() would have been
+        called, and other is not a GF256, otherwise GF256.__mul__()
+        would have been called."""
+        return _mul_table[(self.value, other)]
 
     def __pow__(self, exponent):
         """Exponentiation."""
