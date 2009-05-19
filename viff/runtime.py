@@ -318,7 +318,10 @@ class ShareExchanger(Int16StringReceiver):
                     deferred = deq.popleft()
                     if not deq:
                         del self.waiting_deferreds[key]
-                    deferred.callback(data)
+
+                    # Just queue, callbacks will be executed
+                    # in process_deferred_queue().
+                    self.factory.runtime.queue_deferred(deferred, data)
                 else:
                     deq = self.incoming_data.setdefault(key, deque())
                     deq.append(data)
@@ -532,6 +535,14 @@ class Runtime:
         # Add ourselves, but with no protocol since we wont be
         # communicating with ourselves.
         self.add_player(player, None)
+
+        #: Queue of deferreds and data.
+        self.deferred_queue = []
+        #: Counter for calls of activate_reactor().
+        self.activation_counter = 0
+        #: Record the recursion depth.
+        self.depth_counter = 0
+        self.max_depth = 0
 
     def add_player(self, player, protocol):
         self.players[player.id] = player
@@ -761,6 +772,39 @@ class Runtime:
         Python integer."""
         raise NotImplemented("Override this abstract method in a subclass.")
 
+    def queue_deferred(self, deferred, data):
+        """Put deferred and data into the queue."""
+
+        self.deferred_queue.append((deferred, data))
+
+    def process_deferred_queue(self):
+        """Execute the callbacks of the deferreds in the queue."""
+
+        while(self.deferred_queue):
+            deferred, data = self.deferred_queue.pop(0)
+            deferred.callback(data)
+
+    def activate_reactor(self):
+        """Activate the reactor to do actual communcation.
+
+        This is where the recursion happens."""
+
+        self.activation_counter += 1
+
+        # setting the number to n makes the reactor called 
+        # only every n-th time
+        if (self.activation_counter >= 2):
+            self.depth_counter += 1
+
+            if (self.depth_counter > self.max_depth):
+                # Record the maximal depth reached.
+                self.max_depth = self.depth_counter
+
+            reactor.doIteration(0)
+
+            self.depth_counter -= 1
+            self.activation_counter = 0
+
 
 def make_runtime_class(runtime_class=None, mixins=None):
     """Creates a new runtime class with *runtime_class* as a base
@@ -911,6 +955,9 @@ def create_runtime(id, players, threshold, options=None, runtime_class=None):
         if peer_id > id:
             print "Will connect to %s" % player
             connect(player.host, player.port)
+
+    # Process the deferred queue after every reactor iteration.
+    reactor.setLoopCall(runtime.process_deferred_queue)
 
     return result
 

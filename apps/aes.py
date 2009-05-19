@@ -23,6 +23,8 @@
 import time
 from optparse import OptionParser
 
+import viff.reactor
+viff.reactor.install()
 from twisted.internet import reactor
 
 from viff.field import GF256

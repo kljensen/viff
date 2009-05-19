@@ -70,6 +70,9 @@ class BrachaBroadcastMixin:
             for protocol in self.protocols.itervalues():
                 protocol.sendData(pc, data_type, message)
 
+            # do actual communication
+            self.activate_reactor()
+
         def echo_received(message, peer_id):
             # This is called when we receive an echo message. It
             # updates the echo count for the message and enters the
@@ -133,6 +136,8 @@ class BrachaBroadcastMixin:
             d_send = Deferred().addCallback(send_received)
             self._expect_data(sender, SEND, d_send)
 
+        # do actual communication
+        self.activate_reactor()
 
         return result
 
@@ -261,6 +266,9 @@ class TriplesHyperinvertibleMatricesMixin:
                 # first T shares.
                 return rvec[:T]
 
+            # do actual communication
+            self.activate_reactor()
+
         result = gather_shares(svec[T:])
         self.schedule_callback(result, exchange)
         return result
@@ -360,6 +368,9 @@ class TriplesHyperinvertibleMatricesMixin:
                 # We cannot verify anything, so we just return the
                 # first T shares.
                 return (rvec1[:T], rvec2[:T])
+
+            # do actual communication
+            self.activate_reactor()
 
         result = gather_shares([gather_shares(svec1[T:]), gather_shares(svec2[T:])])
         self.schedule_callback(result, exchange)

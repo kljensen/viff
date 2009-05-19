@@ -20,6 +20,8 @@
 import sys
 import random
 
+import viff.reactor
+viff.reactor.install()
 from twisted.internet import reactor
 from twisted.internet.defer import gatherResults
 

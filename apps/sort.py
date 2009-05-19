@@ -51,6 +51,8 @@
 
 from math import log, floor
 from optparse import OptionParser
+import viff.reactor
+viff.reactor.install()
 from twisted.internet import reactor
 
 from progressbar import ProgressBar, Percentage, Bar, ETA, ProgressBarWidget
