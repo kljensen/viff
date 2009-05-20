@@ -110,7 +110,14 @@ class RuntimeTestCase(TestCase):
             raise self.failureException(msg)
 
     def setUp(self):
-        """Configure and connect three Runtimes."""
+        """Configure and connect three Runtimes.
+
+        .. warning::
+        
+           Subclasses that override this method *must* remember to do
+           a super-call to it. Otherwise the runtimes wont be
+           connected and :meth:`tearDown` wont work.
+        """
         # Our standard 65 bit Blum prime
         self.Zp = GF(30916444023318367583)
 
@@ -139,6 +146,12 @@ class RuntimeTestCase(TestCase):
         interrupted by a C{TimeoutError}, and so we do it here in all
         cases to avoid leaving scheduled calls lying around in the
         reactor.
+
+        .. warning::
+        
+           Subclasses that override this method *must* remember to do
+           a super-call to it. Otherwise the runtimes wont be
+           disconnected and your test case will hang.
         """
         for protocol in self.protocols.itervalues():
             protocol.transport.close()
