@@ -104,6 +104,10 @@ class PassiveRuntime(Runtime):
 
         result = share.clone()
         self.schedule_callback(result, exchange)
+
+        # do actual communication
+        self.activate_reactor()
+
         if self.id in receivers:
             return result
 
@@ -204,6 +208,10 @@ class PassiveRuntime(Runtime):
         result = gather_shares([share_a, share_b])
         result.addCallback(lambda (a, b): a * b)
         self.schedule_callback(result, share_recombine)
+
+        # do actual communication
+        self.activate_reactor()
+
         return result
 
     def pow(self, share, exponent):
@@ -500,6 +508,9 @@ class PassiveRuntime(Runtime):
                         self.protocols[other_id.value].sendShare(pc, share)
             else:
                 results.append(self._expect_share(peer_id, field))
+
+        # do actual communication
+        self.activate_reactor()
 
         # Unpack a singleton list.
         if len(results) == 1:

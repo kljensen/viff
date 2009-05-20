@@ -38,6 +38,8 @@
 import time, random
 from optparse import OptionParser
 
+import viff.reactor
+viff.reactor.install()
 from twisted.internet import reactor
 
 from viff import shamir
