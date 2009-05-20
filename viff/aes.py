@@ -377,9 +377,9 @@ class AES:
                 trigger.addCallback(progress, i, time.time())
 
                 if (i < self.rounds - 1):
-                    self.runtime.schedule_callback(trigger, round, state, i + 1)
+                    self.runtime.schedule_complex_callback(trigger, round, state, i + 1)
                 else:
-                    self.runtime.schedule_callback(trigger, final_round, state)
+                    self.runtime.schedule_complex_callback(trigger, final_round, state)
 
             prep_progress(i, start_round)
 

@@ -538,6 +538,7 @@ class Runtime:
 
         #: Queue of deferreds and data.
         self.deferred_queue = []
+        self.complex_deferred_queue = []
         #: Counter for calls of activate_reactor().
         self.activation_counter = 0
         #: Record the recursion depth.
@@ -627,6 +628,25 @@ class Runtime:
                 self.program_counter[:] = current_pc
 
         return deferred.addCallback(callback_wrapper, *args, **kwargs)
+
+    def schedule_complex_callback(self, deferred, func, *args, **kwargs):
+        """Schedule a complex callback, i.e. a callback which blocks a
+        long time.
+
+        Consider that the deferred is forked, i.e. if the callback returns
+        something to be used afterwards, add further callbacks to the returned
+        deferred."""
+
+        if isinstance(deferred, Share):
+            fork = Share(deferred.runtime, deferred.field)
+        else:
+            fork = Deferred()
+
+        def queue_callback(result, runtime, fork):
+            runtime.complex_deferred_queue.append((fork, result))
+
+        deferred.addCallback(queue_callback, self, fork)
+        return self.schedule_callback(fork, func, *args, **kwargs)
 
     @increment_pc
     def synchronize(self):
@@ -778,10 +798,21 @@ class Runtime:
         self.deferred_queue.append((deferred, data))
 
     def process_deferred_queue(self):
-        """Execute the callbacks of the deferreds in the queue."""
+        """Execute the callbacks of the deferreds in the queue.
 
-        while(self.deferred_queue):
-            deferred, data = self.deferred_queue.pop(0)
+        If this function is not called via activate_reactor(), also
+        complex callbacks are executed."""
+
+        self.process_queue(self.deferred_queue)
+
+        if self.depth_counter == 0:
+            self.process_queue(self.complex_deferred_queue)
+
+    def process_queue(self, queue):
+        """Execute the callbacks of the deferreds in *queue*."""
+
+        while(queue):
+            deferred, data = queue.pop(0)
             deferred.callback(data)
 
     def activate_reactor(self):

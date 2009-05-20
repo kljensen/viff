@@ -83,7 +83,7 @@ def encrypt(_, rt, key):
         rt.shutdown()
 
     g = gather_shares(opened_ciphertext)
-    rt.schedule_callback(g, fin)
+    rt.schedule_complex_callback(g, fin)
 
 def share_key(rt):
     key =  []
@@ -96,7 +96,7 @@ def share_key(rt):
             key.append(rt.input([inputter], GF256))
 
     s = rt.synchronize()
-    s.addCallback(encrypt, rt, key)
+    rt.schedule_complex_callback(s, encrypt, rt, key)
 
 rt = create_runtime(id, players, 1, options)
 rt.addCallback(share_key)
