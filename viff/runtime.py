@@ -537,8 +537,8 @@ class Runtime:
         self.add_player(player, None)
 
         #: Queue of deferreds and data.
-        self.deferred_queue = []
-        self.complex_deferred_queue = []
+        self.deferred_queue = deque()
+        self.complex_deferred_queue = deque()
         #: Counter for calls of activate_reactor().
         self.activation_counter = 0
         #: Record the recursion depth.
@@ -812,7 +812,7 @@ class Runtime:
         """Execute the callbacks of the deferreds in *queue*."""
 
         while(queue):
-            deferred, data = queue.pop(0)
+            deferred, data = queue.popleft()
             deferred.callback(data)
 
     def activate_reactor(self):
