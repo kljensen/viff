@@ -40,6 +40,7 @@ from collections import deque
 
 from viff.field import GF256, FieldElement
 from viff.util import wrapper, rand, deep_wait, track_memory_usage
+import viff.reactor
 
 from twisted.internet import reactor
 from twisted.internet.task import LoopingCall
@@ -318,10 +319,7 @@ class ShareExchanger(Int16StringReceiver):
                     deferred = deq.popleft()
                     if not deq:
                         del self.waiting_deferreds[key]
-
-                    # Just queue, callbacks will be executed
-                    # in process_deferred_queue().
-                    self.factory.runtime.queue_deferred(deferred, data)
+                    self.factory.runtime.handle_deferred_data(deferred, data)
                 else:
                     deq = self.incoming_data.setdefault(key, deque())
                     deq.append(data)
@@ -544,6 +542,8 @@ class Runtime:
         #: Record the recursion depth.
         self.depth_counter = 0
         self.max_depth = 0
+        #: Use deferred queues only if the ViffReactor is running.
+        self.using_viff_reactor = isinstance(reactor, viff.reactor.ViffReactor)
 
     def add_player(self, player, protocol):
         self.players[player.id] = player
@@ -792,10 +792,14 @@ class Runtime:
         Python integer."""
         raise NotImplemented("Override this abstract method in a subclass.")
 
-    def queue_deferred(self, deferred, data):
-        """Put deferred and data into the queue."""
+    def handle_deferred_data(self, deferred, data):
+        """Put deferred and data into the queue if the ViffReactor is running. 
+        Otherwise, just execute the callback."""
 
-        self.deferred_queue.append((deferred, data))
+        if (self.using_viff_reactor):
+            self.deferred_queue.append((deferred, data))
+        else:
+            deferred.callback(data)
 
     def process_deferred_queue(self):
         """Execute the callbacks of the deferreds in the queue.
@@ -987,8 +991,9 @@ def create_runtime(id, players, threshold, options=None, runtime_class=None):
             print "Will connect to %s" % player
             connect(player.host, player.port)
 
-    # Process the deferred queue after every reactor iteration.
-    reactor.setLoopCall(runtime.process_deferred_queue)
+    if runtime.using_viff_reactor:
+        # Process the deferred queue after every reactor iteration.
+        reactor.setLoopCall(runtime.process_deferred_queue)
 
     return result
 
