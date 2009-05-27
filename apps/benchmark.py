@@ -60,6 +60,8 @@ from optparse import OptionParser
 import operator
 from pprint import pformat
 
+import viff.reactor
+viff.reactor.install()
 from twisted.internet import reactor
 
 from viff.field import GF, GF256, FakeGF
@@ -176,7 +178,7 @@ class Benchmark:
             # run with no preprocessing. So they are quite brittle.
             if self.operation == operator.mul:
                 key = ("generate_triples", (Zp,))
-                desc = [(i, 1, 0) for i in range(2, 2 + count)]
+                desc = [(i, 1, 0) for i in range(3, 3 + count)]
                 program_desc.setdefault(key, []).extend(desc)
             elif isinstance(self.rt, ComparisonToft05Mixin):
                 key = ("generate_triples", (GF256,))

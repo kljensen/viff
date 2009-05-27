@@ -40,6 +40,7 @@ from collections import deque
 
 from viff.field import GF256, FieldElement
 from viff.util import wrapper, rand, deep_wait, track_memory_usage
+import viff.reactor
 
 from twisted.internet import reactor
 from twisted.internet.task import LoopingCall
@@ -318,7 +319,7 @@ class ShareExchanger(Int16StringReceiver):
                     deferred = deq.popleft()
                     if not deq:
                         del self.waiting_deferreds[key]
-                    deferred.callback(data)
+                    self.factory.runtime.handle_deferred_data(deferred, data)
                 else:
                     deq = self.incoming_data.setdefault(key, deque())
                     deq.append(data)
@@ -533,6 +534,17 @@ class Runtime:
         # communicating with ourselves.
         self.add_player(player, None)
 
+        #: Queue of deferreds and data.
+        self.deferred_queue = deque()
+        self.complex_deferred_queue = deque()
+        #: Counter for calls of activate_reactor().
+        self.activation_counter = 0
+        #: Record the recursion depth.
+        self.depth_counter = 0
+        self.max_depth = 0
+        #: Use deferred queues only if the ViffReactor is running.
+        self.using_viff_reactor = isinstance(reactor, viff.reactor.ViffReactor)
+
     def add_player(self, player, protocol):
         self.players[player.id] = player
         self.num_players = len(self.players)
@@ -616,6 +628,25 @@ class Runtime:
                 self.program_counter[:] = current_pc
 
         return deferred.addCallback(callback_wrapper, *args, **kwargs)
+
+    def schedule_complex_callback(self, deferred, func, *args, **kwargs):
+        """Schedule a complex callback, i.e. a callback which blocks a
+        long time.
+
+        Consider that the deferred is forked, i.e. if the callback returns
+        something to be used afterwards, add further callbacks to the returned
+        deferred."""
+
+        if isinstance(deferred, Share):
+            fork = Share(deferred.runtime, deferred.field)
+        else:
+            fork = Deferred()
+
+        def queue_callback(result, runtime, fork):
+            runtime.complex_deferred_queue.append((fork, result))
+
+        deferred.addCallback(queue_callback, self, fork)
+        return self.schedule_callback(fork, func, *args, **kwargs)
 
     @increment_pc
     def synchronize(self):
@@ -760,6 +791,54 @@ class Runtime:
         other can be a :class:`FieldElement` or a (possible long)
         Python integer."""
         raise NotImplemented("Override this abstract method in a subclass.")
+
+    def handle_deferred_data(self, deferred, data):
+        """Put deferred and data into the queue if the ViffReactor is running. 
+        Otherwise, just execute the callback."""
+
+        if (self.using_viff_reactor):
+            self.deferred_queue.append((deferred, data))
+        else:
+            deferred.callback(data)
+
+    def process_deferred_queue(self):
+        """Execute the callbacks of the deferreds in the queue.
+
+        If this function is not called via activate_reactor(), also
+        complex callbacks are executed."""
+
+        self.process_queue(self.deferred_queue)
+
+        if self.depth_counter == 0:
+            self.process_queue(self.complex_deferred_queue)
+
+    def process_queue(self, queue):
+        """Execute the callbacks of the deferreds in *queue*."""
+
+        while(queue):
+            deferred, data = queue.popleft()
+            deferred.callback(data)
+
+    def activate_reactor(self):
+        """Activate the reactor to do actual communcation.
+
+        This is where the recursion happens."""
+
+        self.activation_counter += 1
+
+        # setting the number to n makes the reactor called 
+        # only every n-th time
+        if (self.activation_counter >= 2):
+            self.depth_counter += 1
+
+            if (self.depth_counter > self.max_depth):
+                # Record the maximal depth reached.
+                self.max_depth = self.depth_counter
+
+            reactor.doIteration(0)
+
+            self.depth_counter -= 1
+            self.activation_counter = 0
 
 
 def make_runtime_class(runtime_class=None, mixins=None):
@@ -911,6 +990,10 @@ def create_runtime(id, players, threshold, options=None, runtime_class=None):
         if peer_id > id:
             print "Will connect to %s" % player
             connect(player.host, player.port)
+
+    if runtime.using_viff_reactor:
+        # Process the deferred queue after every reactor iteration.
+        reactor.setLoopCall(runtime.process_deferred_queue)
 
     return result
 

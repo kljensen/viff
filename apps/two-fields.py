@@ -19,6 +19,8 @@
 
 import sys
 
+import viff.reactor
+viff.reactor.install()
 from twisted.internet import reactor
 
 from viff.field import GF

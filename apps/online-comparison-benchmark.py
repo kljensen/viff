@@ -21,6 +21,8 @@ import time
 import signal
 from optparse import OptionParser
 
+import viff.reactor
+viff.reactor.install()
 from twisted.internet import reactor
 from twisted.internet.defer import DeferredList, gatherResults
 
