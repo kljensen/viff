@@ -56,6 +56,9 @@ def generate_keys(bit_length):
 
 def encrypt(m, (n, g)):
     r = rand.randint(1, long(n))
+    return encrypt_r(m, r, (n, g))
+
+def encrypt_r(m, r, (n, g)):
     nsq = n*n
     return (pow(g, m, nsq)*pow(r, n, nsq)) % nsq
 
