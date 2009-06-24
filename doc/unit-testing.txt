@@ -45,10 +45,10 @@ directory, starting an interactive Python session and run:
 If it fails with an ImportError, then please double-check that your
 ``PYTHONPATH`` is setup correctly.
 
-Now simply execute ``trial viff`` to run the unit tests. You should
-get output similar to this::
+Now simply execute ``trial --reactor viff viff`` to run the unit
+tests. You should get output similar to this::
 
-  % trial viff
+  % trial --reactor viff viff
   Seeding random generator with random seed 4658
   Running 65 tests.
   viff.test.test_active_runtime
@@ -148,6 +148,13 @@ Lots of success! But one of the tests was skipped — we do this when we
 have a test which represents a known problem. Otherwise every test run
 would be cluttered with long of traceback messages, making it
 difficult to notice new *unexpected* failures.
+
+.. warning::
+
+   Always run ``trial`` with the ``--reactor viff`` arguments. This
+   ensures that the tests are run with the special VIFF reactor. The
+   tests currently cannot be run without this reactor, but we might
+   lift this restriction in the future.
 
 
 Writing Unit Tests

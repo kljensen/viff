@@ -18,6 +18,7 @@ ca.{cert,key}
 
 # Trial output directory.
 _trial_temp
+dropin.cache
 
 # Benchmarking data.
 profile.data

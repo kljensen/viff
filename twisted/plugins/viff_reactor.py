@@ -1,4 +1,4 @@
-# Copyright 2007, 2008, 2009 VIFF Development Team.
+# Copyright 2009 VIFF Development Team.
 #
 # This file is part of VIFF, the Virtual Ideal Functionality Framework.
 #
@@ -14,3 +14,8 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with VIFF. If not, see <http://www.gnu.org/licenses/>.
+
+# This will register the VIFF reactor so that "trial --reactor viff"
+# can install it.
+from twisted.application.reactors import Reactor
+viff = Reactor('viff', 'viff.reactor', 'The re-entrent VIFF reactor.')
