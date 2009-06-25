@@ -84,6 +84,7 @@ that an operation starts as soon as the operands are ready.
         ],
       license=viff.__license__,
       packages=['viff', 'viff.test', 'viff.libs'],
+      package_data={'viff': ['../twisted/plugins/viff_reactor.py']},
       platforms=['any'],
       classifiers=[
         'Development Status :: 3 - Alpha',
