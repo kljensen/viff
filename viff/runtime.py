@@ -37,9 +37,10 @@ import time
 import struct
 from optparse import OptionParser, OptionGroup
 from collections import deque
+import os
 
 from viff.field import GF256, FieldElement
-from viff.util import wrapper, rand, deep_wait, track_memory_usage
+from viff.util import wrapper, rand, deep_wait, track_memory_usage, begin, end
 import viff.reactor
 
 from twisted.internet import reactor
@@ -86,6 +87,21 @@ class Share(Deferred):
         self.field = field
         if value is not None:
             self.callback(value)
+
+    if os.environ.get("VIFF_PROFILE"):
+        old_init = __init__
+
+        def __init__(self, *a, **kw):
+            self.old_init(*a, **kw)
+            self.pc = self.runtime.program_counter[:]
+            begin(None, self.label())
+
+        def __del__(self):
+            end(None, self.label())
+
+        def label(self):
+            return "share " + hex(id(self)) + " " + \
+                   ".".join(map(str, self.pc))
 
     def __add__(self, other):
         """Addition."""
