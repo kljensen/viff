@@ -19,6 +19,8 @@
 
 """Passively secure VIFF runtime."""
 
+import operator
+
 from viff import shamir
 from viff.runtime import Runtime, increment_pc, Share, ShareList, gather_shares
 from viff.prss import prss, prss_lsb, prss_zero, prss_multi
@@ -163,8 +165,7 @@ class PassiveRuntime(Runtime):
             "Number of coefficients and shares should be equal."
 
         def computation(shares, coefficients):
-            summands = [shares[i] * coefficients[i] for i in range(len(shares))]
-            return reduce(lambda x, y: x + y, summands)
+            return sum(map(operator.mul, shares, coefficients))
 
         result = gather_shares(shares)
         result.addCallback(computation, coefficients)
