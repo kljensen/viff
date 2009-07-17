@@ -274,17 +274,22 @@ class AES:
 
         state[:] = (Matrix(state) + Matrix(zip(*round_key))).rows
 
-    def key_expansion(self, key):
+    def key_expansion(self, key, new_length=None):
         """Rijndael key expansion.
 
-        Input and output are lists of 4-byte columns (words)."""
+        Input and output are lists of 4-byte columns (words).
+        *new_length* is the round for which the key should be expanded.
+        If ommitted, the key is expanded for all rounds."""
 
-        assert len(key) == self.n_k, "Wrong key size."
+        assert len(key) >= self.n_k, "Wrong key size."
         assert len(key[0]) == 4, "Key must consist of 4-byte words."
 
-        expanded_key = list(key)
+        expanded_key = key
 
-        for i in xrange(self.n_k, self.n_b * (self.rounds + 1)):
+        if new_length == None:
+            new_length = self.rounds
+
+        for i in xrange(len(key), self.n_b * (new_length + 1)):
             temp = list(expanded_key[i - 1])
 
             if (i % self.n_k == 0):
@@ -355,8 +360,7 @@ class AES:
             progress = lambda x, i, start_round: x
             prep_progress = lambda i, start_round: None
 
-        expanded_key = self.key_expansion(key)
-
+        expanded_key = self.key_expansion(key[:], 0)
         self.add_round_key(state, expanded_key[0:self.n_b])
 
         prep_progress(0, start)
@@ -366,7 +370,9 @@ class AES:
 
         def round(_, state, i):
             start_round = time.time()
-            
+
+            self.key_expansion(expanded_key, i)
+
             self.byte_sub(state)
             self.shift_row(state)
             self.mix_column(state)
@@ -387,6 +393,8 @@ class AES:
 
         def final_round(_, state):
             start_round = time.time()
+
+            self.key_expansion(expanded_key, self.rounds)
 
             self.byte_sub(state)
             self.shift_row(state)

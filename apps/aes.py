@@ -35,6 +35,9 @@ from viff.aes import AES
 
 
 parser = OptionParser(usage="Usage: %prog [options] config_file")
+parser.add_option("-K", "--keylength", action="store", type="int",
+                  help="Key length: 128, 192, or 256. Defaults to 128.")
+parser.set_defaults(keylength=128)
 parser.add_option("-e", "--exponentiation", action="store", type="int",
                   metavar="variant",
                   help="Use exponentiation to invert bytes. "
@@ -67,7 +70,7 @@ def encrypt(_, rt, key):
     start = time.time()
     print "Started at %f." % start
 
-    aes = AES(rt, 192, use_exponentiation=options.exponentiation)
+    aes = AES(rt, options.keylength, use_exponentiation=options.exponentiation)
 
     ciphertext = []
 
@@ -88,7 +91,7 @@ def encrypt(_, rt, key):
 def share_key(rt):
     key =  []
 
-    for i in range(24):
+    for i in range(options.keylength / 8):
         inputter = i % 3 + 1
         if (inputter == id):
             key.append(rt.input([inputter], GF256, ord("b")))
