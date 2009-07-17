@@ -796,7 +796,7 @@ class Runtime:
         """Put deferred and data into the queue if the ViffReactor is running. 
         Otherwise, just execute the callback."""
 
-        if (self.using_viff_reactor):
+        if self.using_viff_reactor:
             self.deferred_queue.append((deferred, data))
         else:
             deferred.callback(data)
@@ -828,10 +828,10 @@ class Runtime:
 
         # setting the number to n makes the reactor called 
         # only every n-th time
-        if (self.activation_counter >= 2):
+        if self.activation_counter >= 2:
             self.depth_counter += 1
 
-            if (self.depth_counter > self.max_depth):
+            if self.depth_counter > self.max_depth:
                 # Record the maximal depth reached.
                 self.max_depth = self.depth_counter
 
