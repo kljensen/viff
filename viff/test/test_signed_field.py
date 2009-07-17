@@ -15,9 +15,6 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with VIFF. If not, see <http://www.gnu.org/licenses/>.
 
-# Import system packages.
-import sys
-
 from twisted.trial.unittest import TestCase
 
 # Import VIFF packages.
