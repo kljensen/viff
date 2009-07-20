@@ -27,6 +27,7 @@ from viff.field import GF
 from viff.config import generate_configs, load_config
 from viff.util import rand
 from viff.test.loopback import loopbackAsync
+from viff.reactor import ViffReactor
 
 from random import Random
 
@@ -135,10 +136,26 @@ class RuntimeTestCase(TestCase):
         self.close_sentinels = []
 
         self.runtimes = []
-        self.real_runtimes = []
         for id in reversed(range(1, self.num_players+1)):
             _, players = load_config(configs[id])
             self.create_loopback_runtime(id, players)
+
+        if isinstance(reactor, ViffReactor):
+            def set_loop_call(runtimes):
+                self.i = 0
+
+                # This loop call should ensure the queues of the parties are
+                # processed in a more or less fair manner. This is necessary
+                # because we have only one reactor for all parties here.
+                def loop_call():
+                    i = self.i
+                    for j in range(len(runtimes)):
+                        self.i = (self.i + 1) % len(runtimes)
+                        runtimes[(i + j) % len(runtimes)].process_deferred_queue()
+
+                reactor.setLoopCall(loop_call)
+
+            gatherResults(self.runtimes).addCallback(set_loop_call)
 
     def tearDown(self):
         """Ensure that all protocol transports are closed.
@@ -179,18 +196,6 @@ class RuntimeTestCase(TestCase):
         # the Runtime, since we want everybody to wait until all
         # runtimes are ready.
         self.runtimes.append(result)
-        self.real_runtimes.append(runtime)
-        self.i = 0
-
-        # This loop call should ensure the queues of the parties are
-        # processed in a more or less fair manner. This is necessary
-        # because we have only one reactor for all parties here.
-        def loop_call():
-            for runtime in self.real_runtimes[self.i:] + self.real_runtimes[:self.i]:
-                runtime.process_deferred_queue()
-                self.i = (self.i + 1) % len(self.real_runtimes)
-
-        reactor.setLoopCall(loop_call)
 
         for peer_id in players:
             if peer_id != id:
