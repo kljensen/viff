@@ -653,6 +653,9 @@ class Runtime:
         something to be used afterwards, add further callbacks to the returned
         deferred."""
 
+        if not self.using_viff_reactor:
+            return self.schedule_callback(deferred, func, *args, **kwargs)
+
         if isinstance(deferred, Share):
             fork = Share(deferred.runtime, deferred.field)
         else:
@@ -839,6 +842,9 @@ class Runtime:
         """Activate the reactor to do actual communcation.
 
         This is where the recursion happens."""
+
+        if not self.using_viff_reactor:
+            return
 
         self.activation_counter += 1
 
