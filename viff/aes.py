@@ -107,6 +107,8 @@ class AES:
                 self.invert = lambda byte: byte ** 254
             elif (use_exponentiation == "shortest_chain_with_least_rounds"):
                 self.invert = self.invert_by_exponentiation_with_less_rounds
+            elif (use_exponentiation == "chain_with_least_rounds"):
+                self.invert = self.invert_by_exponentiation_with_least_rounds
             else:
                 self.invert = self.invert_by_exponentiation
         else:
@@ -117,7 +119,8 @@ class AES:
 
     exponentiation_variants = ["standard_square_and_multiply",
                                "shortest_sequential_chain",
-                               "shortest_chain_with_least_rounds"]
+                               "shortest_chain_with_least_rounds",
+                               "chain_with_least_rounds"]
 
     def invert_by_masking(self, byte):
         bits = bit_decompose(byte)
@@ -179,6 +182,22 @@ class AES:
         byte_100 = byte_50 * byte_50
         byte_200 = byte_100 * byte_100
         byte_254 = byte_200 * byte_54
+        return byte_254
+
+    def invert_by_exponentiation_with_least_rounds(self, byte):
+        byte_2 = byte * byte
+        byte_3 = byte_2 * byte
+        byte_4 = byte_2 * byte_2
+        byte_7 = byte_4 * byte_3
+        byte_8 = byte_4 * byte_4
+        byte_15 = byte_8 * byte_7
+        byte_16 = byte_8 * byte_8
+        byte_31 = byte_16 * byte_15
+        byte_32 = byte_16 * byte_16
+        byte_63 = byte_32 * byte_31
+        byte_64 = byte_32 * byte_32
+        byte_127 = byte_64 * byte_63
+        byte_254 = byte_127 * byte_127
         return byte_254
 
     # matrix for byte_sub, the last column is the translation vector
