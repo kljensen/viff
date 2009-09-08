@@ -175,13 +175,13 @@ class AES:
         byte_4 = byte_2 * byte_2
         byte_8 = byte_4 * byte_4
         byte_9 = byte_8 * byte
-        byte_16 = byte_8 * byte_8
-        byte_25 = byte_16 * byte_9
-        byte_50 = byte_25 * byte_25
-        byte_54 = byte_50 * byte_4
-        byte_100 = byte_50 * byte_50
-        byte_200 = byte_100 * byte_100
-        byte_254 = byte_200 * byte_54
+        byte_18 = byte_9 * byte_9
+        byte_19 = byte_18 * byte
+        byte_36 = byte_18 * byte_18
+        byte_55 = byte_36 * byte_19
+        byte_72 = byte_36 * byte_36
+        byte_127 = byte_72 * byte_55
+        byte_254 = byte_127 * byte_127
         return byte_254
 
     def invert_by_exponentiation_with_least_rounds(self, byte):
