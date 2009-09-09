@@ -288,11 +288,16 @@ class ShareExchanger(Int16StringReceiver):
         #: Data expected to be received in the future.
         self.incoming_data = {}
         self.waiting_deferreds = {}
+        #: Statistics
+        self.sent_packets = 0
+        self.sent_bytes = 0
 
     def connectionMade(self):
         self.sendString(str(self.factory.runtime.id))
 
     def connectionLost(self, reason):
+        print "Transfer to peer %d: %d bytes in %d packets" % \
+              (self.peer_id, self.sent_bytes, self.sent_packets)
         reason.trap(ConnectionDone)
         self.lost_connection.callback(self)
 
@@ -362,7 +367,10 @@ class ShareExchanger(Int16StringReceiver):
         data_size = len(data)
         fmt = "!HHB%dI%ds" % (pc_size, data_size)
         t = (pc_size, data_size, data_type) + program_counter + (data,)
-        self.sendString(struct.pack(fmt, *t))
+        packet = struct.pack(fmt, *t)
+        self.sendString(packet)
+        self.sent_packets += 1
+        self.sent_bytes += len(packet)
 
     def sendShare(self, program_counter, share):
         """Send a share.
@@ -578,7 +586,7 @@ class Runtime:
 
         def close_connections(_):
             print "done."
-            print "Closing connections...",
+            print "Closing connections..."
             results = [maybeDeferred(self.port.stopListening)]
             for protocol in self.protocols.itervalues():
                 results.append(protocol.lost_connection)
@@ -586,7 +594,7 @@ class Runtime:
             return DeferredList(results)
 
         def stop_reactor(_):
-            print "done."
+            print "Connections closed."
             print "Stopping reactor...",
             reactor.stop()
             print "done."
