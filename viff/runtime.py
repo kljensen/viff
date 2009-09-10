@@ -296,8 +296,6 @@ class ShareExchanger(Int16StringReceiver):
         self.sendString(str(self.factory.runtime.id))
 
     def connectionLost(self, reason):
-        print "Transfer to peer %d: %d bytes in %d packets" % \
-              (self.peer_id, self.sent_bytes, self.sent_packets)
         reason.trap(ConnectionDone)
         self.lost_connection.callback(self)
 
@@ -586,7 +584,7 @@ class Runtime:
 
         def close_connections(_):
             print "done."
-            print "Closing connections..."
+            print "Closing connections...",
             results = [maybeDeferred(self.port.stopListening)]
             for protocol in self.protocols.itervalues():
                 results.append(protocol.lost_connection)
@@ -594,7 +592,7 @@ class Runtime:
             return DeferredList(results)
 
         def stop_reactor(_):
-            print "Connections closed."
+            print "done."
             print "Stopping reactor...",
             reactor.stop()
             print "done."
@@ -869,6 +867,13 @@ class Runtime:
 
             self.depth_counter -= 1
             self.activation_counter = 0
+
+    def print_transferred_data():
+        """Print the amount of transferred data for all connections."""
+
+        for protocol in self.protocols.itervalues():
+            print "Transfer to peer %d: %d bytes in %d packets" % \
+                  (protocol.peer_id, protocol.sent_bytes, protocol.sent_packets)
 
 
 def make_runtime_class(runtime_class=None, mixins=None):
