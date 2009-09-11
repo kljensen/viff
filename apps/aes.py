@@ -22,6 +22,7 @@
 
 import time
 from optparse import OptionParser
+from pprint import pformat
 
 import viff.reactor
 viff.reactor.install()
@@ -57,6 +58,8 @@ parser.add_option("-c", "--count", action="store", type="int",
 parser.set_defaults(count=1)
 parser.add_option("-a", "--active", action="store_true", help="Use actively "
                   "secure runtime. Default is only passive security.")
+parser.add_option("-p", "--preproc", action="store_true", help="Use "
+                  "preprocessing. Default is no preprocessing.")
 
 # Add standard VIFF options.
 Runtime.add_options(parser)
@@ -85,6 +88,19 @@ def encrypt(_, rt, key):
     def fin(ciphertext):
         print "Finished after %f sec." % (time.time() - start)
         print "Ciphertext:", [hex(c.value) for c in ciphertext]
+
+        if rt._needed_data and options.preproc:
+            print "Missing pre-processed data:"
+            for (func, args), pcs in rt._needed_data.iteritems():
+                print "* %s%s:" % (func, args)
+                print "  " + pformat(pcs).replace("\n", "\n  ")
+
+        if rt._pool:
+            print "Unused pre-processed data:"
+            pcs = rt._pool.keys()
+            pcs.sort()
+            print "  " + pformat(pcs).replace("\n", "\n  ")
+
         rt.shutdown()
 
     g = gather_shares(opened_ciphertext)
@@ -103,6 +119,37 @@ def share_key(rt):
     s = rt.synchronize()
     rt.schedule_complex_callback(s, encrypt, rt, key)
 
+def preprocess(rt):
+    if options.active:
+        start = time.time()
+
+        if options.exponentiation is False:
+            max = 301
+            js = [3 + i * 15 + j for i in range(20) for j in range(7) + [8]]
+        elif options.exponentiation == 0:
+            max = 321
+            js = [2 + i * 16 + j for i in range(20) for j in range(13)]
+        elif options.exponentiation == 1 or options.exponentiation == 2:
+            max = 261
+            js = [1 + i * 13 + j for i in range(20) for j in range(11)]
+        elif options.exponentiation == 3:
+            max = 301
+            js = [1 + i * 15 + j for i in range(20) for j in range(13)]
+
+        pcs = [(2, 18, k) +  (max,) * i + (j, 1, 0)
+               for k in range(1, options.count + 1)
+               for i in range(10)
+               for j in js]
+
+        preproc = rt.preprocess({("generate_triples", (GF256,)): pcs})
+
+        def fin(_):
+            print "Finished preprocessing after %f sec." % (time.time() - start)
+            return rt
+
+        preproc.addCallback(fin)
+        rt.schedule_complex_callback(preproc, share_key)
+
 if options.active:
     from viff.active import ActiveRuntime
     runtime_class = ActiveRuntime
@@ -111,6 +158,10 @@ else:
     runtime_class = PassiveRuntime
 
 rt = create_runtime(id, players, 1, options, runtime_class)
-rt.addCallback(share_key)
+
+if options.preproc:
+    rt.addCallback(preprocess)
+else:
+    rt.addCallback(share_key)
 
 reactor.run()
