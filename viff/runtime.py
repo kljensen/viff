@@ -446,7 +446,7 @@ def preprocess(generator):
         def preprocess_wrapper(self, *args, **kwargs):
             pc = tuple(self.program_counter)
             try:
-                return self._pool[pc]
+                return self._pool.pop(pc)
             except KeyError:
                 key = (generator, args)
                 pcs = self._needed_data.setdefault(key, [])
