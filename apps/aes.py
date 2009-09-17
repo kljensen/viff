@@ -120,9 +120,10 @@ def share_key(rt):
     rt.schedule_complex_callback(s, encrypt, rt, key)
 
 def preprocess(rt):
-    if options.active:
-        start = time.time()
+    start = time.time()
+    program_desc = {}
 
+    if options.active:
         if options.exponentiation is False:
             max = 301
             js = [3 + i * 15 + j for i in range(20) for j in range(7) + [8]]
@@ -140,13 +141,21 @@ def preprocess(rt):
                for k in range(1, options.count + 1)
                for i in range(10)
                for j in js]
+        program_desc[("generate_triples", (GF256,))] = pcs
 
-        preproc = rt.preprocess({("generate_triples", (GF256,)): pcs})
+    if options.exponentiation == 4:
+        pcs = [(2, 18, k) + (81,) * i + (1 + j * 4, 0)
+               for k in range(1, options.count + 1)
+               for i in range(10)
+               for j in range(20)]
 
+        program_desc[("prss_powerchains", ())] = pcs
+
+    if program_desc:
+        preproc = rt.preprocess(program_desc)
         def fin(_):
             print "Finished preprocessing after %f sec." % (time.time() - start)
             return rt
-
         preproc.addCallback(fin)
         rt.schedule_complex_callback(preproc, share_key)
 

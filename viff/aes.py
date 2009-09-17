@@ -109,6 +109,8 @@ class AES:
                 self.invert = self.invert_by_exponentiation_with_less_rounds
             elif (use_exponentiation == "chain_with_least_rounds"):
                 self.invert = self.invert_by_exponentiation_with_least_rounds
+            elif (use_exponentiation == "masked"):
+                self.invert = self.invert_by_masked_exponentiation
             else:
                 self.invert = self.invert_by_exponentiation
         else:
@@ -120,7 +122,8 @@ class AES:
     exponentiation_variants = ["standard_square_and_multiply",
                                "shortest_sequential_chain",
                                "shortest_chain_with_least_rounds",
-                               "chain_with_least_rounds"]
+                               "chain_with_least_rounds",
+                               "masked"]
 
     def invert_by_masking(self, byte):
         bits = bit_decompose(byte)
@@ -154,6 +157,25 @@ class AES:
         # was: return c * r - b
         result = gather_shares([c, r, b])
         result.addCallback(lambda (c, r, b): c * r - b)
+        return result
+
+    def invert_by_masked_exponentiation(self, byte):
+        def add_and_multiply(masked_powers, random_powers):
+            byte_powers = map(operator.add, masked_powers, random_powers)[1:]
+            while len(byte_powers) > 1:
+                byte_powers.append(byte_powers.pop(0) * byte_powers.pop(0))
+            return byte_powers[0]
+
+        def open_and_exponentiate(random_powers):
+            masked_byte = self.runtime.open(byte + random_powers[0])
+            masked_powers = self.runtime.schedule_complex_callback(masked_byte,
+                lambda masked_byte: self.runtime.powerchain(masked_byte, 7))
+            return self.runtime.schedule_complex_callback(
+                masked_powers, add_and_multiply, random_powers)
+
+        result = Share(self.runtime, GF256)
+        self.runtime.prss_powerchain().chainDeferred(result)
+        result = self.runtime.schedule_complex_callback(result, open_and_exponentiate)
         return result
 
     def invert_by_exponentiation(self, byte):

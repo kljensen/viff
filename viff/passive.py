@@ -22,10 +22,13 @@
 import operator
 
 from viff import shamir
-from viff.runtime import Runtime, increment_pc, Share, ShareList, gather_shares
+from viff.runtime import Runtime, increment_pc, Share, ShareList, \
+     gather_shares, preprocess
 from viff.prss import prss, prss_lsb, prss_zero, prss_multi
 from viff.field import GF256, FieldElement
 from viff.util import rand, profile
+
+from twisted.internet.defer import succeed
 
 
 class PassiveRuntime(Runtime):
@@ -447,6 +450,30 @@ class PassiveRuntime(Runtime):
 
         # Use r_lsb to flip b as needed.
         return (b_p, b ^ r_lsb)
+
+    def powerchain(self, share, max):
+        """Returns the list [*share*, *share*^2, *share*^4, ...,
+        *share*^(i^max)]."""
+        result = [share]
+        for i in range(max):
+            share = share * share
+            result.append(share)
+        return result
+
+    @increment_pc
+    @preprocess("prss_powerchains")
+    def prss_powerchain(self, max=7):
+        """Generate a random secret share in GF256 and returns
+        [*share*, *share*^2, *share*^4, ..., *share*^(i^max)]."""
+        share = self.prss_share_random(GF256)
+        return succeed(self.powerchain(share, max))
+
+    def prss_powerchains(self, max=7, quantity=20):
+        """Does *quantity* times the same as :meth:`prss_powerchain`.
+        Used for preprocessing."""
+        shares = self.prss_share_random_multi(GF256, quantity)
+        return quantity, succeed([self.powerchain(share, max)
+                                  for share in shares])
 
     def input(self, inputters, field, number=None, threshold=None):
         """Input *number* to the computation.
