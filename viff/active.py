@@ -428,32 +428,35 @@ class TriplesPRSSMixin:
     @increment_pc
     @preprocess("generate_triples")
     def get_triple(self, field):
-        count, result = self.generate_triples(field)
+        count, result = self.generate_triples(field, quantity=1)
         result.addCallback(lambda triples: triples[0])
         return result
 
     @increment_pc
-    def generate_triples(self, field):
-        """Generate a multiplication triple using PRSS.
+    def generate_triples(self, field, quantity=20):
+        """Generate *quantity* multiplication triples using PRSS.
 
         These are random numbers *a*, *b*, and *c* such that ``c =
         ab``. This function can be used in pre-processing.
 
-        Returns a tuple with the number of triples generated (1) and a
+        Returns a tuple with the number of triples generated and a
         Deferred which will yield a singleton-list with a 3-tuple.
         """
-        a_t = self.prss_share_random(field)
-        b_t = self.prss_share_random(field)
-        r_t, r_2t = self.prss_double_share(field)
+        a_t = self.prss_share_random_multi(field, quantity)
+        b_t = self.prss_share_random_multi(field, quantity)
+        r_t, r_2t = self.prss_double_share(field, quantity)
+        c_t = [0] * quantity
 
-        # Multiply a and b without resharing.
-        c_2t = gather_shares([a_t, b_t])
-        c_2t.addCallback(lambda (a, b): a * b)
+        for i in range(quantity):
+            # Multiply a and b without resharing.
+            c_2t = gather_shares([a_t[i], b_t[i]])
+            c_2t.addCallback(lambda (a, b): a * b)
 
-        d_2t = c_2t - r_2t
-        d = self.open(d_2t, threshold=2*self.threshold)
-        c_t = r_t + d
-        return 1, succeed([(a_t, b_t, c_t)])
+            d_2t = c_2t - r_2t[i]
+            d = self.open(d_2t, threshold=2*self.threshold)
+            c_t[i] = r_t[i] + d
+
+        return quantity, succeed(zip(a_t, b_t, c_t))
 
 
 class BasicActiveRuntime(PassiveRuntime):

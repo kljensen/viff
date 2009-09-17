@@ -375,8 +375,9 @@ class PassiveRuntime(Runtime):
         return [Share(self, field, share) for share in shares]
 
     @increment_pc
-    def prss_share_zero(self, field):
-        """Generate shares of the zero element from the field given.
+    def prss_share_zero(self, field, quantity):
+        """Generate *quantity* shares of the zero element from the
+        field given.
 
         Communication cost: none.
         """
@@ -384,19 +385,19 @@ class PassiveRuntime(Runtime):
         prss_key = tuple(self.program_counter)
         prfs = self.players[self.id].prfs(field.modulus)
         zero_share = prss_zero(self.num_players, self.threshold, self.id,
-                               field, prfs, prss_key)
-        return Share(self, field, zero_share)
+                               field, prfs, prss_key, quantity)
+        return [Share(self, field, zero_share[i]) for i in range(quantity)]
 
     @increment_pc
-    def prss_double_share(self, field):
-        """Make a double-sharing using PRSS.
+    def prss_double_share(self, field, quantity):
+        """Make *quantity* double-sharings using PRSS.
 
         The pair of shares will have degree t and 2t where t is the
         default threshold for the runtime.
         """
-        r_t = self.prss_share_random(field)
-        z_2t = self.prss_share_zero(field)
-        return (r_t, r_t + z_2t)
+        r_t = self.prss_share_random_multi(field, quantity)
+        z_2t = self.prss_share_zero(field, quantity)
+        return (r_t, [r_t[i] + z_2t[i] for i in range(quantity)])
 
     @increment_pc
     def prss_share_bit_double(self, field):
