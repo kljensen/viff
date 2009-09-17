@@ -158,6 +158,8 @@ def preprocess(rt):
             return rt
         preproc.addCallback(fin)
         rt.schedule_complex_callback(preproc, share_key)
+    else:
+        share_key(rt)
 
 if options.active:
     from viff.active import ActiveRuntime
