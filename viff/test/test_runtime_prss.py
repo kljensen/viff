@@ -130,7 +130,7 @@ class RuntimePrssTest(RuntimeTestCase):
     @protocol
     def test_prss_share_zero_bit(self, runtime):
         """Tests the sharing of a zero GF256 element using PRSS."""
-        a = runtime.prss_share_zero(GF256)
+        a = runtime.prss_share_zero(GF256, 1)[0]
         self.assert_type(a, Share)
 
         opened_a = runtime.open(a, threshold=2*runtime.threshold)
@@ -140,7 +140,7 @@ class RuntimePrssTest(RuntimeTestCase):
     @protocol
     def test_prss_share_zero_int(self, runtime):
         """Tests the sharing of a zero Zp element using PRSS."""
-        a = runtime.prss_share_zero(self.Zp)
+        a = runtime.prss_share_zero(self.Zp, 1)[0]
         self.assert_type(a, Share)
 
         opened_a = runtime.open(a, threshold=2*runtime.threshold)
@@ -150,7 +150,7 @@ class RuntimePrssTest(RuntimeTestCase):
     @protocol
     def test_prss_double_share(self, runtime):
         """Test double-sharing of random numbers using PRSS."""
-        r_t, r_2t = runtime.prss_double_share(self.Zp)
+        r_t, r_2t = zip(*runtime.prss_double_share(self.Zp, 1))[0]
 
         self.assert_type(r_t, Share)
         self.assertEquals(r_t.field, self.Zp)

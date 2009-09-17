@@ -70,7 +70,7 @@ class FakeTest(TestCase):
         self.assertEquals(bit, GF256(1))
 
     def test_prss_zero(self):
-        share = prss.prss_zero(None, None, None, self.field, None, None)
+        share = prss.prss_zero(None, None, None, self.field, None, None, 1)[0]
         self.assertEquals(share, self.field(0))
 
 
