@@ -54,7 +54,6 @@ class PassiveRuntime(Runtime):
     def output(self, share, receivers=None, threshold=None):
         return self.open(share, receivers, threshold)
 
-    @increment_pc
     def open(self, share, receivers=None, threshold=None):
         """Open a secret sharing.
 
@@ -172,7 +171,6 @@ class PassiveRuntime(Runtime):
         return result
 
     @profile
-    @increment_pc
     def mul(self, share_a, share_b):
         """Multiplication of shares.
 
@@ -229,7 +227,6 @@ class PassiveRuntime(Runtime):
         else:
             return share * (share ** (exponent-1))
 
-    @increment_pc
     def xor(self, share_a, share_b):
         field = share_a.field
         if not isinstance(share_b, Share):
@@ -242,7 +239,6 @@ class PassiveRuntime(Runtime):
         else:
             return share_a + share_b - 2 * share_a * share_b
 
-    @increment_pc
     def prss_share(self, inputters, field, element=None):
         """Creates pseudo-random secret sharings.
 
@@ -351,7 +347,6 @@ class PassiveRuntime(Runtime):
         self.schedule_callback(result, finish, share, binary)
         return result
 
-    @increment_pc
     def prss_share_random_multi(self, field, quantity, binary=False):
         """Does the same as calling *quantity* times :meth:`prss_share_random`,
         but with less calls to the PRF. Sampling of a binary element is only
@@ -374,7 +369,6 @@ class PassiveRuntime(Runtime):
                             modulus, quantity)
         return [Share(self, field, share) for share in shares]
 
-    @increment_pc
     def prss_share_zero(self, field):
         """Generate shares of the zero element from the field given.
 
@@ -387,7 +381,6 @@ class PassiveRuntime(Runtime):
                                field, prfs, prss_key)
         return Share(self, field, zero_share)
 
-    @increment_pc
     def prss_double_share(self, field):
         """Make a double-sharing using PRSS.
 
@@ -398,7 +391,6 @@ class PassiveRuntime(Runtime):
         z_2t = self.prss_share_zero(field)
         return (r_t, r_t + z_2t)
 
-    @increment_pc
     def prss_share_bit_double(self, field):
         """Share a random bit over *field* and GF256.
 
@@ -423,7 +415,6 @@ class PassiveRuntime(Runtime):
         # Use r_lsb to flip b as needed.
         return (b_p, b ^ r_lsb)
 
-    @increment_pc
     def prss_shamir_share_bit_double(self, field):
         """Shamir share a random bit over *field* and GF256."""
         n = self.num_players
@@ -455,7 +446,6 @@ class PassiveRuntime(Runtime):
         """
         return self.shamir_share(inputters, field, number, threshold)
 
-    @increment_pc
     def shamir_share(self, inputters, field, number=None, threshold=None):
         """Secret share *number* over *field* using Shamir's method.
 

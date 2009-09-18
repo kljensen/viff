@@ -141,7 +141,6 @@ class BrachaBroadcastMixin:
 
         return result
 
-    @increment_pc
     def broadcast(self, senders, message=None):
         """Perform one or more Bracha broadcast(s).
 
@@ -186,7 +185,6 @@ class TriplesHyperinvertibleMatricesMixin:
     #: to :const:`None` here and update it as necessary.
     _hyper = None
 
-    @increment_pc
     def single_share_random(self, T, degree, field):
         """Share a random secret.
 
@@ -273,7 +271,6 @@ class TriplesHyperinvertibleMatricesMixin:
         self.schedule_callback(result, exchange)
         return result
 
-    @increment_pc
     def double_share_random(self, T, d1, d2, field):
         """Double-share a random secret using two polynomials.
 
@@ -376,7 +373,6 @@ class TriplesHyperinvertibleMatricesMixin:
         self.schedule_callback(result, exchange)
         return result
 
-    @increment_pc
     @preprocess("generate_triples")
     def get_triple(self, field):
         # This is a waste, but this function is only called if there
@@ -385,7 +381,6 @@ class TriplesHyperinvertibleMatricesMixin:
         result.addCallback(lambda triples: triples[0])
         return result
 
-    @increment_pc
     def generate_triples(self, field):
         """Generate multiplication triples.
 
@@ -425,14 +420,12 @@ class TriplesHyperinvertibleMatricesMixin:
 class TriplesPRSSMixin:
     """Mixin class for generating multiplication triples using PRSS."""
 
-    @increment_pc
     @preprocess("generate_triples")
     def get_triple(self, field):
         count, result = self.generate_triples(field)
         result.addCallback(lambda triples: triples[0])
         return result
 
-    @increment_pc
     def generate_triples(self, field):
         """Generate a multiplication triple using PRSS.
 
@@ -467,7 +460,6 @@ class BasicActiveRuntime(PassiveRuntime):
     :class:`ActiveRuntime` instead.
     """
 
-    @increment_pc
     def mul(self, share_x, share_y):
         """Multiplication of shares.
 
