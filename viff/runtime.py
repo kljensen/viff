@@ -848,7 +848,7 @@ class Runtime:
             self.depth_counter -= 1
             self.activation_counter = 0
 
-    def print_transferred_data():
+    def print_transferred_data(self):
         """Print the amount of transferred data for all connections."""
 
         for protocol in self.protocols.itervalues():
