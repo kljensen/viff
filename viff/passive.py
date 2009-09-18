@@ -22,7 +22,7 @@
 import operator
 
 from viff import shamir
-from viff.runtime import Runtime, increment_pc, Share, ShareList, gather_shares
+from viff.runtime import Runtime, Share, ShareList, gather_shares
 from viff.prss import prss, prss_lsb, prss_zero, prss_multi
 from viff.field import GF256, FieldElement
 from viff.util import rand, profile
@@ -239,6 +239,18 @@ class PassiveRuntime(Runtime):
         else:
             return share_a + share_b - 2 * share_a * share_b
 
+    def prss_key(self):
+        """Create unique key for PRSS.
+
+        This increments the program counter and returns it as a tuple.
+        Each straight-line program (typically a callback attached to
+        some :class:`Deferred`) is executed in a context with unique
+        starting program counter. This ensures that consequetive calls
+        to PRSS-related methods will use unique program counters.
+        """
+        self.program_counter[-1] += 1
+        return tuple(self.program_counter)
+
     def prss_share(self, inputters, field, element=None):
         """Creates pseudo-random secret sharings.
 
@@ -266,7 +278,7 @@ class PassiveRuntime(Runtime):
         n = self.num_players
 
         # Key used for PRSS.
-        key = tuple(self.program_counter)
+        key = self.prss_key()
 
         # The shares for which we have all the keys.
         all_shares = []
@@ -307,7 +319,6 @@ class PassiveRuntime(Runtime):
         else:
             return result
 
-    @increment_pc
     def prss_share_random(self, field, binary=False):
         """Generate shares of a uniformly random element from the field given.
 
@@ -322,7 +333,7 @@ class PassiveRuntime(Runtime):
             modulus = field.modulus
 
         # Key used for PRSS.
-        prss_key = tuple(self.program_counter)
+        prss_key = self.prss_key()
         prfs = self.players[self.id].prfs(modulus)
         share = prss(self.num_players, self.id, field, prfs, prss_key)
 
@@ -363,7 +374,7 @@ class PassiveRuntime(Runtime):
             modulus = field.modulus
 
         # Key used for PRSS.
-        prss_key = tuple(self.program_counter)
+        prss_key = self.prss_key()
         prfs = self.players[self.id].prfs(modulus ** quantity)
         shares = prss_multi(self.num_players, self.id, field, prfs, prss_key,
                             modulus, quantity)
@@ -375,7 +386,7 @@ class PassiveRuntime(Runtime):
         Communication cost: none.
         """
         # Key used for PRSS.
-        prss_key = tuple(self.program_counter)
+        prss_key = self.prss_key()
         prfs = self.players[self.id].prfs(field.modulus)
         zero_share = prss_zero(self.num_players, self.threshold, self.id,
                                field, prfs, prss_key)
@@ -402,7 +413,7 @@ class PassiveRuntime(Runtime):
         n = self.num_players
         k = self.options.security_parameter
         prfs = self.players[self.id].prfs(2**k)
-        prss_key = tuple(self.program_counter)
+        prss_key = self.prss_key()
 
         b_p = self.prss_share_random(field, binary=True)
         r_p, r_lsb = prss_lsb(n, self.id, field, prfs, prss_key)
@@ -420,7 +431,7 @@ class PassiveRuntime(Runtime):
         n = self.num_players
         k = self.options.security_parameter
         prfs = self.players[self.id].prfs(2**k)
-        prss_key = tuple(self.program_counter)
+        prss_key = self.prss_key()
         inputters = range(1, self.num_players + 1)
 
         ri = rand.randint(0, 2**k - 1)
