@@ -401,25 +401,6 @@ class ShareExchangerFactory(ReconnectingClientFactory, ServerFactory):
         reason.trap(ConnectionDone)
 
 
-def increment_pc(method):
-    """Make *method* automatically increment the program counter.
-
-    Adding this decorator to a :class:`Runtime` method will ensure
-    that the program counter is incremented correctly when entering
-    the method.
-    """
-
-    @wrapper(method)
-    def inc_pc_wrapper(self, *args, **kwargs):
-        try:
-            self.program_counter[-1] += 1
-            self.program_counter.append(0)
-            return method(self, *args, **kwargs)
-        finally:
-            self.program_counter.pop()
-    return inc_pc_wrapper
-
-
 def preprocess(generator):
     """Track calls to this method.
 
