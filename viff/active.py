@@ -27,7 +27,7 @@ from viff import shamir
 from viff.util import rand
 from viff.matrix import Matrix, hyper
 from viff.passive import PassiveRuntime
-from viff.runtime import Share, increment_pc, preprocess, gather_shares
+from viff.runtime import Share, preprocess, gather_shares
 from viff.runtime import ECHO, READY, SEND
 
 
@@ -37,7 +37,6 @@ class BrachaBroadcastMixin:
     broadcast.
     """
 
-    @increment_pc
     def _broadcast(self, sender, message=None):
         """Perform a Bracha broadcast.
 
@@ -47,6 +46,8 @@ class BrachaBroadcastMixin:
         protocol" by G. Bracha in Proc. 3rd ACM Symposium on
         Principles of Distributed Computing, 1984, pages 154-162.
         """
+        # We need a unique program counter for each call.
+        self.program_counter[-1] += 1
 
         result = Deferred()
         pc = tuple(self.program_counter)
