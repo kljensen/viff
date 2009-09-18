@@ -55,6 +55,8 @@ parser.add_option("-o", "--at-once", action="store_true",help="Prepare "
 parser.add_option("-c", "--count", action="store", type="int",
                   help="Number of blocks to encrypt. Defaults to 1.")
 parser.set_defaults(count=1)
+parser.add_option("-a", "--active", action="store_true", help="Use actively "
+                  "secure runtime. Default is only passive security.")
 
 # Add standard VIFF options.
 Runtime.add_options(parser)
@@ -101,7 +103,14 @@ def share_key(rt):
     s = rt.synchronize()
     rt.schedule_complex_callback(s, encrypt, rt, key)
 
-rt = create_runtime(id, players, 1, options)
+if options.active:
+    from viff.active import ActiveRuntime
+    runtime_class = ActiveRuntime
+else:
+    from viff.passive import PassiveRuntime
+    runtime_class = PassiveRuntime
+
+rt = create_runtime(id, players, 1, options, runtime_class)
 rt.addCallback(share_key)
 
 reactor.run()

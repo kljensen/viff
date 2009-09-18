@@ -288,6 +288,9 @@ class ShareExchanger(Int16StringReceiver):
         #: Data expected to be received in the future.
         self.incoming_data = {}
         self.waiting_deferreds = {}
+        #: Statistics
+        self.sent_packets = 0
+        self.sent_bytes = 0
 
     def connectionMade(self):
         self.sendString(str(self.factory.runtime.id))
@@ -362,7 +365,10 @@ class ShareExchanger(Int16StringReceiver):
         data_size = len(data)
         fmt = "!HHB%dI%ds" % (pc_size, data_size)
         t = (pc_size, data_size, data_type) + program_counter + (data,)
-        self.sendString(struct.pack(fmt, *t))
+        packet = struct.pack(fmt, *t)
+        self.sendString(packet)
+        self.sent_packets += 1
+        self.sent_bytes += len(packet)
 
     def sendShare(self, program_counter, share):
         """Send a share.
@@ -841,6 +847,13 @@ class Runtime:
 
             self.depth_counter -= 1
             self.activation_counter = 0
+
+    def print_transferred_data():
+        """Print the amount of transferred data for all connections."""
+
+        for protocol in self.protocols.itervalues():
+            print "Transfer to peer %d: %d bytes in %d packets" % \
+                  (protocol.peer_id, protocol.sent_bytes, protocol.sent_packets)
 
 
 def make_runtime_class(runtime_class=None, mixins=None):
