@@ -22,10 +22,12 @@
 import operator
 
 from viff import shamir
-from viff.runtime import Runtime, Share, ShareList, gather_shares
+from viff.runtime import Runtime, Share, ShareList, gather_shares, preprocess
 from viff.prss import prss, prss_lsb, prss_zero, prss_multi
 from viff.field import GF256, FieldElement
 from viff.util import rand, profile
+
+from twisted.internet.defer import succeed
 
 
 class PassiveRuntime(Runtime):
@@ -380,8 +382,9 @@ class PassiveRuntime(Runtime):
                             modulus, quantity)
         return [Share(self, field, share) for share in shares]
 
-    def prss_share_zero(self, field):
-        """Generate shares of the zero element from the field given.
+    def prss_share_zero(self, field, quantity):
+        """Generate *quantity* shares of the zero element from the
+        field given.
 
         Communication cost: none.
         """
@@ -389,18 +392,18 @@ class PassiveRuntime(Runtime):
         prss_key = self.prss_key()
         prfs = self.players[self.id].prfs(field.modulus)
         zero_share = prss_zero(self.num_players, self.threshold, self.id,
-                               field, prfs, prss_key)
-        return Share(self, field, zero_share)
+                               field, prfs, prss_key, quantity)
+        return [Share(self, field, zero_share[i]) for i in range(quantity)]
 
-    def prss_double_share(self, field):
-        """Make a double-sharing using PRSS.
+    def prss_double_share(self, field, quantity):
+        """Make *quantity* double-sharings using PRSS.
 
         The pair of shares will have degree t and 2t where t is the
         default threshold for the runtime.
         """
-        r_t = self.prss_share_random(field)
-        z_2t = self.prss_share_zero(field)
-        return (r_t, r_t + z_2t)
+        r_t = self.prss_share_random_multi(field, quantity)
+        z_2t = self.prss_share_zero(field, quantity)
+        return (r_t, [r_t[i] + z_2t[i] for i in range(quantity)])
 
     def prss_share_bit_double(self, field):
         """Share a random bit over *field* and GF256.
@@ -449,6 +452,29 @@ class PassiveRuntime(Runtime):
 
         # Use r_lsb to flip b as needed.
         return (b_p, b ^ r_lsb)
+
+    def powerchain(self, share, max):
+        """Returns the list [*share*, *share*^2, *share*^4, ...,
+        *share*^(i^max)]."""
+        result = [share]
+        for i in range(max):
+            share = share * share
+            result.append(share)
+        return result
+
+    @preprocess("prss_powerchains")
+    def prss_powerchain(self, max=7):
+        """Generate a random secret share in GF256 and returns
+        [*share*, *share*^2, *share*^4, ..., *share*^(i^max)]."""
+        share = self.prss_share_random(GF256)
+        return succeed(self.powerchain(share, max))
+
+    def prss_powerchains(self, max=7, quantity=20):
+        """Does *quantity* times the same as :meth:`prss_powerchain`.
+        Used for preprocessing."""
+        shares = self.prss_share_random_multi(GF256, quantity)
+        return quantity, succeed([self.powerchain(share, max)
+                                  for share in shares])
 
     def input(self, inputters, field, number=None, threshold=None):
         """Input *number* to the computation.
