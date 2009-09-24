@@ -137,10 +137,20 @@ def preprocess(rt):
             max = 301
             js = [1 + i * 15 + j for i in range(20) for j in range(13)]
 
-        pcs = [(2, 18, k) +  (max,) * i + (j, 1, 0)
-               for k in range(1, options.count + 1)
-               for i in range(10)
-               for j in js]
+        if options.exponentiation == 4:
+            pcs = [(1, 2 + 130 * options.count + 141 * i + j, 1, 0)
+                   for i in range(10 * options.count)
+                   for j in range(140)] + \
+                  [(2, 18, k) + (81,) * i + (2 + 4 * j, 3, l, 1, 0)
+                   for k in range(1, options.count + 1)
+                   for i in range(10)
+                   for j in range(20)
+                   for l in range(1, 7)]
+        else:
+            pcs = [(2, 18, k) + (max,) * i + (j, 1, 0)
+                   for k in range(1, options.count + 1)
+                   for i in range(10)
+                   for j in js]
         program_desc[("generate_triples", (GF256,))] = pcs
 
     if options.exponentiation == 4:
