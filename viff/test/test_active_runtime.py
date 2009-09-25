@@ -99,24 +99,23 @@ class TriplesHyperTest(RuntimeTestCase):
             """Verify a multiplication triple."""
             self.assertEquals(triple[0] * triple[1], triple[2])
 
-        def check(triples):
-            results = []
-            for a, b, c in triples:
-                self.assert_type(a, Share)
-                self.assert_type(b, Share)
-                self.assert_type(c, Share)
-                open_a = runtime.open(a)
-                open_b = runtime.open(b)
-                open_c = runtime.open(c)
-                result = gatherResults([open_a, open_b, open_c])
-                result.addCallback(verify)
-                results.append(result)
-            return gatherResults(results)
+        def check(triple):
+            a, b, c = triple
+            self.assert_type(a, self.Zp)
+            self.assert_type(b, self.Zp)
+            self.assert_type(c, self.Zp)
+            open_a = runtime.open(Share(self, self.Zp, a))
+            open_b = runtime.open(Share(self, self.Zp, b))
+            open_c = runtime.open(Share(self, self.Zp, c))
+            result = gatherResults([open_a, open_b, open_c])
+            result.addCallback(verify)
+            return result
 
-        count, triples = runtime.generate_triples(self.Zp)
-        self.assertEquals(count, runtime.num_players - 2*runtime.threshold)
+        triples = runtime.generate_triples(self.Zp)
+        self.assertEquals(len(triples), runtime.num_players - 2*runtime.threshold)
 
-        runtime.schedule_callback(triples, check)
+        for triple in triples:
+            runtime.schedule_callback(triple, check)
         return triples
 
 

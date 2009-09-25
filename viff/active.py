@@ -381,9 +381,7 @@ class TriplesHyperinvertibleMatricesMixin:
     def get_triple(self, field):
         # This is a waste, but this function is only called if there
         # are no pre-processed triples left.
-        count, result = self.generate_triples(field)
-        result.addCallback(lambda triples: triples[0])
-        return result
+        return self.generate_triples(field)[0]
 
     @increment_pc
     def generate_triples(self, field):
@@ -399,7 +397,7 @@ class TriplesHyperinvertibleMatricesMixin:
         t = self.threshold
         T = n - 2*t
 
-        def make_triple(shares):
+        def make_triple(shares, results):
             a_t, b_t, (r_t, r_2t) = shares
 
             c_2t = []
@@ -412,15 +410,17 @@ class TriplesHyperinvertibleMatricesMixin:
             d_2t = [c_2t[i] - r_2t[i] for i in range(T)]
             d = [self.open(d_2t[i], threshold=2*t) for i in range(T)]
             c_t = [r_t[i] + d[i] for i in range(T)]
-            return zip(a_t, b_t, c_t)
+
+            for triple, result in zip(zip(a_t, b_t, c_t), results):
+                gatherResults(triple).chainDeferred(result)
 
         single_a = self.single_share_random(T, t, field)
         single_b = self.single_share_random(T, t, field)
         double_c = self.double_share_random(T, t, 2*t, field)
 
-        result = gatherResults([single_a, single_b, double_c])
-        self.schedule_callback(result, make_triple)
-        return T, result
+        results = [Deferred() for i in range(T)]
+        self.schedule_callback(gatherResults([single_a, single_b, double_c]), make_triple, results)
+        return results
 
 class TriplesPRSSMixin:
     """Mixin class for generating multiplication triples using PRSS."""
@@ -428,9 +428,8 @@ class TriplesPRSSMixin:
     @increment_pc
     @preprocess("generate_triples")
     def get_triple(self, field):
-        count, result = self.generate_triples(field, quantity=1)
-        result.addCallback(lambda triples: triples[0])
-        return result
+        result = self.generate_triples(field, quantity=1)
+        return result[0]
 
     @increment_pc
     def generate_triples(self, field, quantity=20):
@@ -456,7 +455,7 @@ class TriplesPRSSMixin:
             d = self.open(d_2t, threshold=2*self.threshold)
             c_t[i] = r_t[i] + d
 
-        return quantity, succeed(zip(a_t, b_t, c_t))
+        return [gatherResults(triple) for triple in zip(a_t, b_t, c_t)]
 
 
 class BasicActiveRuntime(PassiveRuntime):
@@ -516,7 +515,6 @@ class BasicActiveRuntime(PassiveRuntime):
         result = Share(self, share_x.field)
         # This is the Deferred we will do processing on.
         triple = self.get_triple(share_x.field)
-        triple.addCallback(gather_shares)
         triple = self.schedule_complex_callback(triple, finish_mul)
         # We add the result to the chains in triple.
         triple.chainDeferred(result)
