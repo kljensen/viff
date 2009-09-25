@@ -737,14 +737,13 @@ class Runtime:
         arguments. The generator methods called must adhere to the
         following interface:
 
-        - They must return a ``(int, Deferred)`` tuple where the
-          ``int`` tells us how many items of pre-processed data the
-          :class:`Deferred` will yield.
+        - They must return a list of :class:`Deferred` instances.
 
-        - The Deferred must yield a list of the promised length.
-
-        - The list contains the actual data. This data can be either a
-          Deferred or a tuple of Deferreds.
+        - Every Deferred must yield an item of pre-processed data.
+          This can be value, a list or tuple of values, or a Deferred
+          (which will be converted to a value by Twisted), but NOT a
+          list of Deferreds. Use :meth:`gatherResults` to avoid the
+          latter.
 
         The :meth:`ActiveRuntime.generate_triples` method is an
         example of a method fulfilling this interface.
@@ -767,20 +766,14 @@ class Runtime:
             # avoid starting before the pre-processing is complete.
             return deep_wait(results)
 
-        wait_list = []
         for ((generator, args), program_counters) in program.iteritems():
             print "Preprocessing %s (%d items)" % (generator, len(program_counters))
             func = getattr(self, generator)
             results = []
-            items = 0
-            while items < len(program_counters):
-                item_count, result = func(*args)
-                items += item_count
-                results.append(result)
-            ready = gatherResults(results)
-            ready.addCallback(update, program_counters)
-            wait_list.append(ready)
-        return DeferredList(wait_list)
+            while len(results) < len(program_counters):
+                results += func(*args)
+            self._pool.update(zip(program_counters, results))
+        return DeferredList(results).addCallback(lambda _: None)
 
     def input(self, inputters, field, number=None):
         """Input *number* to the computation.

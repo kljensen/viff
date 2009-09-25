@@ -28,7 +28,7 @@ from viff.prss import prss, prss_lsb, prss_zero, prss_multi
 from viff.field import GF256, FieldElement
 from viff.util import rand, profile
 
-from twisted.internet.defer import succeed
+from twisted.internet.defer import succeed, gatherResults
 
 
 class PassiveRuntime(Runtime):
@@ -467,14 +467,13 @@ class PassiveRuntime(Runtime):
         """Generate a random secret share in GF256 and returns
         [*share*, *share*^2, *share*^4, ..., *share*^(i^max)]."""
         share = self.prss_share_random(GF256)
-        return succeed(self.powerchain(share, max))
+        return gatherResults(self.powerchain(share, max))
 
     def prss_powerchains(self, max=7, quantity=20):
         """Does *quantity* times the same as :meth:`prss_powerchain`.
         Used for preprocessing."""
         shares = self.prss_share_random_multi(GF256, quantity)
-        return quantity, succeed([self.powerchain(share, max)
-                                  for share in shares])
+        return [gatherResults(self.powerchain(share, max)) for share in shares]
 
     def input(self, inputters, field, number=None, threshold=None):
         """Input *number* to the computation.
