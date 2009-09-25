@@ -87,7 +87,7 @@ class Benchmark(object):
         return sync
 
     def run_test(self, _):
-        raise NotImplemented("Override this abstract method in a sub class.")
+        raise NotImplementedError
 
     def finished(self, needed_data, termination_function):
         sys.stdout.flush()
@@ -155,7 +155,7 @@ class Operation(object):
 
         Returns: None.
         """
-        raise NotImplemented("Override this abstract method in subclasses")
+        raise NotImplementedError
 
     def is_operation_done(self):
         """Returns true if there are no more operations to perform.
@@ -163,14 +163,14 @@ class Operation(object):
 
         Returns: Boolean.
         """
-        raise NotImplemented("Override this abstract method in subclasses")
+        raise NotImplementedError
 
     def do_operation(self):
         """Perform the operation.
 
         Returns: A share containing the result of the operation.
         """
-        raise NotImplemented("Override this abstract method in subclasses")
+        raise NotImplementedError
 
 class BinaryOperation(Operation):
     """A binary operation."""
@@ -220,7 +220,7 @@ class BenchmarkStrategy(object):
     """A benchmark strategy defines how the benchmark is done."""
 
     def benchmark(self, *args):
-        raise NotImplemented("Override this abstract method in subclasses")
+        raise NotImplementedError
 
 
 class SelfcontainedBenchmarkStrategy(BenchmarkStrategy):

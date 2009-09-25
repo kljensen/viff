@@ -863,7 +863,7 @@ class Runtime:
         listed in *inputters*, then a :class:`Share` is given back
         directly.
         """
-        raise NotImplemented("Override this abstract method in a subclass.")
+        raise NotImplementedError
 
     def output(self, share, receivers=None):
         """Open *share* to *receivers* (defaults to all players).
@@ -871,7 +871,7 @@ class Runtime:
         Returns a :class:`Share` to players with IDs in *receivers*
         and :const:`None` to the remaining players.
         """
-        raise NotImplemented("Override this abstract method in a subclass.")
+        raise NotImplementedError
 
     def add(self, share_a, share_b):
         """Secure addition.
@@ -879,7 +879,7 @@ class Runtime:
         At least one of the arguments must be a :class:`Share`, the
         other can be a :class:`FieldElement` or a (possible long)
         Python integer."""
-        raise NotImplemented("Override this abstract method in a subclass.")
+        raise NotImplementedError
 
     def mul(self, share_a, share_b):
         """Secure multiplication.
@@ -887,7 +887,7 @@ class Runtime:
         At least one of the arguments must be a :class:`Share`, the
         other can be a :class:`FieldElement` or a (possible long)
         Python integer."""
-        raise NotImplemented("Override this abstract method in a subclass.")
+        raise NotImplementedError
 
     def handle_deferred_data(self, deferred, data):
         """Put deferred and data into the queue if the ViffReactor is running. 
