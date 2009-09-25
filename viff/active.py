@@ -466,6 +466,9 @@ class BasicActiveRuntime(PassiveRuntime):
     :class:`ActiveRuntime` instead.
     """
 
+    def get_triple(self, field):
+        raise NotImplementedError
+
     def mul(self, share_x, share_y):
         """Multiplication of shares.
 
@@ -518,7 +521,7 @@ class BasicActiveRuntime(PassiveRuntime):
         return result
 
 
-class ActiveRuntime(BasicActiveRuntime, TriplesPRSSMixin):
+class ActiveRuntime(TriplesPRSSMixin, BasicActiveRuntime):
     """Default mix of :class:`BasicActiveRuntime` and
     :class:`TriplesPRSSMixin`."""
     pass
