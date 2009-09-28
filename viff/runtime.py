@@ -604,6 +604,18 @@ class Runtime:
         dl = DeferredList(vars)
         self.schedule_callback(dl, lambda _: self.shutdown())
 
+    def increment_pc(self):
+        """Increment the program counter."""
+        self.program_counter[-1] += 1
+
+    def fork_pc(self):
+        """Fork the program counter."""
+        self.program_counter.append(0)
+
+    def unfork_pc(self):
+        """Leave a fork of the program counter."""
+        self.program_counter.pop()
+
     def schedule_callback(self, deferred, func, *args, **kwargs):
         """Schedule a callback on a deferred with the correct program
         counter.
@@ -617,9 +629,8 @@ class Runtime:
         Any extra arguments are passed to the callback as with
         :meth:`addCallback`.
         """
-        self.program_counter[-1] += 1
+        self.increment_pc()
         saved_pc = self.program_counter[:]
-        saved_pc.append(0)
 
         @wrapper(func)
         def callback_wrapper(*args, **kwargs):
@@ -627,6 +638,7 @@ class Runtime:
             try:
                 current_pc = self.program_counter[:]
                 self.program_counter[:] = saved_pc
+                self.fork_pc()
                 return func(*args, **kwargs)
             finally:
                 self.program_counter[:] = current_pc

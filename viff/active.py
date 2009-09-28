@@ -47,7 +47,7 @@ class BrachaBroadcastMixin:
         Principles of Distributed Computing, 1984, pages 154-162.
         """
         # We need a unique program counter for each call.
-        self.program_counter[-1] += 1
+        self.increment_pc()
 
         result = Deferred()
         pc = tuple(self.program_counter)

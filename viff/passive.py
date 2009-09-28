@@ -250,7 +250,7 @@ class PassiveRuntime(Runtime):
         starting program counter. This ensures that consequetive calls
         to PRSS-related methods will use unique program counters.
         """
-        self.program_counter[-1] += 1
+        self.increment_pc()
         return tuple(self.program_counter)
 
     def prss_share(self, inputters, field, element=None):
