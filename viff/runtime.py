@@ -425,6 +425,7 @@ def preprocess(generator):
 
         @wrapper(method)
         def preprocess_wrapper(self, *args, **kwargs):
+            self.increment_pc()
             pc = tuple(self.program_counter)
             try:
                 return self._pool.pop(pc)
@@ -432,7 +433,11 @@ def preprocess(generator):
                 key = (generator, args)
                 pcs = self._needed_data.setdefault(key, [])
                 pcs.append(pc)
-                return method(self, *args, **kwargs)
+                self.fork_pc()
+                try:
+                    return method(self, *args, **kwargs)
+                finally:
+                    self.unfork_pc()
 
         return preprocess_wrapper
     return preprocess_decorator
