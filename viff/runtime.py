@@ -407,25 +407,6 @@ class ShareExchangerFactory(ReconnectingClientFactory, ServerFactory):
         reason.trap(ConnectionDone)
 
 
-def increment_pc(method):
-    """Make *method* automatically increment the program counter.
-
-    Adding this decorator to a :class:`Runtime` method will ensure
-    that the program counter is incremented correctly when entering
-    the method.
-    """
-
-    @wrapper(method)
-    def inc_pc_wrapper(self, *args, **kwargs):
-        try:
-            self.program_counter[-1] += 1
-            self.program_counter.append(0)
-            return method(self, *args, **kwargs)
-        finally:
-            self.program_counter.pop()
-    return inc_pc_wrapper
-
-
 def preprocess(generator):
     """Track calls to this method.
 
@@ -444,6 +425,7 @@ def preprocess(generator):
 
         @wrapper(method)
         def preprocess_wrapper(self, *args, **kwargs):
+            self.increment_pc()
             pc = tuple(self.program_counter)
             try:
                 return self._pool.pop(pc)
@@ -451,7 +433,11 @@ def preprocess(generator):
                 key = (generator, args)
                 pcs = self._needed_data.setdefault(key, [])
                 pcs.append(pc)
-                return method(self, *args, **kwargs)
+                self.fork_pc()
+                try:
+                    return method(self, *args, **kwargs)
+                finally:
+                    self.unfork_pc()
 
         return preprocess_wrapper
     return preprocess_decorator
@@ -623,7 +609,18 @@ class Runtime:
         dl = DeferredList(vars)
         self.schedule_callback(dl, lambda _: self.shutdown())
 
-    @increment_pc
+    def increment_pc(self):
+        """Increment the program counter."""
+        self.program_counter[-1] += 1
+
+    def fork_pc(self):
+        """Fork the program counter."""
+        self.program_counter.append(0)
+
+    def unfork_pc(self):
+        """Leave a fork of the program counter."""
+        self.program_counter.pop()
+
     def schedule_callback(self, deferred, func, *args, **kwargs):
         """Schedule a callback on a deferred with the correct program
         counter.
@@ -637,6 +634,7 @@ class Runtime:
         Any extra arguments are passed to the callback as with
         :meth:`addCallback`.
         """
+        self.increment_pc()
         saved_pc = self.program_counter[:]
 
         @wrapper(func)
@@ -645,6 +643,7 @@ class Runtime:
             try:
                 current_pc = self.program_counter[:]
                 self.program_counter[:] = saved_pc
+                self.fork_pc()
                 return func(*args, **kwargs)
             finally:
                 self.program_counter[:] = current_pc
@@ -673,7 +672,6 @@ class Runtime:
         deferred.addCallback(queue_callback, self, fork)
         return self.schedule_callback(fork, func, *args, **kwargs)
 
-    @increment_pc
     def synchronize(self):
         """Introduce a synchronization point.
 
@@ -729,7 +727,6 @@ class Runtime:
         self._expect_data(peer_id, SHARE, share)
         return share
 
-    @increment_pc
     def preprocess(self, program):
         """Generate preprocess material.
 
@@ -868,7 +865,7 @@ class Runtime:
             self.depth_counter -= 1
             self.activation_counter = 0
 
-    def print_transferred_data():
+    def print_transferred_data(self):
         """Print the amount of transferred data for all connections."""
 
         for protocol in self.protocols.itervalues():

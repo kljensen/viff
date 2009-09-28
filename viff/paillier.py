@@ -27,7 +27,7 @@ Residuosity Classes" by Pascal Paillier in EUROCRYPT 1999, 223-238.
 from twisted.internet.defer import Deferred, gatherResults
 import gmpy
 
-from viff.runtime import Runtime, increment_pc, Share, gather_shares
+from viff.runtime import Runtime, Share, gather_shares
 from viff.runtime import PAILLIER
 from viff.util import rand, find_random_prime
 
@@ -78,7 +78,6 @@ class PaillierRuntime(Runtime):
         else:
             self.peer = player
 
-    @increment_pc
     def prss_share_random(self, field):
         """Generate a share of a uniformly random element."""
         prfs = self.players[self.id].prfs(field.modulus)
@@ -94,7 +93,6 @@ class PaillierRuntime(Runtime):
         """
         return self.share(inputters, field, number)
 
-    @increment_pc
     def share(self, inputters, field, number=None):
         """Share *number* additively."""
         assert number is None or self.id in inputters
@@ -121,7 +119,6 @@ class PaillierRuntime(Runtime):
     def output(self, share, receivers=None):
         return self.open(share, receivers)
 
-    @increment_pc
     def open(self, share, receivers=None):
         """Open *share* to *receivers* (defaults to both players)."""
 

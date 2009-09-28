@@ -91,64 +91,24 @@ class Players3Threshold1Test(Tests, RuntimeTestCase):
     num_players = 3
     threshold = 1
 
-
 class Players4Threshold1Test(Tests, RuntimeTestCase):
     num_players = 4
-    threshold = 1
-
-
-class Players5Threshold1Test(Tests, RuntimeTestCase):
-    num_players = 5
     threshold = 1
 
 class Players5Threshold2Test(Tests, RuntimeTestCase):
     num_players = 5
     threshold = 2
 
-
-class Players6Threshold1Test(Tests, RuntimeTestCase):
-    num_players = 6
-    threshold = 1
-
 class Players6Threshold2Test(Tests, RuntimeTestCase):
     num_players = 6
-    threshold = 2
-
-
-class Players7Threshold1Test(Tests, RuntimeTestCase):
-    num_players = 7
-    threshold = 1
-
-class Players7Threshold2Test(Tests, RuntimeTestCase):
-    num_players = 7
     threshold = 2
 
 class Players7Threshold3Test(Tests, RuntimeTestCase):
     num_players = 7
     threshold = 3
 
-class Players8Threshold1Test(Tests, RuntimeTestCase):
-    num_players = 8
-    threshold = 1
-
-class Players8Threshold2Test(Tests, RuntimeTestCase):
-    num_players = 8
-    threshold = 2
-
 class Players8Threshold3Test(Tests, RuntimeTestCase):
     num_players = 8
-    threshold = 3
-
-class Players9Threshold1Test(Tests, RuntimeTestCase):
-    num_players = 9
-    threshold = 1
-
-class Players9Threshold2Test(Tests, RuntimeTestCase):
-    num_players = 9
-    threshold = 2
-
-class Players9Threshold3Test(Tests, RuntimeTestCase):
-    num_players = 9
     threshold = 3
 
 class Players9Threshold4Test(Tests, RuntimeTestCase):

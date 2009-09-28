@@ -20,13 +20,10 @@
 is mixed with.
 """
 
-from viff.runtime import increment_pc
-
 class ProbabilisticEqualityMixin:
     """This class implements probabilistic constant-round secure
     equality-testing of secret shared numbers."""
 
-    @increment_pc
     def equal(self, share_x, share_y):
         """Equality testing with secret shared result.
 

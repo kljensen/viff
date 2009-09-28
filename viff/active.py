@@ -27,7 +27,7 @@ from viff import shamir
 from viff.util import rand
 from viff.matrix import Matrix, hyper
 from viff.passive import PassiveRuntime
-from viff.runtime import Share, increment_pc, preprocess, gather_shares
+from viff.runtime import Share, preprocess, gather_shares
 from viff.runtime import ECHO, READY, SEND
 
 
@@ -37,7 +37,6 @@ class BrachaBroadcastMixin:
     broadcast.
     """
 
-    @increment_pc
     def _broadcast(self, sender, message=None):
         """Perform a Bracha broadcast.
 
@@ -47,6 +46,8 @@ class BrachaBroadcastMixin:
         protocol" by G. Bracha in Proc. 3rd ACM Symposium on
         Principles of Distributed Computing, 1984, pages 154-162.
         """
+        # We need a unique program counter for each call.
+        self.increment_pc()
 
         result = Deferred()
         pc = tuple(self.program_counter)
@@ -141,7 +142,6 @@ class BrachaBroadcastMixin:
 
         return result
 
-    @increment_pc
     def broadcast(self, senders, message=None):
         """Perform one or more Bracha broadcast(s).
 
@@ -186,7 +186,6 @@ class TriplesHyperinvertibleMatricesMixin:
     #: to :const:`None` here and update it as necessary.
     _hyper = None
 
-    @increment_pc
     def single_share_random(self, T, degree, field):
         """Share a random secret.
 
@@ -273,7 +272,6 @@ class TriplesHyperinvertibleMatricesMixin:
         self.schedule_callback(result, exchange)
         return result
 
-    @increment_pc
     def double_share_random(self, T, d1, d2, field):
         """Double-share a random secret using two polynomials.
 
@@ -376,7 +374,6 @@ class TriplesHyperinvertibleMatricesMixin:
         self.schedule_callback(result, exchange)
         return result
 
-    @increment_pc
     @preprocess("generate_triples")
     def get_triple(self, field):
         # This is a waste, but this function is only called if there
@@ -385,7 +382,6 @@ class TriplesHyperinvertibleMatricesMixin:
         result.addCallback(lambda triples: triples[0])
         return result
 
-    @increment_pc
     def generate_triples(self, field):
         """Generate multiplication triples.
 
@@ -425,14 +421,12 @@ class TriplesHyperinvertibleMatricesMixin:
 class TriplesPRSSMixin:
     """Mixin class for generating multiplication triples using PRSS."""
 
-    @increment_pc
     @preprocess("generate_triples")
     def get_triple(self, field):
         count, result = self.generate_triples(field, quantity=1)
         result.addCallback(lambda triples: triples[0])
         return result
 
-    @increment_pc
     def generate_triples(self, field, quantity=20):
         """Generate *quantity* multiplication triples using PRSS.
 
@@ -470,7 +464,6 @@ class BasicActiveRuntime(PassiveRuntime):
     :class:`ActiveRuntime` instead.
     """
 
-    @increment_pc
     def mul(self, share_x, share_y):
         """Multiplication of shares.
 

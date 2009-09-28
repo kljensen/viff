@@ -18,7 +18,6 @@
 from twisted.internet.defer import Deferred, gatherResults
 
 from viff.test.util import RuntimeTestCase, protocol
-from viff.runtime import increment_pc
 
 
 class ProgramCounterTest(RuntimeTestCase):
@@ -32,26 +31,14 @@ class ProgramCounterTest(RuntimeTestCase):
     def test_simple_operation(self, runtime):
         """Test an operation which makes no further calls.
 
-        Each call should increment the program counter by one.
+        No callbacks are scheduled, and so the program counter is not
+        increased.
         """
+        self.assertEquals(runtime.program_counter, [0])
         runtime.synchronize()
-        self.assertEquals(runtime.program_counter, [1])
+        self.assertEquals(runtime.program_counter, [0])
         runtime.synchronize()
-        self.assertEquals(runtime.program_counter, [2])
-
-    @protocol
-    def test_complex_operation(self, runtime):
-        """Test an operation which makes nested calls.
-
-        This verifies that the program counter is only incremented by
-        one, even for a complex operation.
-        """
-        # Exclusive-or is calculated as x + y - 2 * x * y, so add,
-        # sub, and mul are called.
-        runtime.xor(self.Zp(0), self.Zp(1))
-        self.assertEquals(runtime.program_counter, [1])
-        runtime.xor(self.Zp(0), self.Zp(1))
-        self.assertEquals(runtime.program_counter, [2])
+        self.assertEquals(runtime.program_counter, [0])
 
     @protocol
     def test_callback(self, runtime):
@@ -62,49 +49,19 @@ class ProgramCounterTest(RuntimeTestCase):
         """
 
         def verify_program_counter(_):
+            # The callback is run with its own sub-program counter.
             self.assertEquals(runtime.program_counter, [1, 0])
 
         d = Deferred()
-        runtime.schedule_callback(d, verify_program_counter)
 
-        runtime.synchronize()
-        self.assertEquals(runtime.program_counter, [2])
+        self.assertEquals(runtime.program_counter, [0])
+
+        # Scheduling a callback increases the program counter.
+        runtime.schedule_callback(d, verify_program_counter)
+        self.assertEquals(runtime.program_counter, [1])
 
         # Now trigger verify_program_counter.
         d.callback(None)
-
-    @protocol
-    def test_nested_calls(self, runtime):
-        """Test Runtime methods that call other methods.
-
-        We create a couple of functions that are used as fake methods.
-        """
-
-        @increment_pc
-        def method_a(runtime):
-            # First top-level call, so first entry is 1. No calls to
-            # other methods decorated with increment_pc has been made,
-            # so the second entry is 0.
-            self.assertEquals(runtime.program_counter, [1, 0])
-            method_b(runtime, 1)
-
-            self.assertEquals(runtime.program_counter, [1, 1])
-            method_b(runtime, 2)
-
-            # At this point two sub-calls has been made:
-            self.assertEquals(runtime.program_counter, [1, 2])
-
-        @increment_pc
-        def method_b(runtime, count):
-            # This method is called twice from method_a:
-            self.assertEquals(runtime.program_counter, [1, count, 0])
-
-        # Zero top-level calls:
-        self.assertEquals(runtime.program_counter, [0])
-        method_a(runtime)
-
-        # One top-level call:
-        self.assertEquals(runtime.program_counter, [1])
 
     @protocol
     def test_multiple_callbacks(self, runtime):
@@ -113,11 +70,11 @@ class ProgramCounterTest(RuntimeTestCase):
         d2 = Deferred()
 
         def verify_program_counter(_, count):
-            self.assertEquals(runtime.program_counter, [1, count, 0])
+            self.assertEquals(runtime.program_counter, [count, 0])
 
-        @increment_pc
         def method_a(runtime):
-            self.assertEquals(runtime.program_counter, [1, 0])
+            # No calls to schedule_callback yet.
+            self.assertEquals(runtime.program_counter, [0])
 
             runtime.schedule_callback(d1, verify_program_counter, 1)
             runtime.schedule_callback(d2, verify_program_counter, 2)

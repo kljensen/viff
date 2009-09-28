@@ -88,63 +88,41 @@ necessary to ensure that we can allocate new fresh counters at any
 point in the execution tree. The execution tree is never explicitly
 constructed in VIFF, so a simple static numbering is not possible.
 
-Instead we mark methods that need to increment the program counter
-with the :func:`viff.runtime.increment_pc` decorator. The program
-counter starts at the value ``[0]`` and the decorated method will now
-begin by doing::
+The program counter starts at the value ``[0]``. It is changed in two
+cases:
 
-  self.program_counter[-1] += 1
-  self.program_counter.append(0)
+* when a callback is scheduled using
+  :meth:`viff.runtime.BasicRuntime.schedule_callback`, a new
+  sub-program counter is allocated. A sub-program counter is simply a
+  program counter with another digit. Because of the asynchronous
+  network, the callback will be invoked at an unknown later time. When
+  invoked, it sees the sub-program counter. This ensures that that the
+  parties agree on any network traffic produced in the callback.
 
-before it executes its body. When the body is finished, the method
-does::
+  When a piece of code like this::
 
-  self.program_counter.pop()
+    def cb(ignored):
+        print "callback:", self.program_counter
+    d = Deferred()
 
-before it returns. A method :meth:`foo` defined like this::
+    print "main:", self.program_counter
+    self.schedule_callback(d, cb)
+    print "main:", self.program_counter
 
-  @increment_pc
-  def foo(self):
-      print "foo:", self.program_counter
+    d.callback(None)
 
-is thus turned into this::
+  is executed, one will see output like this:
 
-  def foo(self):
-      self.program_counter[-1] += 1
-      self.program_counter.append(0)
-      print "foo:", self.program_counter
-      self.program_counter.pop()
+  .. code-block:: none
 
-and when executed starting from the initial program counter of ``[0]``
-we see that it prints ``foo: [1, 0]`` and leaves the program counter
-at ``[1]`` after it returns. It is very important that the program
-counter is left changed like this, for this means that the next call
-to :meth:`foo` will print ``foo: [2, 0]`` and increment the program
-counter to ``[2]``.
+     main: [0]
+     main: [1]
+     callback: [0, 0]
 
-If we have a method :meth:`bar` which calls :meth:`foo` several times::
+* some functions depend on a unique program counter. These functions
+  simply increase the last digit in the current program counter::
 
-  @increment_pc
-  def bar(self):
-      print "bar:", self.program_counter
-      self.foo()
-      print "bar:", self.program_counter
-      self.foo()
-      print "bar:", self.program_counter
-
-then the result of calling :meth:`bar` will be:
-
-.. code-block:: none
-
-   bar: [1, 0]
-   foo: [1, 1, 0]
-   bar: [1, 1]
-   foo: [1, 2, 0]
-   bar: [1, 2]
-
-Notice how each sub-call adds another digit to the counter and how it
-increments the counter used at the level of the caller. This system
-ensures that all program counters are unique.
+    self.program_counter[-1] += 1
 
 
 Alternatives

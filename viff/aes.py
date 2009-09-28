@@ -24,7 +24,7 @@ import time
 import operator
 
 from viff.field import GF256
-from viff.runtime import Share, gather_shares, increment_pc
+from viff.runtime import Share, gather_shares
 from viff.matrix import Matrix
 
 
@@ -360,7 +360,6 @@ class AES:
                     "or of shares thereof."
             return input
 
-    @increment_pc
     def encrypt(self, cleartext, key, benchmark=False, prepare_at_once=False):
         """Rijndael encryption.
 
