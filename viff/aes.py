@@ -367,6 +367,8 @@ class AES:
         (possibly shared as elements of GF256)."""
 
         start = time.time()
+        self.runtime.increment_pc()
+        self.runtime.fork_pc()
 
         assert len(cleartext) == 4 * self.n_b, "Wrong length of cleartext."
         assert len(key) == 4 * self.n_k, "Wrong length of key."
@@ -470,4 +472,5 @@ class AES:
         else:
             round(None, state, 1)
 
+        self.runtime.unfork_pc()
         return result
