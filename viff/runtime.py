@@ -767,16 +767,22 @@ class Runtime:
         wait_list = []
         for ((generator, args), program_counters) in program.iteritems():
             print "Preprocessing %s (%d items)" % (generator, len(program_counters))
+            self.increment_pc()
+            self.fork_pc()
             func = getattr(self, generator)
             results = []
             items = 0
             while items < len(program_counters):
+                self.increment_pc()
+                self.fork_pc()
                 item_count, result = func(*args)
                 items += item_count
                 results.append(result)
+                self.unfork_pc()
             ready = gatherResults(results)
             ready.addCallback(update, program_counters)
             wait_list.append(ready)
+            self.unfork_pc()
         return DeferredList(wait_list)
 
     def input(self, inputters, field, number=None):
