@@ -99,6 +99,9 @@ class PaillierRuntime(Runtime):
 
         results = []
         for peer_id in inputters:
+            # Unique program counter per input.
+            self.increment_pc()
+
             if peer_id == self.id:
                 a = field(rand.randint(0, field.modulus - 1))
                 b = number - a

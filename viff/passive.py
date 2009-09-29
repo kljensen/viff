@@ -525,6 +525,9 @@ class PassiveRuntime(Runtime):
 
         results = []
         for peer_id in inputters:
+            # Unique program counter per input.
+            self.increment_pc()
+
             if peer_id == self.id:
                 pc = tuple(self.program_counter)
                 shares = shamir.share(field(number), threshold,
