@@ -125,36 +125,34 @@ def preprocess(rt):
 
     if options.active:
         if options.exponentiation is False:
-            max = 301
-            js = [3 + i * 15 + j for i in range(20) for j in range(7) + [8]]
-        elif options.exponentiation == 0:
-            max = 321
-            js = [2 + i * 16 + j for i in range(20) for j in range(13)]
+            max = 461
+            js = [3 + i * 23 + j for i in range(20)
+                  for j in range(0, 14, 2) + [15]]
+        elif options.exponentiation == 0 or options.exponentiation == 3:
+            max = 561
+            js = [1 + i * 28 + j * 2 for i in range(20) for j in range(13)]
         elif options.exponentiation == 1 or options.exponentiation == 2:
-            max = 261
-            js = [1 + i * 13 + j for i in range(20) for j in range(11)]
-        elif options.exponentiation == 3:
-            max = 301
-            js = [1 + i * 15 + j for i in range(20) for j in range(13)]
+            max = 481
+            js = [1 + i * 24 + j * 2 for i in range(20) for j in range(11)]
 
         if options.exponentiation == 4:
-            pcs = [(1, 2 + 130 * options.count + 141 * i + j, 1, 0)
+            pcs = [(2, 1 + i, 2 + 2 * j)
                    for i in range(10 * options.count)
                    for j in range(140)] + \
-                  [(2, 18, k) + (81,) * i + (2 + 4 * j, 3, l, 1, 0)
+                  [(3, 17, k) + (81,) * i + (2 + 4 * j, 3, 1 + 2 * l)
                    for k in range(1, options.count + 1)
                    for i in range(10)
                    for j in range(20)
-                   for l in range(1, 7)]
+                   for l in range(6)]
         else:
-            pcs = [(2, 18, k) + (max,) * i + (j, 1, 0)
+            pcs = [(2, 17, k) + (max,) * i + (j,)
                    for k in range(1, options.count + 1)
                    for i in range(10)
                    for j in js]
         program_desc[("generate_triples", (GF256,))] = pcs
 
     if options.exponentiation == 4:
-        pcs = [(2, 18, k) + (81,) * i + (1 + j * 4, 0)
+        pcs = [(3, 17, k) + (81,) * i + (1 + j * 4,)
                for k in range(1, options.count + 1)
                for i in range(10)
                for j in range(20)]
