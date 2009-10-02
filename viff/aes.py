@@ -167,17 +167,12 @@ class AES:
                 byte_powers.append(byte_powers.pop(0) * byte_powers.pop(0))
             return byte_powers[0]
 
-        def open_and_exponentiate(random_powers):
-            masked_byte = self.runtime.open(byte + random_powers[0])
-            masked_powers = self.runtime.schedule_callback(masked_byte,
-                lambda masked_byte: self.runtime.powerchain(masked_byte, 7))
-            return self.runtime.schedule_callback(
-                masked_powers, add_and_multiply, random_powers)
-
-        result = Share(self.runtime, GF256)
-        self.runtime.prss_powerchain().chainDeferred(result)
-        result = self.runtime.schedule_callback(result, open_and_exponentiate)
-        return result
+        random_powers = self.runtime.prss_powerchain()
+        masked_byte = self.runtime.open(byte + random_powers[0])
+        masked_powers = self.runtime.schedule_callback(masked_byte,
+            lambda masked_byte: self.runtime.powerchain(masked_byte, 7))
+        return self.runtime.schedule_callback(
+            masked_powers, add_and_multiply, random_powers)
 
     def invert_by_exponentiation(self, byte):
         byte_2 = byte * byte

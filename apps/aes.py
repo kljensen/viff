@@ -141,7 +141,7 @@ def preprocess(rt):
             pcs = [(1, 2 + 130 * options.count + 141 * i + j, 1, 0)
                    for i in range(10 * options.count)
                    for j in range(140)] + \
-                  [(2, 18, k) + (81,) * i + (2 + 4 * j, 3, l, 1, 0)
+                  [(2, 18, k) + (121,) * i + (4 + 6 * j, l, 1, 0)
                    for k in range(1, options.count + 1)
                    for i in range(10)
                    for j in range(20)
@@ -154,7 +154,7 @@ def preprocess(rt):
         program_desc[("generate_triples", (GF256,))] = pcs
 
     if options.exponentiation == 4:
-        pcs = [(2, 18, k) + (81,) * i + (1 + j * 4, 0)
+        pcs = [(2, 18, k) + (121,) * i + (1 + j * 6, 0)
                for k in range(1, options.count + 1)
                for i in range(10)
                for j in range(20)]

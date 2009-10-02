@@ -381,10 +381,10 @@ class TriplesHyperinvertibleMatricesMixin:
     def get_triple(self, field):
         # This is a waste, but this function is only called if there
         # are no pre-processed triples left.
-        return self.generate_triples(field)[0]
+        return self.generate_triples(field, gather=False)[0]
 
     @increment_pc
-    def generate_triples(self, field):
+    def generate_triples(self, field, gather=True):
         """Generate multiplication triples.
 
         These are random numbers *a*, *b*, and *c* such that ``c =
@@ -411,14 +411,23 @@ class TriplesHyperinvertibleMatricesMixin:
             d = [self.open(d_2t[i], threshold=2*t) for i in range(T)]
             c_t = [r_t[i] + d[i] for i in range(T)]
 
-            for triple, result in zip(zip(a_t, b_t, c_t), results):
-                gatherResults(triple).chainDeferred(result)
+            if gather:
+                for triple, result in zip(zip(a_t, b_t, c_t), results):
+                    gatherResults(triple).chainDeferred(result)
+            else:
+                for triple, result_triple in zip(zip(a_t, b_t, c_t), results):
+                    for item, result_item in zip(triple, result_triple):
+                        item.chainDeferred(result_item)
 
         single_a = self.single_share_random(T, t, field)
         single_b = self.single_share_random(T, t, field)
         double_c = self.double_share_random(T, t, 2*t, field)
 
-        results = [Deferred() for i in range(T)]
+        if gather:
+            results = [Deferred() for i in range(T)]
+        else:
+            results = [[Share(self, field) for i in range(3)] for i in range(T)]
+
         self.schedule_callback(gatherResults([single_a, single_b, double_c]), make_triple, results)
         return results
 
@@ -428,11 +437,11 @@ class TriplesPRSSMixin:
     @increment_pc
     @preprocess("generate_triples")
     def get_triple(self, field):
-        result = self.generate_triples(field, quantity=1)
+        result = self.generate_triples(field, quantity=1, gather=False)
         return result[0]
 
     @increment_pc
-    def generate_triples(self, field, quantity=20):
+    def generate_triples(self, field, quantity=20, gather=True):
         """Generate *quantity* multiplication triples using PRSS.
 
         These are random numbers *a*, *b*, and *c* such that ``c =
@@ -455,7 +464,10 @@ class TriplesPRSSMixin:
             d = self.open(d_2t, threshold=2*self.threshold)
             c_t[i] = r_t[i] + d
 
-        return [gatherResults(triple) for triple in zip(a_t, b_t, c_t)]
+        if gather:
+            return [gatherResults(triple) for triple in zip(a_t, b_t, c_t)]
+        else:
+            return zip(a_t, b_t, c_t)
 
 
 class BasicActiveRuntime(PassiveRuntime):
@@ -493,31 +505,21 @@ class BasicActiveRuntime(PassiveRuntime):
 
         # At this point both share_x and share_y must be Share
         # objects. We multiply them via a multiplication triple.
-        def finish_mul(triple):
-            a, b, c = triple
-            d = self.open(share_x - a)
-            e = self.open(share_y - b)
+        a, b, c = self.get_triple(share_x.field)
+        d = self.open(share_x - a)
+        e = self.open(share_y - b)
 
-            # TODO: We ought to be able to simply do
-            #
-            #   return d*e + d*y + e*x + c
-            #
-            # but that leads to infinite recursion since d and e are
-            # Shares, not FieldElements. So we have to do a bit more
-            # work... The following callback also leads to recursion, but
-            # only one level since d and e are FieldElements now, which
-            # means that we return in the above if statements.
-            result = gather_shares([d, e])
-            result.addCallback(lambda (d,e): d*e + d*b + e*a + c)
-            return result
-
-        # This will be the result, a Share object.
-        result = Share(self, share_x.field)
-        # This is the Deferred we will do processing on.
-        triple = self.get_triple(share_x.field)
-        triple = self.schedule_callback(triple, finish_mul)
-        # We add the result to the chains in triple.
-        triple.chainDeferred(result)
+        # TODO: We ought to be able to simply do
+        #
+        #   return d*e + d*y + e*x + c
+        #
+        # but that leads to infinite recursion since d and e are
+        # Shares, not FieldElements. So we have to do a bit more
+        # work... The following callback also leads to recursion, but
+        # only one level since d and e are FieldElements now, which
+        # means that we return in the above if statements.
+        result = gather_shares([d, e])
+        result.addCallback(lambda (d,e): d*e + d*b + e*a + c)
         return result
 
 

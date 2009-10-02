@@ -467,7 +467,7 @@ class PassiveRuntime(Runtime):
         """Generate a random secret share in GF256 and returns
         [*share*, *share*^2, *share*^4, ..., *share*^(i^max)]."""
         share = self.prss_share_random(GF256)
-        return gatherResults(self.powerchain(share, max))
+        return self.powerchain(share, max)
 
     def prss_powerchains(self, max=7, quantity=20):
         """Does *quantity* times the same as :meth:`prss_powerchain`.
