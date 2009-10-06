@@ -161,3 +161,81 @@ class OrlandiBasicCommandsTest(RuntimeTestCase):
         d = runtime.open(z2)
         d.addCallback(check)
         return d
+
+    @protocol
+    def test_sub(self, runtime):
+        """Test subtration of two numbers."""
+
+        self.Zp = GF(6277101735386680763835789423176059013767194773182842284081)
+
+        x1 = 42
+        y1 = 7
+ 
+        def check(v):
+            self.assertEquals(v, x1 - y1)
+
+        if 1 == runtime.id:
+            x2 = runtime.secret_share([1], self.Zp, x1)
+        else:
+            x2 = runtime.secret_share([1], self.Zp)
+
+        if 3 == runtime.id:
+            y2 = runtime.secret_share([3], self.Zp, y1)
+        else:
+            y2 = runtime.secret_share([3], self.Zp)
+
+        z2 = runtime.sub(x2, y2)
+        d = runtime.open(z2)
+        d.addCallback(check)
+        return d
+
+    @protocol
+    def test_sub_minus(self, runtime):
+        """Test subtration of two numbers."""
+
+        self.Zp = GF(6277101735386680763835789423176059013767194773182842284081)
+
+        x1 = 42
+        y1 = 7
+
+        def check(v):
+            self.assertEquals(v, x1 - y1)
+
+        if 1 == runtime.id:
+            x2 = runtime.secret_share([1], self.Zp, x1)
+        else:
+            x2 = runtime.secret_share([1], self.Zp)
+
+        if 3 == runtime.id:
+            y2 = runtime.secret_share([3], self.Zp, y1)
+        else:
+            y2 = runtime.secret_share([3], self.Zp)
+
+        z2 = x2 - y2
+        d = runtime.open(z2)
+        d.addCallback(check)
+        return d
+
+    @protocol
+    def test_sub_constant(self, runtime):
+        """Test subtration of two numbers."""
+
+        self.Zp = GF(6277101735386680763835789423176059013767194773182842284081)
+
+        x1 = 42
+        y1 = 7
+
+        def check(v):
+            self.assertEquals(v, x1 - y1)
+
+        if 1 == runtime.id:
+            x2 = runtime.secret_share([1], self.Zp, x1)
+        else:
+            x2 = runtime.secret_share([1], self.Zp)
+
+        z2 = x2 - y1
+        d = runtime.open(z2)
+        d.addCallback(check)
+        return d
+
+

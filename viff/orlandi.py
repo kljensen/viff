@@ -350,6 +350,39 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
         result.addCallbacks(compute_sums, self.error_handler)
         return result
 
+    def sub(self, share_a, share_b):
+        """Subtraction of shares.
+
+        Communication cost: none.
+
+        Each party ``P_i`` computes:
+        ``[z]_i = [x]_i - [y]_i
+                = (x_i - y_i mod p, rho_x,i - rho_y,i mod p, C_x * C_y)``.
+
+        """
+        def is_share(s, field):
+            if not isinstance(s, Share):
+                if not isinstance(s, FieldElement):
+                    s = field(s)
+                (v, rhov, Cv) = self._additive_constant(field(0), s)
+                return OrlandiShare(self, field, v, rhov, Cv)
+            return s
+
+        # Either share_a or share_b must have an attribute called "field". 
+        field = getattr(share_a, "field", getattr(share_b, "field", None))
+
+        share_a = is_share(share_a, field)
+        share_b = is_share(share_b, field)
+
+        # Subtract xi and yi, rhoxi and rhoyi, and compute the commitment
+        def compute_subs((x, y)):
+            zi, (rhozi1, rhozi2), Cz = self._minus(x, y)
+            return OrlandiShare(self, field, zi, (rhozi1, rhozi2), Cz)
+
+        result = gather_shares([share_a, share_b])
+        result.addCallbacks(compute_subs, self.error_handler)
+        return result
+
     def _additive_constant(self, zero, field_element):
         """Greate an additive constant.
 
@@ -378,6 +411,23 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
         rhozi1 = rhoxi1 + rhoyi1
         rhozi2 = rhoxi2 + rhoyi2
         Cz = Cx * Cy
+        return (zi, (rhozi1, rhozi2), Cz)
+
+    def _minus(self, x, y):
+        """Subtraction of share-tuples *x* and *y*.
+
+        Each party ``P_i`` computes:
+        ``[x]_i = (x_i, rho_x,i, C_x)``
+        ``[y]_i = (y_i, rho_y,i, C_y)``
+        ``[z]_i = [x]_i - [y]_i
+                = (x_i - y_i mod p, rho_x,i - rho_y,i mod p, C_x / C_y)``.
+        """
+        xi, (rhoxi1, rhoxi2), Cx = x
+        yi, (rhoyi1, rhoyi2), Cy = y
+        zi = xi - yi
+        rhozi1 = rhoxi1 - rhoyi1
+        rhozi2 = rhoxi2 - rhoyi2
+        Cz = Cx / Cy
         return (zi, (rhozi1, rhozi2), Cz)
 
     def error_handler(self, ex):
