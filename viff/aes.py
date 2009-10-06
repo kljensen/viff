@@ -129,7 +129,7 @@ class AES:
         bits = bit_decompose(byte)
 
         for j in range(len(bits)):
-            bits[j].addCallback(lambda x: GF256(1) - x)
+            bits[j].addCallback(lambda x: 1 - x)
 #            bits[j] = 1 - bits[j]
 
         while(len(bits) > 1):
@@ -277,10 +277,6 @@ class AES:
          [1, 2, 3, 1],
          [1, 1, 2, 3],
          [3, 1, 1, 2]]
-
-    for row in C:
-        for i in xrange(len(row)):
-            row[i] = GF256(row[i])
 
     C = Matrix(C)
 

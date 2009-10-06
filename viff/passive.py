@@ -127,7 +127,7 @@ class PassiveRuntime(Runtime):
             # operator overloading in Share. Clone share_a to avoid
             # changing it.
             result = share_a.clone()
-            result.addCallback(lambda a, b: a + b, share_b)
+            result.addCallback(lambda a, b: b + a, share_b)
             return result
         
         result = gather_shares([share_a, share_b])
@@ -168,7 +168,7 @@ class PassiveRuntime(Runtime):
             "Number of coefficients and shares should be equal."
 
         def computation(shares, coefficients):
-            return sum(map(operator.mul, shares, coefficients))
+            return sum(map(operator.mul, coefficients, shares))
 
         result = gather_shares(shares)
         result.addCallback(computation, coefficients)
@@ -189,7 +189,7 @@ class PassiveRuntime(Runtime):
             # operator overloading in Share. We clone share_a first
             # to avoid changing it.
             result = share_a.clone()
-            result.addCallback(lambda a: a * share_b)
+            result.addCallback(lambda a: share_b * a)
             return result
 
         # At this point both share_a and share_b must be Share
