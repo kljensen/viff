@@ -75,7 +75,7 @@ class OrlandiBasicCommandsTest(RuntimeTestCase):
     def test_random_share(self, runtime):
         """Test creation of a random shared number."""
 
-        self.Zp = GF(6277101735386680763835789423176059013767194773182842284081)        
+        self.Zp = GF(6277101735386680763835789423176059013767194773182842284081)
 
         def check(v):
             self.assertEquals(True, True)           
@@ -86,3 +86,78 @@ class OrlandiBasicCommandsTest(RuntimeTestCase):
         return d
  
 
+    @protocol
+    def test_sum(self, runtime):
+        """Test addition of two numbers."""
+
+        self.Zp = GF(6277101735386680763835789423176059013767194773182842284081)
+ 
+        x1 = 42
+        y1 = 7
+
+        def check(v):
+            self.assertEquals(v, x1 + y1)
+
+        if 1 == runtime.id:
+            x2 = runtime.secret_share([1], self.Zp, x1)
+        else:
+            x2 = runtime.secret_share([1], self.Zp)
+
+        if 3 == runtime.id:
+            y2 = runtime.secret_share([3], self.Zp, y1)
+        else:
+            y2 = runtime.secret_share([3], self.Zp)
+
+        z2 = runtime.add(x2, y2)
+        d = runtime.open(z2)
+        d.addCallback(check)
+        return d
+
+    @protocol
+    def test_sum_plus(self, runtime):
+        """Test addition of two numbers."""
+
+        self.Zp = GF(6277101735386680763835789423176059013767194773182842284081)
+
+        x1 = 42
+        y1 = 7
+
+        def check(v):
+            self.assertEquals(v, x1 + y1)
+
+        if 1 == runtime.id:
+            x2 = runtime.secret_share([1], self.Zp, x1)
+        else:
+            x2 = runtime.secret_share([1], self.Zp)
+
+        if 3 == runtime.id:
+            y2 = runtime.secret_share([3], self.Zp, y1)
+        else:
+            y2 = runtime.secret_share([3], self.Zp)
+
+        z2 = x2 + y2
+        d = runtime.open(z2)
+        d.addCallback(check)
+        return d
+
+    @protocol
+    def test_sum_constant(self, runtime):
+        """Test addition of two numbers."""
+
+        self.Zp = GF(6277101735386680763835789423176059013767194773182842284081)
+
+        x1 = 42
+        y1 = 7
+
+        def check(v):
+            self.assertEquals(v, x1 + y1)
+
+        if 1 == runtime.id:
+            x2 = runtime.secret_share([1], self.Zp, x1)
+        else:
+            x2 = runtime.secret_share([1], self.Zp)
+
+        z2 = x2 + y1
+        d = runtime.open(z2)
+        d.addCallback(check)
+        return d

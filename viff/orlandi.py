@@ -20,6 +20,7 @@ from twisted.internet.defer import Deferred, gatherResults
 from viff.runtime import Runtime, Share, ShareList, gather_shares
 from viff.util import rand
 from viff.constants import TEXT
+from viff.field import FieldElement
 
 from hash_broadcast import HashBroadcastMixin
 
@@ -315,6 +316,69 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
         self.activate_reactor()
 
         return s
+    
+    def add(self, share_a, share_b):
+        """Addition of shares.
+
+        Communication cost: none.
+
+        Each party ``P_i`` computes:
+        ``[z]_i = [x]_i + [y]_i
+                = (x_i + y_i mod p, rho_xi + rho_yi mod p, C_x * C_y)``.
+
+        """
+        def is_share(s, field):
+            if not isinstance(s, Share):
+                if not isinstance(s, FieldElement):
+                    s = field(s)
+                (v, rhov, Cv) = self._additive_constant(field(0), s)
+                return OrlandiShare(self, field, v, rhov, Cv)
+            return s
+
+        # Either share_a or share_b must have an attribute called "field". 
+        field = getattr(share_a, "field", getattr(share_b, "field", None))
+
+        share_a = is_share(share_a, field)
+        share_b = is_share(share_b, field)
+
+        # Add rho_xi and rho_yi and compute the commitment.
+        def compute_sums((x, y)):
+            (zi, (rhozi1, rhozi2), Cz) = self._plus(x, y)
+            return OrlandiShare(self, field, zi, (rhozi1, rhozi2), Cz)
+
+        result = gather_shares([share_a, share_b])
+        result.addCallbacks(compute_sums, self.error_handler)
+        return result
+
+    def _additive_constant(self, zero, field_element):
+        """Greate an additive constant.
+
+        Any additive constant can be interpreted as:
+        ``[c]_1 = (c, 0, Com_ck(c,0))`` and
+        ``[c]_i = (0, 0, Com_ck(c,0)) for i != 1``.
+        """
+        v = zero
+        if self.id == 1:
+            v = field_element
+        Cx = commitment.commit(field_element.value, zero.value, zero.value)
+        return (v, (zero, zero), Cx)
+
+    def _plus(self, x, y):
+        """Addition of share-tuples *x* and *y*.
+
+        Each party ``P_i`` computes:
+        ``[x]_i = (x_i, rho_xi, C_x)``
+        ``[y]_i = (y_i, rho_yi, C_y)``
+        ``[z]_i = [x]_i + [y]_i
+                = (x_i + y_i mod p, rho_xi + rho_yi mod p, C_x * C_y)``.
+        """
+        (xi, (rhoxi1, rhoxi2), Cx) = x
+        (yi, (rhoyi1, rhoyi2), Cy) = y
+        zi = xi + yi
+        rhozi1 = rhoxi1 + rhoyi1
+        rhozi2 = rhoxi2 + rhoyi2
+        Cz = Cx * Cy
+        return (zi, (rhozi1, rhozi2), Cz)
 
     def error_handler(self, ex):
         print "Error: ", ex
