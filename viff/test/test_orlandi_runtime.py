@@ -567,3 +567,60 @@ class OrlandiAdvancedCommandsTest(RuntimeTestCase):
         z2 = runtime._cmul(y2, x2, self.Zp)
         self.assertEquals(z2, None)
         return z2
+
+
+class TripleGenTest(RuntimeTestCase):
+    """Test for generation of triples."""
+    
+    # Number of players.
+    num_players = 3
+ 
+    runtime_class = OrlandiRuntime
+ 
+    timeout = 240
+
+    @protocol
+    def test_tripleGen(self, runtime):
+        """Test the triple_gen command."""
+
+        self.Zp = GF(6277101735386680763835789423176059013767194773182842284081)
+
+        def check((a, b, c)):
+            self.assertEquals(c, a * b)
+
+        def open((a, b, c, _)):
+            d1 = runtime.open(a)
+            d2 = runtime.open(b)
+            d3 = runtime.open(c)
+            d = gatherResults([d1, d2, d3])
+            d.addCallback(check)
+            return d
+        d = runtime.triple_gen(self.Zp)
+        d.addCallbacks(open, runtime.error_handler)
+        return d
+
+    @protocol
+    def test_tripleGen2(self, runtime):
+        """Test the triple_gen command."""
+
+        self.Zp = GF(6277101735386680763835789423176059013767194773182842284081)
+
+        def check((a, b, c, dx, dy, dz)):
+            self.assertEquals(c, a * b)
+            self.assertEquals(dz, dx * dy)
+
+        def open(((a, b, c, control), (x, y, z, _))):
+            d1 = runtime.open(a)
+            d2 = runtime.open(b)
+            d3 = runtime.open(c)
+            dx = runtime.open(x)
+            dy = runtime.open(y)
+            dz = runtime.open(z)
+            d = gatherResults([d1, d2, d3, dx, dy, dz])
+            d.addCallback(check)
+            return d
+        t1 = runtime.triple_gen(self.Zp)
+        t2 = runtime.triple_gen(self.Zp)
+        d = gatherResults([t1, t2])
+        d.addCallbacks(open, runtime.error_handler)
+        return d

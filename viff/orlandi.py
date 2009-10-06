@@ -19,8 +19,9 @@ from twisted.internet.defer import Deferred, DeferredList, gatherResults
 
 from viff.runtime import Runtime, Share, ShareList, gather_shares
 from viff.util import rand
-from viff.constants import TEXT
+from viff.constants import TEXT, PAILLIER
 from viff.field import FieldElement
+from viff.paillier import encrypt_r, decrypt
 
 from hash_broadcast import HashBroadcastMixin
 
@@ -770,6 +771,200 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
         self.activate_reactor()
 
         return result
+
+    def triple_gen(self, field):
+        """Generate a triple ``a, b, c`` s.t. ``c = a * b``.
+
+        1) Every party ``P_i`` chooses random values ``a_i, r_i in Z_p X (Z_p)^2``,
+        compute ``alpha_i = Enc_eki(a_i)`` and ``Ai = Com_ck(a_i, r_i)``, and
+        broadcast them.
+
+        2) Every party ``P_j`` does:
+           (a) choose random ``b_j, s_j in Z_p X (Z_p)^2``.
+
+           (b) compute ``B_j = ``Com_ck(b_j, s_j)`` and broadcast it.
+
+           (c) ``P_j`` do towards every other party:
+                i. choose random ``d_ij in Z_p^3``
+               ii. compute and send 
+                   ``gamma_ij = alpha_i^b_j Enc_ek_i(1;1)^d_ij`` to ``P_i``.
+
+        3) Every party ``P_i`` does:
+           (a) compute ``c_i = SUM_j Dec_sk_i(gamma_ij) - SUM_j d_ij mod p``
+
+           (b) pick random ``t_i in (Z_p)^2``, compute and 
+               broadcast ``C_i = Com_ck(c_i, t_i)``
+
+        4) Everyone computes:
+           ``(A, B, C) = (PRODUCT_i A_i, PRODUCT_i B_i, PRODUCT_i C_i)``
+        
+        5) Every party ``P_i`` outputs shares ``[a_i] = (a_i, r_i, A)``, 
+           ``[b_i] = (b_i, s_i, B)``, and ``[c_i] = (c_i, t_i, C)``.
+
+        """
+        self.program_counter[-1] += 1
+
+        def random_number(p):
+            return field(rand.randint(0, p - 1))
+
+        def product(ls):
+            """Compute the product of the elements in the list *ls*."""
+            b = commitment.deserialize(ls[0])
+            for x in ls[1:]:
+                b *= commitment.deserialize(x)
+            return b
+
+        def sum(ls):
+            """Compute the sum of the elements in the list *ls*."""
+            b = field(0)
+            for x in ls:
+                b += x
+            return b
+
+        def step45(Cs, alphas, gammas, alpha_randomness,
+                   As, Bs, ai, bi, ci, r, s, t, dijs):
+            """4) Everyone computes:
+                  ``A = PRODUCT_i A_i``
+                  ``B = PRODUCT_i B_i``
+                  ``C = PRODUCT_i C_i``
+        
+               5) Every party ``P_i`` outputs shares ``[a_i] = (a_i, r_i, A)``, 
+                  ``[b_i] = (b_i, s_i, B)``, and ``[c_i] = (c_i, t_i, C)``.
+            """
+            A = product(As)
+            B = product(Bs)
+            C = product(Cs)
+            a = OrlandiShare(self, field, ai, r, A)
+            b = OrlandiShare(self, field, bi, s, B)
+            c = OrlandiShare(self, field, ci, t, C)
+            return (a, b, c, (alphas, alpha_randomness, gammas, dijs))
+
+        def decrypt_gammas(ls):
+            """Decrypt all the elements of the list *ls*."""
+            rs = []
+            for x in ls:
+                rs.append(field(decrypt(x, self.players[self.id].seckey)))
+            return rs
+
+        def step3(gammas, alphas, alpha_randomness, As, Bs, ai, bi, r, s, dijs):
+            """3) Every party ``P_i`` does:
+                  (a) compute 
+                  ``c_i = SUM_j Dec_sk_i(gamma_ij) - SUM_j d_ji mod p``
+
+                  (b) pick random ``t_i in (Z_p)^2``, compute and 
+                      broadcast ``C_i = Com_ck(c_i, t_i)``
+            """
+            # c_i = SUM_j Dec_sk_i(gamma_ij) - SUM_j d_ji mod p.
+            ls = decrypt_gammas(gammas)
+            ci = sum(ls) - sum(dijs)
+            # (b) pick random t_i in (Z_p)^2.
+            t1 = random_number(field. modulus)
+            t2 = random_number(field. modulus)
+            t = (t1, t2)
+            # C_i = Com_ck(c_i, t_i).
+            Ci = commitment.commit(ci.value, t1.value, t2.value)
+            
+            # Broadcast Ci.
+            Cs = self.broadcast(self.players.keys(), self.players.keys(), repr(Ci))
+            result = gatherResults(Cs)
+            result.addCallbacks(step45, self.error_handler, callbackArgs=(alphas, gammas, alpha_randomness, 
+                                                                          As, Bs, ai, bi, ci, r, s, t, dijs))
+            return result
+
+        def step2c(Bs, As, alphas, alpha_randomness, ai, bj, r, s):
+            """(c) P_j do, towards every other party:
+                   i. choose random d_i,j in Z_p^3
+                   ii. compute and send 
+            gamma_ij = alpha_i^b_j Enc_ek_i(1;1)^d_ij to P_i.
+            """
+
+            # (c) P_j do, towards every other party:
+            dijs = [None] * len(self.players.keys())
+            results = [None] * len(self.players.keys())
+            pc = tuple(self.program_counter)
+            for pi in self.players.keys():
+                n = self.players[pi].pubkey[0]
+                nsq = n * n
+                # choose random d_i,j in Z_p^3
+                dij = random_number(field.modulus**3)
+                # Enc_ek_i(1;1)^d_ij
+                enc = encrypt_r(1, 1, self.players[pi].pubkey)
+                t1 = pow(enc, dij.value, nsq)
+                # alpha_i^b_j.
+                t2 = pow(alphas[pi - 1], bj.value, nsq)
+                # gamma_ij = alpha_i^b_j Enc_ek_i(1;1)^d_ij
+                gammaij = (t2) * (t1) % nsq
+                # Broadcast gamma_ij
+                if pi != self.id:
+                    self.protocols[pi].sendData(pc, PAILLIER, str(gammaij))
+                    d = Deferred()
+                    d.addCallbacks(lambda value: long(value), self.error_handler)
+                    self._expect_data(pi, PAILLIER, d)
+                else:
+                    d = Deferred()
+                    d.callback(gammaij)
+                dijs[pi - 1] = dij
+                results[pi - 1] = d
+            result = gatherResults(results)
+            self.schedule_callback(result, step3, alphas, alpha_randomness, 
+                                   As, Bs, ai, bj, r, s, dijs)
+            result.addErrback(self.error_handler)
+            return result
+
+        def step2ab((alphas, As), ai, r, alpha_randomness):
+            """2) Every party P_j does:
+                  (a) choose random b_j, s_j in Z_p X (Z_p)^2.
+
+                  (b) compute B_j = Com_ck(b_j, s_j) and broadcast it.
+            """
+            # (a) choose random b_j, s_j in Z_p X (Z_p)^2.
+            bj = random_number(field.modulus)
+            s1 = random_number(field.modulus)
+            s2 = random_number(field.modulus)
+            # (b) compute B_j = Com_ck(b_j, s_j).
+            Bj = commitment.commit(bj.value, s1.value, s2.value)
+
+            # Broadcast B_j.
+            results = self.broadcast(self.players.keys(), self.players.keys(), repr(Bj))
+            result = gatherResults(results)
+            self.schedule_callback(result, step2c, As, alphas, alpha_randomness, 
+                                   ai, bj, r, (s1, s2))
+            result.addErrback(self.error_handler)
+            return result
+        
+        # 1) Every party P_i chooses random values a_i, r_i in Z_p X (Z_p)^2,
+        #    compute alpha_i = Enc_eki(a_i) and Ai = Com_ck(a_i, r_i), and
+        #    broadcast them.
+
+        # Every party P_i chooses random values a_i, r_i in Z_p X (Z_p)^2
+        ai = random_number(field.modulus)
+        r1 = random_number(field.modulus)
+        r2 = random_number(field.modulus)
+
+        # compute alpha_i = Enc_eki(a_i) 
+        n, g = self.players[self.id].pubkey
+        alpha_randomness = rand.randint(1, long(n))
+        alphai = encrypt_r(ai.value, alpha_randomness, (n, g))
+        # and A_i = Com_ck(a_i, r_i).
+        Ai = commitment.commit(ai.value, r1.value, r2.value)
+
+        # broadcast alpha_i and A_i.
+        ds = self.broadcast(sorted(self.players.keys()), sorted(self.players.keys()), str(alphai) + ":" + repr(Ai))
+
+        result = gatherResults(ds)
+        def split_alphas_and_As(ls):
+            alphas = []
+            As = []
+            for x in ls:
+                alpha, Ai = x.split(':')
+                alphas.append(long(alpha))
+                As.append(Ai)
+            return alphas, As
+        self.schedule_callback(result, split_alphas_and_As)
+        self.schedule_callback(result, step2ab, ai, (r1, r2), alpha_randomness)
+        result.addErrback(self.error_handler)
+        return result
+                
 
     def error_handler(self, ex):
         print "Error: ", ex
