@@ -334,7 +334,7 @@ class OrlandiAdvancedCommandsTest(RuntimeTestCase):
 
         self.Zp = GF(6277101735386680763835789423176059013767194773182842284081)
 
-        count = 20
+        count = 9
 
         a_shares = []
         b_shares = []
@@ -480,6 +480,89 @@ class OrlandiAdvancedCommandsTest(RuntimeTestCase):
 
         x2 = runtime.shift([1], self.Zp, x1)
         y2 = runtime.shift([1], self.Zp, y1)
+
+    @protocol
+    def test_sum_poly(self, runtime):
+        """Test implementation of sum_poly."""
+
+        self.Zp = GF(6277101735386680763835789423176059013767194773182842284081)
+
+        f = []
+        f.append((self.Zp(7), (self.Zp(7), self.Zp(7)), self.Zp(7)))
+        f.append((self.Zp(9), (self.Zp(9), self.Zp(9)), self.Zp(9)))
+        f.append((self.Zp(13), (self.Zp(13), self.Zp(13)), self.Zp(13)))
+        
+        x, (rho1, rho2), Cx = runtime.sum_poly(1, f)
+        self.assertEquals(x, 29)
+        self.assertEquals(rho1, 29)
+        self.assertEquals(rho2, 29)
+        self.assertEquals(Cx, 29)
+        return x
+ 
+    @protocol
+    def test_sum_poly(self, runtime):
+        """Test implementation of sum_poly."""
+
+        self.Zp = GF(6277101735386680763835789423176059013767194773182842284081)
+        
+        Cf1 = commitment.commit(21, 21, 21)
+        Cf2 = commitment.commit(27, 27, 27)
+        Cf3 = commitment.commit(39, 39, 39)
+
+        f = []
+        f.append((self.Zp(7), (self.Zp(7), self.Zp(7)), Cf1))
+        f.append((self.Zp(9), (self.Zp(9), self.Zp(9)), Cf2))
+        f.append((self.Zp(13), (self.Zp(13), self.Zp(13)), Cf3))
+        
+        x, (rho1, rho2), Cx = runtime.sum_poly(3, f)
+        self.assertEquals(x, 453)
+        self.assertEquals(rho1, 453)
+        self.assertEquals(rho2, 453)
+        self.assertEquals(Cx, Cf1**3 * Cf2**9 * Cf3**27)
+        return x
+
+    @protocol
+    def test_delta(self, runtime):
+        """Test implementation of compute_delta."""
+
+        self.Zp = GF(6277101735386680763835789423176059013767194773182842284081)
+
+        delta = runtime.compute_delta(3)
+        self.assertEquals(delta[0], 7)
+        self.assertEquals(delta[1], -21)
+        self.assertEquals(delta[2], 35)
+        self.assertEquals(delta[3], -35)
+        self.assertEquals(delta[4], 21)
+        self.assertEquals(delta[5], -7)
+        self.assertEquals(delta[6], 1)
+ 
+        return delta
+
+    @protocol
+    def test_leak_mul(self, runtime):
+        """Test leaktolerant multiplication of two numbers."""
+        commitment.set_reference_string(long(2), long(6))
+
+        self.Zp = GF(6277101735386680763835789423176059013767194773182842284081)
+       
+        x1 = 42
+        y1 = 7
+
+        d = 4
+        
+        def check(v):
+            self.assertEquals(v, x1 * y1)
+ 
+        x2 = runtime.shift([1], self.Zp, x1)
+        y2 = runtime.shift([2], self.Zp, y1)
+
+        M = []
+        for j in xrange(1, 2*d + 2):
+            M.append(_get_triple(self, self.Zp))
+        z2 = runtime.leak_tolerant_mul(x2, y2, M)
+        d = runtime.open(z2)
+        d.addCallback(check)
+        return d
 
         z2 = runtime._cmul(y2, x2, self.Zp)
         self.assertEquals(z2, None)
