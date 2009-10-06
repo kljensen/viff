@@ -21,8 +21,10 @@ from viff.test.util import RuntimeTestCase, protocol, BinaryOperatorTestCase
 from viff.runtime import Share
 from viff.orlandi import OrlandiRuntime
 
-from viff.field import FieldElement
+from viff.field import FieldElement, GF
 from viff.passive import PassiveRuntime
+
+import commitment
 
 class OrlandiBasicCommandsTest(RuntimeTestCase):
     """Test for basic commands."""
@@ -31,3 +33,23 @@ class OrlandiBasicCommandsTest(RuntimeTestCase):
     num_players = 3
 
     runtime_class = OrlandiRuntime
+
+    @protocol
+    def test_secret_share(self, runtime):
+        """Test sharing of random numbers."""
+
+        self.Zp = GF(6277101735386680763835789423176059013767194773182842284081)
+
+        def check((xi, (rho1, rho2), Cr)):
+            # Check that we got the expected number of shares.
+            self.assert_type(xi, FieldElement)
+            self.assert_type(rho1, FieldElement)
+            self.assert_type(rho2, FieldElement)
+            self.assert_type(Cr, commitment.Commitment)
+
+        if 1 == runtime.id:
+            share = runtime.secret_share([1], self.Zp, 42)
+        else:
+            share = runtime.secret_share([1], self.Zp)
+        share.addCallback(check)
+        return share
