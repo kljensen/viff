@@ -15,11 +15,13 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with VIFF. If not, see <http://www.gnu.org/licenses/>.
 
-from twisted.internet.defer import Deferred
+from twisted.internet.defer import Deferred, gatherResults
 
 from viff.runtime import Runtime, Share, ShareList, gather_shares
 from viff.util import rand
 from viff.constants import TEXT
+
+from hash_broadcast import HashBroadcastMixin
 
 import commitment
 commitment.set_reference_string(23434347834783478783478L, 489237823478234783478020L)
@@ -54,7 +56,7 @@ class OrlandiShare(Share):
         Share.__init__(self, runtime, field, (value, rho, commitment))
 
 
-class OrlandiRuntime(Runtime):
+class OrlandiRuntime(Runtime, HashBroadcastMixin):
     """The Orlandi runtime.
 
     The runtime is used for sharing values (:meth:`secret_share` or
@@ -110,6 +112,27 @@ class OrlandiRuntime(Runtime):
                 raise OrlandiException("Cannot share number, trying to create share,"
                                        " but a component did arrive properly.")
             return OrlandiShare(self, field, xi, (rhoi1, rhoi2), Cxx)
+        sls.addCallbacks(combine, self.error_handler)
+        return sls
+
+    def _expect_orlandi_share_xi_rhoi(self, peer_id, field):
+        xi = self._expect_share(peer_id, field)
+        rhoi1 = self._expect_share(peer_id, field)
+        rhoi2 = self._expect_share(peer_id, field)
+        sls = ShareList([xi, rhoi1, rhoi2])
+        def combine(ls):
+            expected_num = 3;
+            if len(ls) is not expected_num:
+                raise OrlandiException("Cannot share number, trying to create a share,"
+                                       " expected %s components got %s." % (expected_num, len(ls)))
+
+            s1, xi = ls[0]
+            s2, rhoi1 = ls[1]
+            s3, rhoi2 = ls[2]
+            if not (s1 and s2 and s3):
+                raise OrlandiException("Cannot share number, trying to create share "
+                                       "but a component did arrive properly.")
+            return OrlandiShare(self, field, xi, (rhoi1, rhoi2))
         sls.addCallbacks(combine, self.error_handler)
         return sls
 
@@ -185,6 +208,66 @@ class OrlandiRuntime(Runtime):
         if len(results) == 1:
             return results[0]
         return results
+
+    def open(self, share, receivers=None, threshold=None):
+        """Share reconstruction.
+
+        Every partyi broadcasts a share pair ``(x_i', rho_x,i')``.
+
+        The parties compute the sums ``x'``, ``rho_x'`` and 
+        check ``Com_ck(x',rho_x' = C_x``.
+
+        If yes, return ``x = x'``, else else return :const:`None`.
+        """
+        assert isinstance(share, Share)
+        # all players receive result by default
+        if receivers is None:
+            receivers = self.players.keys()
+        assert threshold is None
+        threshold = self.num_players - 1
+
+        field = share.field
+
+        self.program_counter[-1] += 1
+
+        def recombine_value(shares, Cx):
+            x = 0
+            rho1 = 0
+            rho2 = 0
+            for xi, rhoi1, rhoi2 in shares:
+                x += xi
+                rho1 += rhoi1
+                rho2 += rhoi2
+            Cx1 = commitment.commit(x.value, rho1.value, rho2.value)
+            if Cx1 == Cx:
+                return x
+            else:
+                raise OrlandiException("Wrong commitment for value %s, found %s expected %s." % 
+                                       (x, Cx1, Cx))
+
+        def deserialize(ls):
+            shares = [(field(long(x)), field(long(rho1)), field(long(rho2))) for x, rho1, rho2 in map(self.list_str, ls)]
+            return shares
+            
+        def exchange((xi, (rhoi1, rhoi2), Cx), receivers):
+            # Send share to all receivers.
+            ds = self.broadcast(self.players.keys(), receivers, str((str(xi.value), str(rhoi1.value), str(rhoi2.value))))
+
+            if self.id in receivers:
+                result = gatherResults(ds)
+                result.addCallbacks(deserialize, self.error_handler)
+                result.addCallbacks(recombine_value, self.error_handler, callbackArgs=(Cx,))
+                return result
+
+        result = share.clone()
+        self.schedule_callback(result, exchange, receivers)
+        result.addErrback(self.error_handler)
+
+        # do actual communication
+        self.activate_reactor()
+
+        if self.id in receivers:
+            return result
 
     def error_handler(self, ex):
         print "Error: ", ex

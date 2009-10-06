@@ -53,3 +53,21 @@ class OrlandiBasicCommandsTest(RuntimeTestCase):
             share = runtime.secret_share([1], self.Zp)
         share.addCallback(check)
         return share
+
+    @protocol
+    def test_open_secret_share(self, runtime):
+        """Test sharing and open of a number."""
+
+        self.Zp = GF(6277101735386680763835789423176059013767194773182842284081)
+
+        def check(v):
+            self.assertEquals(v, 42)
+
+        if 1 == runtime.id:
+            x = runtime.secret_share([1], self.Zp, 42)
+        else:
+            x = runtime.secret_share([1], self.Zp)
+        d = runtime.open(x)
+        d.addCallback(check)
+        return d
+
