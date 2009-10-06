@@ -28,7 +28,7 @@ from viff.util import rand
 from viff.matrix import Matrix, hyper
 from viff.passive import PassiveRuntime
 from viff.runtime import Share, preprocess, gather_shares
-from viff.runtime import ECHO, READY, SEND
+from viff.constants import ECHO, READY, SEND
 
 
 class BrachaBroadcastMixin:

@@ -41,6 +41,7 @@ import os
 
 from viff.field import GF256, FieldElement
 from viff.util import wrapper, rand, deep_wait, track_memory_usage, begin, end
+from viff.constants import SHARE
 import viff.reactor
 
 from twisted.internet import reactor
@@ -50,13 +51,6 @@ from twisted.internet.defer import Deferred, DeferredList, gatherResults, succee
 from twisted.internet.defer import maybeDeferred
 from twisted.internet.protocol import ReconnectingClientFactory, ServerFactory
 from twisted.protocols.basic import Int16StringReceiver
-
-# Constants used by ShareExchanger.
-SHARE    = 0
-ECHO     = 1
-READY    = 2
-SEND     = 3
-PAILLIER = 4
 
 
 class Share(Deferred):
