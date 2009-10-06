@@ -964,7 +964,46 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
         self.schedule_callback(result, step2ab, ai, (r1, r2), alpha_randomness)
         result.addErrback(self.error_handler)
         return result
-                
+    
+    def triple_test(self, field):
+        """Generate a triple ``(a, b, c)`` where ``c = a * b``.
+
+        The triple ``(a, b, c)`` is checked against the 
+        triple ``(x, y, z)`` and a random value ``r``.
+
+        """
+        triple1 = self.triple_gen(field)
+        triple2 = self.triple_gen(field)
+        r = self.open(self.random_share(field))
+        
+        def check((v, oa, ob, oc, ox, oy, oz), a, b, c, ec):
+            if v is 0:
+                return None
+            return (a, b, c, ec)
+        
+        def compute_value(((a, b, c, ec), (x, y, z, _), r)):
+            oa = self.open(a)
+            ob = self.open(b)
+            oc = self.open(c)
+            ox = self.open(x)
+            oy = self.open(y)
+            oz = self.open(z)
+            l = self._cmul(r, x, field)
+            m = self._cmul(r, y, field)
+            n = self._cmul(r*r, z, field)
+            d = c - self._basic_multiplication(a, b, l, m, n)
+            r = gather_shares([d, oa, ob, oc, ox, oy, oz])
+            r.addCallbacks(check, self.error_handler, callbackArgs=(a, b, c, ec))
+            return r
+
+        result = gatherResults([triple1, triple2, r])
+        self.schedule_callback(result, compute_value)
+        result.addErrback(self.error_handler)
+
+        # do actual communication
+        self.activate_reactor()
+
+        return result
 
     def error_handler(self, ex):
         print "Error: ", ex

@@ -624,3 +624,24 @@ class TripleGenTest(RuntimeTestCase):
         d = gatherResults([t1, t2])
         d.addCallbacks(open, runtime.error_handler)
         return d
+
+    
+    @protocol
+    def test_tripleTest(self, runtime):
+        """Test the triple_test command."""
+
+        self.Zp = GF(6277101735386680763835789423176059013767194773182842284081)
+
+        def check((a, b, c)):
+            self.assertEquals(c, a * b)
+
+        def open((a, b, c, _)):
+            d1 = runtime.open(a)
+            d2 = runtime.open(b)
+            d3 = runtime.open(c)
+            d = gatherResults([d1, d2, d3])
+            d.addCallback(check)
+            return d
+        d = runtime.triple_test(self.Zp)
+        d.addCallbacks(open, runtime.error_handler)
+        return d
