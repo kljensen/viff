@@ -219,14 +219,19 @@ class AES:
         return byte_254
 
     # matrix for byte_sub, the last column is the translation vector
-    A = Matrix([[1,0,0,0,1,1,1,1, 1],
-                [1,1,0,0,0,1,1,1, 1],
-                [1,1,1,0,0,0,1,1, 0],
-                [1,1,1,1,0,0,0,1, 0],
-                [1,1,1,1,1,0,0,0, 0],
-                [0,1,1,1,1,1,0,0, 1],
-                [0,0,1,1,1,1,1,0, 1],
-                [0,0,0,1,1,1,1,1, 0]])
+    A = Matrix([[1,0,0,0,1,1,1,1],
+                [1,1,0,0,0,1,1,1],
+                [1,1,1,0,0,0,1,1],
+                [1,1,1,1,0,0,0,1],
+                [1,1,1,1,1,0,0,0],
+                [0,1,1,1,1,1,0,0],
+                [0,0,1,1,1,1,1,0],
+                [0,0,0,1,1,1,1,1]])
+
+    # anticipate bit recombination
+    for i, row in enumerate(A.rows):
+        for j in range(len(row)):
+            row[j] *= 2 ** i
 
     def byte_sub(self, state, use_lin_comb=True):
         """ByteSub operation of Rijndael.
@@ -240,21 +245,16 @@ class AES:
             for i in range(len(row)):
                 bits = bit_decompose(self.invert(row[i]))
 
-                # include the translation in the matrix multiplication
-                # (see definition of AES.A)
-                bits.append(Share(self.runtime, GF256, GF256(1)))
-
                 if (use_lin_comb):
-                    bits = [self.runtime.lin_comb(AES.A.rows[j], bits) 
-                            for j in range(len(bits) - 1)]
-                    row[i] = self.runtime.lin_comb(
-                        [2**j for j in range(len(bits))], bits)
+                    row[i] = self.runtime.lin_comb(sum(AES.A.rows, []),
+                                                   bits * len(AES.A.rows))
                 else:
                     # caution: order is lsb first
                     vector = AES.A * Matrix(zip(bits))
                     bits = zip(*vector.rows)[0]
-                    row[i] = reduce(lambda x,y: x + y, 
-                                    [bits[j] * 2**j for j in range(len(bits))])
+                    row[i] = sum(bits)
+
+                row[i].addCallback(lambda x: 0x63 + x)
 
     def shift_row(self, state):
         """Rijndael ShiftRow.
