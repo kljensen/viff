@@ -726,6 +726,9 @@ class Runtime:
         # Convert self.program_counter to a hashable value in order to
         # use it as a key in self.protocols[peer_id].incoming_data.
         pc = tuple(self.program_counter)
+        return self._expect_data_with_pc(pc, peer_id, data_type, deferred)
+
+    def _expect_data_with_pc(self, pc, peer_id, data_type, deferred):
         key = (pc, data_type)
 
         if key in self.protocols[peer_id].incoming_data:
