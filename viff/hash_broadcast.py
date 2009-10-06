@@ -96,7 +96,8 @@ class HashBroadcastMixin:
             self._expect_data_with_pc(unique_pc, peer_id, HASH, d_hash)
             d_signal = Deferred().addCallbacks(signal_received, 
                                                self.error_handler, 
-                                               callbackArgs=(peer_id, message, len(receivers), g_hashes, signals))
+                                               callbackArgs=(peer_id, message, len(receivers), 
+                                                             g_hashes, signals))
             self._expect_data_with_pc(unique_pc, peer_id, SIGNAL, d_signal)
 
         # Set up receiving of the message.

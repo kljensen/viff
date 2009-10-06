@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with VIFF. If not, see <http://www.gnu.org/licenses/>.
 
-from twisted.internet.defer import Deferred, gatherResults
+from twisted.internet.defer import Deferred, DeferredList, gatherResults
 
 from viff.runtime import Runtime, Share, ShareList, gather_shares
 from viff.util import rand
@@ -382,6 +382,82 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
         result = gather_shares([share_a, share_b])
         result.addCallbacks(compute_subs, self.error_handler)
         return result
+
+    def input(self, inputters, field, number=None, threshold=None):
+        """Input *number* to the computation.
+
+        The input is shared using the :meth:`shift` method.
+        """
+        return self.shift(inputters, field, number)
+
+
+    def shift(self, inputters, field, number=None):
+        """Shift of a share.
+        
+        Useful for input.
+
+        Communication cost: ???.
+
+        Assume the parties are given a random share ``[r]`` by a trusted dealer. 
+        Then we denote the following protocol but ``[x] = Shift(P_i, x, [r])``.
+
+        1) ``r = OpenTo(P_i, [r]``
+
+        2) ``P_i broadcasts Delta = r - x``
+
+        3) ``[x] = [r] - Delta``
+
+        """
+        # TODO: Communitcation costs?
+        assert (self.id in inputters and number != None) or (self.id not in inputters)
+
+        self.program_counter[-1] += 1
+
+        results = []
+        def hack(_, peer_id):
+            # Assume the parties are given a random share [r] by a trusted dealer.
+            share_r = self.random_share(field)
+            # 1) r = OpenTo(P_i, [r])
+            open_r = self.open(share_r, [peer_id])
+            def subtract_delta(delta, share_r):
+                delta = field(long(delta))
+                x = self.sub(share_r, delta)
+                return x
+            if peer_id == self.id:
+                def g(r, x):
+                    delta = r - x
+                    delta = self.broadcast([peer_id], self.players.keys(), str(delta.value))
+                    self.schedule_callback(delta, subtract_delta, share_r)
+                    delta.addErrback(self.error_handler)
+                    return delta
+                self.schedule_callback(open_r, g, number)
+                open_r.addErrback(self.error_handler)
+                return open_r
+            else:
+                d = Deferred()
+                def g(_, peer_id, share_r):
+                    delta = self.broadcast([peer_id], self.players.keys())
+                    self.schedule_callback(delta, subtract_delta, share_r)
+                    delta.addErrback(self.error_handler)
+                    return delta
+                self.schedule_callback(d, g, peer_id, share_r)
+                d.addErrback(self.error_handler)
+                d.callback(None)
+                return d
+
+        for peer_id in inputters:
+            s = Share(self, field)
+            self.schedule_callback(s, hack, peer_id)
+            s.addErrback(self.error_handler)
+            s.callback(None)
+            results.append(s)
+
+        # do actual communication
+        self.activate_reactor()
+
+        if len(results) == 1:
+             return results[0]
+        return results       
 
     def _additive_constant(self, zero, field_element):
         """Greate an additive constant.
