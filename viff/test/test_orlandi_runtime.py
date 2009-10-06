@@ -19,7 +19,7 @@ from twisted.internet.defer import gatherResults, DeferredList
 
 from viff.test.util import RuntimeTestCase, protocol, BinaryOperatorTestCase
 from viff.runtime import Share, gather_shares
-from viff.orlandi import OrlandiRuntime
+from viff.orlandi import OrlandiRuntime, OrlandiShare
 
 from viff.field import FieldElement, GF
 from viff.passive import PassiveRuntime
@@ -27,6 +27,18 @@ from viff.passive import PassiveRuntime
 from viff.util import rand
 
 import commitment
+
+
+def _get_triple(runtime, field):
+    n = field(0)
+    Ca = commitment.commit(6, 0, 0)
+    a = OrlandiShare(runtime, field, field(2), (n, n), Ca)
+    Cb = commitment.commit(12, 0, 0)
+    b = OrlandiShare(runtime, field, field(4), (n, n), Cb)
+    Cc = commitment.commit(72, 0, 0)
+    c = OrlandiShare(runtime, field, field(24), (n, n), Cc)
+    return (a, b, c)
+
 
 class OrlandiBasicCommandsTest(RuntimeTestCase):
     """Test for basic commands."""
@@ -281,7 +293,6 @@ class OrlandiAdvancedCommandsTest(RuntimeTestCase):
         d2.addCallback(check)
         return DeferredList([d1, d2])
 
-
     @protocol
     def test_shift_two_consequtive_inputters(self, runtime):
         """Test addition of the shift command."""
@@ -339,3 +350,137 @@ class OrlandiAdvancedCommandsTest(RuntimeTestCase):
         shares_ready = gather_shares(a_shares + b_shares)
         return shares_ready
 
+    @protocol
+    def test_basic_multiply(self, runtime):
+        """Test multiplication of two numbers."""
+
+        self.Zp = GF(6277101735386680763835789423176059013767194773182842284081)
+
+        x1 = 42
+        y1 = 7
+ 
+        def check(v):
+            self.assertEquals(v, x1 * y1)
+ 
+        x2 = runtime.shift([2], self.Zp, x1)
+        y2 = runtime.shift([3], self.Zp, y1)
+
+        a, b, c = _get_triple(self, self.Zp)
+        z2 = runtime._basic_multiplication(x2, y2, a, b, c)
+        d = runtime.open(z2)
+        d.addCallback(check)
+        return d
+
+    @protocol
+    def test_mul_mul(self, runtime):
+        """Test multiplication of two numbers."""
+
+        self.Zp = GF(6277101735386680763835789423176059013767194773182842284081)
+
+        x1 = 42
+        y1 = 7
+ 
+        def check(v):
+            self.assertEquals(v, x1 * y1)
+ 
+        x2 = runtime.shift([2], self.Zp, x1)
+        y2 = runtime.shift([3], self.Zp, y1)
+
+        z2 = x2 * y2
+        d = runtime.open(z2)
+        d.addCallback(check)
+        return d
+
+    @protocol
+    def test_basic_multiply_constant_right(self, runtime):
+        """Test multiplication of two numbers."""
+
+        self.Zp = GF(6277101735386680763835789423176059013767194773182842284081)
+
+        x1 = 42
+        y1 = 7
+
+        def check(v):
+            self.assertEquals(v, x1 * y1)
+
+        x2 = runtime.shift([1], self.Zp, x1)
+
+        a, b, c = _get_triple(self, self.Zp)
+        z2 = runtime._basic_multiplication(x2, self.Zp(y1), a, b, c)
+        d = runtime.open(z2)
+        d.addCallback(check)
+        return d
+
+    @protocol
+    def test_basic_multiply_constant_left(self, runtime):
+        """Test multiplication of two numbers."""
+
+        self.Zp = GF(6277101735386680763835789423176059013767194773182842284081)
+
+        x1 = 42
+        y1 = 7
+
+        def check(v):
+            self.assertEquals(v, x1 * y1)
+
+        x2 = runtime.shift([1], self.Zp, x1)
+
+        a, b, c = _get_triple(self, self.Zp)
+        z2 = runtime._basic_multiplication(self.Zp(y1), x2, a, b, c)
+        d = runtime.open(z2)
+        d.addCallback(check)
+        return d
+
+    @protocol
+    def test_constant_multiplication_constant_left(self, runtime):
+        """Test multiplication of two numbers."""
+
+        self.Zp = GF(6277101735386680763835789423176059013767194773182842284081)
+
+        x1 = 42
+        y1 = 7
+
+        def check(v):
+            self.assertEquals(v, x1 * y1)
+
+        x2 = runtime.shift([1], self.Zp, x1)
+
+        z2 = runtime._cmul(self.Zp(y1), x2, self.Zp)
+        d = runtime.open(z2)
+        d.addCallback(check)
+        return d
+
+    @protocol
+    def test_constant_multiplication_constant_right(self, runtime):
+        """Test multiplication of two numbers."""
+
+        self.Zp = GF(6277101735386680763835789423176059013767194773182842284081)
+
+        x1 = 42
+        y1 = 7
+
+        def check(v):
+            self.assertEquals(v, x1 * y1)
+
+        x2 = runtime.shift([1], self.Zp, x1)
+
+        z2 = runtime._cmul(x2, self.Zp(y1), self.Zp)
+        d = runtime.open(z2)
+        d.addCallback(check)
+        return d
+
+    @protocol
+    def test_constant_multiplication_constant_None(self, runtime):
+        """Test multiplication of two numbers."""
+
+        self.Zp = GF(6277101735386680763835789423176059013767194773182842284081)
+
+        x1 = 42
+        y1 = 7
+
+        x2 = runtime.shift([1], self.Zp, x1)
+        y2 = runtime.shift([1], self.Zp, y1)
+
+        z2 = runtime._cmul(y2, x2, self.Zp)
+        self.assertEquals(z2, None)
+        return z2
