@@ -25,3 +25,10 @@ ECHO     = 1
 READY    = 2
 SEND     = 3
 PAILLIER = 4
+TEXT     = 5
+
+# Used by the HashBroadcastMixin
+INCONSISTENTHASH = 6
+OK               = 7
+HASH             = 8
+SIGNAL           = 9
