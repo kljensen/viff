@@ -117,13 +117,17 @@ class FieldElement(object):
 #: Inversion table.
 #:
 #: Maps a value *x* to *x^-1*. See `_generate_tables`.
-_inv_table = {}
+_inv_table = [None] * 256
 
 #: Multiplication table.
 #:
 #: Maps *(x,y)* to *xy*. See `_generate_tables`.
-_mul_table = {}
+_mul_table = [[None] * 256 for i in range(256)]
 
+#: Addition table.
+#:
+#: Maps *(x,y)* to *x + y*. See `_generate_tables`.
+_add_table = [[None] * 256 for i in range(256)]
 
 # The class name is slightly wrong since the class instances cannot be
 # said to be represent a field. Instead they represent instances of
@@ -166,7 +170,7 @@ class GF256(FieldElement):
             return NotImplemented
         if isinstance(other, GF256):
             other = other.value
-        return GF256(self.value ^ other)
+        return _add_table[self.value][other]
 
     def __radd__(self, other):
         """Add this and another number (reflected argument version).
@@ -174,8 +178,8 @@ class GF256(FieldElement):
         other is not Share, otherwise Share.__add__() would have been
         called, and other is not a GF256, otherwise GF256.__add__()
         would have been called."""
-        return GF256(self.value ^ other)
-    
+        return _add_table[self.value][other]
+
     #: Subtract this and another GF256 element.
     #:
     #: Addition is its own inverse in GF(2^8) and so this is the same
@@ -206,7 +210,7 @@ class GF256(FieldElement):
             return NotImplemented
         if isinstance(other, GF256):
             other = other.value
-        return _mul_table[(self.value, other)]
+        return _mul_table[self.value][other]
 
 
     def __rmul__(self, other):
@@ -216,7 +220,7 @@ class GF256(FieldElement):
         other is not Share, otherwise Share.__mul__() would have been
         called, and other is not a GF256, otherwise GF256.__mul__()
         would have been called."""
-        return _mul_table[(self.value, other)]
+        return _mul_table[self.value][other]
 
     def __pow__(self, exponent):
         """Exponentiation."""
@@ -325,6 +329,9 @@ def _generate_tables():
         log_table[exp_table[c]] = c
     exp_table[255] = exp_table[0]
 
+    # Don't waste memory for several instances with the same value.
+    inst_table = [GF256(i) for i in range(256)]
+
     for x in range(256):
         for y in range(256):
             if x == 0 or y == 0:
@@ -332,10 +339,11 @@ def _generate_tables():
             else:
                 log_product = (log_table[x] + log_table[y]) % 255
                 z = exp_table[log_product]
-            _mul_table[(x,y)] = GF256(z)
+            _mul_table[x][y] = inst_table[z % 256]
+            _add_table[x][y] = inst_table[x ^ y]
 
     for c in range(1, 256):
-        _inv_table[c] = GF256(exp_table[255 - log_table[c]])
+        _inv_table[c] = inst_table[exp_table[255 - log_table[c]]]
 
 _generate_tables()
 
