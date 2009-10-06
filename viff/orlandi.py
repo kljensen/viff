@@ -269,6 +269,53 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
         if self.id in receivers:
             return result
 
+    def random_share(self, field):
+        """Generate a random share in the field, field.
+
+        To generate a share of a random element ``r in Z_p``, party ``P_i`` 
+        chooses at random ``r_i, rho_ri in Z_p X (Z_p)^2`` and
+        broadcast ``C_r^i = Com_ck(r_i, rho_ri)``.
+
+        Every party computes ``C_r = PRODUCT_i=1^n C_r^i = Com_ck(r, rho_r)``,
+        where ``r_i = SUM_i=1^n r_i and rho_r = SUM_i=1^n rho_ri``.
+
+        Party ``P_i sets [r]_i = (r_i, rho_ri, C_r)``.
+
+        """
+        self.program_counter[-1] += 1
+
+        # P_i chooses at random r_i, rho_ri in Z_p x (Z_p)^2
+        ri = field(rand.randint(0, field.modulus - 1))     
+        rhoi1 = field(rand.randint(0, field.modulus - 1))
+        rhoi2 = field(rand.randint(0, field.modulus - 1))
+
+        # compute C_r^i = Com_ck(r_i, rho_ri).
+        Cri = commitment.commit(ri.value, rhoi1, rhoi2)
+
+        # Broadcast C_r^i.
+        sls = gatherResults(self.broadcast(self.players.keys(), self.players.keys(), repr(Cri)))
+
+        def compute_commitment(ls):
+            Cr = ls.pop()
+            for Cri in ls:
+                Cr = Cr * Cri
+            return OrlandiShare(self, field, ri, (rhoi1, rhoi2), Cr)
+
+        def deserialize(ls):
+            return [ commitment.deserialize(x) for x in ls ]
+
+        sls.addCallbacks(deserialize, self.error_handler)
+        sls.addCallbacks(compute_commitment, self.error_handler)
+
+        s = Share(self, field)
+        # We add the result to the chains in triple.
+        sls.chainDeferred(s)
+
+        # do actual communication
+        self.activate_reactor()
+
+        return s
+
     def error_handler(self, ex):
         print "Error: ", ex
         return ex

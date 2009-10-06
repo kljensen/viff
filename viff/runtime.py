@@ -327,20 +327,13 @@ class ShareExchanger(Int16StringReceiver):
 
                 key = (program_counter, data_type)
 
-#                 print "Player %s has received data %s from %s with pc: %s" % (str(self.factory.runtime.id), 
-#                                                                               str(data), 
-#                                                                               str(self.peer_id),
-#                                                                               str(key))
-
                 if key in self.waiting_deferreds:
-#                    print "A deferred was waiting"
                     deq = self.waiting_deferreds[key]
                     deferred = deq.popleft()
                     if not deq:
                         del self.waiting_deferreds[key]
                     self.factory.runtime.handle_deferred_data(deferred, data)
                 else:
-#                    print "A deferred is not waiting, lets put the data on the shelf"
                     deq = self.incoming_data.setdefault(key, deque())
                     deq.append(data)
             except struct.error, e:
@@ -399,12 +392,6 @@ class SelfShareExchanger(ShareExchanger):
         """
         try:
             key = (program_counter, data_type)
-
-#            print self
-#             print "Player %s has received data %s from %s with pc: %s" % (str(self.factory.runtime.id), 
-#                                                                           str(data), 
-#                                                                           str(self.peer_id),
-#                                                                           program_counter)
                          
             if key in self.waiting_deferreds:
                 deq = self.waiting_deferreds[key]
@@ -754,7 +741,6 @@ class Runtime:
         else:
             # We have not yet received anything from the other side.
             deq = self.protocols[peer_id].waiting_deferreds.setdefault(key, deque())
-#             print "The deferred %s is waiting on data from %i with key: %s" % (str(deferred), peer_id, str(key))
             deq.append(deferred)
 
     def _exchange_shares(self, peer_id, field_element):
@@ -869,6 +855,7 @@ class Runtime:
     def handle_deferred_data(self, deferred, data):
         """Put deferred and data into the queue if the ViffReactor is running. 
         Otherwise, just execute the callback."""
+
         if self.using_viff_reactor:
             self.deferred_queue.append((deferred, data))
         else:
