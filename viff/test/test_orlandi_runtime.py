@@ -261,7 +261,7 @@ class OrlandiAdvancedCommandsTest(RuntimeTestCase):
  
     runtime_class = OrlandiRuntime
 
-    timeout = 60
+    timeout = 800
 
     @protocol
     def test_shift(self, runtime):
@@ -556,13 +556,15 @@ class OrlandiAdvancedCommandsTest(RuntimeTestCase):
         x2 = runtime.shift([1], self.Zp, x1)
         y2 = runtime.shift([2], self.Zp, y1)
 
-        M = []
-        for j in xrange(1, 2*runtime.d + 2):
-            M.append(_get_triple(self, self.Zp))
-        z2 = runtime.leak_tolerant_mul(x2, y2, M)
-        d = runtime.open(z2)
-        d.addCallback(check)
-        return d
+        c, sls = runtime.random_triple(self.Zp, 2*runtime.d + 1)
+
+        def cont(M):
+            z2 = runtime.leak_tolerant_mul(x2, y2, M)
+            d = runtime.open(z2)
+            d.addCallback(check)
+            return d
+        sls.addCallbacks(cont, runtime.error_handler)
+        return sls
 
         z2 = runtime._cmul(y2, x2, self.Zp)
         self.assertEquals(z2, None)
@@ -672,7 +674,94 @@ class TripleGenTest(RuntimeTestCase):
             d = gatherResults(ds)
             d.addCallback(check)
             return d
-        d = runtime.random_triple(self.Zp)
+        c, d = runtime.random_triple(self.Zp, 1)
         d.addCallbacks(open, runtime.error_handler)
         return d
 
+    @protocol
+    def test_random_triple3_parallel(self, runtime):
+        """Test the triple_combiner command."""
+
+        self.Zp = GF(6277101735386680763835789423176059013767194773182842284081)
+
+        def check(ls):
+            for x in xrange(len(ls) // 3):
+                a = ls[x * 3]
+                b = ls[x * 3 + 1]
+                c = ls[x * 3 + 2]
+                self.assertEquals(c, a * b)
+
+        def open(ls):
+            ds = []
+            for [(a, b, c)] in ls:
+                d1 = runtime.open(a)
+                d2 = runtime.open(b)
+                d3 = runtime.open(c)
+                ds.append(d1)
+                ds.append(d2)
+                ds.append(d3)
+
+            d = gatherResults(ds)
+            d.addCallback(check)
+            return d
+        ac, a = runtime.random_triple(self.Zp, 1)
+        bc, b = runtime.random_triple(self.Zp, 1)
+        cc, c = runtime.random_triple(self.Zp, 1)
+        d = gather_shares([a, b, c])
+        d.addCallbacks(open, runtime.error_handler)
+        return d
+
+    @protocol
+    def test_random_triple_parallel(self, runtime):
+        """Test the triple_combiner command."""
+
+        self.Zp = GF(6277101735386680763835789423176059013767194773182842284081)
+
+        def check(ls):
+            for x in xrange(len(ls) // 3):
+                a = ls[x * 3]
+                b = ls[x * 3 + 1]
+                c = ls[x * 3 + 2]
+                self.assertEquals(c, a * b)
+
+        def open(ls):
+            ds = []
+            for [(a, b, c)] in ls:
+                d1 = runtime.open(a)
+                d2 = runtime.open(b)
+                d3 = runtime.open(c)
+                ds.append(d1)
+                ds.append(d2)
+                ds.append(d3)
+
+            d = gatherResults(ds)
+            d.addCallback(check)
+            return d
+
+        a_shares = []
+        b_shares = []
+        c_shares = []
+
+        def cont(x):
+            while a_shares and b_shares:
+                a = a_shares.pop()
+                b = b_shares.pop()
+                c_shares.append(runtime.mul(a, b))
+            done = gather_shares(c_shares)
+            return done
+
+        count = 5
+
+        for i in range(count):
+            inputter = (i % len(runtime.players)) + 1
+            if inputter == runtime.id:
+                a = rand.randint(0, self.Zp.modulus)
+                b = rand.randint(0, self.Zp.modulus)
+            else:
+                a, b = None, None
+            a_shares.append(runtime.input([inputter], self.Zp, a))
+            b_shares.append(runtime.input([inputter], self.Zp, b))
+        shares_ready = gather_shares(a_shares + b_shares)
+
+        runtime.schedule_callback(shares_ready, cont)
+        return shares_ready

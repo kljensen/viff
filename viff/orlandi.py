@@ -495,8 +495,17 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
 
         field = getattr(share_x, "field", getattr(share_y, "field", None))
 
-        a, b, c = self._get_triple(field)
-        return self._basic_multiplication(share_x, share_y, a, b, c)
+        def finish_mul((a, b, c)):
+            return self._basic_multiplication(share_x, share_y, a, b, c)
+
+        # This will be the result, a Share object.
+        result = Share(self, share_x.field)
+        # This is the Deferred we will do processing on.
+        triple = self._get_triple(field)
+        triple = self.schedule_complex_callback(triple, finish_mul)
+        # We add the result to the chains in triple.
+        triple.chainDeferred(result)
+        return result
 
     def _additive_constant(self, zero, field_element):
         """Greate an additive constant.
@@ -588,14 +597,11 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
         return c
 
     def _get_triple(self, field):
-        n = field(0)
-        Ca = commitment.commit(6, 0, 0)
-        a = OrlandiShare(self, field, field(2), (n, n), Ca)
-        Cb = commitment.commit(12, 0, 0)
-        b = OrlandiShare(self, field, field(4), (n, n), Cb)
-        Cc = commitment.commit(72, 0, 0)
-        c = OrlandiShare(self, field, field(24), (n, n), Cc)
-        return (a, b, c)
+        c, d = self.random_triple(field, 1)
+        def f(ls):
+            return ls[0]
+        d.addCallbacks(f, self.error_handler)
+        return d
 
     def _basic_multiplication(self, share_x, share_y, triple_a, triple_b, triple_c):
         """Multiplication of shares give a triple.
@@ -1011,7 +1017,7 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
 
         return result
 
-    def random_triple(self, field):
+    def random_triple(self, field, number_of_requested_triples):
         """Generate a list of triples ``(a, b, c)`` where ``c = a * b``.
 
         The triple ``(a, b, c)`` is secure in the Fcrs-hybrid model.
@@ -1019,15 +1025,16 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
         """
         self.program_counter[-1] += 1
 
-        number_of_multiplications = 1
         M = []
-        
-        for x in xrange((1 + self.s_lambda) * (2 * self.d + 1) * number_of_multiplications):
+
+# print "Generating %i triples... relax, have a brak..." % ((1 + self.s_lambda) * (2 * self.d + 1) * number_of_requested_triples)
+
+        for x in xrange((1 + self.s_lambda) * (2 * self.d + 1) * number_of_requested_triples):
             M.append(self.triple_test(field))
 
         def step3(ls):
             """Coin-flip a subset test_set of M of size lambda(2d + 1)M."""
-            size = self.s_lambda * (2 * self.d + 1) * number_of_multiplications
+            size = self.s_lambda * (2 * self.d + 1) * number_of_requested_triples
             inx = 0
             p_half = field.modulus // 2
             def coin_flip(v, ls, test_set):
@@ -1235,18 +1242,18 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
             return dls_all
 
         def step6(M_without_test_set):
-            """Partition M without test_set in number_of_multiplications
+            """Partition M without test_set in number_of_requested_triples
             random subsets M_i of size (2d + 1).
             """
             subsets = []
             size = 2 * self.d + 1
-            for x in xrange(number_of_multiplications):
+            for x in xrange(number_of_requested_triples):
                 subsets.append([])
 
             def put_in_set(v, M_without_test_set, subsets):
                 if 0 == len(M_without_test_set):
                     return subsets
-                v = v.value % number_of_multiplications
+                v = v.value % number_of_requested_triples
                 if size > len(subsets[v]):
                     subsets[v].append(M_without_test_set.pop(0))
                 r = self.random_share(field)
@@ -1295,8 +1302,11 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
         # do actual communication
         self.activate_reactor()
 
-        return result
-
+        s = Share(self, field)
+        def f(ls, s):
+            s.callback(ls)
+        result.addCallbacks(f, self.error_handler, callbackArgs=(s,))
+        return number_of_requested_triples, s
 
     def error_handler(self, ex):
         print "Error: ", ex
