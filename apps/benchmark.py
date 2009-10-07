@@ -94,18 +94,30 @@ def record_stop(_, what):
     print "Time per %s operation: %.0f ms" % (what, 1000*(stop-start) / count)
     print "*" * 6
 
+operations = {"mul": (operator.mul,[]),
+              "compToft05": (operator.ge, [ComparisonToft05Mixin]),
+              "compToft07": (operator.ge, [ComparisonToft07Mixin]),
+              "eq": (operator.eq, [ProbabilisticEqualityMixin])}
 
-operations = ["mul", "compToft05", "compToft07", "eq"]
+runtimes = {"PassiveRuntime": PassiveRuntime,
+            "PaillierRuntime": PaillierRuntime, 
+            "BasicActiveRuntime": BasicActiveRuntime}
+
+mixins = {"TriplesHyperinvertibleMatricesMixin" : TriplesHyperinvertibleMatricesMixin, 
+          "TriplesPRSSMixin": TriplesPRSSMixin, 
+          "ComparisonToft05Mixin": ComparisonToft05Mixin,
+          "ComparisonToft07Mixin": ComparisonToft07Mixin, 
+          "ProbabilisticEqualityMixin": ProbabilisticEqualityMixin}
 
 parser = OptionParser(usage="Usage: %prog [options] config_file")
 parser.add_option("-m", "--modulus",
                   help="lower limit for modulus (can be an expression)")
-parser.add_option("-a", "--active", action="store_true",
-                  help="use actively secure runtime")
-parser.add_option("--passive", action="store_false", dest="active",
-                  help="use passively secure runtime")
-parser.add_option("-2", "--twoplayer", action="store_true",
-                  help="use twoplayer runtime")
+parser.add_option("-r", "--runtime", type="choice", choices=runtimes.keys(),
+                  help="the name of the basic runtime to test")
+parser.add_option("-n", "--num_players", action="store_true", dest="num_players",
+                  help="number of players")
+parser.add_option("--mixins", type="choice", choices=mixins.keys(),
+                  help="operation to benchmark")
 parser.add_option("--prss", action="store_true",
                   help="use PRSS for preprocessing")
 parser.add_option("--hyper", action="store_false", dest="prss",
@@ -114,7 +126,7 @@ parser.add_option("-t", "--threshold", type="int",
                   help="corruption threshold")
 parser.add_option("-c", "--count", type="int",
                   help="number of operations")
-parser.add_option("-o", "--operation", type="choice", choices=operations,
+parser.add_option("-o", "--operation", type="choice", choices=operations.keys(),
                   help="operation to benchmark")
 parser.add_option("-p", "--parallel", action="store_true",
                   help="execute operations in parallel")
@@ -122,10 +134,12 @@ parser.add_option("-s", "--sequential", action="store_false", dest="parallel",
                   help="execute operations in sequence")
 parser.add_option("-f", "--fake", action="store_true",
                   help="skip local computations using fake field elements")
+parser.add_option("--args", type="string",
+                  help="additional arguments to the runtime, the format is a comma separated list of id=value pairs e.g. --args s=1,d=0,lambda=1")
 
 parser.set_defaults(modulus=2**65, threshold=1, count=10,
-                    active=False, twoplayer=False, prss=True,
-                    operation=operations[0], parallel=True, fake=False)
+                    runtime=runtimes.keys()[0], mixins=mixins.keys(), num_players=2, prss=True,
+                    operation=operations.keys()[0], parallel=True, fake=False)
 
 # Add standard VIFF options.
 Runtime.add_options(parser)
@@ -285,41 +299,26 @@ class SequentialBenchmark(Benchmark):
             record_stop(None, "sequential test")
             self.finished(None)
 
-mixins = []
-if options.twoplayer:
-    # Then there is just one possible runtime:
-    operation = operator.mul
-    base_runtime_class = PaillierRuntime
-else:
-    # There are several options for a multiplayer runtime:
-    if options.active:
-        base_runtime_class = BasicActiveRuntime
-        if options.prss:
-            mixins.append(TriplesPRSSMixin)
-        else:
-            mixins.append(TriplesHyperinvertibleMatricesMixin)
-    else:
-        base_runtime_class = PassiveRuntime
+# Identify the base runtime class.
+base_runtime_class = runtimes[options.runtime]
 
-    if options.operation == "mul":
-        operation = operator.mul
-    elif options.operation == "compToft05":
-        operation = operator.ge
-        mixins.append(ComparisonToft05Mixin)
-    elif options.operation == "compToft07":
-        operation = operator.ge
-        mixins.append(ComparisonToft07Mixin)
-    elif options.operation == "eq":
-        operation = operator.eq
-        mixins.append(ProbabilisticEqualityMixin)
+# Identify the additional mixins.
+actual_mixins = []
+if options.mixins != "":
+    actual_mixins = [mixins[mixin] for mixin in options.mixins.split(',')]
+
+
+# Identify the operation and it mixin dependencies.
+operation = operations[options.operation][0]
+actual_mixins += operations[options.operation][1]
 
 print "Using the base runtime: %s." % base_runtime_class
-if mixins:
+if actual_mixins:
     print "With the following mixins:"
-    for mixin in mixins:
+    for mixin in actual_mixins:
         print "- %s" % mixin
 
-runtime_class = make_runtime_class(base_runtime_class, mixins)
+runtime_class = make_runtime_class(base_runtime_class, actual_mixins)
 
 if options.parallel:
     benchmark = ParallelBenchmark
@@ -328,6 +327,19 @@ else:
 
 pre_runtime = create_runtime(id, players, options.threshold,
                              options, runtime_class)
+
+def update_args(runtime, options):
+    args = {}
+    if options.args != "":
+        for arg in options.args.split(','):
+            id, value = arg.split('=')
+            args[id] = long(value)
+        runtime.setArgs(args)
+    return runtime
+
+
+pre_runtime.addCallback(update_args, options)
+
 pre_runtime.addCallback(benchmark, operation)
 
 print "#### Starting reactor ###"
