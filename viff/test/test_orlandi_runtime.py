@@ -26,7 +26,7 @@ from viff.passive import PassiveRuntime
 
 from viff.util import rand
 
-import commitment
+# import commitment
 
 
 def _get_triple(runtime, field):
@@ -68,6 +68,8 @@ class OrlandiBasicCommandsTest(RuntimeTestCase):
         share.addCallback(check)
         return share
 
+    test_secret_share.skip = "Commitment module is not included in VIFF."
+
     @protocol
     def test_open_secret_share(self, runtime):
         """Test sharing and open of a number."""
@@ -85,6 +87,8 @@ class OrlandiBasicCommandsTest(RuntimeTestCase):
         d.addCallback(check)
         return d
 
+    test_open_secret_share.skip = "Commitment module is not included in VIFF."
+
     @protocol
     def test_random_share(self, runtime):
         """Test creation of a random shared number."""
@@ -99,6 +103,7 @@ class OrlandiBasicCommandsTest(RuntimeTestCase):
         d.addCallback(check)
         return d
  
+    test_random_share.skip = "Commitment module is not included in VIFF."
 
     @protocol
     def test_sum(self, runtime):
@@ -127,6 +132,8 @@ class OrlandiBasicCommandsTest(RuntimeTestCase):
         d.addCallback(check)
         return d
 
+    test_sum.skip = "Commitment module is not included in VIFF."
+
     @protocol
     def test_sum_plus(self, runtime):
         """Test addition of two numbers."""
@@ -154,6 +161,8 @@ class OrlandiBasicCommandsTest(RuntimeTestCase):
         d.addCallback(check)
         return d
 
+    test_sum_plus.skip = "Commitment module is not included in VIFF."
+
     @protocol
     def test_sum_constant(self, runtime):
         """Test addition of two numbers."""
@@ -175,6 +184,8 @@ class OrlandiBasicCommandsTest(RuntimeTestCase):
         d = runtime.open(z2)
         d.addCallback(check)
         return d
+
+    test_sum_constant.skip = "Commitment module is not included in VIFF."
 
     @protocol
     def test_sub(self, runtime):
@@ -203,6 +214,8 @@ class OrlandiBasicCommandsTest(RuntimeTestCase):
         d.addCallback(check)
         return d
 
+    test_sub.skip = "Commitment module is not included in VIFF."
+
     @protocol
     def test_sub_minus(self, runtime):
         """Test subtration of two numbers."""
@@ -230,6 +243,8 @@ class OrlandiBasicCommandsTest(RuntimeTestCase):
         d.addCallback(check)
         return d
 
+    test_sub_minus.skip = "Commitment module is not included in VIFF."
+
     @protocol
     def test_sub_constant(self, runtime):
         """Test subtration of two numbers."""
@@ -252,6 +267,7 @@ class OrlandiBasicCommandsTest(RuntimeTestCase):
         d.addCallback(check)
         return d
 
+    test_sub_constant.skip = "Commitment module is not included in VIFF."
 
 class OrlandiAdvancedCommandsTest(RuntimeTestCase):
     """Test for advanced commands."""
@@ -277,6 +293,8 @@ class OrlandiAdvancedCommandsTest(RuntimeTestCase):
         d.addCallback(check)
         return d
 
+    test_shift.skip = "Commitment module is not included in VIFF."
+
     @protocol
     def test_shift_two_inputters(self, runtime):
         """Test addition of the shift command."""
@@ -293,6 +311,8 @@ class OrlandiAdvancedCommandsTest(RuntimeTestCase):
         d2.addCallback(check)
         return DeferredList([d1, d2])
 
+    test_shift_two_inputters.skip = "Commitment module is not included in VIFF."
+
     @protocol
     def test_shift_two_consequtive_inputters(self, runtime):
         """Test addition of the shift command."""
@@ -308,6 +328,8 @@ class OrlandiAdvancedCommandsTest(RuntimeTestCase):
         r = gather_shares([x, y])
         r.addCallback(r1)
         return r
+
+    test_shift_two_consequtive_inputters.skip = "Commitment module is not included in VIFF."
 
     @protocol
     def test_shift_two_consequtive_inputters2(self, runtime):
@@ -327,6 +349,8 @@ class OrlandiAdvancedCommandsTest(RuntimeTestCase):
         r = gather_shares([runtime.open(x), runtime.open(y)])
         r.addCallback(r1)
         return r
+
+    test_shift_two_consequtive_inputters2.skip = "Commitment module is not included in VIFF."
 
     @protocol
     def test_input(self, runtime):
@@ -350,6 +374,8 @@ class OrlandiAdvancedCommandsTest(RuntimeTestCase):
         shares_ready = gather_shares(a_shares + b_shares)
         return shares_ready
 
+    test_input.skip = "Commitment module is not included in VIFF."
+
     @protocol
     def test_basic_multiply(self, runtime):
         """Test multiplication of two numbers."""
@@ -371,6 +397,8 @@ class OrlandiAdvancedCommandsTest(RuntimeTestCase):
         d.addCallback(check)
         return d
 
+    test_basic_multiply.skip = "Commitment module is not included in VIFF."
+
     @protocol
     def test_mul_mul(self, runtime):
         """Test multiplication of two numbers."""
@@ -390,6 +418,8 @@ class OrlandiAdvancedCommandsTest(RuntimeTestCase):
         d = runtime.open(z2)
         d.addCallback(check)
         return d
+
+    test_mul_mul.skip = "Commitment module is not included in VIFF."
 
     @protocol
     def test_basic_multiply_constant_right(self, runtime):
@@ -411,6 +441,8 @@ class OrlandiAdvancedCommandsTest(RuntimeTestCase):
         d.addCallback(check)
         return d
 
+    test_basic_multiply_constant_right.skip = "Commitment module is not included in VIFF."
+
     @protocol
     def test_basic_multiply_constant_left(self, runtime):
         """Test multiplication of two numbers."""
@@ -431,6 +463,8 @@ class OrlandiAdvancedCommandsTest(RuntimeTestCase):
         d.addCallback(check)
         return d
 
+    test_basic_multiply_constant_left.skip = "Commitment module is not included in VIFF."
+
     @protocol
     def test_constant_multiplication_constant_left(self, runtime):
         """Test multiplication of two numbers."""
@@ -449,6 +483,8 @@ class OrlandiAdvancedCommandsTest(RuntimeTestCase):
         d = runtime.open(z2)
         d.addCallback(check)
         return d
+
+    test_constant_multiplication_constant_left.skip = "Commitment module is not included in VIFF."
 
     @protocol
     def test_constant_multiplication_constant_right(self, runtime):
@@ -469,6 +505,8 @@ class OrlandiAdvancedCommandsTest(RuntimeTestCase):
         d.addCallback(check)
         return d
 
+    test_constant_multiplication_constant_right.skip = "Commitment module is not included in VIFF."
+
     @protocol
     def test_constant_multiplication_constant_None(self, runtime):
         """Test multiplication of two numbers."""
@@ -480,6 +518,8 @@ class OrlandiAdvancedCommandsTest(RuntimeTestCase):
 
         x2 = runtime.shift([1], self.Zp, x1)
         y2 = runtime.shift([1], self.Zp, y1)
+
+    test_constant_multiplication_constant_None.skip = "Commitment module is not included in VIFF."
 
     @protocol
     def test_sum_poly(self, runtime):
@@ -498,6 +538,8 @@ class OrlandiAdvancedCommandsTest(RuntimeTestCase):
         self.assertEquals(rho2, 29)
         self.assertEquals(Cx, 29)
         return x
+
+    test_sum_poly.skip = "Commitment module is not included in VIFF."
  
     @protocol
     def test_sum_poly(self, runtime):
@@ -521,6 +563,8 @@ class OrlandiAdvancedCommandsTest(RuntimeTestCase):
         self.assertEquals(Cx, Cf1**3 * Cf2**9 * Cf3**27)
         return x
 
+    test_sum_poly.skip = "Commitment module is not included in VIFF."
+
     @protocol
     def test_delta(self, runtime):
         """Test implementation of compute_delta."""
@@ -537,6 +581,8 @@ class OrlandiAdvancedCommandsTest(RuntimeTestCase):
         self.assertEquals(delta[6], 1)
  
         return delta
+
+    test_delta.skip = "Commitment module is not included in VIFF."
 
     @protocol
     def test_leak_mul(self, runtime):
@@ -570,6 +616,7 @@ class OrlandiAdvancedCommandsTest(RuntimeTestCase):
         self.assertEquals(z2, None)
         return z2
 
+    test_leak_mul.skip = "Commitment module is not included in VIFF."
 
 class TripleGenTest(RuntimeTestCase):
     """Test for generation of triples."""
@@ -601,6 +648,8 @@ class TripleGenTest(RuntimeTestCase):
         d.addCallbacks(open, runtime.error_handler)
         return d
 
+    test_tripleGen.skip = "Commitment module is not included in VIFF."
+
     @protocol
     def test_tripleGen2(self, runtime):
         """Test the triple_gen command."""
@@ -627,6 +676,7 @@ class TripleGenTest(RuntimeTestCase):
         d.addCallbacks(open, runtime.error_handler)
         return d
 
+    test_tripleGen2.skip = "Commitment module is not included in VIFF."
     
     @protocol
     def test_tripleTest(self, runtime):
@@ -647,6 +697,8 @@ class TripleGenTest(RuntimeTestCase):
         d = runtime.triple_test(self.Zp)
         d.addCallbacks(open, runtime.error_handler)
         return d
+
+    test_tripleTest.skip = "Commitment module is not included in VIFF."
 
     @protocol
     def test_random_triple(self, runtime):
@@ -677,6 +729,8 @@ class TripleGenTest(RuntimeTestCase):
         c, d = runtime.random_triple(self.Zp, 1)
         d.addCallbacks(open, runtime.error_handler)
         return d
+
+    test_random_triple.skip = "Commitment module is not included in VIFF."
 
     @protocol
     def test_random_triple3_parallel(self, runtime):
@@ -710,6 +764,8 @@ class TripleGenTest(RuntimeTestCase):
         d = gather_shares([a, b, c])
         d.addCallbacks(open, runtime.error_handler)
         return d
+
+    test_random_triple3_parallel.skip = "Commitment module is not included in VIFF."
 
     @protocol
     def test_random_triple_parallel(self, runtime):
@@ -765,3 +821,5 @@ class TripleGenTest(RuntimeTestCase):
 
         runtime.schedule_callback(shares_ready, cont)
         return shares_ready
+
+    test_random_triple_parallel.skip = "Commitment module is not included in VIFF."
