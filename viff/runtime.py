@@ -680,6 +680,7 @@ class Runtime:
         adding callbacks to the returned :class:`Deferred`, one can
         divide a protocol execution into disjoint phases.
         """
+        self.increment_pc()
         shares = [self._exchange_shares(player, GF256(0))
                   for player in self.players]
         result = gather_shares(shares)
