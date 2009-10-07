@@ -55,6 +55,9 @@ class OrlandiShare(Share):
     """
 
     def __init__(self, runtime, field, value=None, rho=None, commitment=None):
+        self.share = value
+        self.rho = rho
+        self.commitment = commitment
         Share.__init__(self, runtime, field, (value, rho, commitment))
 
 
@@ -81,6 +84,9 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
         """Initialize runtime."""
         Runtime.__init__(self, player, threshold, options)
         self.threshold = self.num_players - 1
+        self.s = 1
+        self.d = 0
+        self.s_lambda = 1
 
     def compute_delta(self, d):
         def product(j):
@@ -1004,6 +1010,293 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
         self.activate_reactor()
 
         return result
+
+    def random_triple(self, field):
+        """Generate a list of triples ``(a, b, c)`` where ``c = a * b``.
+
+        The triple ``(a, b, c)`` is secure in the Fcrs-hybrid model.
+
+        """
+        self.program_counter[-1] += 1
+
+        number_of_multiplications = 1
+        M = []
+        
+        for x in xrange((1 + self.s_lambda) * (2 * self.d + 1) * number_of_multiplications):
+            M.append(self.triple_test(field))
+
+        def step3(ls):
+            """Coin-flip a subset test_set of M of size lambda(2d + 1)M."""
+            size = self.s_lambda * (2 * self.d + 1) * number_of_multiplications
+            inx = 0
+            p_half = field.modulus // 2
+            def coin_flip(v, ls, test_set):
+                candidate = ls.pop(0)
+                if p_half > v:
+                    test_set.append(candidate)
+                else:
+                    ls.append(candidate)
+                if size > len(test_set):
+                    r = self.random_share(field)
+                    r = self.output(r)
+                    self.schedule_callback(r, coin_flip, ls, test_set)
+                    r.addErrback(self.error_handler)
+                    return r
+                return ls, test_set
+            r = self.random_share(field)
+            r = self.output(r)
+            self.schedule_callback(r, coin_flip, ls, [])
+            r.addErrback(self.error_handler)
+            return r            
+
+        def step45(lists):
+            """For all i in test_set the parties reveal 
+            the randomness used for TripleTest() and checks that
+            the randomness is consistent with the actual values."""
+            M_without_test_set = lists[0]
+            T = lists[1]
+
+            def defer_share(xi, (rho1, rho2), commitment):
+                d1 = Deferred()
+                d2 = Deferred()
+                d3 = Deferred()
+                d4 = Deferred()
+                d1.callback(xi)
+                d2.callback(rho1)
+                d3.callback(rho2)
+                d4.callback(commitment)
+                return gatherResults([d1, d2, d3, d4])
+
+            def get_share(x, ls):
+                share = ls[x * 4]
+                rho1 = ls[x * 4 + 1]
+                rho2 = ls[x * 4 + 2]
+                commitment = ls[x * 4 + 3]
+                return (share, rho1, rho2, commitment)
+
+            def send_share(player_id, pc, a):
+                self._send_orlandi_share(player_id, pc, a.share, a.rho, a.commitment) 
+                
+            def receive_shares(player_id):
+                Cx = Deferred()
+                xi = self._expect_share(player_id, field)
+                rho1 = self._expect_share(player_id, field)
+                rho2 = self._expect_share(player_id, field)
+                self._expect_data(player_id, TEXT, Cx)
+                Cx.addCallbacks(lambda Cx: commitment.deserialize(Cx), 
+                                        self.error_handler)
+                return gatherResults([xi, rho1, rho2, Cx])
+
+            def send_long(player_id, pc, l):
+                self.protocols[player_id].sendData(pc, TEXT, str(l))
+
+            def receive_long(player_id):
+                l = Deferred()
+                self._expect_data(player_id, TEXT, l)
+                l.addCallbacks(lambda x: long(x), self.error_handler)
+                return l
+
+            def defer_value(l):
+                d = Deferred()
+                d.callback(l)
+                return d
+
+            def check((ais, bis, cis, alpha_randomness, dijs), alphas, gammas):
+                """So if B receives ai, bi, dij, ri, si, and the randomness used in the
+                computation of alpha, he then checks that:
+                1) the alpha_i he received is equals to the encryption of ai and the
+                commitment he received, Ai, is equal to the commitment of ai and ri
+                2) the commitment he received, Bj, is equal to the commitment of bj and sj
+                3) the gammaij he received is equal to the gammaij he now computes based on
+                the values he reveives
+                4) a, b, c is a triple, a * b = c
+                5) ai, bi < p and dij < p^3
+                """
+                a = 0
+                a_rho1 = 0
+                a_rho2 = 0
+                b = 0
+                b_rho1 = 0
+                b_rho2 = 0
+                c = 0
+                c_rho1 = 0
+                c_rho2 = 0
+                
+                for x in xrange(len(ais)):
+                    (ai, a_rhoi1, a_rhoi2, A) = ais[x]
+                    (bi, b_rhoi1, b_rhoi2, B) = bis[x]
+                    (ci, c_rhoi1, c_rhoi2, C) = cis[x]
+                    # 5) ai, bi < p...
+                    if ai >= field.modulus:
+                        raise OrlandiException("Inconsistent share ai, ai >= p: %i" % ai)
+                    if bi >= field.modulus:
+                        raise OrlandiException("Inconsistent share bi, bi >= p: %i" % bi)
+                    a += ai
+                    a_rho1 += a_rhoi1
+                    a_rho2 += a_rhoi2
+                    b += bi
+                    b_rho1 += b_rhoi1
+                    b_rho2 += b_rhoi2
+                    c += ci
+                    c_rho1 += c_rhoi1
+                    c_rho2 += c_rhoi2
+                    # 1) the alpha_i he received is equals to the encryption of ai...
+                    alphai = encrypt_r(ai.value, alpha_randomness[x],
+                                       self.players[x + 1].pubkey)
+                    if not(alphas[x] == alphai):
+                        raise OrlandiException("Inconsistent alpha from player %i, %i, %i" % (x + 1, alphas[x], alphai))
+
+                A1 = commitment.commit(a.value, a_rho1.value, a_rho2.value)
+                B1 = commitment.commit(b.value, b_rho1.value, b_rho2.value)
+                C1 = commitment.commit(c.value, c_rho1.value, c_rho2.value)
+
+                # 1) ... and the commitment he received, Ai, is equal
+                # to the commitment of ai and ri.
+                if A1 != A:
+                    raise OrlandiException("Inconsistent commitment for value %s, found %s expected %s." % (a, A1, A))
+                # 2) the commitment he received, Bj, is equal to the commitment of bj and sj.
+                if B1 != B:
+                    raise OrlandiException("Inconsistent commitment for value %s, found %s expected %s." % (b, B1, B))
+                if C1 != C:
+                    raise OrlandiException("Inconsistent commitment for value %s, found %s expected %s." % (c, C1, C))
+                # 4) a, b, c is a triple, a * b = c
+                if a * b != c:
+                    raise OrlandiException("Inconsistent triple, %i * %i does not equals %i." % (a, b, c))
+
+
+                # 3) the gammaij he received is equal to the gammaij he now computes based on
+                # the values he reveives
+                for j in xrange(len(ais)):
+                    n = self.players[self.id].pubkey[0]
+                    nsq = n * n
+                    dij = dijs[j]
+                    # 5) ... and dij < p^3.
+                    if dij >= (field.modulus**3):
+                        raise OrlandiException("Inconsistent random value dij %i from player %i" % (dij, j + 1))
+                    # Enc_ek_i(1;1)^d_ij
+                    enc = encrypt_r(1, 1, self.players[self.id].pubkey)
+                    t1 = pow(enc, dij.value, nsq)
+                    # alpha_i^b_j.
+                    t2 = pow(alphas[self.id - 1], bis[j][0].value, nsq)
+                    # gamma_ij = alpha_i^b_j Enc_ek_i(1;1)^d_ij
+                    gammaij = (t2) * (t1) % nsq
+                    if gammaij != gammas[j]:
+                        raise OrlandiException("Inconsistent gammaij, %i, %i" % (gammaij, gammas[j]))
+
+                return True
+
+            dls_all = []
+            for (a, b, c, (alphas, alpha_randomness, gammas, dijs)) in T:
+                ds_a = [None] * len(self.players)
+                ds_b = [None] * len(self.players)
+                ds_c = [None] * len(self.players)
+                ds_alpha_randomness = [None] * len(self.players)
+                ds_dijs = [None] * len(self.players)
+                pc = tuple(self.program_counter)
+
+                for player_id in xrange(1, len(self.players.keys()) + 1):
+                    if player_id == self.id:
+                        ds_a[player_id - 1] = defer_share(a.share, a.rho, a.commitment)
+                        ds_b[player_id - 1] = defer_share(b.share, b.rho, b.commitment)
+                        ds_c[player_id - 1] = defer_share(c.share, c.rho, c.commitment)
+                        ds_alpha_randomness[player_id - 1] = defer_value(alpha_randomness)
+                        ds_dijs[player_id - 1] = defer_value(dijs[player_id - 1])
+                    # Receive and recombine shares if this player is a receiver.
+                    else:
+                        send_share(player_id, pc, a)
+                        send_share(player_id, pc, b)
+                        send_share(player_id, pc, c)
+                        send_long(player_id, pc, alpha_randomness)
+                        self.protocols[player_id].sendShare(pc, dijs[player_id - 1])
+
+                        ds_a[player_id - 1] = receive_shares(player_id)
+                        ds_b[player_id - 1] = receive_shares(player_id)
+                        ds_c[player_id - 1] = receive_shares(player_id)
+                        ds_alpha_randomness[player_id - 1] = receive_long(player_id)
+                        ds_dijs[player_id - 1] = self._expect_share(player_id, field)
+                dls_a = gatherResults(ds_a)
+                dls_b = gatherResults(ds_b)
+                dls_c = gatherResults(ds_c)
+                dls_dijs = gatherResults(ds_dijs)
+                dls_alpha_randomness = gatherResults(ds_alpha_randomness)
+
+            dls = gatherResults([dls_a, dls_b, dls_c, dls_alpha_randomness, dls_dijs])
+            dls.addCallbacks(check, self.error_handler, callbackArgs=[alphas, gammas])
+            dls_all.append(dls)
+
+            def result(x):
+                ls = []
+                for a, b, c, _ in M_without_test_set:
+                    ls.append((a, b, c))
+                return ls
+
+            dls_all = gatherResults(dls_all)
+            dls_all.addCallbacks(result, self.error_handler)
+            return dls_all
+
+        def step6(M_without_test_set):
+            """Partition M without test_set in number_of_multiplications
+            random subsets M_i of size (2d + 1).
+            """
+            subsets = []
+            size = 2 * self.d + 1
+            for x in xrange(number_of_multiplications):
+                subsets.append([])
+
+            def put_in_set(v, M_without_test_set, subsets):
+                if 0 == len(M_without_test_set):
+                    return subsets
+                v = v.value % number_of_multiplications
+                if size > len(subsets[v]):
+                    subsets[v].append(M_without_test_set.pop(0))
+                r = self.random_share(field)
+                r = self.output(r)
+                self.schedule_callback(r, put_in_set, M_without_test_set, subsets)
+                r.addErrback(self.error_handler)
+                return r
+            r = self.random_share(field)
+            r = self.output(r)
+            self.schedule_callback(r, put_in_set, M_without_test_set, subsets)
+            r.addErrback(self.error_handler)
+            return r
+            
+
+        def step7(Msets):
+            """For i = 1,...,M do:
+            a) [a] <- Fpp(rand,...), [b] <- Fpp(rand,...)
+            b) [r] <- Fpp(rand,...), 
+            c) [c] <- LTMUL([a], [b], M_i)
+            d) Open([c] + [r])
+            """
+            ds = []
+            for Mi in Msets:
+                a = self.random_share(field)
+                b = self.random_share(field)
+                r = self.random_share(field)
+                c = self.leak_tolerant_mul(a, b, Mi)
+                d = self.open(c + r)
+                def return_abc(x, a, b, c):
+                    return a, b, c
+                d.addCallbacks(return_abc, self.error_handler, callbackArgs=(a, b, c))
+                ds.append(d)
+            result = gather_shares(ds)
+            def triples(ls):
+                return ls
+            result.addCallbacks(triples, self.error_handler)
+            return result
+
+        result = gatherResults(M)
+        self.schedule_callback(result, step3)
+        result.addErrback(self.error_handler)
+        self.schedule_callback(result, step45)
+        self.schedule_callback(result, step6)
+        self.schedule_callback(result, step7)
+
+        # do actual communication
+        self.activate_reactor()
+
+        return result
+
 
     def error_handler(self, ex):
         print "Error: ", ex

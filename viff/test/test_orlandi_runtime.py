@@ -548,8 +548,8 @@ class OrlandiAdvancedCommandsTest(RuntimeTestCase):
         x1 = 42
         y1 = 7
 
-        d = 4
-        
+        runtime.d = 2
+
         def check(v):
             self.assertEquals(v, x1 * y1)
  
@@ -557,7 +557,7 @@ class OrlandiAdvancedCommandsTest(RuntimeTestCase):
         y2 = runtime.shift([2], self.Zp, y1)
 
         M = []
-        for j in xrange(1, 2*d + 2):
+        for j in xrange(1, 2*runtime.d + 2):
             M.append(_get_triple(self, self.Zp))
         z2 = runtime.leak_tolerant_mul(x2, y2, M)
         d = runtime.open(z2)
@@ -577,7 +577,7 @@ class TripleGenTest(RuntimeTestCase):
  
     runtime_class = OrlandiRuntime
  
-    timeout = 240
+    timeout = 1600
 
     @protocol
     def test_tripleGen(self, runtime):
@@ -645,3 +645,34 @@ class TripleGenTest(RuntimeTestCase):
         d = runtime.triple_test(self.Zp)
         d.addCallbacks(open, runtime.error_handler)
         return d
+
+    @protocol
+    def test_random_triple(self, runtime):
+        """Test the triple_combiner command."""
+
+        self.Zp = GF(6277101735386680763835789423176059013767194773182842284081)
+
+        def check(ls):
+            for x in xrange(len(ls) // 3):
+                a = ls[x * 3]
+                b = ls[x * 3 + 1]
+                c = ls[x * 3 + 2]
+                self.assertEquals(c, a * b)
+
+        def open(ls):
+            ds = []
+            for (a, b, c) in ls:
+                d1 = runtime.open(a)
+                d2 = runtime.open(b)
+                d3 = runtime.open(c)
+                ds.append(d1)
+                ds.append(d2)
+                ds.append(d3)
+
+            d = gatherResults(ds)
+            d.addCallback(check)
+            return d
+        d = runtime.random_triple(self.Zp)
+        d.addCallbacks(open, runtime.error_handler)
+        return d
+
