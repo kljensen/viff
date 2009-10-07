@@ -475,17 +475,21 @@ def preprocess(generator):
     """
 
     def preprocess_decorator(method):
-
         @wrapper(method)
         def preprocess_wrapper(self, *args, **kwargs):
             pc = tuple(self.program_counter)
             try:
+                self.program_counter[-1] += 1
                 return self._pool[pc]
             except KeyError:
-                key = (generator, args)
-                pcs = self._needed_data.setdefault(key, [])
-                pcs.append(pc)
-                return method(self, *args, **kwargs)
+                try:
+                    key = (generator, args)
+                    pcs = self._needed_data.setdefault(key, [])
+                    pcs.append(pc)
+                    self.program_counter.append(0)
+                    return method(self, *args, **kwargs)
+                finally:
+                    self.program_counter.pop()
 
         return preprocess_wrapper
     return preprocess_decorator
@@ -808,6 +812,9 @@ class Runtime:
             func = getattr(self, generator)
             results = []
             items = 0
+            args = list(args)
+            args.append(len(program_counters))
+            args = tuple(args)
             while items < len(program_counters):
                 item_count, result = func(*args)
                 items += item_count

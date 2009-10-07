@@ -378,11 +378,11 @@ class TriplesHyperinvertibleMatricesMixin:
     def get_triple(self, field):
         # This is a waste, but this function is only called if there
         # are no pre-processed triples left.
-        count, result = self.generate_triples(field)
+        count, result = self.generate_triples(field, None)
         result.addCallback(lambda triples: triples[0])
         return result
 
-    def generate_triples(self, field):
+    def generate_triples(self, field, number_of_requested_triples):
         """Generate multiplication triples.
 
         These are random numbers *a*, *b*, and *c* such that ``c =
@@ -423,11 +423,11 @@ class TriplesPRSSMixin:
 
     @preprocess("generate_triples")
     def get_triple(self, field):
-        count, result = self.generate_triples(field)
+        count, result = self.generate_triples(field, None)
         result.addCallback(lambda triples: triples[0])
         return result
 
-    def generate_triples(self, field):
+    def generate_triples(self, field, number_of_requested_triples):
         """Generate a multiplication triple using PRSS.
 
         These are random numbers *a*, *b*, and *c* such that ``c =
