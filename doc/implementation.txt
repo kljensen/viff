@@ -21,4 +21,5 @@ VIFF consists of several modules which will be described next.
    aes
    constants
    orlandi
+   hashbroadcast
 
