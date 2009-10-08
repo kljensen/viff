@@ -41,6 +41,7 @@ import os
 
 from viff.field import GF256, FieldElement
 from viff.util import wrapper, rand, deep_wait, track_memory_usage, begin, end
+from viff.constants import SHARE
 import viff.reactor
 
 from twisted.internet import reactor
@@ -50,13 +51,6 @@ from twisted.internet.defer import Deferred, DeferredList, gatherResults, succee
 from twisted.internet.defer import maybeDeferred
 from twisted.internet.protocol import ReconnectingClientFactory, ServerFactory
 from twisted.protocols.basic import Int16StringReceiver
-
-# Constants used by ShareExchanger.
-SHARE    = 0
-ECHO     = 1
-READY    = 2
-SEND     = 3
-PAILLIER = 4
 
 
 class Share(Deferred):
@@ -382,6 +376,65 @@ class ShareExchanger(Int16StringReceiver):
         """Disconnect this protocol instance."""
         self.transport.loseConnection()
 
+class SelfShareExchanger(ShareExchanger):
+
+    def __init__(self, id, factory):
+        ShareExchanger.__init__(self)
+        self.peer_id = id
+        self.factory = factory
+
+    def stringReceived(self, program_counter, data_type, data):
+        """Called when a share is received.
+
+        The string received is unpacked into the program counter, and
+        a data part. The data is passed the appropriate Deferred in
+        :class:`self.incoming_data`.
+        """
+        try:
+            key = (program_counter, data_type)
+                         
+            if key in self.waiting_deferreds:
+                deq = self.waiting_deferreds[key]
+                deferred = deq.popleft()
+                if not deq:
+                    del self.waiting_deferreds[key]
+                self.factory.runtime.handle_deferred_data(deferred, data)
+            else:
+                deq = self.incoming_data.setdefault(key, deque())
+                deq.append(data)
+        except struct.error, e:
+            self.factory.runtime.abort(self, e)
+
+    def sendData(self, program_counter, data_type, data):
+        """Send data to the self.id."""
+        self.stringReceived(program_counter, data_type, data)
+
+    def loseConnection(self):
+        """Disconnect this protocol instance."""
+        self.lost_connection.callback(self)
+        return None
+
+
+class SelfShareExchangerFactory(ReconnectingClientFactory, ServerFactory):
+    """Factory for creating SelfShareExchanger protocols."""
+
+    protocol = SelfShareExchanger
+    maxDelay = 3
+    factor = 1.234567 # About half of the Twisted default
+
+    def __init__(self, runtime):
+        """Initialize the factory."""
+        self.runtime = runtime
+
+    def identify_peer(self, protocol):
+        raise Exception("Is identify_peer necessary?")
+
+    def clientConnectionLost(self, connector, reason):
+        reason.trap(ConnectionDone)
+
+class FakeTransport(object):
+    def close(self):
+        return True
 
 class ShareExchangerFactory(ReconnectingClientFactory, ServerFactory):
     """Factory for creating ShareExchanger protocols."""
@@ -540,7 +593,9 @@ class Runtime:
         self.players = {}
         # Add ourselves, but with no protocol since we wont be
         # communicating with ourselves.
-        self.add_player(player, None)
+        protocol = SelfShareExchanger(self.id, SelfShareExchangerFactory(self))
+        protocol.transport = FakeTransport()
+        self.add_player(player, protocol)
 
         #: Queue of deferreds and data.
         self.deferred_queue = deque()
@@ -556,9 +611,7 @@ class Runtime:
     def add_player(self, player, protocol):
         self.players[player.id] = player
         self.num_players = len(self.players)
-        # There is no protocol for ourselves, so we wont add that:
-        if protocol is not None:
-            self.protocols[player.id] = protocol
+        self.protocols[player.id] = protocol
 
     def shutdown(self):
         """Shutdown the runtime.
@@ -688,10 +741,12 @@ class Runtime:
         return result
 
     def _expect_data(self, peer_id, data_type, deferred):
-        assert peer_id != self.id, "Do not expect data from yourself!"
         # Convert self.program_counter to a hashable value in order to
         # use it as a key in self.protocols[peer_id].incoming_data.
         pc = tuple(self.program_counter)
+        return self._expect_data_with_pc(pc, peer_id, data_type, deferred)
+
+    def _expect_data_with_pc(self, pc, peer_id, data_type, deferred):
         key = (pc, data_type)
 
         if key in self.protocols[peer_id].incoming_data:
@@ -776,7 +831,8 @@ class Runtime:
             while items < len(program_counters):
                 self.increment_pc()
                 self.fork_pc()
-                item_count, result = func(*args)
+                item_count, result = func(*args,
+                                          **{"quantity": len(program_counters) - items})
                 items += item_count
                 results.append(result)
                 self.unfork_pc()

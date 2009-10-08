@@ -28,7 +28,7 @@ from viff.util import rand
 from viff.matrix import Matrix, hyper
 from viff.passive import PassiveRuntime
 from viff.runtime import Share, preprocess, gather_shares
-from viff.runtime import ECHO, READY, SEND
+from viff.constants import ECHO, READY, SEND
 
 
 class BrachaBroadcastMixin:
@@ -378,11 +378,11 @@ class TriplesHyperinvertibleMatricesMixin:
     def get_triple(self, field):
         # This is a waste, but this function is only called if there
         # are no pre-processed triples left.
-        count, result = self.generate_triples(field)
+        count, result = self.generate_triples(field, quantity=1)
         result.addCallback(lambda triples: triples[0])
         return result
 
-    def generate_triples(self, field):
+    def generate_triples(self, field, quantity):
         """Generate multiplication triples.
 
         These are random numbers *a*, *b*, and *c* such that ``c =
@@ -436,6 +436,8 @@ class TriplesPRSSMixin:
         Returns a tuple with the number of triples generated and a
         Deferred which will yield a singleton-list with a 3-tuple.
         """
+        quantity = min(quantity, 20)
+
         a_t = self.prss_share_random_multi(field, quantity)
         b_t = self.prss_share_random_multi(field, quantity)
         r_t, r_2t = self.prss_double_share(field, quantity)

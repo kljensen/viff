@@ -28,7 +28,7 @@ from twisted.internet.defer import Deferred, gatherResults
 import gmpy
 
 from viff.runtime import Runtime, Share, gather_shares
-from viff.runtime import PAILLIER
+from viff.constants import PAILLIER
 from viff.util import rand, find_random_prime
 
 def L(u, n):

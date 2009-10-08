@@ -472,6 +472,7 @@ class PassiveRuntime(Runtime):
     def prss_powerchains(self, max=7, quantity=20):
         """Does *quantity* times the same as :meth:`prss_powerchain`.
         Used for preprocessing."""
+        quantity = min(quantity, 20)
         shares = self.prss_share_random_multi(GF256, quantity)
         return quantity, succeed([self.powerchain(share, max)
                                   for share in shares])

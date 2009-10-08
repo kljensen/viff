@@ -27,10 +27,11 @@ import os
 from random import Random
 import operator
 
-from twisted.internet.defer import gatherResults
+from twisted.internet.defer import gatherResults, Deferred, DeferredList
 
 from viff.field import GF256
 from viff.runtime import Share
+from viff.constants import SHARE
 from viff.comparison import Toft05Runtime
 from viff.test.util import RuntimeTestCase, BinaryOperatorTestCase, protocol
 
@@ -190,6 +191,49 @@ class RuntimeTest(RuntimeTestCase):
         opened_c.addCallback(self.assertEquals, 42 + 3)
 
         return gatherResults([opened_a, opened_b, opened_c])
+
+    @protocol
+    def test_send_receive_self(self, runtime):
+        """Test send and receive of values."""
+        value = 42
+        
+        pc = tuple(runtime.program_counter)
+        runtime.protocols[runtime.id].sendData(pc, SHARE, str(value))
+
+        d = Deferred()
+        runtime._expect_data(runtime.id, SHARE, d)
+        def check(x):
+            self.assertEquals(int(x), value)
+            return x
+        d.addCallback(check)
+        return d
+
+    @protocol
+    def test_send_receive_self2(self, runtime):
+        """Test send and receive of values."""
+        value = 42
+        
+        pc = tuple(runtime.program_counter)
+        for peer_id in runtime.players:
+            data = str(value)
+            runtime.protocols[peer_id].sendData(pc, SHARE, data)
+
+        ds = []
+        for peer_id in runtime.players:
+            d = Deferred()
+            runtime._expect_data(peer_id, SHARE, d)
+            ds.append(d)
+
+        dls = DeferredList(ds)
+        def check(ls):
+            for s, x in ls:
+                self.assertEquals(int(x), value)
+            return ls
+
+        dls.addCallback(check)
+        return dls
+
+
 
 
 class ConvertBitShareTest(RuntimeTestCase):
