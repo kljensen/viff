@@ -831,8 +831,7 @@ class Runtime:
             while items < len(program_counters):
                 self.increment_pc()
                 self.fork_pc()
-                item_count, result = func(*args,
-                                          **{"quantity": len(program_counters) - items})
+                item_count, result = func(quantity=len(program_counters) - items, *args)
                 items += item_count
                 results.append(result)
                 self.unfork_pc()
