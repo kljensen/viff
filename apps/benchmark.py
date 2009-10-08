@@ -141,7 +141,7 @@ parser.add_option("--args", type="string",
 
 parser.set_defaults(modulus=2**65, threshold=1, count=10,
                     runtime=runtimes.keys()[0], mixins="", num_players=2, prss=True,
-                    operation=operations.keys()[0], parallel=True, fake=False)
+                    operation=operations.keys()[0], parallel=True, fake=False, args="")
 
 # Add standard VIFF options.
 Runtime.add_options(parser)
