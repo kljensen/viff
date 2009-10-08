@@ -1,6 +1,6 @@
 
-An Actively Secure Protocol with Self Trust
-===========================================
+The Orlandi Runtime - An Actively Secure Protocol with Full Threshold
+=======================================================================
 
 .. automodule:: viff.orlandi
 
