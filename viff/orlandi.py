@@ -345,9 +345,10 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
 
         Communication cost: none.
 
-        Each party ``P_i`` computes:
-        ``[z]_i = [x]_i + [y]_i
-                = (x_i + y_i mod p, rho_xi + rho_yi mod p, C_x * C_y)``.
+        Each party ``P_i`` computes::
+
+          [z]_i = [x]_i + [y]_i
+                = (x_i + y_i mod p, rho_xi + rho_yi mod p, C_x * C_y)
 
         """
         def is_share(s, field):
@@ -378,9 +379,10 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
 
         Communication cost: none.
 
-        Each party ``P_i`` computes:
-        ``[z]_i = [x]_i - [y]_i
-                = (x_i - y_i mod p, rho_x,i - rho_y,i mod p, C_x * C_y)``.
+        Each party ``P_i`` computes::
+
+          [z]_i = [x]_i - [y]_i
+                = (x_i - y_i mod p, rho_x,i - rho_y,i mod p, C_x * C_y)
 
         """
         def is_share(s, field):
@@ -424,11 +426,11 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
         Assume the parties are given a random share ``[r]`` by a trusted dealer. 
         Then we denote the following protocol but ``[x] = Shift(P_i, x, [r])``.
 
-        1) ``r = OpenTo(P_i, [r]``
+        1. ``r = OpenTo(P_i, [r]``
 
-        2) ``P_i broadcasts Delta = r - x``
+        2. ``P_i broadcasts Delta = r - x``
 
-        3) ``[x] = [r] - Delta``
+        3. ``[x] = [r] - Delta``
 
         """
         # TODO: Communitcation costs?
@@ -440,7 +442,7 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
         def hack(_, peer_id):
             # Assume the parties are given a random share [r] by a trusted dealer.
             share_r = self.random_share(field)
-            # 1) r = OpenTo(P_i, [r])
+            # 1. r = OpenTo(P_i, [r])
             open_r = self.open(share_r, [peer_id])
             def subtract_delta(delta, share_r):
                 delta = field(long(delta))
@@ -676,20 +678,21 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
         Assuming a set of multiplicative triples:
         ``M = ([a_i], [b_i], [c_i]) for 1 <= i <= 2d + 1``.
 
-        1) ``for i = 1, ..., d do [f_i] = rand(), [g_i] = rand()``
+        1. ``for i = 1, ..., d do [f_i] = rand(), [g_i] = rand()``
 
-        2) ``for j = 1, ..., 2d+1 do
+        2. Compute::
+
+             for j = 1, ..., 2d+1 do
              [F_j] = [x] + SUM_i=1^d [f_i]*j^i 
              and
-             [G_j] = [y] + SUM_i=1^d [g_i]*j^i`` 
+             [G_j] = [y] + SUM_i=1^d [g_i]*j^i
 
-        3) for j = 1, ..., 2d+1 do [H_j] = Mul([F_j], [G_j], [a_j], [b_j], [c_j])
+        3. ``for j = 1, ..., 2d+1 do [H_j] = Mul([F_j], [G_j], [a_j], [b_j], [c_j])``
 
-        4) compute [H_0] = SUM_j=1^2d+1 delta_j[H_j] 
+        4. compute ``[H_0] = SUM_j=1^2d+1 delta_j[H_j]`` where 
+           ``delta_j = PRODUCT_k=1, k!=j^2d+1 k/(k-j)``
 
-        5) output [z] = [H_0]
-
-        delta_j = PRODUCT_k=1, k!=j^2d+1 k/(k-j).
+        5. output ``[z] = [H_0]``
         """
         assert isinstance(share_x, Share) or isinstance(share_y, Share), \
             "At least one of share_x and share_y must be a Share."
@@ -703,7 +706,7 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
         if cmul_result is not None:
             return cmul_result
 
-        # 1) for i = 1, ..., d do [f_i] = rand(), [g_i] = rand()
+        # 1. for i = 1, ..., d do [f_i] = rand(), [g_i] = rand()
         d = (len(M) - 1) // 2
         deltas = self.compute_delta(d)
         f = []
@@ -787,30 +790,35 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
     def triple_gen(self, field):
         """Generate a triple ``a, b, c`` s.t. ``c = a * b``.
 
-        1) Every party ``P_i`` chooses random values ``a_i, r_i in Z_p X (Z_p)^2``,
-        compute ``alpha_i = Enc_eki(a_i)`` and ``Ai = Com_ck(a_i, r_i)``, and
-        broadcast them.
+        1. Every party ``P_i`` chooses random values ``a_i, r_i in Z_p X (Z_p)^2``,
+           compute ``alpha_i = Enc_eki(a_i)`` and ``Ai = Com_ck(a_i, r_i)``, and
+           broadcast them.
 
-        2) Every party ``P_j`` does:
-           (a) choose random ``b_j, s_j in Z_p X (Z_p)^2``.
+        2. Every party ``P_j`` does:
 
-           (b) compute ``B_j = ``Com_ck(b_j, s_j)`` and broadcast it.
+           a. choose random ``b_j, s_j in Z_p X (Z_p)^2``.
 
-           (c) ``P_j`` do towards every other party:
+           b. compute ``B_j = ``Com_ck(b_j, s_j)`` and broadcast it.
+
+           c. ``P_j`` do towards every other party:
+
                 i. choose random ``d_ij in Z_p^3``
-               ii. compute and send 
-                   ``gamma_ij = alpha_i^b_j Enc_ek_i(1;1)^d_ij`` to ``P_i``.
 
-        3) Every party ``P_i`` does:
-           (a) compute ``c_i = SUM_j Dec_sk_i(gamma_ij) - SUM_j d_ij mod p``
+                ii. compute and send 
+                    ``gamma_ij = alpha_i^b_j Enc_ek_i(1;1)^d_ij`` to ``P_i``.
 
-           (b) pick random ``t_i in (Z_p)^2``, compute and 
-               broadcast ``C_i = Com_ck(c_i, t_i)``
 
-        4) Everyone computes:
+        3. Every party ``P_i`` does:
+
+           a. compute ``c_i = SUM_j Dec_sk_i(gamma_ij) - SUM_j d_ij mod p``
+
+           b. pick random ``t_i in (Z_p)^2``, compute and 
+              broadcast ``C_i = Com_ck(c_i, t_i)``
+
+        4. Everyone computes:
            ``(A, B, C) = (PRODUCT_i A_i, PRODUCT_i B_i, PRODUCT_i C_i)``
         
-        5) Every party ``P_i`` outputs shares ``[a_i] = (a_i, r_i, A)``, 
+        5. Every party ``P_i`` outputs shares ``[a_i] = (a_i, r_i, A)``, 
            ``[b_i] = (b_i, s_i, B)``, and ``[c_i] = (c_i, t_i, C)``.
 
         """

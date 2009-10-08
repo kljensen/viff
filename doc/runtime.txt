@@ -21,16 +21,6 @@ Runtime Module
          or the data itself if data is received from the other player
          before we are ready to use it.
 
-   .. attribute:: SHARE
-                  ECHO
-                  READY
-                  SEND
-                  PAILLIER
-
-      Constants used by :class:`ShareExchanger` when sending shares
-      and other messages. They serve to distinguish messages sent with
-      the same program counter from one another.
-
    .. autofunction:: preprocess
 
       See also :ref:`preprocessing` for more background information.

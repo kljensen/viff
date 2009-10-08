@@ -1,6 +1,6 @@
 
-Actively Secure Protocols
-=========================
+A Thresholdbased Actively Secure Runtime
+========================================
 
 .. automodule:: viff.active
 

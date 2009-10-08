@@ -1,0 +1,24 @@
+Constants Module
+================
+
+.. automodule:: viff.constants
+
+   .. attribute:: SHARE
+                  ECHO
+                  READY
+                  SEND
+                  PAILLIER
+                  TEXT
+
+      Constants used by :class:`ShareExchanger` and others when sending 
+      shares and other messages. They serve to distinguish messages sent 
+      with the same program counter from one another.
+
+   .. attribute::INCONSISTENTHASH
+                  OK
+                  HASH
+                  SIGNAL
+
+      Constants used by :class:`HashBroadcastMixin` when sending shares
+      and other messages. They serve to distinguish messages sent with
+      the same program counter from one another.

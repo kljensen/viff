@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with VIFF. If not, see <http://www.gnu.org/licenses/>.
 
-"""Actively secure protocols."""
+"""A thresholdbased actively secure runtime."""
 
 __docformat__ = "restructuredtext"
 

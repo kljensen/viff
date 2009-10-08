@@ -13,9 +13,13 @@ VIFF consists of several modules which will be described next.
    matrix
    runtime
    passive
-   active
+   active_runtimes
    paillier
    comparison
    prss
    config
    aes
+   constants
+   orlandi
+   hashbroadcast
+

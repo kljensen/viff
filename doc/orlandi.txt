@@ -1,0 +1,15 @@
+
+The Orlandi Runtime - An Actively Secure Protocol with Full Threshold
+=======================================================================
+
+.. automodule:: viff.orlandi
+
+   .. autoclass:: OrlandiException
+      :members:
+
+   .. autoclass:: OrlandiShare
+      :members:
+
+   .. autoclass:: OrlandiRuntime
+      :members:
+
