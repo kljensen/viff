@@ -382,7 +382,7 @@ class TriplesHyperinvertibleMatricesMixin:
         result.addCallback(lambda triples: triples[0])
         return result
 
-    def generate_triples(self, field, quantity):
+    def generate_triples(self, field, quantity=None):
         """Generate multiplication triples.
 
         These are random numbers *a*, *b*, and *c* such that ``c =
