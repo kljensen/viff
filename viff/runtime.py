@@ -38,6 +38,7 @@ import struct
 from optparse import OptionParser, OptionGroup
 from collections import deque
 import os
+import sys
 
 from viff.field import GF256, FieldElement
 from viff.util import wrapper, rand, deep_wait, track_memory_usage, begin, end
@@ -605,6 +606,8 @@ class Runtime:
         #: Record the recursion depth.
         self.depth_counter = 0
         self.max_depth = 0
+        #: Recursion depth limit by experiment, including security margin.
+        self.depth_limit = int(sys.getrecursionlimit() / 50)
         #: Use deferred queues only if the ViffReactor is running.
         self.using_viff_reactor = isinstance(reactor, viff.reactor.ViffReactor)
 
@@ -921,8 +924,11 @@ class Runtime:
             if self.depth_counter > self.max_depth:
                 # Record the maximal depth reached.
                 self.max_depth = self.depth_counter
+                if self.depth_counter >= self.depth_limit:
+                    print "Recursion depth limit reached."
 
-            reactor.doIteration(0)
+            if self.depth_counter < self.depth_limit:
+                reactor.doIteration(0)
 
             self.depth_counter -= 1
             self.activation_counter = 0
