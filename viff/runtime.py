@@ -803,7 +803,14 @@ class Runtime:
         example of a method fulfilling this interface.
         """
 
-        def update(results, program_counters):
+        def update(results, program_counters, start_time, count, what):
+            stop = time.time()
+
+            print
+            print "Total time used: %.3f sec" % (stop - start_time)
+            print "Time per %s operation: %.0f ms" % (what, 1000*(stop - start_time) / count)
+            print "*" * 6
+
             # We concatenate the sub-lists in results.
             results = sum(results, [])
 
@@ -828,7 +835,10 @@ class Runtime:
             func = getattr(self, generator)
             results = []
             items = 0
+            count = 0
+            start_time = time.time()
             while items < len(program_counters):
+                count += 1
                 self.increment_pc()
                 self.fork_pc()
                 item_count, result = func(*args,
@@ -837,7 +847,7 @@ class Runtime:
                 results.append(result)
                 self.unfork_pc()
             ready = gatherResults(results)
-            ready.addCallback(update, program_counters)
+            ready.addCallback(update, program_counters, start_time, count, generator)
             wait_list.append(ready)
             self.unfork_pc()
         return DeferredList(wait_list)

@@ -358,11 +358,9 @@ if options.needed_data != "":
     needed_data = eval(needed_data)
 
 if options.needed_data != "" and options.pc != "":
-    print "A1"
     bases = (benchmark,) + (NeededDataBenchmarkStrategy,) + (object,)
     options.pc = eval(options.pc)
 else:
-    print "B1"
     bases = (benchmark,) + (SelfcontainedBenchmarkStrategy,) + (object,)
 benchmark = type("ExtendedBenchmark", bases, {})
 
@@ -382,7 +380,6 @@ def update_args(runtime, options):
 pre_runtime.addCallback(update_args, options)
 
 def do_benchmark(runtime, operation, benchmark, *args):
-    print "db"
     benchmark(runtime, operation).benchmark(*args)
 
 pre_runtime.addCallback(do_benchmark, operation, benchmark, needed_data, options.pc)
