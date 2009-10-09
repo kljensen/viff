@@ -17,7 +17,7 @@
 
 from twisted.internet.defer import Deferred, DeferredList, gatherResults
 
-from viff.runtime import Runtime, Share, ShareList, gather_shares
+from viff.runtime import Runtime, Share, ShareList, gather_shares, preprocess
 from viff.util import rand
 from viff.constants import TEXT, PAILLIER
 from viff.field import FieldElement
@@ -598,6 +598,7 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
         c = OrlandiShare(self, field, field(value), (field(0), field(0)), Cc)
         return c
 
+    @preprocess("random_triple")
     def _get_triple(self, field):
         c, d = self.random_triple(field, 1)
         def f(ls):
@@ -1025,7 +1026,7 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
 
         return result
 
-    def random_triple(self, field, number_of_requested_triples):
+    def random_triple(self, field, quantity=1):
         """Generate a list of triples ``(a, b, c)`` where ``c = a * b``.
 
         The triple ``(a, b, c)`` is secure in the Fcrs-hybrid model.
@@ -1035,14 +1036,14 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
 
         M = []
 
-# print "Generating %i triples... relax, have a brak..." % ((1 + self.s_lambda) * (2 * self.d + 1) * number_of_requested_triples)
+# print "Generating %i triples... relax, have a break..." % ((1 + self.s_lambda) * (2 * self.d + 1) * quantity)
 
-        for x in xrange((1 + self.s_lambda) * (2 * self.d + 1) * number_of_requested_triples):
+        for x in xrange((1 + self.s_lambda) * (2 * self.d + 1) * quantity):
             M.append(self.triple_test(field))
 
         def step3(ls):
             """Coin-flip a subset test_set of M of size lambda(2d + 1)M."""
-            size = self.s_lambda * (2 * self.d + 1) * number_of_requested_triples
+            size = self.s_lambda * (2 * self.d + 1) * quantity
             inx = 0
             p_half = field.modulus // 2
             def coin_flip(v, ls, test_set):
@@ -1250,18 +1251,18 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
             return dls_all
 
         def step6(M_without_test_set):
-            """Partition M without test_set in number_of_requested_triples
+            """Partition M without test_set in quantity
             random subsets M_i of size (2d + 1).
             """
             subsets = []
             size = 2 * self.d + 1
-            for x in xrange(number_of_requested_triples):
+            for x in xrange(quantity):
                 subsets.append([])
 
             def put_in_set(v, M_without_test_set, subsets):
                 if 0 == len(M_without_test_set):
                     return subsets
-                v = v.value % number_of_requested_triples
+                v = v.value % quantity
                 if size > len(subsets[v]):
                     subsets[v].append(M_without_test_set.pop(0))
                 r = self.random_share(field)
@@ -1311,12 +1312,17 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
         self.activate_reactor()
 
         s = Share(self, field)
-        def f(ls, s):
-            s.callback(ls)
-        result.addCallbacks(f, self.error_handler, callbackArgs=(s,))
-        return number_of_requested_triples, s
+        # We add the result to the chains in result.
+        result.chainDeferred(s)
+
+        return quantity, s
 
     def error_handler(self, ex):
         print "Error: ", ex
         return ex
 
+    def set_args(self, args):
+        """args is a dictionary."""
+        self.s = args['s']
+        self.d = args['d']
+        self.s_lambda = args['lambda']

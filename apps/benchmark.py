@@ -74,8 +74,15 @@ from viff.active import BasicActiveRuntime, \
 from viff.comparison import ComparisonToft05Mixin, ComparisonToft07Mixin
 from viff.equality import ProbabilisticEqualityMixin
 from viff.paillier import PaillierRuntime
+from viff.orlandi import OrlandiRuntime
 from viff.config import load_config
 from viff.util import find_prime, rand
+
+
+# Hack in order to avoid Maximum recursion depth exceeded
+# exception;
+sys.setrecursionlimit(5000)
+
 
 last_timestamp = time.time()
 start = 0
@@ -103,7 +110,8 @@ operations = {"mul": (operator.mul,[]),
 
 runtimes = {"PassiveRuntime": PassiveRuntime,
             "PaillierRuntime": PaillierRuntime, 
-            "BasicActiveRuntime": BasicActiveRuntime}
+            "BasicActiveRuntime": BasicActiveRuntime,
+            "OrlandiRuntime": OrlandiRuntime}
 
 mixins = {"TriplesHyperinvertibleMatricesMixin" : TriplesHyperinvertibleMatricesMixin, 
           "TriplesPRSSMixin": TriplesPRSSMixin, 
@@ -138,10 +146,17 @@ parser.add_option("-f", "--fake", action="store_true",
                   help="skip local computations using fake field elements")
 parser.add_option("--args", type="string",
                   help="additional arguments to the runtime, the format is a comma separated list of id=value pairs e.g. --args s=1,d=0,lambda=1")
+parser.add_option("--needed_data", type="string",
+                  help="name of a file containing already computed dictionary of needed_data. Useful for skipping generating the needed data, which usually elliminates half the execution time. Format of file: \"{('random_triple', (Zp,)): [(3, 1), (3, 4)]}\"")
+parser.add_option("--pc", type="string",
+                  help="The program counter to start from when using explicitly provided needed_data. Format: [3,0]")
 
 parser.set_defaults(modulus=2**65, threshold=1, count=10,
-                    runtime=runtimes.keys()[0], mixins="", num_players=2, prss=True,
-                    operation=operations.keys()[0], parallel=True, fake=False, args="")
+                    runtime="PassiveRuntime", mixins="", num_players=2, prss=True,
+                    operation=operations.keys()[0], parallel=True, fake=False, 
+                    args="", needed_data="")
+
+print "*" * 60
 
 # Add standard VIFF options.
 Runtime.add_options(parser)
@@ -168,28 +183,44 @@ print "Using field elements (%d bit modulus)" % log(Zp.modulus, 2)
 count = options.count
 print "I am player %d, will %s %d numbers" % (id, options.operation, count)
 
+
+class BenchmarkStrategy:
+
+    def benchmark(self, *args):
+        raise NotImplemented("Override this abstract method in subclasses")
+
+
+class SelfcontainedBenchmarkStrategy(BenchmarkStrategy):
+
+    def benchmark(self, *args):
+        sys.stdout.flush()
+        sync = self.rt.synchronize()
+        self.doTest(sync, lambda x: x)
+        self.rt.schedule_callback(sync, self.preprocess)
+        self.doTest(sync, lambda x: self.rt.shutdown())
+
+
+class NeededDataBenchmarkStrategy(BenchmarkStrategy):
+
+    def benchmark(self, needed_data, pc, *args):
+        self.pc = pc
+        sys.stdout.flush()
+        sync = self.rt.synchronize()
+        self.rt.schedule_callback(sync, lambda x: needed_data)
+        self.rt.schedule_callback(sync, self.preprocess)
+        self.doTest(sync, lambda x: self.rt.shutdown())
+
+
 # Defining the protocol as a class makes it easier to write the
 # callbacks in the order they are called. This class is a base class
 # that executes the protocol by calling the run_test method.
 class Benchmark:
 
     def __init__(self, rt, operation):
-        print "init"
         self.rt = rt
         self.operation = operation
         self.pc = None
-        sys.stdout.flush()
-        sync = self.rt.synchronize()
-        self.doTest(sync, lambda x: x)
-        self.rt.schedule_callback(sync, self.preprocess)
-        self.doTest(sync, lambda x: self.rt.shutdown())
         
-#     def sync_preprocess(self):
-#         print "Synchronizing preprocessing"
-#         sys.stdout.flush()
-#         sync = self.rt.synchronize()
-#         self.rt.schedule_callback(sync, self.preprocess)
-
     def preprocess(self, needed_data):
         print "Preprocess", needed_data
         if needed_data:
@@ -203,10 +234,8 @@ class Benchmark:
             return None
 
     def doTest(self, d, termination_function):
-        print "doTest", self.rt.program_counter
         self.rt.schedule_callback(d, self.begin)
         self.rt.schedule_callback(d, self.sync_test)
-#         self.rt.schedule_callback(d, self.countdown, 3)
         self.rt.schedule_callback(d, self.run_test)
         self.rt.schedule_callback(d, self.sync_test)
         self.rt.schedule_callback(d, self.finished, termination_function)
@@ -235,16 +264,6 @@ class Benchmark:
         sync = self.rt.synchronize()
         self.rt.schedule_callback(sync, lambda y: x)
         return sync
-
-#     def countdown(self, _, seconds):
-#         if seconds > 0:
-#             print "Starting test in %d" % seconds
-#             sys.stdout.flush()
-#             reactor.callLater(1, self.countdown, None, seconds - 1)
-#         else:
-#             print "Starting test now"
-#             sys.stdout.flush()
-#             self.run_test(None)
 
     def run_test(self, _):
         raise NotImplemented("Override this abstract method in a sub class.")
@@ -276,6 +295,7 @@ class ParallelBenchmark(Benchmark):
             a = self.a_shares.pop()
             b = self.b_shares.pop()
             c_shares.append(self.operation(a, b))
+            print "."
 
         done = gather_shares(c_shares)
         done.addCallback(record_stop, "parallel test")
@@ -330,6 +350,20 @@ if options.parallel:
 else:
     benchmark = SequentialBenchmark
 
+needed_data = ""
+if options.needed_data != "":
+    file = open(options.needed_data, 'r')
+    for l in file:
+        needed_data += l
+    needed_data = eval(needed_data)
+
+if options.needed_data != "" and options.pc != "":
+    bases = (benchmark,) + (NeededDataBenchmarkStrategy,) + (object,)
+    options.pc = eval(options.pc)
+else:
+    bases = (benchmark,) + (SelfcontainedBenchmarkStrategy,) + (object,)
+benchmark = type("ExtendedBenchmark", bases, {})
+
 pre_runtime = create_runtime(id, players, options.threshold,
                              options, runtime_class)
 
@@ -339,13 +373,16 @@ def update_args(runtime, options):
         for arg in options.args.split(','):
             id, value = arg.split('=')
             args[id] = long(value)
-        runtime.setArgs(args)
+        runtime.set_args(args)
     return runtime
 
 
 pre_runtime.addCallback(update_args, options)
 
-pre_runtime.addCallback(benchmark, operation)
+def do_benchmark(runtime, operation, benchmark, *args):
+    benchmark(runtime, operation).benchmark(*args)
+
+pre_runtime.addCallback(do_benchmark, operation, benchmark, needed_data, options.pc)
 
 print "#### Starting reactor ###"
 reactor.run()

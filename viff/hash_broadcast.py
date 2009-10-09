@@ -54,7 +54,7 @@ class HashBroadcastMixin:
             signals[peer_id] = long(signal)
             # If all signals are received then check if they are OK or INCONSISTENTHASH.
             if num_receivers == len(signals.keys()):
-                s = reduce(lambda x, y: OK if OK == y else INCONSISTENTHASH, signals.values())
+                s = reduce(lambda x, y: (OK == y and OK) or INCONSISTENTHASH, signals.values())
                 if OK == s:
                     # Make the result ready.
                     result.callback(message[0])
@@ -69,7 +69,10 @@ class HashBroadcastMixin:
                 signal = OK
                 # First we check if the hashes we received are equal to the hash we computed ourselves.
                 for peer_id in receivers:
-                    signal = signal if a_hashes[peer_id] == a_hashes[self.id] else INCONSISTENTHASH
+                    if a_hashes[peer_id] == a_hashes[self.id]:
+                        signal = signal
+                    else:
+                        signal = INCONSISTENTHASH
                 # Then we send the SAME signal to everybody. 
                 for peer_id in receivers:
                     self.protocols[peer_id].sendData(unique_pc, SIGNAL, str(signal))           
