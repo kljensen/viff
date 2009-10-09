@@ -74,8 +74,15 @@ from viff.active import BasicActiveRuntime, \
 from viff.comparison import ComparisonToft05Mixin, ComparisonToft07Mixin
 from viff.equality import ProbabilisticEqualityMixin
 from viff.paillier import PaillierRuntime
+from viff.orlandi import OrlandiRuntime
 from viff.config import load_config
 from viff.util import find_prime, rand
+
+
+# Hack in order to avoid Maximum recursion depth exceeded
+# exception;
+sys.setrecursionlimit(5000)
+
 
 last_timestamp = time.time()
 start = 0
@@ -103,7 +110,8 @@ operations = {"mul": (operator.mul,[]),
 
 runtimes = {"PassiveRuntime": PassiveRuntime,
             "PaillierRuntime": PaillierRuntime, 
-            "BasicActiveRuntime": BasicActiveRuntime}
+            "BasicActiveRuntime": BasicActiveRuntime,
+            "OrlandiRuntime": OrlandiRuntime}
 
 mixins = {"TriplesHyperinvertibleMatricesMixin" : TriplesHyperinvertibleMatricesMixin, 
           "TriplesPRSSMixin": TriplesPRSSMixin, 
@@ -142,6 +150,8 @@ parser.add_option("--args", type="string",
 parser.set_defaults(modulus=2**65, threshold=1, count=10,
                     runtime=runtimes.keys()[0], mixins="", num_players=2, prss=True,
                     operation=operations.keys()[0], parallel=True, fake=False, args="")
+
+print "*" * 60
 
 # Add standard VIFF options.
 Runtime.add_options(parser)
