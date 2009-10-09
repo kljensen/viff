@@ -113,7 +113,7 @@ class TriplesHyperTest(RuntimeTestCase):
                 results.append(result)
             return gatherResults(results)
 
-        count, triples = runtime.generate_triples(self.Zp)
+        count, triples = runtime.generate_triples(self.Zp, 1)
         self.assertEquals(count, runtime.num_players - 2*runtime.threshold)
 
         runtime.schedule_callback(triples, check)

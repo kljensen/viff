@@ -36,9 +36,9 @@ class ProgramCounterTest(RuntimeTestCase):
         """
         self.assertEquals(runtime.program_counter, [0])
         runtime.synchronize()
-        self.assertEquals(runtime.program_counter, [0])
+        self.assertEquals(runtime.program_counter, [1])
         runtime.synchronize()
-        self.assertEquals(runtime.program_counter, [0])
+        self.assertEquals(runtime.program_counter, [2])
 
     @protocol
     def test_callback(self, runtime):
