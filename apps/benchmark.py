@@ -152,7 +152,7 @@ parser.add_option("--pc", type="string",
                   help="The program counter to start from when using explicitly provided needed_data. Format: [3,0]")
 
 parser.set_defaults(modulus=2**65, threshold=1, count=10,
-                    runtime=runtimes.keys()[0], mixins="", num_players=2, prss=True,
+                    runtime="PassiveRuntime", mixins="", num_players=2, prss=True,
                     operation=operations.keys()[0], parallel=True, fake=False, 
                     args="", needed_data="")
 
@@ -358,9 +358,11 @@ if options.needed_data != "":
     needed_data = eval(needed_data)
 
 if options.needed_data != "" and options.pc != "":
+    print "A1"
     bases = (benchmark,) + (NeededDataBenchmarkStrategy,) + (object,)
     options.pc = eval(options.pc)
 else:
+    print "B1"
     bases = (benchmark,) + (SelfcontainedBenchmarkStrategy,) + (object,)
 benchmark = type("ExtendedBenchmark", bases, {})
 
@@ -373,13 +375,14 @@ def update_args(runtime, options):
         for arg in options.args.split(','):
             id, value = arg.split('=')
             args[id] = long(value)
-        runtime.setArgs(args)
+        runtime.set_args(args)
     return runtime
 
 
 pre_runtime.addCallback(update_args, options)
 
 def do_benchmark(runtime, operation, benchmark, *args):
+    print "db"
     benchmark(runtime, operation).benchmark(*args)
 
 pre_runtime.addCallback(do_benchmark, operation, benchmark, needed_data, options.pc)
