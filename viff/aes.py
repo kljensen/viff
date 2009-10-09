@@ -89,7 +89,6 @@ class AES:
         self.n_b = block_size / 32
         self.rounds = max(self.n_k, self.n_b) + 6
         self.runtime = runtime
-        self.program_counter = runtime.program_counter
 
         if (use_exponentiation is not False):
             if (isinstance(use_exponentiation, int) and
