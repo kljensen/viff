@@ -28,17 +28,16 @@ class ProgramCounterTest(RuntimeTestCase):
         self.assertEquals(runtime.program_counter, [0])
 
     @protocol
-    def test_simple_operation(self, runtime):
-        """Test an operation which makes no further calls.
+    def test_synchronize(self, runtime):
+        """Test whether synchronize increases the program counter.
 
-        No callbacks are scheduled, and so the program counter is not
-        increased.
-        """
+        Every synchronize operation should have its unique program
+        counter."""
         self.assertEquals(runtime.program_counter, [0])
         runtime.synchronize()
-        self.assertEquals(runtime.program_counter, [0])
+        self.assertEquals(runtime.program_counter, [1])
         runtime.synchronize()
-        self.assertEquals(runtime.program_counter, [0])
+        self.assertEquals(runtime.program_counter, [2])
 
     @protocol
     def test_callback(self, runtime):
