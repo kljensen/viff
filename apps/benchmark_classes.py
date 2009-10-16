@@ -51,7 +51,7 @@ class Benchmark(object):
 
     def __init__(self, rt, operation, field, count):
         self.rt = rt
-        self.operation = operation
+        self.operation = getattr(rt, operation)
         self.pc = None
         self.field = field
         self.count = count

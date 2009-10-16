@@ -85,10 +85,10 @@ sys.setrecursionlimit(5000)
 
 last_timestamp = time.time()
 
-operations = {"mul": (operator.mul, [], BinaryOperation),
-              "compToft05": (operator.ge, [ComparisonToft05Mixin], BinaryOperation),
-              "compToft07": (operator.ge, [ComparisonToft07Mixin], BinaryOperation),
-              "eq": (operator.eq, [ProbabilisticEqualityMixin], BinaryOperation)}
+operations = {"mul"       : ("mul", [], BinaryOperation),
+              "compToft05": ("ge", [ComparisonToft05Mixin], BinaryOperation),
+              "compToft07": ("ge", [ComparisonToft07Mixin], BinaryOperation),
+              "eq"        : ("eq", [ProbabilisticEqualityMixin], BinaryOperation)}
 
 runtimes = {"PassiveRuntime": PassiveRuntime,
             "PaillierRuntime": PaillierRuntime, 
