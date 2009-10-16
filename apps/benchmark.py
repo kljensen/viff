@@ -153,7 +153,7 @@ Runtime.add_options(parser)
 
 (options, args) = parser.parse_args()
 
-if len(args) == 0:
+if not args:
     parser.error("you must specify a config file")
 
 id, players = load_config(args[0])
@@ -181,7 +181,7 @@ base_runtime_class = runtimes[options.runtime]
 
 # Identify the additional mixins.
 actual_mixins = []
-if options.mixins != "":
+if options.mixins:
     actual_mixins = [mixins[mixin] for mixin in options.mixins.split(',')]
 
 
@@ -203,7 +203,7 @@ pre_runtime = create_runtime(id, players, options.threshold,
 
 def update_args(runtime, options):
     args = {}
-    if options.args != "":
+    if options.args:
         for arg in options.args.split(','):
             id, value = arg.split('=')
             args[id] = long(value)
@@ -219,13 +219,13 @@ else:
     benchmark = SequentialBenchmark
 
 needed_data = ""
-if options.needed_data != "":
+if options.needed_data:
     file = open(options.needed_data, 'r')
     for l in file:
         needed_data += l
     needed_data = eval(needed_data)
 
-if options.needed_data != "" and options.pc != "":
+if options.needed_data and options.pc:
     bases = (benchmark, NeededDataBenchmarkStrategy, operation_arity, object)
     options.pc = eval(options.pc)
 else:
