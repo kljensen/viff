@@ -110,7 +110,7 @@ parser.add_option("-r", "--runtime", type="choice", choices=runtimes.keys(),
 parser.add_option("-n", "--num_players", action="store_true", dest="num_players",
                   help="number of players")
 parser.add_option("--mixins", type="string",
-                  help="operation to benchmark")
+                  help="Additional mixins which must be added to the runtime")
 parser.add_option("--prss", action="store_true",
                   help="use PRSS for preprocessing")
 parser.add_option("--hyper", action="store_false", dest="prss",
