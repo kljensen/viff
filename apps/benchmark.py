@@ -128,11 +128,18 @@ parser.add_option("-s", "--sequential", action="store_false", dest="parallel",
 parser.add_option("-f", "--fake", action="store_true",
                   help="skip local computations using fake field elements")
 parser.add_option("--args", type="string",
-                  help="additional arguments to the runtime, the format is a comma separated list of id=value pairs e.g. --args s=1,d=0,lambda=1")
+                  help=("additional arguments to the runtime, the format is "
+                        "a comma separated list of id=value pairs e.g. "
+                        "--args s=1,d=0,lambda=1"))
 parser.add_option("--needed_data", type="string",
-                  help="name of a file containing already computed dictionary of needed_data. Useful for skipping generating the needed data, which usually elliminates half the execution time. Format of file: \"{('random_triple', (Zp,)): [(3, 1), (3, 4)]}\"")
+                  help=("name of a file containing already computed "
+                        "dictionary of needed_data. Useful for skipping "
+                        "generating the needed data, which usually "
+                        "elliminates half the execution time. Format of file: "
+                        "\"{('random_triple', (Zp,)): [(3, 1), (3, 4)]}\""))
 parser.add_option("--pc", type="string",
-                  help="The program counter to start from when using explicitly provided needed_data. Format: [3,0]")
+                  help=("The program counter to start from when using "
+                        "explicitly provided needed_data. Format: [3,0]"))
 
 parser.set_defaults(modulus=2**65, threshold=1, count=10,
                     runtime="PassiveRuntime", mixins="", num_players=2, prss=True,

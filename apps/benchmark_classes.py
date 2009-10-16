@@ -47,8 +47,9 @@ def record_stop(x, what, count):
 class Benchmark(object):
     """Abstract base class for all Benchmarks.
 
-    For concrete classes see the `ParallelBenchmark` and `SequentialBenchmark` classes.
-    A concrete class must be mixed with a `BenchmarkStrategy` and an `Operator`.
+    For concrete classes see the `ParallelBenchmark` and
+    `SequentialBenchmark` classes. A concrete class must be mixed with
+    a `BenchmarkStrategy` and an `Operator`.
     """
 
     def __init__(self, rt, operation, field, count):
@@ -127,7 +128,8 @@ class ParallelBenchmark(Benchmark):
 
 
 class SequentialBenchmark(Benchmark):
-    """A benchmark where the operations are executed one after each other."""
+    """A benchmark where the operations are executed one after each
+    other."""
 
     def run_test(self, _, termination_function, d):
         record_start("sequential test")
@@ -222,7 +224,8 @@ class BenchmarkStrategy(object):
 
 
 class SelfcontainedBenchmarkStrategy(BenchmarkStrategy):
-    """In a self contained benchmark strategy, all the needed data is generated on the fly."""
+    """In a self contained benchmark strategy, all the needed data is
+    generated on the fly."""
 
     def benchmark(self, *args):
         sys.stdout.flush()
@@ -233,8 +236,8 @@ class SelfcontainedBenchmarkStrategy(BenchmarkStrategy):
 
 
 class NeededDataBenchmarkStrategy(BenchmarkStrategy):
-    """In a needed data benchmark strategy, all the needed data has to have been generated
-    before the test is run."""
+    """In a needed data benchmark strategy, all the needed data has to
+    have been generated before the test is run."""
 
     def benchmark(self, needed_data, pc, *args):
         self.pc = pc
