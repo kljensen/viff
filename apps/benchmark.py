@@ -190,6 +190,21 @@ if actual_mixins:
 
 runtime_class = make_runtime_class(base_runtime_class, actual_mixins)
 
+pre_runtime = create_runtime(id, players, options.threshold,
+                             options, runtime_class)
+
+def update_args(runtime, options):
+    args = {}
+    if options.args != "":
+        for arg in options.args.split(','):
+            id, value = arg.split('=')
+            args[id] = long(value)
+        runtime.set_args(args)
+    return runtime
+
+
+pre_runtime.addCallback(update_args, options)
+
 if options.parallel:
     benchmark = ParallelBenchmark
 else:
@@ -210,21 +225,6 @@ else:
 
 print "Using the Benchmark bases: ", bases
 benchmark = type("ExtendedBenchmark", bases, {})
-
-pre_runtime = create_runtime(id, players, options.threshold,
-                             options, runtime_class)
-
-def update_args(runtime, options):
-    args = {}
-    if options.args != "":
-        for arg in options.args.split(','):
-            id, value = arg.split('=')
-            args[id] = long(value)
-        runtime.set_args(args)
-    return runtime
-
-
-pre_runtime.addCallback(update_args, options)
 
 def do_benchmark(runtime, operation, benchmark, field, count, *args):
     benchmark(runtime, operation, field, count).benchmark(*args)
