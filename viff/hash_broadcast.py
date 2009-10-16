@@ -134,7 +134,7 @@ class HashBroadcastMixin:
         self.program_counter[-1] += 1
 
         pc = tuple(self.program_counter)
-        if (self.id in receivers or self.id in senders):
+        if self.id in receivers or self.id in senders:
             results = [None] * len(senders)
         else:
             results = []

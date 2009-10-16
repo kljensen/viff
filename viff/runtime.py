@@ -912,7 +912,7 @@ class Runtime:
     def process_queue(self, queue):
         """Execute the callbacks of the deferreds in *queue*."""
 
-        while(queue):
+        while queue:
             deferred, data = queue.popleft()
             deferred.callback(data)
 
