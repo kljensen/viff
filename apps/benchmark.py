@@ -92,14 +92,14 @@ operations = {"mul"       : ("mul", [], BinaryOperation),
               "triple_gen": ("triple_gen", [], NullaryOperation)}
 
 runtimes = {"PassiveRuntime": PassiveRuntime,
-            "PaillierRuntime": PaillierRuntime, 
+            "PaillierRuntime": PaillierRuntime,
             "BasicActiveRuntime": BasicActiveRuntime,
             "OrlandiRuntime": OrlandiRuntime}
 
-mixins = {"TriplesHyperinvertibleMatricesMixin" : TriplesHyperinvertibleMatricesMixin, 
-          "TriplesPRSSMixin": TriplesPRSSMixin, 
+mixins = {"TriplesHyperinvertibleMatricesMixin" : TriplesHyperinvertibleMatricesMixin,
+          "TriplesPRSSMixin": TriplesPRSSMixin,
           "ComparisonToft05Mixin": ComparisonToft05Mixin,
-          "ComparisonToft07Mixin": ComparisonToft07Mixin, 
+          "ComparisonToft07Mixin": ComparisonToft07Mixin,
           "ProbabilisticEqualityMixin": ProbabilisticEqualityMixin}
 
 parser = OptionParser(usage="Usage: %prog [options] config_file")
@@ -136,7 +136,7 @@ parser.add_option("--pc", type="string",
 
 parser.set_defaults(modulus=2**65, threshold=1, count=10,
                     runtime="PassiveRuntime", mixins="", num_players=2, prss=True,
-                    operation=operations.keys()[0], parallel=True, fake=False, 
+                    operation=operations.keys()[0], parallel=True, fake=False,
                     args="", needed_data="")
 
 print "*" * 60

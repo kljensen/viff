@@ -96,19 +96,19 @@ class OrlandiBasicCommandsTest(RuntimeTestCase):
         self.Zp = GF(6277101735386680763835789423176059013767194773182842284081)
 
         def check(v):
-            self.assertEquals(True, True)           
+            self.assertEquals(True, True)
 
         x = runtime.random_share(self.Zp)
         d = runtime.open(x)
         d.addCallback(check)
         return d
- 
+
     @protocol
     def test_sum(self, runtime):
         """Test addition of two numbers."""
 
         self.Zp = GF(6277101735386680763835789423176059013767194773182842284081)
- 
+
         x1 = 42
         y1 = 7
 
@@ -187,7 +187,7 @@ class OrlandiBasicCommandsTest(RuntimeTestCase):
 
         x1 = 42
         y1 = 7
- 
+
         def check(v):
             self.assertEquals(v, x1 - y1)
 
@@ -258,10 +258,10 @@ class OrlandiBasicCommandsTest(RuntimeTestCase):
 
 class OrlandiAdvancedCommandsTest(RuntimeTestCase):
     """Test for advanced commands."""
-    
+
     # Number of players.
     num_players = 3
- 
+
     runtime_class = OrlandiRuntime
 
     timeout = 800
@@ -271,10 +271,10 @@ class OrlandiAdvancedCommandsTest(RuntimeTestCase):
         """Test addition of the shift command."""
 
         self.Zp = GF(6277101735386680763835789423176059013767194773182842284081)
-        
+
         def check(v):
             self.assertEquals(v, 42)
- 
+
         x = runtime.shift([2], self.Zp, 42)
         d = runtime.open(x)
         d.addCallback(check)
@@ -285,10 +285,10 @@ class OrlandiAdvancedCommandsTest(RuntimeTestCase):
         """Test addition of the shift command."""
 
         self.Zp = GF(6277101735386680763835789423176059013767194773182842284081)
-        
+
         def check(v):
             self.assertEquals(v, 42)
- 
+
         x, y = runtime.shift([1,3], self.Zp, 42)
         d1 = runtime.open(x)
         d1.addCallback(check)
@@ -301,11 +301,11 @@ class OrlandiAdvancedCommandsTest(RuntimeTestCase):
         """Test addition of the shift command."""
 
         self.Zp = GF(6277101735386680763835789423176059013767194773182842284081)
-        
+
         def r1(ls):
             x, y = ls
             self.assertEquals(runtime.program_counter, [4])
- 
+
         x = runtime.shift([1], self.Zp, 42)
         y = runtime.shift([2], self.Zp, 42)
         r = gather_shares([x, y])
@@ -317,14 +317,14 @@ class OrlandiAdvancedCommandsTest(RuntimeTestCase):
         """Test addition of the shift command."""
 
         self.Zp = GF(6277101735386680763835789423176059013767194773182842284081)
-        
+
         def check(v):
             self.assertEquals(v, 42)
 
         def r1((x, y)):
             self.assertEquals(x, 42)
             self.assertEquals(y, 42)
- 
+
         x = runtime.shift([1], self.Zp, 42)
         y = runtime.shift([2], self.Zp, 42)
         r = gather_shares([runtime.open(x), runtime.open(y)])
@@ -361,10 +361,10 @@ class OrlandiAdvancedCommandsTest(RuntimeTestCase):
 
         x1 = 42
         y1 = 7
- 
+
         def check(v):
             self.assertEquals(v, x1 * y1)
- 
+
         x2 = runtime.shift([2], self.Zp, x1)
         y2 = runtime.shift([3], self.Zp, y1)
 
@@ -382,10 +382,10 @@ class OrlandiAdvancedCommandsTest(RuntimeTestCase):
 
         x1 = 42
         y1 = 7
- 
+
         def check(v):
             self.assertEquals(v, x1 * y1)
- 
+
         x2 = runtime.shift([2], self.Zp, x1)
         y2 = runtime.shift([3], self.Zp, y1)
 
@@ -494,7 +494,7 @@ class OrlandiAdvancedCommandsTest(RuntimeTestCase):
         f.append((self.Zp(7), (self.Zp(7), self.Zp(7)), self.Zp(7)))
         f.append((self.Zp(9), (self.Zp(9), self.Zp(9)), self.Zp(9)))
         f.append((self.Zp(13), (self.Zp(13), self.Zp(13)), self.Zp(13)))
-        
+
         x, (rho1, rho2), Cx = runtime.sum_poly(1, f)
         self.assertEquals(x, 29)
         self.assertEquals(rho1, 29)
@@ -507,7 +507,7 @@ class OrlandiAdvancedCommandsTest(RuntimeTestCase):
         """Test implementation of sum_poly."""
 
         self.Zp = GF(6277101735386680763835789423176059013767194773182842284081)
-        
+
         Cf1 = commitment.commit(21, 21, 21)
         Cf2 = commitment.commit(27, 27, 27)
         Cf3 = commitment.commit(39, 39, 39)
@@ -516,7 +516,7 @@ class OrlandiAdvancedCommandsTest(RuntimeTestCase):
         f.append((self.Zp(7), (self.Zp(7), self.Zp(7)), Cf1))
         f.append((self.Zp(9), (self.Zp(9), self.Zp(9)), Cf2))
         f.append((self.Zp(13), (self.Zp(13), self.Zp(13)), Cf3))
-        
+
         x, (rho1, rho2), Cx = runtime.sum_poly(3, f)
         self.assertEquals(x, 453)
         self.assertEquals(rho1, 453)
@@ -538,7 +538,7 @@ class OrlandiAdvancedCommandsTest(RuntimeTestCase):
         self.assertEquals(delta[4], 21)
         self.assertEquals(delta[5], -7)
         self.assertEquals(delta[6], 1)
- 
+
         return delta
 
     @protocol
@@ -547,7 +547,7 @@ class OrlandiAdvancedCommandsTest(RuntimeTestCase):
         commitment.set_reference_string(long(2), long(6))
 
         self.Zp = GF(6277101735386680763835789423176059013767194773182842284081)
-       
+
         x1 = 42
         y1 = 7
 
@@ -555,7 +555,7 @@ class OrlandiAdvancedCommandsTest(RuntimeTestCase):
 
         def check(v):
             self.assertEquals(v, x1 * y1)
- 
+
         x2 = runtime.shift([1], self.Zp, x1)
         y2 = runtime.shift([2], self.Zp, y1)
 
@@ -578,9 +578,9 @@ class TripleGenTest(RuntimeTestCase):
 
     # Number of players.
     num_players = 3
- 
+
     runtime_class = OrlandiRuntime
- 
+
     timeout = 1600
 
     @protocol

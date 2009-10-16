@@ -124,7 +124,7 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
     def _expect_orlandi_share(self, peer_id, field):
         """Waits for a number ``x``, ``rho``, and the commitment for ``x``."""
         xi = self._expect_share(peer_id, field)
-        Cx = Deferred()        
+        Cx = Deferred()
         rhoi1 = self._expect_share(peer_id, field)
         rhoi2 = self._expect_share(peer_id, field)
         self._expect_data(peer_id, TEXT, Cx)
@@ -170,12 +170,12 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
     def secret_share(self, inputters, field, number=None, threshold=None):
         """Share the value, number, among all the parties using additive shareing.
 
-        To share an element ``x in Z_p``, choose random ``x_1, ..., x_n-1 in Z_p``, 
+        To share an element ``x in Z_p``, choose random ``x_1, ..., x_n-1 in Z_p``,
         define ``x_n = x - SUM_i=1^n-1 x_i mod p``.
 
-        Choose random values ``rho_x1, ..., rho_xn in (Z_p)^2``, define 
+        Choose random values ``rho_x1, ..., rho_xn in (Z_p)^2``, define
         ``rho_x = SUM_i=1^n rho_x,i`` and ``C_x = Com_ck(x, p_x)``.
-        
+
         Send ``[x]_i = (x_i, rho_xi, C_x)`` to party ``P_i``.
         """
         assert number is None or self.id in inputters
@@ -186,14 +186,14 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
         def additive_shares_with_rho(x):
             """Returns a tuple of a list of tuples (player id, share, rho) and rho.
 
-            Chooses random elements ``x_1, ..., x_n-1`` in field and ``x_n`` st. 
+            Chooses random elements ``x_1, ..., x_n-1`` in field and ``x_n`` st.
             ``x_n = x - Sum_i=1^n-1 x_i``.
 
             Chooses random pair of elements ``rho_1, ..., rho_n in Z_p^2``
             and define ``rho_n = Sum_i=1^n rho_i``.
 
             Returns a pair of ``((player id, x_i, rho_i), rho)``.
-            """ 
+            """
             shares = []
             rhos = []
             sum = 0
@@ -206,7 +206,7 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
                 sum += xi
                 rho1 += rhoi1
                 rho2 += rhoi2
-                shares.append((i, xi, (rhoi1, rhoi2)))    
+                shares.append((i, xi, (rhoi1, rhoi2)))
             xn = field(x) - sum
             rhon1 = field(rand.randint(0, field.modulus - 1))
             rhon2 = field(rand.randint(0, field.modulus - 1))
@@ -245,7 +245,7 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
 
         Every partyi broadcasts a share pair ``(x_i', rho_x,i')``.
 
-        The parties compute the sums ``x'``, ``rho_x'`` and 
+        The parties compute the sums ``x'``, ``rho_x'`` and
         check ``Com_ck(x',rho_x' = C_x``.
 
         If yes, return ``x = x'``, else else return :const:`None`.
@@ -274,13 +274,13 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
                 return x
             else:
                 #return x
-                raise OrlandiException("Wrong commitment for value %s, %s, %s, found %s expected %s." % 
+                raise OrlandiException("Wrong commitment for value %s, %s, %s, found %s expected %s." %
                                        (x, rho1, rho2, Cx1, Cx))
 
         def deserialize(ls):
             shares = [(field(long(x)), field(long(rho1)), field(long(rho2))) for x, rho1, rho2 in map(self.list_str, ls)]
             return shares
-            
+
         def exchange((xi, (rhoi1, rhoi2), Cx), receivers):
             # Send share to all receivers.
             ds = self.broadcast(self.players.keys(), receivers, str((str(xi.value), str(rhoi1.value), str(rhoi2.value))))
@@ -304,7 +304,7 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
     def random_share(self, field):
         """Generate a random share in the field, field.
 
-        To generate a share of a random element ``r in Z_p``, party ``P_i`` 
+        To generate a share of a random element ``r in Z_p``, party ``P_i``
         chooses at random ``r_i, rho_ri in Z_p X (Z_p)^2`` and
         broadcast ``C_r^i = Com_ck(r_i, rho_ri)``.
 
@@ -317,7 +317,7 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
         self.program_counter[-1] += 1
 
         # P_i chooses at random r_i, rho_ri in Z_p x (Z_p)^2
-        ri = field(rand.randint(0, field.modulus - 1))     
+        ri = field(rand.randint(0, field.modulus - 1))
         rhoi1 = field(rand.randint(0, field.modulus - 1))
         rhoi2 = field(rand.randint(0, field.modulus - 1))
 
@@ -347,7 +347,7 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
         self.activate_reactor()
 
         return s
-    
+
     def add(self, share_a, share_b):
         """Addition of shares.
 
@@ -367,7 +367,7 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
                 return OrlandiShare(self, field, v, rhov, Cv)
             return s
 
-        # Either share_a or share_b must have an attribute called "field". 
+        # Either share_a or share_b must have an attribute called "field".
         field = getattr(share_a, "field", getattr(share_b, "field", None))
 
         share_a = is_share(share_a, field)
@@ -401,7 +401,7 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
                 return OrlandiShare(self, field, v, rhov, Cv)
             return s
 
-        # Either share_a or share_b must have an attribute called "field". 
+        # Either share_a or share_b must have an attribute called "field".
         field = getattr(share_a, "field", getattr(share_b, "field", None))
 
         share_a = is_share(share_a, field)
@@ -426,12 +426,12 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
 
     def shift(self, inputters, field, number=None):
         """Shift of a share.
-        
+
         Useful for input.
 
         Communication cost: ???.
 
-        Assume the parties are given a random share ``[r]`` by a trusted dealer. 
+        Assume the parties are given a random share ``[r]`` by a trusted dealer.
         Then we denote the following protocol but ``[x] = Shift(P_i, x, [r])``.
 
         1. ``r = OpenTo(P_i, [r]``
@@ -490,7 +490,7 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
 
         if len(results) == 1:
              return results[0]
-        return results       
+        return results
 
     def mul(self, share_x, share_y):
         """Multiplication of shares.
@@ -618,7 +618,7 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
         """Multiplication of shares give a triple.
 
         Communication cost: ???.
-        
+
         ``d = Open([x] - [a])``
         ``e = Open([y] - [b])``
         ``[z] = e[x] + d[y] - [de] + [c]``
@@ -692,13 +692,13 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
         2. Compute::
 
              for j = 1, ..., 2d+1 do
-             [F_j] = [x] + SUM_i=1^d [f_i]*j^i 
+             [F_j] = [x] + SUM_i=1^d [f_i]*j^i
              and
              [G_j] = [y] + SUM_i=1^d [g_i]*j^i
 
         3. ``for j = 1, ..., 2d+1 do [H_j] = Mul([F_j], [G_j], [a_j], [b_j], [c_j])``
 
-        4. compute ``[H_0] = SUM_j=1^2d+1 delta_j[H_j]`` where 
+        4. compute ``[H_0] = SUM_j=1^2d+1 delta_j[H_j]`` where
            ``delta_j = PRODUCT_k=1, k!=j^2d+1 k/(k-j)``
 
         5. output ``[z] = [H_0]``
@@ -738,9 +738,9 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
 #             print "f:", f
 #             print "g:", g
             # 2) for j = 1, ..., 2d+1 do
-            # [F_j] = [x] + SUM_i=1^d [f_i]*j^i 
+            # [F_j] = [x] + SUM_i=1^d [f_i]*j^i
             # and
-            # [G_j] = [y] + SUM_i=1^d [g_i]*j^i 
+            # [G_j] = [y] + SUM_i=1^d [g_i]*j^i
             h0i, rhoh0, Ch0 = self._additive_constant(field(0), n)
             H0 = OrlandiShare(self, field, h0i, rhoh0, Ch0)
             xi, (rhoxi1, rhoxi2), Cx = x
@@ -752,9 +752,9 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
                 rho2_Fji = rhoxi2
                 C_Fji = Cx
                 if f != []:
-                    # SUM_i=1^d [f_i]*j^i 
+                    # SUM_i=1^d [f_i]*j^i
                     vi, (rhovi1, rhovi2), Cv = self.sum_poly(j, f)
-                    # [F_j] = [x] + SUM_i=1^d [f_i]*j^i 
+                    # [F_j] = [x] + SUM_i=1^d [f_i]*j^i
                     Fji += vi
                     rho1_Fji += rhovi1
                     rho2_Fji += rhovi2
@@ -764,7 +764,7 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
                 rho2_Gji = rhoyi2
                 C_Gji = Cy
                 if g != []:
-                    # SUM_i=1^d [g_i]*j^i 
+                    # SUM_i=1^d [g_i]*j^i
                     wi, (rhowi1, rhowi2), Cw = self.sum_poly(j, g)
                     # [G_j] = [y] + SUM_i=1^d [g_i]*j^i
                     Gji += wi
@@ -813,7 +813,7 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
 
                 i. choose random ``d_ij in Z_p^3``
 
-                ii. compute and send 
+                ii. compute and send
                     ``gamma_ij = alpha_i^b_j Enc_ek_i(1;1)^d_ij`` to ``P_i``.
 
 
@@ -821,13 +821,13 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
 
            a. compute ``c_i = SUM_j Dec_sk_i(gamma_ij) - SUM_j d_ij mod p``
 
-           b. pick random ``t_i in (Z_p)^2``, compute and 
+           b. pick random ``t_i in (Z_p)^2``, compute and
               broadcast ``C_i = Com_ck(c_i, t_i)``
 
         4. Everyone computes:
            ``(A, B, C) = (PRODUCT_i A_i, PRODUCT_i B_i, PRODUCT_i C_i)``
-        
-        5. Every party ``P_i`` outputs shares ``[a_i] = (a_i, r_i, A)``, 
+
+        5. Every party ``P_i`` outputs shares ``[a_i] = (a_i, r_i, A)``,
            ``[b_i] = (b_i, s_i, B)``, and ``[c_i] = (c_i, t_i, C)``.
 
         """
@@ -856,8 +856,8 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
                   ``A = PRODUCT_i A_i``
                   ``B = PRODUCT_i B_i``
                   ``C = PRODUCT_i C_i``
-        
-               5) Every party ``P_i`` outputs shares ``[a_i] = (a_i, r_i, A)``, 
+
+               5) Every party ``P_i`` outputs shares ``[a_i] = (a_i, r_i, A)``,
                   ``[b_i] = (b_i, s_i, B)``, and ``[c_i] = (c_i, t_i, C)``.
             """
             A = product(As)
@@ -877,10 +877,10 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
 
         def step3(gammas, alphas, alpha_randomness, As, Bs, ai, bi, r, s, dijs):
             """3) Every party ``P_i`` does:
-                  (a) compute 
+                  (a) compute
                   ``c_i = SUM_j Dec_sk_i(gamma_ij) - SUM_j d_ji mod p``
 
-                  (b) pick random ``t_i in (Z_p)^2``, compute and 
+                  (b) pick random ``t_i in (Z_p)^2``, compute and
                       broadcast ``C_i = Com_ck(c_i, t_i)``
             """
             # c_i = SUM_j Dec_sk_i(gamma_ij) - SUM_j d_ji mod p.
@@ -892,18 +892,18 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
             t = (t1, t2)
             # C_i = Com_ck(c_i, t_i).
             Ci = commitment.commit(ci.value, t1.value, t2.value)
-            
+
             # Broadcast Ci.
             Cs = self.broadcast(self.players.keys(), self.players.keys(), repr(Ci))
             result = gatherResults(Cs)
-            result.addCallbacks(step45, self.error_handler, callbackArgs=(alphas, gammas, alpha_randomness, 
+            result.addCallbacks(step45, self.error_handler, callbackArgs=(alphas, gammas, alpha_randomness,
                                                                           As, Bs, ai, bi, ci, r, s, t, dijs))
             return result
 
         def step2c(Bs, As, alphas, alpha_randomness, ai, bj, r, s):
             """(c) P_j do, towards every other party:
                    i. choose random d_i,j in Z_p^3
-                   ii. compute and send 
+                   ii. compute and send
             gamma_ij = alpha_i^b_j Enc_ek_i(1;1)^d_ij to P_i.
             """
 
@@ -935,7 +935,7 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
                 dijs[pi - 1] = dij
                 results[pi - 1] = d
             result = gatherResults(results)
-            self.schedule_callback(result, step3, alphas, alpha_randomness, 
+            self.schedule_callback(result, step3, alphas, alpha_randomness,
                                    As, Bs, ai, bj, r, s, dijs)
             result.addErrback(self.error_handler)
             return result
@@ -956,11 +956,11 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
             # Broadcast B_j.
             results = self.broadcast(self.players.keys(), self.players.keys(), repr(Bj))
             result = gatherResults(results)
-            self.schedule_callback(result, step2c, As, alphas, alpha_randomness, 
+            self.schedule_callback(result, step2c, As, alphas, alpha_randomness,
                                    ai, bj, r, (s1, s2))
             result.addErrback(self.error_handler)
             return result
-        
+
         # 1) Every party P_i chooses random values a_i, r_i in Z_p X (Z_p)^2,
         #    compute alpha_i = Enc_eki(a_i) and Ai = Com_ck(a_i, r_i), and
         #    broadcast them.
@@ -970,7 +970,7 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
         r1 = random_number(field.modulus)
         r2 = random_number(field.modulus)
 
-        # compute alpha_i = Enc_eki(a_i) 
+        # compute alpha_i = Enc_eki(a_i)
         n, g = self.players[self.id].pubkey
         alpha_randomness = rand.randint(1, long(n))
         alphai = encrypt_r(ai.value, alpha_randomness, (n, g))
@@ -993,23 +993,23 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
         self.schedule_callback(result, step2ab, ai, (r1, r2), alpha_randomness)
         result.addErrback(self.error_handler)
         return result
-    
+
     def triple_test(self, field):
         """Generate a triple ``(a, b, c)`` where ``c = a * b``.
 
-        The triple ``(a, b, c)`` is checked against the 
+        The triple ``(a, b, c)`` is checked against the
         triple ``(x, y, z)`` and a random value ``r``.
 
         """
         triple1 = self.triple_gen(field)
         triple2 = self.triple_gen(field)
         r = self.open(self.random_share(field))
-        
+
         def check((v, oa, ob, oc, ox, oy, oz), a, b, c, ec):
             if v is 0:
                 return None
             return (a, b, c, ec)
-        
+
         def compute_value(((a, b, c, ec), (x, y, z, _), r)):
             oa = self.open(a)
             ob = self.open(b)
@@ -1071,10 +1071,10 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
             r = self.output(r)
             self.schedule_callback(r, coin_flip, ls, [])
             r.addErrback(self.error_handler)
-            return r            
+            return r
 
         def step45(lists):
-            """For all i in test_set the parties reveal 
+            """For all i in test_set the parties reveal
             the randomness used for TripleTest() and checks that
             the randomness is consistent with the actual values."""
             M_without_test_set = lists[0]
@@ -1099,15 +1099,15 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
                 return (share, rho1, rho2, commitment)
 
             def send_share(player_id, pc, a):
-                self._send_orlandi_share(player_id, pc, a.share, a.rho, a.commitment) 
-                
+                self._send_orlandi_share(player_id, pc, a.share, a.rho, a.commitment)
+
             def receive_shares(player_id):
                 Cx = Deferred()
                 xi = self._expect_share(player_id, field)
                 rho1 = self._expect_share(player_id, field)
                 rho2 = self._expect_share(player_id, field)
                 self._expect_data(player_id, TEXT, Cx)
-                Cx.addCallbacks(lambda Cx: commitment.deserialize(Cx), 
+                Cx.addCallbacks(lambda Cx: commitment.deserialize(Cx),
                                         self.error_handler)
                 return gatherResults([xi, rho1, rho2, Cx])
 
@@ -1145,7 +1145,7 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
                 c = 0
                 c_rho1 = 0
                 c_rho2 = 0
-                
+
                 for x in xrange(len(ais)):
                     (ai, a_rhoi1, a_rhoi2, A) = ais[x]
                     (bi, b_rhoi1, b_rhoi2, B) = bis[x]
@@ -1283,12 +1283,12 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
             self.schedule_callback(r, put_in_set, M_without_test_set, subsets)
             r.addErrback(self.error_handler)
             return r
-            
+
 
         def step7(Msets):
             """For i = 1,...,M do:
             a) [a] <- Fpp(rand,...), [b] <- Fpp(rand,...)
-            b) [r] <- Fpp(rand,...), 
+            b) [r] <- Fpp(rand,...),
             c) [c] <- LTMUL([a], [b], M_i)
             d) Open([c] + [r])
             """

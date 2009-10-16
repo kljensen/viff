@@ -46,10 +46,10 @@ def record_stop(x, what, count):
 
 class Benchmark(object):
     """Abstract base class for all Benchmarks.
-    
+
     For concrete classes see the `ParallelBenchmark` and `SequentialBenchmark` classes.
     A concrete class must be mixed with a `BenchmarkStrategy` and an `Operator`.
-    """ 
+    """
 
     def __init__(self, rt, operation, field, count):
         self.rt = rt
@@ -57,7 +57,7 @@ class Benchmark(object):
         self.pc = None
         self.field = field
         self.count = count
-        
+
     def preprocess(self, needed_data):
         print "Preprocess", needed_data
         if needed_data:
@@ -147,7 +147,7 @@ class Operation(object):
 
     An operation can be nullary, unary, binary, etc.
     """
-    
+
     def generate_operation_arguments(self, _):
         """Generate the input need for performing the operation.
 
@@ -156,7 +156,7 @@ class Operation(object):
         raise NotImplemented("Override this abstract method in subclasses")
 
     def is_operation_done(self):
-        """Returns true if there are no more operations to perform. 
+        """Returns true if there are no more operations to perform.
         Used in sequential tests.
 
         Returns: Boolean.
@@ -201,7 +201,7 @@ class BinaryOperation(Operation):
 
 class NullaryOperation(Operation):
     """A nullary operation."""
-    
+
     def generate_operation_arguments(self, _):
         self.nullary_tests = self.count
         return None
@@ -233,7 +233,7 @@ class SelfcontainedBenchmarkStrategy(BenchmarkStrategy):
 
 
 class NeededDataBenchmarkStrategy(BenchmarkStrategy):
-    """In a needed data benchmark strategy, all the needed data has to have been generated 
+    """In a needed data benchmark strategy, all the needed data has to have been generated
     before the test is run."""
 
     def benchmark(self, needed_data, pc, *args):
