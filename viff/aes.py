@@ -39,12 +39,12 @@ def bit_decompose(share, use_lin_comb=True):
     if (use_lin_comb):
         r = share.runtime.lin_comb([2 ** i for i in range(8)], r_bits)
     else:
-        r = reduce(lambda x,y: x + y, 
+        r = reduce(lambda x,y: x + y,
                    [r_bits[i] * 2 ** i for i in range(8)])
 
     c = share.runtime.open(share + r)
     c_bits = [Share(share.runtime, GF256) for i in range(8)]
-    
+
     def decompose(byte, bits):
         value = byte.value
 
@@ -73,7 +73,7 @@ class AES:
     In every case *ciphertext* will be a list of shares over GF256.
     """
 
-    def __init__(self, runtime, key_size, block_size=128, 
+    def __init__(self, runtime, key_size, block_size=128,
                  use_exponentiation=False, quiet=False):
         """Initialize Rijndael.
 
@@ -239,7 +239,7 @@ class AES:
 
         for h in range(len(state)):
             row = state[h]
-            
+
             for i in range(len(row)):
                 bits = bit_decompose(self.invert(row[i]))
 
@@ -248,7 +248,7 @@ class AES:
                 bits.append(Share(self.runtime, GF256, GF256(1)))
 
                 if (use_lin_comb):
-                    bits = [self.runtime.lin_comb(AES.A.rows[j], bits) 
+                    bits = [self.runtime.lin_comb(AES.A.rows[j], bits)
                             for j in range(len(bits) - 1)]
                     row[i] = self.runtime.lin_comb(
                         [2**j for j in range(len(bits))], bits)
@@ -256,7 +256,7 @@ class AES:
                     # caution: order is lsb first
                     vector = AES.A * Matrix(zip(bits))
                     bits = zip(*vector.rows)[0]
-                    row[i] = reduce(lambda x,y: x + y, 
+                    row[i] = reduce(lambda x,y: x + y,
                                     [bits[j] * 2**j for j in range(len(bits))])
 
     def shift_row(self, state):
@@ -350,7 +350,7 @@ class AES:
 
     def preprocess(self, input):
         if (isinstance(input, str)):
-            return [Share(self.runtime, GF256, GF256(ord(c))) 
+            return [Share(self.runtime, GF256, GF256(ord(c)))
                     for c in input]
         else:
             for byte in input:
@@ -362,7 +362,7 @@ class AES:
     def encrypt(self, cleartext, key, benchmark=False, prepare_at_once=False):
         """Rijndael encryption.
 
-        Cleartext and key should be either a string or a list of bytes 
+        Cleartext and key should be either a string or a list of bytes
         (possibly shared as elements of GF256)."""
 
         start = time.time()
