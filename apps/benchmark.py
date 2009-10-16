@@ -220,10 +220,7 @@ else:
 
 needed_data = ""
 if options.needed_data:
-    file = open(options.needed_data, 'r')
-    for l in file:
-        needed_data += l
-    needed_data = eval(needed_data)
+    needed_data = eval(open(options.needed_data).read())
 
 if options.needed_data and options.pc:
     bases = (benchmark, NeededDataBenchmarkStrategy, operation_arity, object)
