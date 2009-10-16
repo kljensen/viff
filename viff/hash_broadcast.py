@@ -19,7 +19,10 @@
 
 from twisted.internet.defer import gatherResults, Deferred, DeferredList
 
-from hashlib import sha1
+try:
+    from hashlib import sha1
+except ImportError:
+    from sha import sha as sha1
 from viff.constants import TEXT, INCONSISTENTHASH, OK, HASH, SIGNAL
 
 error_msg = "Player %i, has received an inconsistent hash %s."
