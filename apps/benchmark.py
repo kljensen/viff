@@ -143,7 +143,7 @@ parser.add_option("--pc", type="string",
 
 parser.set_defaults(modulus=2**65, threshold=1, count=10,
                     runtime="PassiveRuntime", mixins="", num_players=2, prss=True,
-                    operation=operations.keys()[0], parallel=True, fake=False,
+                    operation="mul", parallel=True, fake=False,
                     args="", needed_data="")
 
 print "*" * 60
