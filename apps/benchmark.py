@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Copyright 2007, 2008 VIFF Development Team.
+# Copyright 2007, 2008, 2009 VIFF Development Team.
 #
 # This file is part of VIFF, the Virtual Ideal Functionality Framework.
 #
