@@ -20,6 +20,8 @@ import time
 
 from pprint import pformat
 
+from twisted.internet.defer import gatherResults
+
 from viff.runtime import gather_shares
 from viff.util import rand
 
@@ -114,7 +116,7 @@ class ParallelBenchmark(Benchmark):
             c_shares.append(self.do_operation())
             print "."
 
-        done = gather_shares(c_shares)
+        done = gatherResults(c_shares)
         done.addCallback(record_stop, "parallel test", self.count)
         def f(x):
             needed_data = self.rt._needed_data

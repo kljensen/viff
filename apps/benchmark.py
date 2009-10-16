@@ -88,7 +88,8 @@ last_timestamp = time.time()
 operations = {"mul"       : ("mul", [], BinaryOperation),
               "compToft05": ("ge", [ComparisonToft05Mixin], BinaryOperation),
               "compToft07": ("ge", [ComparisonToft07Mixin], BinaryOperation),
-              "eq"        : ("eq", [ProbabilisticEqualityMixin], BinaryOperation)}
+              "eq"        : ("eq", [ProbabilisticEqualityMixin], BinaryOperation),
+              "triple_gen": ("triple_gen", [], NullaryOperation)}
 
 runtimes = {"PassiveRuntime": PassiveRuntime,
             "PaillierRuntime": PaillierRuntime, 
