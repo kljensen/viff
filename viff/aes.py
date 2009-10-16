@@ -39,8 +39,7 @@ def bit_decompose(share, use_lin_comb=True):
     if use_lin_comb:
         r = share.runtime.lin_comb([2 ** i for i in range(8)], r_bits)
     else:
-        r = reduce(lambda x,y: x + y,
-                   [r_bits[i] * 2 ** i for i in range(8)])
+        r = sum([r_bits[i] * 2 ** i for i in range(8)])
 
     c = share.runtime.open(share + r)
     c_bits = [Share(share.runtime, GF256) for i in range(8)]
@@ -256,8 +255,7 @@ class AES:
                     # caution: order is lsb first
                     vector = AES.A * Matrix(zip(bits))
                     bits = zip(*vector.rows)[0]
-                    row[i] = reduce(lambda x,y: x + y,
-                                    [bits[j] * 2**j for j in range(len(bits))])
+                    row[i] = sum([bits[j] * 2**j for j in range(len(bits))])
 
     def shift_row(self, state):
         """Rijndael ShiftRow.
