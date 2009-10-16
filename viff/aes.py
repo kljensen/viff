@@ -36,7 +36,7 @@ def bit_decompose(share, use_lin_comb=True):
 
     r_bits = share.runtime.prss_share_random_multi(GF256, 8, binary=True)
 
-    if (use_lin_comb):
+    if use_lin_comb:
         r = share.runtime.lin_comb([2 ** i for i in range(8)], r_bits)
     else:
         r = reduce(lambda x,y: x + y,
@@ -90,32 +90,32 @@ class AES:
         self.rounds = max(self.n_k, self.n_b) + 6
         self.runtime = runtime
 
-        if (use_exponentiation is not False):
+        if use_exponentiation is not False:
             if (isinstance(use_exponentiation, int) and
                 use_exponentiation < len(AES.exponentiation_variants)):
                 use_exponentiation = \
                     AES.exponentiation_variants[use_exponentiation]
-            elif (use_exponentiation not in AES.exponentation_variants):
+            elif use_exponentiation not in AES.exponentation_variants:
                 use_exponentiation = "shortest_sequential_chain"
 
-            if (not quiet):
+            if not quiet:
                 print "Use %s for inversion by exponentiation." % \
                     use_exponentiation
 
-            if (use_exponentiation == "standard_square_and_multiply"):
+            if use_exponentiation == "standard_square_and_multiply":
                 self.invert = lambda byte: byte ** 254
-            elif (use_exponentiation == "shortest_chain_with_least_rounds"):
+            elif use_exponentiation == "shortest_chain_with_least_rounds":
                 self.invert = self.invert_by_exponentiation_with_less_rounds
-            elif (use_exponentiation == "chain_with_least_rounds"):
+            elif use_exponentiation == "chain_with_least_rounds":
                 self.invert = self.invert_by_exponentiation_with_least_rounds
-            elif (use_exponentiation == "masked"):
+            elif use_exponentiation == "masked":
                 self.invert = self.invert_by_masked_exponentiation
             else:
                 self.invert = self.invert_by_exponentiation
         else:
             self.invert = self.invert_by_masking
 
-            if (not quiet):
+            if not quiet:
                 print "Use inversion by masking."
 
     exponentiation_variants = ["standard_square_and_multiply",
@@ -131,7 +131,7 @@ class AES:
             bits[j].addCallback(lambda x: GF256(1) - x)
 #            bits[j] = 1 - bits[j]
 
-        while(len(bits) > 1):
+        while len(bits) > 1:
             bits.append(bits.pop(0) * bits.pop(0))
 
         # b == 1 if byte is 0, b == 0 else
@@ -141,7 +141,7 @@ class AES:
         c = Share(self.runtime, GF256)
 
         def get_masked_byte(c_opened, r_related, c, r, byte):
-            if (c_opened == 0):
+            if c_opened == 0:
                 r_trial = self.runtime.prss_share_random(GF256)
                 c_trial = self.runtime.open((byte + b) * r_trial)
                 self.runtime.schedule_callback(c_trial, get_masked_byte,
@@ -247,7 +247,7 @@ class AES:
                 # (see definition of AES.A)
                 bits.append(Share(self.runtime, GF256, GF256(1)))
 
-                if (use_lin_comb):
+                if use_lin_comb:
                     bits = [self.runtime.lin_comb(AES.A.rows[j], bits)
                             for j in range(len(bits) - 1)]
                     row[i] = self.runtime.lin_comb(
@@ -294,7 +294,7 @@ class AES:
 
         assert len(state) == 4, "Wrong state size."
 
-        if (use_lin_comb):
+        if use_lin_comb:
             columns = zip(*state)
 
             for i, row in enumerate(state):
@@ -332,11 +332,11 @@ class AES:
         for i in xrange(len(key), self.n_b * (new_length + 1)):
             temp = list(expanded_key[i - 1])
 
-            if (i % self.n_k == 0):
+            if i % self.n_k == 0:
                 temp.append(temp.pop(0))
                 self.byte_sub([temp])
                 temp[0] += GF256(2) ** (i / self.n_k - 1)
-            elif (self.n_k > 6 and i % self.n_k == 4):
+            elif self.n_k > 6 and i % self.n_k == 4:
                 self.byte_sub([temp])
 
             new_word = []
@@ -349,7 +349,7 @@ class AES:
         return expanded_key
 
     def preprocess(self, input):
-        if (isinstance(input, str)):
+        if isinstance(input, str):
             return [Share(self.runtime, GF256, GF256(ord(c)))
                     for c in input]
         else:
@@ -378,7 +378,7 @@ class AES:
         state = [cleartext[i::4] for i in xrange(4)]
         key = [key[4*i:4*i+4] for i in xrange(self.n_k)]
 
-        if (benchmark):
+        if benchmark:
             global preparation, communication
             preparation = 0
             communication = 0
@@ -419,11 +419,11 @@ class AES:
             self.mix_column(state)
             self.add_round_key(state, expanded_key[i*self.n_b:(i+1)*self.n_b])
 
-            if (not prepare_at_once):
+            if not prepare_at_once:
                 trigger = get_trigger(state)
                 trigger.addCallback(progress, i, time.time())
 
-                if (i < self.rounds - 1):
+                if i < self.rounds - 1:
                     self.runtime.schedule_complex_callback(trigger, round, state, i + 1)
                 else:
                     self.runtime.schedule_complex_callback(trigger, final_round, state)
@@ -444,7 +444,7 @@ class AES:
             trigger = get_trigger(state)
             trigger.addCallback(progress, self.rounds, time.time())
 
-            if (benchmark):
+            if benchmark:
                 trigger.addCallback(finish, state)
 
             # connect to final result
@@ -463,7 +463,7 @@ class AES:
 
         result = [Share(self.runtime, GF256) for i in xrange(4 * self.n_b)]
 
-        if (prepare_at_once):
+        if prepare_at_once:
             for i in range(1, self.rounds):
                 round(None, state, i)
 

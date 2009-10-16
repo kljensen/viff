@@ -111,7 +111,7 @@ def share_key(rt):
 
     for i in range(options.keylength / 8):
         inputter = i % 3 + 1
-        if (inputter == id):
+        if inputter == id:
             key.append(rt.input([inputter], GF256, ord("b")))
         else:
             key.append(rt.input([inputter], GF256))
