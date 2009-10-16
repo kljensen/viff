@@ -70,7 +70,7 @@ class Benchmark(object):
             print "Need no preprocessing"
             return None
 
-    def doTest(self, d, termination_function):
+    def test(self, d, termination_function):
         self.rt.schedule_callback(d, self.generate_operation_arguments)
         self.rt.schedule_callback(d, self.sync_test)
         self.rt.schedule_callback(d, self.run_test)
@@ -227,9 +227,9 @@ class SelfcontainedBenchmarkStrategy(BenchmarkStrategy):
     def benchmark(self, *args):
         sys.stdout.flush()
         sync = self.rt.synchronize()
-        self.doTest(sync, lambda x: x)
+        self.test(sync, lambda x: x)
         self.rt.schedule_callback(sync, self.preprocess)
-        self.doTest(sync, lambda x: self.rt.shutdown())
+        self.test(sync, lambda x: self.rt.shutdown())
 
 
 class NeededDataBenchmarkStrategy(BenchmarkStrategy):
@@ -242,4 +242,4 @@ class NeededDataBenchmarkStrategy(BenchmarkStrategy):
         sync = self.rt.synchronize()
         self.rt.schedule_callback(sync, lambda x: needed_data)
         self.rt.schedule_callback(sync, self.preprocess)
-        self.doTest(sync, lambda x: self.rt.shutdown())
+        self.test(sync, lambda x: self.rt.shutdown())
