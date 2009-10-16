@@ -42,10 +42,12 @@ def record_stop(x, what, count):
     return x
 
 
-# Defining the protocol as a class makes it easier to write the
-# callbacks in the order they are called. This class is a base class
-# that executes the protocol by calling the run_test method.
-class Benchmark:
+class Benchmark(object):
+    """Abstract base class for all Benchmarks.
+    
+    For concrete classes see the `ParallelBenchmark` and `SequentialBenchmark` classes.
+    A concrete class must be mixed with a `BenchmarkStrategy` and an `Operator`.
+    """ 
 
     def __init__(self, rt, operation, field, count):
         self.rt = rt
@@ -67,29 +69,12 @@ class Benchmark:
             return None
 
     def doTest(self, d, termination_function):
-        self.rt.schedule_callback(d, self.begin)
+        self.rt.schedule_callback(d, self.generate_operation_arguments)
         self.rt.schedule_callback(d, self.sync_test)
         self.rt.schedule_callback(d, self.run_test)
         self.rt.schedule_callback(d, self.sync_test)
         self.rt.schedule_callback(d, self.finished, termination_function)
         return d
-
-    def begin(self, _):
-        print "begin", self.rt.program_counter
-        print "Runtime ready, generating shares"
-        self.a_shares = []
-        self.b_shares = []
-        for i in range(self.count):
-            inputter = (i % len(self.rt.players)) + 1
-            if inputter == self.rt.id:
-                a = rand.randint(0, self.field.modulus)
-                b = rand.randint(0, self.field.modulus)
-            else:
-                a, b = None, None
-            self.a_shares.append(self.rt.input([inputter], self.field, a))
-            self.b_shares.append(self.rt.input([inputter], self.field, b))
-        shares_ready = gather_shares(self.a_shares + self.b_shares)
-        return shares_ready
 
     def sync_test(self, x):
         print "Synchronizing test start."
@@ -113,9 +98,9 @@ class Benchmark:
         return termination_function(needed_data)
 
 
-# This class implements a benchmark where run_test executes all
-# operations in parallel.
 class ParallelBenchmark(Benchmark):
+    """This class implements a benchmark where run_test executes all
+    operations in parallel."""
 
     def run_test(self, shares):
         print "rt", self.rt.program_counter, self.pc
@@ -125,10 +110,8 @@ class ParallelBenchmark(Benchmark):
             self.pc = list(self.rt.program_counter)
         c_shares = []
         record_start("parallel test")
-        while self.a_shares and self.b_shares:
-            a = self.a_shares.pop()
-            b = self.b_shares.pop()
-            c_shares.append(self.operation(a, b))
+        while not self.is_operation_done():
+            c_shares.append(self.do_operation())
             print "."
 
         done = gather_shares(c_shares)
@@ -141,31 +124,103 @@ class ParallelBenchmark(Benchmark):
         return done
 
 
-# A benchmark where the operations are executed one after each other.
 class SequentialBenchmark(Benchmark):
+    """A benchmark where the operations are executed one after each other."""
 
     def run_test(self, _, termination_function, d):
         record_start("sequential test")
         self.single_operation(None, termination_function)
 
     def single_operation(self, _, termination_function):
-        if self.a_shares and self.b_shares:
-            a = self.a_shares.pop()
-            b = self.b_shares.pop()
-            c = self.operation(a, b)
+        if not self.is_operation_done():
+            c = self.do_operation()
             self.rt.schedule_callback(c, self.single_operation, termination_function)
         else:
             record_stop(None, "sequential test", self.count)
             self.finished(None, termination_function)
 
 
-class BenchmarkStrategy:
+class Operation(object):
+    """An abstract mixin which encapsulate the behaviour of an operation.
+
+    An operation can be nullary, unary, binary, etc.
+    """
+    
+    def generate_operation_arguments(self, _):
+        """Generate the input need for performing the operation.
+
+        Returns: None.
+        """
+        raise NotImplemented("Override this abstract method in subclasses")
+
+    def is_operation_done(self):
+        """Returns true if there are no more operations to perform. 
+        Used in sequential tests.
+
+        Returns: Boolean.
+        """
+        raise NotImplemented("Override this abstract method in subclasses")
+
+    def do_operation(self):
+        """Perform the operation.
+
+        Returns: A share containing the result of the operation.
+        """
+        raise NotImplemented("Override this abstract method in subclasses")
+
+class BinaryOperation(Operation):
+    """A binary operation."""
+
+    def generate_operation_arguments(self, _):
+        print "Generate operation arguments", self.rt.program_counter
+        print "Runtime ready, generating shares"
+        self.a_shares = []
+        self.b_shares = []
+        for i in range(self.count):
+            inputter = (i % len(self.rt.players)) + 1
+            if inputter == self.rt.id:
+                a = rand.randint(0, self.field.modulus)
+                b = rand.randint(0, self.field.modulus)
+            else:
+                a, b = None, None
+            self.a_shares.append(self.rt.input([inputter], self.field, a))
+            self.b_shares.append(self.rt.input([inputter], self.field, b))
+        shares_ready = gather_shares(self.a_shares + self.b_shares)
+        return shares_ready
+
+    def is_operation_done(self):
+        return not (self.a_shares and self.b_shares)
+
+    def do_operation(self):
+        a = self.a_shares.pop()
+        b = self.b_shares.pop()
+        return self.operation(a, b)
+
+
+class NullaryOperation(Operation):
+    """A nullary operation."""
+    
+    def generate_operation_arguments(self, _):
+        self.nullary_tests = self.count
+        return None
+
+    def is_operation_done(self):
+        return self.nullary_tests == 0
+
+    def do_operation(self):
+        self.nullary_tests -= 1
+        return self.operation(self.field)
+
+
+class BenchmarkStrategy(object):
+    """A benchmark strategy defines how the benchmark is done."""
 
     def benchmark(self, *args):
         raise NotImplemented("Override this abstract method in subclasses")
 
 
 class SelfcontainedBenchmarkStrategy(BenchmarkStrategy):
+    """In a self contained benchmark strategy, all the needed data is generated on the fly."""
 
     def benchmark(self, *args):
         sys.stdout.flush()
@@ -176,6 +231,8 @@ class SelfcontainedBenchmarkStrategy(BenchmarkStrategy):
 
 
 class NeededDataBenchmarkStrategy(BenchmarkStrategy):
+    """In a needed data benchmark strategy, all the needed data has to have been generated 
+    before the test is run."""
 
     def benchmark(self, needed_data, pc, *args):
         self.pc = pc

@@ -76,7 +76,7 @@ from viff.config import load_config
 from viff.util import find_prime
 
 from benchmark_classes import SelfcontainedBenchmarkStrategy, \
-    NeededDataBenchmarkStrategy, ParallelBenchmark, SequentialBenchmark
+    NeededDataBenchmarkStrategy, ParallelBenchmark, SequentialBenchmark, BinaryOperation, NullaryOperation
 
 # Hack in order to avoid Maximum recursion depth exceeded
 # exception;
@@ -85,10 +85,10 @@ sys.setrecursionlimit(5000)
 
 last_timestamp = time.time()
 
-operations = {"mul": (operator.mul,[]),
-              "compToft05": (operator.ge, [ComparisonToft05Mixin]),
-              "compToft07": (operator.ge, [ComparisonToft07Mixin]),
-              "eq": (operator.eq, [ProbabilisticEqualityMixin])}
+operations = {"mul": (operator.mul, [], BinaryOperation),
+              "compToft05": (operator.ge, [ComparisonToft05Mixin], BinaryOperation),
+              "compToft07": (operator.ge, [ComparisonToft07Mixin], BinaryOperation),
+              "eq": (operator.eq, [ProbabilisticEqualityMixin], BinaryOperation)}
 
 runtimes = {"PassiveRuntime": PassiveRuntime,
             "PaillierRuntime": PaillierRuntime, 
@@ -180,6 +180,7 @@ if options.mixins != "":
 # Identify the operation and it mixin dependencies.
 operation = operations[options.operation][0]
 actual_mixins += operations[options.operation][1]
+operation_arity = operations[options.operation][2]
 
 print "Using the base runtime: %s." % base_runtime_class
 if actual_mixins:
@@ -202,10 +203,12 @@ if options.needed_data != "":
     needed_data = eval(needed_data)
 
 if options.needed_data != "" and options.pc != "":
-    bases = (benchmark,) + (NeededDataBenchmarkStrategy,) + (object,)
+    bases = (benchmark,) + (NeededDataBenchmarkStrategy, operation_arity, ) + (object,)
     options.pc = eval(options.pc)
 else:
-    bases = (benchmark,) + (SelfcontainedBenchmarkStrategy,) + (object,)
+    bases = (benchmark,) + (SelfcontainedBenchmarkStrategy, operation_arity, ) + (object,)
+
+print "Using the Benchmark bases: ", bases
 benchmark = type("ExtendedBenchmark", bases, {})
 
 pre_runtime = create_runtime(id, players, options.threshold,
