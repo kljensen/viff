@@ -187,7 +187,7 @@ print "Using the base runtime: %s." % base_runtime_class
 if actual_mixins:
     print "With the following mixins:"
     for mixin in actual_mixins:
-        print "- %s" % mixin
+        print "- %s" % mixin.__name__
 
 runtime_class = make_runtime_class(base_runtime_class, actual_mixins)
 
@@ -224,7 +224,9 @@ if options.needed_data != "" and options.pc != "":
 else:
     bases = (benchmark,) + (SelfcontainedBenchmarkStrategy, operation_arity, ) + (object,)
 
-print "Using the Benchmark bases: ", bases
+print "Using the Benchmark bases:"
+for b in bases:
+    print "- %s" % b.__name__
 benchmark = type("ExtendedBenchmark", bases, {})
 
 def do_benchmark(runtime, operation, benchmark, field, count, *args):
