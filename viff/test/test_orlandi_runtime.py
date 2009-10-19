@@ -485,7 +485,7 @@ class OrlandiAdvancedCommandsTest(RuntimeTestCase):
         y2 = runtime.shift([1], self.Zp, y1)
 
     @protocol
-    def test_sum_poly(self, runtime):
+    def test_sum_poly1(self, runtime):
         """Test implementation of sum_poly."""
 
         self.Zp = GF(6277101735386680763835789423176059013767194773182842284081)
@@ -503,7 +503,7 @@ class OrlandiAdvancedCommandsTest(RuntimeTestCase):
         return x
 
     @protocol
-    def test_sum_poly(self, runtime):
+    def test_sum_poly2(self, runtime):
         """Test implementation of sum_poly."""
 
         self.Zp = GF(6277101735386680763835789423176059013767194773182842284081)
