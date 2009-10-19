@@ -15,11 +15,10 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with VIFF. If not, see <http://www.gnu.org/licenses/>.
 
-from twisted.internet.defer import gatherResults, Deferred, DeferredList
+from twisted.internet.defer import Deferred, DeferredList
 
 from viff.test.util import RuntimeTestCase, protocol
 from viff.field import GF
-from viff.runtime import Share
 
 from viff.comparison import Toft05Runtime
 from viff.hash_broadcast import HashBroadcastMixin

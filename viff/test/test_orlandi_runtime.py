@@ -17,8 +17,8 @@
 
 from twisted.internet.defer import gatherResults, DeferredList
 
-from viff.test.util import RuntimeTestCase, protocol, BinaryOperatorTestCase
-from viff.runtime import Share, gather_shares
+from viff.test.util import RuntimeTestCase, protocol
+from viff.runtime import gather_shares
 try:
     from viff.orlandi import OrlandiRuntime, OrlandiShare
     import commitment
@@ -28,7 +28,6 @@ except ImportError:
     OrlandiShare = None
 
 from viff.field import FieldElement, GF
-from viff.passive import PassiveRuntime
 
 from viff.util import rand
 

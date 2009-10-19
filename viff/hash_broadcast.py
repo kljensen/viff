@@ -17,7 +17,7 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with VIFF. If not, see <http://www.gnu.org/licenses/>.
 
-from twisted.internet.defer import gatherResults, Deferred, DeferredList
+from twisted.internet.defer import Deferred
 
 try:
     from hashlib import sha1

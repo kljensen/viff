@@ -57,7 +57,6 @@ import sys
 import time
 from math import log
 from optparse import OptionParser
-import operator
 
 import viff.reactor
 viff.reactor.install()
