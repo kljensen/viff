@@ -21,11 +21,6 @@ Utility Functions Module
       :envvar:`VIFF_SEED` is defined, but empty, then no seed is used
       and a protocol run cannot be reproduced exactly.
 
-   .. envvar:: VIFF_NO_WRAP
-
-      Setting this environment variable to any value will turn
-      :func:`wrapper` into a no-op.
-
    .. envvar:: VIFF_PROFILE
 
       Defining this variable will change :func:`profile` from a no-op
