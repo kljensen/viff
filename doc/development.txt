@@ -76,6 +76,24 @@ needed (name of committer, date, parent changeset, etc.) for importing
 the changes into the repository, just as if the changesets had been
 pulled using ``hg pull``.
 
+Commit Messages
+"""""""""""""""
+
+Please format your commit messages as follows::
+
+   topic: terse one-line summary (60 characters max)
+
+   After the summary line, you're encouraged to provide a bigger
+   description of your changes. If your change is small or obvious
+   from the diff, you can leave this out.
+
+   Please wrap your paragraphs at ~70 characters or so. That ensures
+   that they are readily readable on a standard terminal.
+
+The *topic* in the summary line describes which part of the code the
+changeset touches. There's no fixed list of topics, but a change to
+``viff/X.py`` normally gets the "X" topic.
+
 
 Revising Changes
 ----------------
