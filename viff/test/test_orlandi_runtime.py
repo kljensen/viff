@@ -264,7 +264,7 @@ class OrlandiAdvancedCommandsTest(RuntimeTestCase):
 
     runtime_class = OrlandiRuntime
 
-    timeout = 800
+    timeout = 60
 
     @protocol
     def test_shift(self, runtime):
@@ -551,7 +551,9 @@ class OrlandiAdvancedCommandsTest(RuntimeTestCase):
         x1 = 42
         y1 = 7
 
-        runtime.d = 2
+        runtime.s = 1
+        runtime.d = 0
+        runtime.s_lambda = 1
 
         def check(v):
             self.assertEquals(v, x1 * y1)
