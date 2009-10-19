@@ -29,8 +29,6 @@ function to generate a player config and save it in a number of
 :func:`load_config` function.
 """
 
-__docformat__ = "restructuredtext"
-
 from viff.libs.configobj import ConfigObj
 from viff.prss import generate_subsets, PRF
 from viff.util import rand

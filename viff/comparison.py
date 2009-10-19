@@ -20,8 +20,6 @@
 <viff.runtime.Runtime>` they are mixed with.
 """
 
-__docformat__ = "restructuredtext"
-
 import math
 
 from viff.util import rand, profile

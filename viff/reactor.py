@@ -19,8 +19,6 @@
 
 """VIFF reactor to have control over the scheduling."""
 
-__docformat__ = "restructuredtext"
-
 from twisted.internet.selectreactor import SelectReactor
 
 

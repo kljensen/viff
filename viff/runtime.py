@@ -31,8 +31,6 @@ scheduling things correctly behind the scenes.
 """
 from __future__ import division
 
-__docformat__ = "restructuredtext"
-
 import time
 import struct
 from optparse import OptionParser, OptionGroup

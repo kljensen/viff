@@ -17,9 +17,6 @@
 
 """MPC implementation of AES (Rijndael)."""
 
-__docformat__ = "restructuredtext"
-
-
 import time
 import operator
 

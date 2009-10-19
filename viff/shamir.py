@@ -20,9 +20,6 @@ share a secret* by Adi Shamir in *Communications of the ACM* **22**
 (11): 612-613.
 """
 
-__docformat__ = "restructuredtext"
-
-
 import operator
 from viff.util import rand, fake
 

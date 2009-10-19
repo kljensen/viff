@@ -17,8 +17,6 @@
 
 """A thresholdbased actively secure runtime."""
 
-__docformat__ = "restructuredtext"
-
 from math import ceil
 
 from twisted.internet.defer import gatherResults, Deferred, succeed

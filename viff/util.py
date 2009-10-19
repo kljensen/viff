@@ -22,8 +22,6 @@ known seed each time. Using this generator for all random numbers
 ensures that a protocol run can be reproduced at a later time.
 """
 
-__docformat__ = "restructuredtext"
-
 import os
 import time
 import random
