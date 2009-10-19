@@ -21,7 +21,7 @@ do not have what is traditionally known as "commit access". You can
 also work offline and take advantage of the many fast operations
 offered by Mercurial.
 
-.. _Mercurial: http://www.selenic.com/mercurial/
+.. _Mercurial: http://mercurial.selenic.com/
 
 After installing Mercurial you can checkout a copy of the source using
 this command line::
@@ -67,8 +67,7 @@ probably want to test using a ``-n`` flag or by sending the patches to
 your own address first to make sure everything looks okay. You can get
 the full list of options using ``hg help email``.
 
-.. _patchbomb: http://www.selenic.com/mercurial/
-                      wiki/index.cgi/PatchbombExtension
+.. _patchbomb: http://mercurial.selenic.com/wiki/PatchbombExtension
 
 The advantage of using patchbomb is that allows everybody to go over
 the code and comment on it before the changesets are pulled into the
@@ -152,7 +151,7 @@ patch is okay. Now continue applying patches with ``hg qpush -a`` and
 fix any remaining conflicts.
 
 
-.. _Mercurial Queues extension: http://www.selenic.com/mercurial/
-                                       wiki/index.cgi/MqExtension
+.. _Mercurial Queues extension: http://mercurial.selenic.com/
+                                wiki/MqExtension
 
 .. LocalWords:  changeset changesets
