@@ -498,7 +498,7 @@ class OrlandiAdvancedCommandsTest(RuntimeTestCase):
         self.assertEquals(x, 29)
         self.assertEquals(rho1, 29)
         self.assertEquals(rho2, 29)
-        self.assertEquals(Cx, 29)
+        self.assertEquals(Cx, 819)
         return x
 
     @protocol
