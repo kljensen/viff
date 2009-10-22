@@ -202,16 +202,8 @@ class TriplesHyperinvertibleMatricesMixin:
         si = rand.randint(0, field.modulus - 1)
 
         # Every player shares the random value with two thresholds.
-        shares = self.shamir_share(inputters, field, si, degree)
-
-        # Turn the shares into a column vector.
-        svec = Matrix([shares]).transpose()
-
-        # Apply the hyper-invertible matrix to svec1 and svec2.
-        rvec = (self._hyper * svec)
-
-        # Get back to normal lists of shares.
-        svec = svec.transpose().rows[0]
+        svec = self.shamir_share(inputters, field, si, degree)
+        rvec = self._hyper * Matrix([svec]).transpose()
         rvec = rvec.transpose().rows[0]
 
         def verify(shares):
@@ -286,20 +278,14 @@ class TriplesHyperinvertibleMatricesMixin:
         si = rand.randint(0, field.modulus - 1)
 
         # Every player shares the random value with two thresholds.
-        d1_shares = self.shamir_share(inputters, field, si, d1)
-        d2_shares = self.shamir_share(inputters, field, si, d2)
-
-        # Turn the shares into a column vector.
-        svec1 = Matrix([d1_shares]).transpose()
-        svec2 = Matrix([d2_shares]).transpose()
+        svec1 = self.shamir_share(inputters, field, si, d1)
+        svec2 = self.shamir_share(inputters, field, si, d2)
 
         # Apply the hyper-invertible matrix to svec1 and svec2.
-        rvec1 = (self._hyper * svec1)
-        rvec2 = (self._hyper * svec2)
+        rvec1 = self._hyper * Matrix([svec1]).transpose()
+        rvec2 = self._hyper * Matrix([svec2]).transpose()
 
         # Get back to normal lists of shares.
-        svec1 = svec1.transpose().rows[0]
-        svec2 = svec2.transpose().rows[0]
         rvec1 = rvec1.transpose().rows[0]
         rvec2 = rvec2.transpose().rows[0]
 
