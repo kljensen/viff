@@ -256,7 +256,7 @@ class TriplesHyperinvertibleMatricesMixin:
                     else:
                         si.append(self._expect_share(peer_id, field))
                 result = gatherResults(si)
-                self.schedule_callback(result, verify)
+                result.addCallback(verify)
                 return result
             else:
                 # We cannot verify anything, so we just return the
@@ -358,7 +358,7 @@ class TriplesHyperinvertibleMatricesMixin:
                         si_1.append(self._expect_share(peer_id, field))
                         si_2.append(self._expect_share(peer_id, field))
                 result = gatherResults([gatherResults(si_1), gatherResults(si_2)])
-                self.schedule_callback(result, verify)
+                result.addCallback(verify)
                 return result
             else:
                 # We cannot verify anything, so we just return the
