@@ -162,15 +162,16 @@ class GF256(FieldElement):
         >>> GF256(0x01) + 1
         [0]
         """
-        if not isinstance(other, (GF256, int, long)):
+        if isinstance(other, GF256):
+            return _add_table[self.value][other.value]
+        elif isinstance(other, (int, long)):
+            return _add_table[self.value][other]
+        else:
             # This occurs with code like 'a + b' where b is a Share.
             # In that case we must return NotImplemented to signal
             # that b.__radd__(a) should be run instead. The Share will
             # then schedule things correctly.
             return NotImplemented
-        if isinstance(other, GF256):
-            other = other.value
-        return _add_table[self.value][other]
 
     def __radd__(self, other):
         """Add this and another number (reflected argument version).
@@ -206,12 +207,12 @@ class GF256(FieldElement):
         >>> GF256(16) * GF256(32)
         [54]
         """
-        if not isinstance(other, (GF256, int, long)):
-            return NotImplemented
         if isinstance(other, GF256):
-            other = other.value
-        return _mul_table[self.value][other]
-
+            return _mul_table[self.value][other.value]
+        elif isinstance(other, (int, long)):
+            return _mul_table[self.value][other]
+        else:
+            return NotImplemented
 
     def __rmul__(self, other):
         """Multiply this and another number (reflected argument
