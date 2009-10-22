@@ -115,7 +115,6 @@ class ParallelBenchmark(Benchmark):
         record_start("parallel test")
         while not self.is_operation_done():
             c_shares.append(self.do_operation())
-            print "."
 
         done = gatherResults(c_shares)
         done.addCallback(record_stop, "parallel test", self.count)
