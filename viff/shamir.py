@@ -79,7 +79,7 @@ def share(secret, threshold, num_players):
         cur_share = coef[threshold]
         # Go backwards from threshold-1 down to 0
         for j in range(threshold-1, -1, -1):
-            cur_share = coef[j] + cur_point * cur_share
+            cur_share = coef[j] + cur_share * cur_point
 
         shares.append((cur_point, cur_share))
 
