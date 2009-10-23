@@ -21,18 +21,6 @@ Runtime Module
          or the data itself if data is received from the other player
          before we are ready to use it.
 
-   .. attribute:: SHARE
-                  ECHO
-                  READY
-                  SEND
-                  PAILLIER
-
-      Constants used by :class:`ShareExchanger` when sending shares
-      and other messages. They serve to distinguish messages sent with
-      the same program counter from one another.
-
-   .. autofunction:: increment_pc
-
    .. autofunction:: preprocess
 
       See also :ref:`preprocessing` for more background information.
@@ -88,9 +76,7 @@ Runtime Module
          different parts of the program execution never reuses the
          same program counter for different variables.
 
-         The :func:`increment_pc` decorator is responsible for
-         dynamically building the tree as the execution unfolds and
-         :meth:`schedule_callback` is responsible for scheduling
-         callbacks with the correct program counter.
+         The :meth:`schedule_callback` method is responsible for
+         scheduling callbacks with the correct program counter.
 
          See :ref:`program-counters` for more background information.

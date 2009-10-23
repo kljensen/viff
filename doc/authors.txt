@@ -15,6 +15,7 @@ to the repository):
 * Marcel Keller <mkeller@cs.au.dk>
 * Tord Reistad
 * Ivan Damgård
+* Janus Dam Nielsen <janus.nielsen@alexandra.dk>
 
 If you have been forgotten, then please checkout `the repository`_,
 add yourself to the list and `send us a patch`_!

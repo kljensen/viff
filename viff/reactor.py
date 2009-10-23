@@ -19,8 +19,6 @@
 
 """VIFF reactor to have control over the scheduling."""
 
-__docformat__ = "restructuredtext"
-
 from twisted.internet.selectreactor import SelectReactor
 
 
@@ -42,7 +40,7 @@ class ViffReactor(SelectReactor):
         self.runUntilCurrent()
         t2 = self.timeout()
 
-        if (t2 is not None):
+        if t2 is not None:
             t = min(t, self.running and t2)
 
         SelectReactor.doIteration(self, t)

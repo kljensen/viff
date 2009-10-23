@@ -15,9 +15,7 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with VIFF. If not, see <http://www.gnu.org/licenses/>.
 
-"""Actively secure protocols."""
-
-__docformat__ = "restructuredtext"
+"""A thresholdbased actively secure runtime."""
 
 from math import ceil
 
@@ -27,8 +25,8 @@ from viff import shamir
 from viff.util import rand
 from viff.matrix import Matrix, hyper
 from viff.passive import PassiveRuntime
-from viff.runtime import Share, increment_pc, preprocess, gather_shares
-from viff.runtime import ECHO, READY, SEND
+from viff.runtime import Share, preprocess, gather_shares
+from viff.constants import ECHO, READY, SEND
 
 
 class BrachaBroadcastMixin:
@@ -37,7 +35,6 @@ class BrachaBroadcastMixin:
     broadcast.
     """
 
-    @increment_pc
     def _broadcast(self, sender, message=None):
         """Perform a Bracha broadcast.
 
@@ -47,6 +44,8 @@ class BrachaBroadcastMixin:
         protocol" by G. Bracha in Proc. 3rd ACM Symposium on
         Principles of Distributed Computing, 1984, pages 154-162.
         """
+        # We need a unique program counter for each call.
+        self.increment_pc()
 
         result = Deferred()
         pc = tuple(self.program_counter)
@@ -141,7 +140,6 @@ class BrachaBroadcastMixin:
 
         return result
 
-    @increment_pc
     def broadcast(self, senders, message=None):
         """Perform one or more Bracha broadcast(s).
 
@@ -186,7 +184,6 @@ class TriplesHyperinvertibleMatricesMixin:
     #: to :const:`None` here and update it as necessary.
     _hyper = None
 
-    @increment_pc
     def single_share_random(self, T, degree, field):
         """Share a random secret.
 
@@ -205,16 +202,8 @@ class TriplesHyperinvertibleMatricesMixin:
         si = rand.randint(0, field.modulus - 1)
 
         # Every player shares the random value with two thresholds.
-        shares = self.shamir_share(inputters, field, si, degree)
-
-        # Turn the shares into a column vector.
-        svec = Matrix([shares]).transpose()
-
-        # Apply the hyper-invertible matrix to svec1 and svec2.
-        rvec = (self._hyper * svec)
-
-        # Get back to normal lists of shares.
-        svec = svec.transpose().rows[0]
+        svec = self.shamir_share(inputters, field, si, degree)
+        rvec = self._hyper * Matrix([svec]).transpose()
         rvec = rvec.transpose().rows[0]
 
         def verify(shares):
@@ -259,7 +248,7 @@ class TriplesHyperinvertibleMatricesMixin:
                     else:
                         si.append(self._expect_share(peer_id, field))
                 result = gatherResults(si)
-                self.schedule_callback(result, verify)
+                result.addCallback(verify)
                 return result
             else:
                 # We cannot verify anything, so we just return the
@@ -273,7 +262,6 @@ class TriplesHyperinvertibleMatricesMixin:
         self.schedule_callback(result, exchange)
         return result
 
-    @increment_pc
     def double_share_random(self, T, d1, d2, field):
         """Double-share a random secret using two polynomials.
 
@@ -290,20 +278,14 @@ class TriplesHyperinvertibleMatricesMixin:
         si = rand.randint(0, field.modulus - 1)
 
         # Every player shares the random value with two thresholds.
-        d1_shares = self.shamir_share(inputters, field, si, d1)
-        d2_shares = self.shamir_share(inputters, field, si, d2)
-
-        # Turn the shares into a column vector.
-        svec1 = Matrix([d1_shares]).transpose()
-        svec2 = Matrix([d2_shares]).transpose()
+        svec1 = self.shamir_share(inputters, field, si, d1)
+        svec2 = self.shamir_share(inputters, field, si, d2)
 
         # Apply the hyper-invertible matrix to svec1 and svec2.
-        rvec1 = (self._hyper * svec1)
-        rvec2 = (self._hyper * svec2)
+        rvec1 = self._hyper * Matrix([svec1]).transpose()
+        rvec2 = self._hyper * Matrix([svec2]).transpose()
 
         # Get back to normal lists of shares.
-        svec1 = svec1.transpose().rows[0]
-        svec2 = svec2.transpose().rows[0]
         rvec1 = rvec1.transpose().rows[0]
         rvec2 = rvec2.transpose().rows[0]
 
@@ -362,7 +344,7 @@ class TriplesHyperinvertibleMatricesMixin:
                         si_1.append(self._expect_share(peer_id, field))
                         si_2.append(self._expect_share(peer_id, field))
                 result = gatherResults([gatherResults(si_1), gatherResults(si_2)])
-                self.schedule_callback(result, verify)
+                result.addCallback(verify)
                 return result
             else:
                 # We cannot verify anything, so we just return the
@@ -376,15 +358,13 @@ class TriplesHyperinvertibleMatricesMixin:
         self.schedule_callback(result, exchange)
         return result
 
-    @increment_pc
     @preprocess("generate_triples")
     def get_triple(self, field):
         # This is a waste, but this function is only called if there
         # are no pre-processed triples left.
-        return self.generate_triples(field, gather=False)[0]
+        return self.generate_triples(field, quantity=1, gather=False)[0]
 
-    @increment_pc
-    def generate_triples(self, field, gather=True):
+    def generate_triples(self, field, quantity=None, gather=True):
         """Generate multiplication triples.
 
         These are random numbers *a*, *b*, and *c* such that ``c =
@@ -434,13 +414,11 @@ class TriplesHyperinvertibleMatricesMixin:
 class TriplesPRSSMixin:
     """Mixin class for generating multiplication triples using PRSS."""
 
-    @increment_pc
     @preprocess("generate_triples")
     def get_triple(self, field):
         result = self.generate_triples(field, quantity=1, gather=False)
         return result[0]
 
-    @increment_pc
     def generate_triples(self, field, quantity=20, gather=True):
         """Generate *quantity* multiplication triples using PRSS.
 
@@ -450,6 +428,8 @@ class TriplesPRSSMixin:
         Returns a tuple with the number of triples generated and a
         Deferred which will yield a singleton-list with a 3-tuple.
         """
+        quantity = min(quantity, 20)
+
         a_t = self.prss_share_random_multi(field, quantity)
         b_t = self.prss_share_random_multi(field, quantity)
         r_t, r_2t = self.prss_double_share(field, quantity)
@@ -481,7 +461,9 @@ class BasicActiveRuntime(PassiveRuntime):
     :class:`ActiveRuntime` instead.
     """
 
-    @increment_pc
+    def get_triple(self, field):
+        raise NotImplementedError
+
     def mul(self, share_x, share_y):
         """Multiplication of shares.
 
@@ -523,7 +505,7 @@ class BasicActiveRuntime(PassiveRuntime):
         return result
 
 
-class ActiveRuntime(BasicActiveRuntime, TriplesPRSSMixin):
+class ActiveRuntime(TriplesPRSSMixin, BasicActiveRuntime):
     """Default mix of :class:`BasicActiveRuntime` and
     :class:`TriplesPRSSMixin`."""
     pass

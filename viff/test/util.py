@@ -22,7 +22,7 @@ from twisted.trial.unittest import TestCase
 from twisted.internet import reactor
 
 from viff.passive import PassiveRuntime
-from viff.runtime import Share, ShareExchanger, ShareExchangerFactory
+from viff.runtime import Share, ShareExchanger, ShareExchangerFactory, SelfShareExchanger, SelfShareExchangerFactory, FakeTransport
 from viff.field import GF
 from viff.config import generate_configs, load_config
 from viff.util import rand
@@ -220,7 +220,13 @@ class RuntimeTestCase(TestCase):
                     # fire.
                     sentinel = loopbackAsync(server, client)
                     self.close_sentinels.append(sentinel)
-
+            else:
+                protocol = SelfShareExchanger(id, SelfShareExchangerFactory(runtime))
+                protocol.transport = FakeTransport()
+                # Keys for when we are the client and when we are the server.
+                server_key = (id, id)
+                # Store a protocol used when we are the server.
+                self.protocols[server_key] = protocol     
 
 class BinaryOperatorTestCase:
     """Test a binary operator.

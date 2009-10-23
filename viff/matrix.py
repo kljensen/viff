@@ -24,8 +24,6 @@ type that acts like a number, including :class:`viff.field.GF256` and
 
 from __future__ import division
 
-__docformat__ = "restructuredtext"
-
 class Matrix(object):
     """A matrix."""
 

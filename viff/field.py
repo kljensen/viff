@@ -75,9 +75,6 @@ The reason for the slightly confusing error message is that ``x`` and
 ``z`` are instances of two *different* classes called ``GFElement``.
 """
 
-__docformat__ = "restructuredtext"
-
-
 from gmpy import mpz
 from math import log, ceil
 

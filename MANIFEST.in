@@ -1,5 +1,4 @@
 graft doc/api
-exclude epydoc.conf
 
 graft doc/html
 prune doc/html/.doctrees

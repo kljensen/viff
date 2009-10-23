@@ -22,8 +22,7 @@
 import operator
 
 from viff import shamir
-from viff.runtime import Runtime, increment_pc, Share, ShareList, \
-     gather_shares, preprocess
+from viff.runtime import Runtime, Share, ShareList, gather_shares, preprocess
 from viff.prss import prss, prss_lsb, prss_zero, prss_multi
 from viff.field import GF256, FieldElement
 from viff.util import rand, profile
@@ -57,7 +56,6 @@ class PassiveRuntime(Runtime):
     def output(self, share, receivers=None, threshold=None):
         return self.open(share, receivers, threshold)
 
-    @increment_pc
     def open(self, share, receivers=None, threshold=None):
         """Open a secret sharing.
 
@@ -175,7 +173,6 @@ class PassiveRuntime(Runtime):
         return result
 
     @profile
-    @increment_pc
     def mul(self, share_a, share_b):
         """Multiplication of shares.
 
@@ -232,7 +229,6 @@ class PassiveRuntime(Runtime):
         else:
             return share * (share ** (exponent-1))
 
-    @increment_pc
     def xor(self, share_a, share_b):
         field = share_a.field
         if not isinstance(share_b, Share):
@@ -245,7 +241,18 @@ class PassiveRuntime(Runtime):
         else:
             return share_a + share_b - 2 * share_a * share_b
 
-    @increment_pc
+    def prss_key(self):
+        """Create unique key for PRSS.
+
+        This increments the program counter and returns it as a tuple.
+        Each straight-line program (typically a callback attached to
+        some :class:`Deferred`) is executed in a context with unique
+        starting program counter. This ensures that consequetive calls
+        to PRSS-related methods will use unique program counters.
+        """
+        self.increment_pc()
+        return tuple(self.program_counter)
+
     def prss_share(self, inputters, field, element=None):
         """Creates pseudo-random secret sharings.
 
@@ -273,7 +280,7 @@ class PassiveRuntime(Runtime):
         n = self.num_players
 
         # Key used for PRSS.
-        key = tuple(self.program_counter)
+        key = self.prss_key()
 
         # The shares for which we have all the keys.
         all_shares = []
@@ -314,7 +321,6 @@ class PassiveRuntime(Runtime):
         else:
             return result
 
-    @increment_pc
     def prss_share_random(self, field, binary=False):
         """Generate shares of a uniformly random element from the field given.
 
@@ -329,7 +335,7 @@ class PassiveRuntime(Runtime):
             modulus = field.modulus
 
         # Key used for PRSS.
-        prss_key = tuple(self.program_counter)
+        prss_key = self.prss_key()
         prfs = self.players[self.id].prfs(modulus)
         share = prss(self.num_players, self.id, field, prfs, prss_key)
 
@@ -354,7 +360,6 @@ class PassiveRuntime(Runtime):
         self.schedule_callback(result, finish, share, binary)
         return result
 
-    @increment_pc
     def prss_share_random_multi(self, field, quantity, binary=False):
         """Does the same as calling *quantity* times :meth:`prss_share_random`,
         but with less calls to the PRF. Sampling of a binary element is only
@@ -371,13 +376,12 @@ class PassiveRuntime(Runtime):
             modulus = field.modulus
 
         # Key used for PRSS.
-        prss_key = tuple(self.program_counter)
+        prss_key = self.prss_key()
         prfs = self.players[self.id].prfs(modulus ** quantity)
         shares = prss_multi(self.num_players, self.id, field, prfs, prss_key,
                             modulus, quantity)
         return [Share(self, field, share) for share in shares]
 
-    @increment_pc
     def prss_share_zero(self, field, quantity):
         """Generate *quantity* shares of the zero element from the
         field given.
@@ -385,13 +389,12 @@ class PassiveRuntime(Runtime):
         Communication cost: none.
         """
         # Key used for PRSS.
-        prss_key = tuple(self.program_counter)
+        prss_key = self.prss_key()
         prfs = self.players[self.id].prfs(field.modulus)
         zero_share = prss_zero(self.num_players, self.threshold, self.id,
                                field, prfs, prss_key, quantity)
         return [Share(self, field, zero_share[i]) for i in range(quantity)]
 
-    @increment_pc
     def prss_double_share(self, field, quantity):
         """Make *quantity* double-sharings using PRSS.
 
@@ -402,7 +405,6 @@ class PassiveRuntime(Runtime):
         z_2t = self.prss_share_zero(field, quantity)
         return (r_t, [r_t[i] + z_2t[i] for i in range(quantity)])
 
-    @increment_pc
     def prss_share_bit_double(self, field):
         """Share a random bit over *field* and GF256.
 
@@ -414,7 +416,7 @@ class PassiveRuntime(Runtime):
         n = self.num_players
         k = self.options.security_parameter
         prfs = self.players[self.id].prfs(2**k)
-        prss_key = tuple(self.program_counter)
+        prss_key = self.prss_key()
 
         b_p = self.prss_share_random(field, binary=True)
         r_p, r_lsb = prss_lsb(n, self.id, field, prfs, prss_key)
@@ -427,13 +429,12 @@ class PassiveRuntime(Runtime):
         # Use r_lsb to flip b as needed.
         return (b_p, b ^ r_lsb)
 
-    @increment_pc
     def prss_shamir_share_bit_double(self, field):
         """Shamir share a random bit over *field* and GF256."""
         n = self.num_players
         k = self.options.security_parameter
         prfs = self.players[self.id].prfs(2**k)
-        prss_key = tuple(self.program_counter)
+        prss_key = self.prss_key()
         inputters = range(1, self.num_players + 1)
 
         ri = rand.randint(0, 2**k - 1)
@@ -461,7 +462,6 @@ class PassiveRuntime(Runtime):
             result.append(share)
         return result
 
-    @increment_pc
     @preprocess("prss_powerchains")
     def prss_powerchain(self, max=7):
         """Generate a random secret share in GF256 and returns
@@ -472,6 +472,7 @@ class PassiveRuntime(Runtime):
     def prss_powerchains(self, max=7, quantity=20):
         """Does *quantity* times the same as :meth:`prss_powerchain`.
         Used for preprocessing."""
+        quantity = min(quantity, 20)
         shares = self.prss_share_random_multi(GF256, quantity)
         return [gatherResults(self.powerchain(share, max)) for share in shares]
 
@@ -482,7 +483,6 @@ class PassiveRuntime(Runtime):
         """
         return self.shamir_share(inputters, field, number, threshold)
 
-    @increment_pc
     def shamir_share(self, inputters, field, number=None, threshold=None):
         """Secret share *number* over *field* using Shamir's method.
 
@@ -525,6 +525,9 @@ class PassiveRuntime(Runtime):
 
         results = []
         for peer_id in inputters:
+            # Unique program counter per input.
+            self.increment_pc()
+
             if peer_id == self.id:
                 pc = tuple(self.program_counter)
                 shares = shamir.share(field(number), threshold,

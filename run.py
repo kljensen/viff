@@ -105,24 +105,12 @@ def build():
         shutil.rmtree('doc/html')
     sphinx('doc/html')
 
-    # Generate API docs in doc/api.
-    if isdir('doc/api'):
-        shutil.rmtree('doc/api')
-    epydoc('doc/api')
-
     # Pack everything up with Distutils.
     execute(["python", "setup.py", "sdist", "--force-manifest",
              "--formats=bztar,gztar,zip"])
 
     # Generate binary Windows installer (which has no docs, though).
     execute(["python", "setup.py", "bdist", "--formats=wininst"])
-
-@command('epydoc', 'target')
-def epydoc(target):
-    """Generate API documentation using epydoc."""
-    ensure_dir(target)
-    execute(["epydoc", "-vv", "--config", "epydoc.conf"],
-            {'VIFF_NO_WRAP': 'YES', 'target': target})
 
 @command('sphinx', 'target')
 def sphinx(target):

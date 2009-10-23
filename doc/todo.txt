@@ -34,13 +34,6 @@ The following points should be addressed:
   make the other honest players crash too, thereby effectively halting
   the protocol.
 
-Self Trust
-----------
-
-Implement an (actively) secure protocol with threshold ``t = n-1``
-based on the "triples approach" of Claudio Orlandi and Jesper Buus
-Nielsen. There will soon be a paper describing the protocol.
-
 Covert Adversaries
 ------------------
 

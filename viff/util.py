@@ -22,8 +22,6 @@ known seed each time. Using this generator for all random numbers
 ensures that a protocol run can be reproduced at a later time.
 """
 
-__docformat__ = "restructuredtext"
-
 import os
 import time
 import random
@@ -64,29 +62,15 @@ def wrapper(func):
     It is important to use this decorator on any wrapper functions in
     order to ensure that they end up with correct :attr:`__name__` and
     :attr:`__doc__` attributes.
-
-    In addition, if the environment variable :envvar:`VIFF_NO_WRAP` is
-    defined, then the wrapper functions will be turned into functions
-    that *do not* wrap -- instead they let their argument function
-    through unchanged. This is done so that epydoc and Sphinx can see
-    the true function arguments when generating documentation. Just
-    remember that your code will break if :envvar:`VIFF_NO_WRAP` is
-    set, so it should only be used when documentation is being
-    generated.
     """
-    if os.environ.get('VIFF_NO_WRAP'):
-        # Return a decorator which ignores the functions it is asked
-        # to decorate and instead returns func:
-        return lambda _: func
-    else:
-        # Return a decorator which does nothing to the function it is
-        # asked to decorate, except update the __name__ and __doc__
-        # attributes to match the original wrapped function.
-        def decorator(f):
-            f.__name__ = func.__name__
-            f.__doc__ = func.__doc__
-            return f
-        return decorator
+    # Return a decorator which does nothing to the function it is
+    # asked to decorate, except update the __name__ and __doc__
+    # attributes to match the original wrapped function.
+    def decorator(f):
+        f.__name__ = func.__name__
+        f.__doc__ = func.__doc__
+        return f
+    return decorator
 
 def fake(replacement):
     """Replace a function with a fake version.

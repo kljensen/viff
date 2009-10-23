@@ -21,7 +21,7 @@ do not have what is traditionally known as "commit access". You can
 also work offline and take advantage of the many fast operations
 offered by Mercurial.
 
-.. _Mercurial: http://www.selenic.com/mercurial/
+.. _Mercurial: http://mercurial.selenic.com/
 
 After installing Mercurial you can checkout a copy of the source using
 this command line::
@@ -67,8 +67,7 @@ probably want to test using a ``-n`` flag or by sending the patches to
 your own address first to make sure everything looks okay. You can get
 the full list of options using ``hg help email``.
 
-.. _patchbomb: http://www.selenic.com/mercurial/
-                      wiki/index.cgi/PatchbombExtension
+.. _patchbomb: http://mercurial.selenic.com/wiki/PatchbombExtension
 
 The advantage of using patchbomb is that allows everybody to go over
 the code and comment on it before the changesets are pulled into the
@@ -76,6 +75,24 @@ repository. The mails sent out by patchbomb contain all the metadata
 needed (name of committer, date, parent changeset, etc.) for importing
 the changes into the repository, just as if the changesets had been
 pulled using ``hg pull``.
+
+Commit Messages
+"""""""""""""""
+
+Please format your commit messages as follows::
+
+   topic: terse one-line summary (60 characters max)
+
+   After the summary line, you're encouraged to provide a bigger
+   description of your changes. If your change is small or obvious
+   from the diff, you can leave this out.
+
+   Please wrap your paragraphs at ~70 characters or so. That ensures
+   that they are readily readable on a standard terminal.
+
+The *topic* in the summary line describes which part of the code the
+changeset touches. There's no fixed list of topics, but a change to
+``viff/X.py`` normally gets the "X" topic.
 
 
 Revising Changes
@@ -152,7 +169,7 @@ patch is okay. Now continue applying patches with ``hg qpush -a`` and
 fix any remaining conflicts.
 
 
-.. _Mercurial Queues extension: http://www.selenic.com/mercurial/
-                                       wiki/index.cgi/MqExtension
+.. _Mercurial Queues extension: http://mercurial.selenic.com/
+                                wiki/MqExtension
 
 .. LocalWords:  changeset changesets

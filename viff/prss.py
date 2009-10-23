@@ -40,9 +40,6 @@ Cramer, Ivan Damgård, and Yuval Ishai in Proc. of TCC 2005, LNCS 3378.
 `Download <http://www.cs.technion.ac.il/~yuvali/pubs/CDI05.ps>`__.
 """
 
-__docformat__ = "restructuredtext"
-
-
 import sha
 from math import ceil
 from binascii import hexlify

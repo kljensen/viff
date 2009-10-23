@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Copyright 2007, 2008 VIFF Development Team.
+# Copyright 2007, 2008, 2009 VIFF Development Team.
 #
 # This file is part of VIFF, the Virtual Ideal Functionality Framework.
 #
@@ -57,55 +57,59 @@ import sys
 import time
 from math import log
 from optparse import OptionParser
-import operator
-from pprint import pformat
 
 import viff.reactor
 viff.reactor.install()
 from twisted.internet import reactor
 
-from viff.field import GF, GF256, FakeGF
-from viff.runtime import Runtime, create_runtime, gather_shares, \
-    make_runtime_class
+from viff.field import GF, FakeGF
+from viff.runtime import Runtime, create_runtime, make_runtime_class
 from viff.passive import PassiveRuntime
 from viff.active import BasicActiveRuntime, \
     TriplesHyperinvertibleMatricesMixin, TriplesPRSSMixin
 from viff.comparison import ComparisonToft05Mixin, ComparisonToft07Mixin
 from viff.equality import ProbabilisticEqualityMixin
 from viff.paillier import PaillierRuntime
+from viff.orlandi import OrlandiRuntime
 from viff.config import load_config
-from viff.util import find_prime, rand
+from viff.util import find_prime
+
+from benchmark_classes import SelfcontainedBenchmarkStrategy, \
+    NeededDataBenchmarkStrategy, ParallelBenchmark, SequentialBenchmark, BinaryOperation, NullaryOperation
+
+# Hack in order to avoid Maximum recursion depth exceeded
+# exception;
+sys.setrecursionlimit(5000)
+
 
 last_timestamp = time.time()
-start = 0
 
+operations = {"mul"       : ("mul", [], BinaryOperation),
+              "compToft05": ("ge", [ComparisonToft05Mixin], BinaryOperation),
+              "compToft07": ("ge", [ComparisonToft07Mixin], BinaryOperation),
+              "eq"        : ("eq", [ProbabilisticEqualityMixin], BinaryOperation),
+              "triple_gen": ("triple_gen", [], NullaryOperation)}
 
-def record_start(what):
-    global start
-    start = time.time()
-    print "*" * 64
-    print "Started", what
+runtimes = {"PassiveRuntime": PassiveRuntime,
+            "PaillierRuntime": PaillierRuntime,
+            "BasicActiveRuntime": BasicActiveRuntime,
+            "OrlandiRuntime": OrlandiRuntime}
 
-
-def record_stop(_, what):
-    stop = time.time()
-    print
-    print "Total time used: %.3f sec" % (stop-start)
-    print "Time per %s operation: %.0f ms" % (what, 1000*(stop-start) / count)
-    print "*" * 6
-
-
-operations = ["mul", "compToft05", "compToft07", "eq"]
+mixins = {"TriplesHyperinvertibleMatricesMixin" : TriplesHyperinvertibleMatricesMixin,
+          "TriplesPRSSMixin": TriplesPRSSMixin,
+          "ComparisonToft05Mixin": ComparisonToft05Mixin,
+          "ComparisonToft07Mixin": ComparisonToft07Mixin,
+          "ProbabilisticEqualityMixin": ProbabilisticEqualityMixin}
 
 parser = OptionParser(usage="Usage: %prog [options] config_file")
 parser.add_option("-m", "--modulus",
                   help="lower limit for modulus (can be an expression)")
-parser.add_option("-a", "--active", action="store_true",
-                  help="use actively secure runtime")
-parser.add_option("--passive", action="store_false", dest="active",
-                  help="use passively secure runtime")
-parser.add_option("-2", "--twoplayer", action="store_true",
-                  help="use twoplayer runtime")
+parser.add_option("-r", "--runtime", type="choice", choices=runtimes.keys(),
+                  help="the name of the basic runtime to test")
+parser.add_option("-n", "--num_players", action="store_true", dest="num_players",
+                  help="number of players")
+parser.add_option("--mixins", type="string",
+                  help="Additional mixins which must be added to the runtime")
 parser.add_option("--prss", action="store_true",
                   help="use PRSS for preprocessing")
 parser.add_option("--hyper", action="store_false", dest="prss",
@@ -114,7 +118,7 @@ parser.add_option("-t", "--threshold", type="int",
                   help="corruption threshold")
 parser.add_option("-c", "--count", type="int",
                   help="number of operations")
-parser.add_option("-o", "--operation", type="choice", choices=operations,
+parser.add_option("-o", "--operation", type="choice", choices=operations.keys(),
                   help="operation to benchmark")
 parser.add_option("-p", "--parallel", action="store_true",
                   help="execute operations in parallel")
@@ -122,17 +126,33 @@ parser.add_option("-s", "--sequential", action="store_false", dest="parallel",
                   help="execute operations in sequence")
 parser.add_option("-f", "--fake", action="store_true",
                   help="skip local computations using fake field elements")
+parser.add_option("--args", type="string",
+                  help=("additional arguments to the runtime, the format is "
+                        "a comma separated list of id=value pairs e.g. "
+                        "--args s=1,d=0,lambda=1"))
+parser.add_option("--needed_data", type="string",
+                  help=("name of a file containing already computed "
+                        "dictionary of needed_data. Useful for skipping "
+                        "generating the needed data, which usually "
+                        "elliminates half the execution time. Format of file: "
+                        "\"{('random_triple', (Zp,)): [(3, 1), (3, 4)]}\""))
+parser.add_option("--pc", type="string",
+                  help=("The program counter to start from when using "
+                        "explicitly provided needed_data. Format: [3,0]"))
 
 parser.set_defaults(modulus=2**65, threshold=1, count=10,
-                    active=False, twoplayer=False, prss=True,
-                    operation=operations[0], parallel=True, fake=False)
+                    runtime="PassiveRuntime", mixins="", num_players=2, prss=True,
+                    operation="mul", parallel=True, fake=False,
+                    args="", needed_data="")
+
+print "*" * 60
 
 # Add standard VIFF options.
 Runtime.add_options(parser)
 
 (options, args) = parser.parse_args()
 
-if len(args) == 0:
+if not args:
     parser.error("you must specify a config file")
 
 id, players = load_config(args[0])
@@ -146,189 +166,76 @@ if options.fake:
 else:
     Field = GF
 
+
 Zp = Field(find_prime(options.modulus))
 print "Using field elements (%d bit modulus)" % log(Zp.modulus, 2)
+
 
 count = options.count
 print "I am player %d, will %s %d numbers" % (id, options.operation, count)
 
-# Defining the protocol as a class makes it easier to write the
-# callbacks in the order they are called. This class is a base class
-# that executes the protocol by calling the run_test method.
-class Benchmark:
 
-    def __init__(self, rt, operation):
-        self.rt = rt
-        self.operation = operation
-        self.sync_preprocess()
+# Identify the base runtime class.
+base_runtime_class = runtimes[options.runtime]
 
-    def sync_preprocess(self):
-        print "Synchronizing preprocessing"
-        sys.stdout.flush()
-        sync = self.rt.synchronize()
-        self.rt.schedule_callback(sync, self.preprocess)
+# Identify the additional mixins.
+actual_mixins = []
+if options.mixins:
+    actual_mixins = [mixins[mixin] for mixin in options.mixins.split(',')]
 
-    def preprocess(self, _):
-        program_desc = {}
 
-        if isinstance(self.rt, BasicActiveRuntime):
-            # TODO: Make this optional and maybe automatic. The
-            # program descriptions below were found by carefully
-            # studying the output reported when the benchmarks were
-            # run with no preprocessing. So they are quite brittle.
-            if self.operation == operator.mul:
-                key = ("generate_triples", (Zp,))
-                desc = [(i, 1, 0) for i in range(3, 3 + count)]
-                program_desc.setdefault(key, []).extend(desc)
-            elif isinstance(self.rt, ComparisonToft05Mixin):
-                key = ("generate_triples", (GF256,))
-                desc = sum([[(c, 64, i, 1, 1, 0) for i in range(2, 33)] +
-                            [(c, 64, i, 3, 1, 0) for i in range(17, 33)]
-                            for c in range(3 + 2*count, 3 + 3*count)],
-                           [])
-                program_desc.setdefault(key, []).extend(desc)
-            elif isinstance(self.rt, ComparisonToft07Mixin):
-                key = ("generate_triples", (Zp,))
-                desc = sum([[(c, 2, 4, i, 2, 1, 0) for i in range(1, 33)] +
-                            [(c, 2, 4, 99, 2, 1, 0)] +
-                            [(c, 2, 4, i, 1, 0) for i in range(65, 98)]
-                            for c in range(3 + 2*count, 3 + 3*count)],
-                           [])
-                program_desc.setdefault(key, []).extend(desc)
-
-        if program_desc:
-            print "Starting preprocessing"
-            record_start("preprocessing")
-            preproc = self.rt.preprocess(program_desc)
-            preproc.addCallback(record_stop, "preprocessing")
-            self.rt.schedule_callback(preproc, self.begin)
-        else:
-            print "Need no preprocessing"
-            self.begin(None)
-
-    def begin(self, _):
-        print "Runtime ready, generating shares"
-        self.a_shares = []
-        self.b_shares = []
-        for i in range(count):
-            inputter = (i % len(self.rt.players)) + 1
-            if inputter == self.rt.id:
-                a = rand.randint(0, Zp.modulus)
-                b = rand.randint(0, Zp.modulus)
-            else:
-                a, b = None, None
-            self.a_shares.append(self.rt.input([inputter], Zp, a))
-            self.b_shares.append(self.rt.input([inputter], Zp, b))
-        shares_ready = gather_shares(self.a_shares + self.b_shares)
-        self.rt.schedule_callback(shares_ready, self.sync_test)
-
-    def sync_test(self, _):
-        print "Synchronizing test start."
-        sys.stdout.flush()
-        sync = self.rt.synchronize()
-        self.rt.schedule_callback(sync, self.countdown, 3)
-
-    def countdown(self, _, seconds):
-        if seconds > 0:
-            print "Starting test in %d" % seconds
-            sys.stdout.flush()
-            reactor.callLater(1, self.countdown, None, seconds - 1)
-        else:
-            print "Starting test now"
-            sys.stdout.flush()
-            self.run_test(None)
-
-    def run_test(self, _):
-        raise NotImplemented("Override this abstract method in a sub class.")
-
-    def finished(self, _):
-        sys.stdout.flush()
-
-        if self.rt._needed_data:
-            print "Missing pre-processed data:"
-            for (func, args), pcs in self.rt._needed_data.iteritems():
-                print "* %s%s:" % (func, args)
-                print "  " + pformat(pcs).replace("\n", "\n  ")
-
-        self.rt.shutdown()
-
-# This class implements a benchmark where run_test executes all
-# operations in parallel.
-class ParallelBenchmark(Benchmark):
-
-    def run_test(self, _):
-        c_shares = []
-        record_start("parallel test")
-        while self.a_shares and self.b_shares:
-            a = self.a_shares.pop()
-            b = self.b_shares.pop()
-            c_shares.append(self.operation(a, b))
-
-        done = gather_shares(c_shares)
-        done.addCallback(record_stop, "parallel test")
-        self.rt.schedule_callback(done, self.finished)
-
-# A benchmark where the operations are executed one after each other.
-class SequentialBenchmark(Benchmark):
-
-    def run_test(self, _):
-        record_start("sequential test")
-        self.single_operation(None)
-
-    def single_operation(self, _):
-        if self.a_shares and self.b_shares:
-            a = self.a_shares.pop()
-            b = self.b_shares.pop()
-            c = self.operation(a, b)
-            self.rt.schedule_callback(c, self.single_operation)
-        else:
-            record_stop(None, "sequential test")
-            self.finished(None)
-
-mixins = []
-if options.twoplayer:
-    # Then there is just one possible runtime:
-    operation = operator.mul
-    base_runtime_class = PaillierRuntime
-else:
-    # There are several options for a multiplayer runtime:
-    if options.active:
-        base_runtime_class = BasicActiveRuntime
-        if options.prss:
-            mixins.append(TriplesPRSSMixin)
-        else:
-            mixins.append(TriplesHyperinvertibleMatricesMixin)
-    else:
-        base_runtime_class = PassiveRuntime
-
-    if options.operation == "mul":
-        operation = operator.mul
-    elif options.operation == "compToft05":
-        operation = operator.ge
-        mixins.append(ComparisonToft05Mixin)
-    elif options.operation == "compToft07":
-        operation = operator.ge
-        mixins.append(ComparisonToft07Mixin)
-    elif options.operation == "eq":
-        operation = operator.eq
-        mixins.append(ProbabilisticEqualityMixin)
+# Identify the operation and it mixin dependencies.
+operation = operations[options.operation][0]
+actual_mixins += operations[options.operation][1]
+operation_arity = operations[options.operation][2]
 
 print "Using the base runtime: %s." % base_runtime_class
-if mixins:
+if actual_mixins:
     print "With the following mixins:"
-    for mixin in mixins:
-        print "- %s" % mixin
+    for mixin in actual_mixins:
+        print "- %s" % mixin.__name__
 
-runtime_class = make_runtime_class(base_runtime_class, mixins)
+runtime_class = make_runtime_class(base_runtime_class, actual_mixins)
+
+pre_runtime = create_runtime(id, players, options.threshold,
+                             options, runtime_class)
+
+def update_args(runtime, options):
+    args = {}
+    if options.args:
+        for arg in options.args.split(','):
+            id, value = arg.split('=')
+            args[id] = long(value)
+        runtime.set_args(args)
+    return runtime
+
+
+pre_runtime.addCallback(update_args, options)
 
 if options.parallel:
     benchmark = ParallelBenchmark
 else:
     benchmark = SequentialBenchmark
 
-pre_runtime = create_runtime(id, players, options.threshold,
-                             options, runtime_class)
-pre_runtime.addCallback(benchmark, operation)
+needed_data = ""
+if options.needed_data:
+    needed_data = eval(open(options.needed_data).read())
+
+if options.needed_data and options.pc:
+    bases = (benchmark, NeededDataBenchmarkStrategy, operation_arity, object)
+    options.pc = eval(options.pc)
+else:
+    bases = (benchmark, SelfcontainedBenchmarkStrategy, operation_arity, object)
+
+print "Using the Benchmark bases:"
+for b in bases:
+    print "- %s" % b.__name__
+benchmark = type("ExtendedBenchmark", bases, {})
+
+def do_benchmark(runtime, operation, benchmark, field, count, *args):
+    benchmark(runtime, operation, field, count).benchmark(*args)
+
+pre_runtime.addCallback(do_benchmark, operation, benchmark, Zp, count, needed_data, options.pc)
 
 print "#### Starting reactor ###"
 reactor.run()

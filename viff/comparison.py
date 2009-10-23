@@ -20,12 +20,10 @@
 <viff.runtime.Runtime>` they are mixed with.
 """
 
-__docformat__ = "restructuredtext"
-
 import math
 
 from viff.util import rand, profile
-from viff.runtime import Share, gather_shares, increment_pc
+from viff.runtime import Share, gather_shares
 from viff.passive import PassiveRuntime
 from viff.active import ActiveRuntime
 from viff.field import GF256, FieldElement
@@ -34,7 +32,6 @@ from viff.field import GF256, FieldElement
 class ComparisonToft05Mixin:
     """Comparison by Tomas Toft, 2005."""
 
-    @increment_pc
     def convert_bit_share(self, share, dst_field):
         """Convert a 0/1 share into dst_field."""
         bit = rand.randint(0, 1)
@@ -67,7 +64,6 @@ class ComparisonToft05Mixin:
         return int_b, bit_bits
 
     @profile
-    @increment_pc
     def greater_than_equal(self, share_a, share_b):
         """Compute ``share_a >= share_b``.
 
@@ -100,7 +96,6 @@ class ComparisonToft05Mixin:
         self.schedule_callback(result, self._finish_greater_than_equal, l)
         return result
 
-    @increment_pc
     def _finish_greater_than_equal(self, results, l):
         """Finish the calculation."""
         T = results[0]
@@ -128,7 +123,6 @@ class ComparisonToft05Mixin:
 
         return GF256(T.bit(l)) ^ (bit_bits[l] ^ vec[0][1])
 
-    @increment_pc
     def _diamond(self, (top_a, bot_a), (top_b, bot_b)):
         """The "diamond-operator".
 
@@ -160,7 +154,6 @@ class ComparisonToft07Mixin:
     elements and gives a secret result shared over Zp.
     """
 
-    @increment_pc
     def convert_bit_share(self, share, dst_field):
         """Convert a 0/1 share into *dst_field*."""
         l = self.options.security_parameter + math.log(dst_field.modulus, 2)
@@ -188,7 +181,6 @@ class ComparisonToft07Mixin:
         return tmp - full_mask
 
     @profile
-    @increment_pc
     def greater_than_equal_preproc(self, field, smallField=None):
         """Preprocessing for :meth:`greater_than_equal`."""
         if smallField is None:
@@ -243,7 +235,6 @@ class ComparisonToft07Mixin:
         ##################################################
 
     @profile
-    @increment_pc
     def greater_than_equal_online(self, share_a, share_b, preproc, field):
         """Compute ``share_a >= share_b``. Result is secret shared."""
         # increment l as a, b are increased
@@ -272,7 +263,6 @@ class ComparisonToft07Mixin:
                                r_modl, r_bits, z)
         return c
 
-    @increment_pc
     def _finish_greater_than_equal(self, c, field, smallField, s_bit, s_sign,
                                mask, r_modl, r_bits, z):
         """Finish the calculation."""
@@ -316,7 +306,6 @@ class ComparisonToft07Mixin:
         return (z - result) * ~field(2**l)
     # END _finish_greater_than
 
-    @increment_pc
     def greater_than_equal(self, share_a, share_b):
         """Compute ``share_a >= share_b``.
 
