@@ -465,7 +465,8 @@ def preprocess(generator):
     The decorated method will be replaced with a proxy method which
     first tries to get the data needed from
     :attr:`Runtime._pool`, and if that fails it falls back to the
-    original method.
+    original method. It also returns a flag to indicate whether the
+    data is from the pool.
 
     The *generator* method is only used to record where the data
     should be generated from, the method is not actually called. This
@@ -480,14 +481,14 @@ def preprocess(generator):
             self.increment_pc()
             pc = tuple(self.program_counter)
             try:
-                return self._pool.pop(pc)
+                return self._pool.pop(pc), True
             except KeyError:
                 key = (generator, args)
                 pcs = self._needed_data.setdefault(key, [])
                 pcs.append(pc)
                 self.fork_pc()
                 try:
-                    return method(self, *args, **kwargs)
+                    return method(self, *args, **kwargs), False
                 finally:
                     self.unfork_pc()
 

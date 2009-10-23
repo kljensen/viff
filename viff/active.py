@@ -487,7 +487,7 @@ class BasicActiveRuntime(PassiveRuntime):
 
         # At this point both share_x and share_y must be Share
         # objects. We multiply them via a multiplication triple.
-        a, b, c = self.get_triple(share_x.field)
+        (a, b, c), _ = self.get_triple(share_x.field)
         d = self.open(share_x - a)
         e = self.open(share_y - b)
 
