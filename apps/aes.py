@@ -129,30 +129,30 @@ def preprocess(rt):
             js = [3 + i * 23 + j for i in range(20)
                   for j in range(0, 14, 2) + [15]]
         elif options.exponentiation == 0 or options.exponentiation == 3:
-            max = 561
-            js = [1 + i * 28 + j * 2 for i in range(20) for j in range(13)]
+            max = 821
+            js = [1 + i * 41 + j * 3 for i in range(20) for j in range(13)]
         elif options.exponentiation == 1 or options.exponentiation == 2:
-            max = 481
-            js = [1 + i * 24 + j * 2 for i in range(20) for j in range(11)]
+            max = 701
+            js = [1 + i * 35 + j * 3 for i in range(20) for j in range(11)]
 
         if options.exponentiation == 4:
-            pcs = [(2, 1 + i, 2 + 2 * j)
+            pcs = [(2, 1 + i, 2 + 3 * j)
                    for i in range(10 * options.count)
                    for j in range(140)] + \
-                  [(3, 17, k) + (121,) * i + (4 + 6 * j, 1 + 2 * l)
+                  [(3, 18, k) + (121,) * i + (4 + 6 * j, 1 + 3 * l)
                    for k in range(1, options.count + 1)
                    for i in range(10)
                    for j in range(20)
                    for l in range(6)]
         else:
-            pcs = [(2, 17, k) + (max,) * i + (j,)
+            pcs = [(2, 18, k) + (max,) * i + (j,)
                    for k in range(1, options.count + 1)
                    for i in range(10)
                    for j in js]
         program_desc[("generate_triples", (GF256,))] = pcs
 
     if options.exponentiation == 4:
-        pcs = [(3, 17, k) + (121,) * i + (1 + j * 6,)
+        pcs = [(3, 18, k) + (121,) * i + (1 + j * 6,)
                for k in range(1, options.count + 1)
                for i in range(10)
                for j in range(20)]
