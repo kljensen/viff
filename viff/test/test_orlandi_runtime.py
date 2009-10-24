@@ -18,7 +18,7 @@
 from twisted.internet.defer import gatherResults, DeferredList
 
 from viff.test.util import RuntimeTestCase, protocol
-from viff.runtime import gather_shares
+from viff.runtime import gather_shares, Share
 try:
     from viff.orlandi import OrlandiRuntime, OrlandiShare
     import commitment
@@ -560,9 +560,10 @@ class OrlandiAdvancedCommandsTest(RuntimeTestCase):
         x2 = runtime.shift([1], self.Zp, x1)
         y2 = runtime.shift([2], self.Zp, y1)
 
-        c, sls = runtime.random_triple(self.Zp, 2*runtime.d + 1)
+        sls = gatherResults(runtime.random_triple(self.Zp, 2*runtime.d + 1))
 
         def cont(M):
+            M = [[Share(self, self.Zp, j) for j in i] for i in M]
             z2 = runtime.leak_tolerant_mul(x2, y2, M)
             d = runtime.open(z2)
             d.addCallback(check)
@@ -666,9 +667,9 @@ class TripleGenTest(RuntimeTestCase):
         def open(ls):
             ds = []
             for (a, b, c) in ls:
-                d1 = runtime.open(a)
-                d2 = runtime.open(b)
-                d3 = runtime.open(c)
+                d1 = runtime.open(Share(self, self.Zp, a))
+                d2 = runtime.open(Share(self, self.Zp, b))
+                d3 = runtime.open(Share(self, self.Zp, c))
                 ds.append(d1)
                 ds.append(d2)
                 ds.append(d3)
@@ -676,7 +677,7 @@ class TripleGenTest(RuntimeTestCase):
             d = gatherResults(ds)
             d.addCallback(check)
             return d
-        c, d = runtime.random_triple(self.Zp, 1)
+        d = gatherResults(runtime.random_triple(self.Zp, 1))
         d.addCallbacks(open, runtime.error_handler)
         return d
 
@@ -696,9 +697,9 @@ class TripleGenTest(RuntimeTestCase):
         def open(ls):
             ds = []
             for [(a, b, c)] in ls:
-                d1 = runtime.open(a)
-                d2 = runtime.open(b)
-                d3 = runtime.open(c)
+                d1 = runtime.open(Share(self, self.Zp, a))
+                d2 = runtime.open(Share(self, self.Zp, b))
+                d3 = runtime.open(Share(self, self.Zp, c))
                 ds.append(d1)
                 ds.append(d2)
                 ds.append(d3)
@@ -706,10 +707,10 @@ class TripleGenTest(RuntimeTestCase):
             d = gatherResults(ds)
             d.addCallback(check)
             return d
-        ac, a = runtime.random_triple(self.Zp, 1)
-        bc, b = runtime.random_triple(self.Zp, 1)
-        cc, c = runtime.random_triple(self.Zp, 1)
-        d = gather_shares([a, b, c])
+        a = gatherResults(runtime.random_triple(self.Zp, 1))
+        b = gatherResults(runtime.random_triple(self.Zp, 1))
+        c = gatherResults(runtime.random_triple(self.Zp, 1))
+        d = gatherResults([a, b, c])
         d.addCallbacks(open, runtime.error_handler)
         return d
 

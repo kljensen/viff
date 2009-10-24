@@ -520,17 +520,11 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
 
         field = getattr(share_x, "field", getattr(share_y, "field", None))
 
-        def finish_mul((a, b, c)):
-            return self._basic_multiplication(share_x, share_y, a, b, c)
-
-        # This will be the result, a Share object.
-        result = Share(self, share_x.field)
-        # This is the Deferred we will do processing on.
-        triple = self._get_triple(field)
-        triple = self.schedule_complex_callback(triple, finish_mul)
-        # We add the result to the chains in triple.
-        triple.chainDeferred(result)
-        return result
+        triple, prep = self._get_triple(field)
+        if prep:
+            # The data from the pool must be wrapped in Shares.
+            triple = [Share(self, field, i) for i in triple]
+        return self._basic_multiplication(share_x, share_y, *triple)
 
     def _additive_constant(self, zero, field_element):
         """Greate an additive constant.
@@ -623,11 +617,13 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
 
     @preprocess("random_triple")
     def _get_triple(self, field):
-        c, d = self.random_triple(field, 1)
-        def f(ls):
-            return ls[0]
-        d.addCallbacks(f, self.error_handler)
-        return d
+        results = [Share(self, field) for i in range(3)]
+        def chain(triple, results):
+            for i, result in zip(triple, results):
+                result.callback(i)
+        self.random_triple(field, 1)[0].addCallbacks(chain, self.error_handler,
+                                                     (results,))
+        return results
 
     def _basic_multiplication(self, share_x, share_y, triple_a, triple_b, triple_c):
         """Multiplication of shares give a triple.
@@ -1314,6 +1310,7 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
             r.addErrback(self.error_handler)
             return r
 
+        results = [Deferred() for i in xrange(quantity)]
 
         def step7(Msets):
             """For i = 1,...,M do:
@@ -1323,21 +1320,15 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
             d) Open([c] + [r])
             """
             ds = []
-            for Mi in Msets:
+            for Mi, result in zip(Msets, results):
                 a = self.random_share(field)
                 b = self.random_share(field)
                 r = self.random_share(field)
                 c = self.leak_tolerant_mul(a, b, Mi)
                 d = self.open(c + r)
-                def return_abc(x, a, b, c):
-                    return a, b, c
-                d.addCallbacks(return_abc, self.error_handler, callbackArgs=(a, b, c))
-                ds.append(d)
-            result = gather_shares(ds)
-            def triples(ls):
-                return ls
-            result.addCallbacks(triples, self.error_handler)
-            return result
+                def return_abc(x, a, b, c, result):
+                    gatherResults([a, b, c]).chainDeferred(result)
+                d.addCallbacks(return_abc, self.error_handler, callbackArgs=(a, b, c, result))
 
         result = gatherResults(M)
         self.schedule_callback(result, step3)
@@ -1348,12 +1339,7 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
 
         # do actual communication
         self.activate_reactor()
-
-        s = Share(self, field)
-        # We add the result to the chains in result.
-        result.chainDeferred(s)
-
-        return quantity, s
+        return results
 
     def error_handler(self, ex):
         print "Error: ", ex
