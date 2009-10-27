@@ -125,9 +125,9 @@ def preprocess(rt):
 
     if options.active:
         if options.exponentiation is False:
-            max = 461
-            js = [3 + i * 23 + j for i in range(20)
-                  for j in range(0, 14, 2) + [15]]
+            max = 621
+            js = [3 + i * 31 + j for i in range(20)
+                  for j in range(0, 21, 3) + [22]]
         elif options.exponentiation == 0 or options.exponentiation == 3:
             max = 821
             js = [1 + i * 41 + j * 3 for i in range(20) for j in range(13)]
