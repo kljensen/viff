@@ -950,7 +950,7 @@ def make_runtime_class(runtime_class=None, mixins=None):
         # We must include at least one new-style class in bases. We
         # include it last to avoid overriding __init__ from the other
         # base classes.
-        bases = (runtime_class,) + tuple(mixins) + (object,)
+        bases = tuple(mixins) + (runtime_class,) + (object,)
         return type("ExtendedRuntime", bases, {})
 
 def create_runtime(id, players, threshold, options=None, runtime_class=None):
