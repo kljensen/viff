@@ -62,10 +62,19 @@ def encrypt_r(m, r, (n, g)):
     nsq = n*n
     return (pow(g, m, nsq)*pow(r, n, nsq)) % nsq
 
+#: Cache for ciphertext-independent factors.
+_decrypt_factors = {}
+
 def decrypt(c, (n, g, lm)):
     numer = L(pow(c, lm, n*n), n)
-    denom = L(pow(g, lm, n*n), n)
-    return (numer*gmpy.invert(denom, n)) % n
+    key = (n, g, lm)
+    try:
+        factor = _decrypt_factors[key]
+    except KeyError:
+        denom = L(pow(g, lm, n*n), n)
+        factor = gmpy.invert(denom, n)
+        _decrypt_factors[key] = factor
+    return (numer * factor) % n
 
 
 class PaillierRuntime(Runtime):
