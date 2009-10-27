@@ -166,7 +166,7 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
         assert number is None or self.id in inputters
         self.threshold = self.num_players - 1
 
-        self.program_counter[-1] += 1
+        self.increment_pc()
 
         def additive_shares_with_rho(x):
             """Returns a tuple of a list of tuples (player id, share,
@@ -245,7 +245,7 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
 
         field = share.field
 
-        self.program_counter[-1] += 1
+        self.increment_pc()
 
         def recombine_value(shares, Cx):
             x = 0
@@ -305,7 +305,7 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
 
         Party ``P_i sets [r]_i = (r_i, rho_ri, C_r)``.
         """
-        self.program_counter[-1] += 1
+        self.increment_pc()
 
         # P_i chooses at random r_i, rho_ri in Z_p x (Z_p)^2
         ri = field(rand.randint(0, field.modulus - 1))
@@ -435,7 +435,7 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
         # TODO: Communitcation costs?
         assert (self.id in inputters and number is not None) or (self.id not in inputters)
 
-        self.program_counter[-1] += 1
+        self.increment_pc()
 
         results = []
         def hack(_, peer_id):
@@ -494,7 +494,7 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
         assert isinstance(share_x, Share) or isinstance(share_y, Share), \
             "At least one of share_x and share_y must be a Share."
 
-        self.program_counter[-1] += 1
+        self.increment_pc()
 
         field = getattr(share_x, "field", getattr(share_y, "field", None))
 
@@ -615,7 +615,7 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
         assert isinstance(share_x, Share) or isinstance(share_y, Share), \
             "At least one of share_x and share_y must be a Share."
 
-        self.program_counter[-1] += 1
+        self.increment_pc()
 
         field = getattr(share_x, "field", getattr(share_y, "field", None))
         n = field(0)
@@ -696,7 +696,7 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
         assert isinstance(share_x, Share) or isinstance(share_y, Share), \
             "At least one of share_x and share_y must be a Share."
 
-        self.program_counter[-1] += 1
+        self.increment_pc()
 
         field = getattr(share_x, "field", getattr(share_y, "field", None))
         n = field(0)
@@ -820,7 +820,7 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
            ``[b_i] = (b_i, s_i, B)``, and ``[c_i] = (c_i, t_i, C)``.
 
         """
-        self.program_counter[-1] += 1
+        self.increment_pc()
 
         def random_number(p):
             return field(rand.randint(0, p - 1))
@@ -1027,7 +1027,7 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
         The triple ``(a, b, c)`` is secure in the Fcrs-hybrid model.
 
         """
-        self.program_counter[-1] += 1
+        self.increment_pc()
 
         M = []
 
