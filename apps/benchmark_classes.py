@@ -107,7 +107,7 @@ class ParallelBenchmark(Benchmark):
     operations in parallel."""
 
     def run_test(self, shares):
-        print "rt", self.rt.program_counter, self.pc
+        # print "rt", self.rt.program_counter, self.pc
         if self.pc != None:
             self.rt.program_counter = self.pc
         else:
@@ -176,7 +176,7 @@ class BinaryOperation(Operation):
     """A binary operation."""
 
     def generate_operation_arguments(self, _):
-        print "Generate operation arguments", self.rt.program_counter
+        # print "Generate operation arguments", self.rt.program_counter
         print "Runtime ready, generating shares"
         self.a_shares = []
         self.b_shares = []
