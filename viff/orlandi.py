@@ -15,6 +15,8 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with VIFF. If not, see <http://www.gnu.org/licenses/>.
 
+import operator
+
 from twisted.internet.defer import Deferred, gatherResults, succeed
 
 from viff.runtime import Runtime, Share, ShareList, gather_shares, preprocess
@@ -303,9 +305,7 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
         sls = gatherResults(self.broadcast(self.players.keys(), self.players.keys(), repr(Cri)))
 
         def compute_commitment(ls):
-            Cr = ls.pop()
-            for Cri in ls:
-                Cr = Cr * Cri
+            Cr = reduce(operator.mul, ls)
             return OrlandiShare(self, field, ri, (rhoi1, rhoi2), Cr)
 
         def deserialize(ls):
@@ -343,9 +343,8 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
             return s
 
         # Either share_a or share_b must have an attribute called "field".
-        field = getattr(share_a, "field", getattr(share_b, "field", None))
+        field = share_a.field
 
-        share_a = is_share(share_a, field)
         share_b = is_share(share_b, field)
 
         # Add rho_xi and rho_yi and compute the commitment.
@@ -811,17 +810,7 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
 
         def product(ls):
             """Compute the product of the elements in the list *ls*."""
-            b = commitment.deserialize(ls[0])
-            for x in ls[1:]:
-                b *= commitment.deserialize(x)
-            return b
-
-        def sum(ls):
-            """Compute the sum of the elements in the list *ls*."""
-            b = field(0)
-            for x in ls:
-                b += x
-            return b
+            return  reduce(operator.mul, map(commitment.deserialize, ls))
 
         def step45(Cs, alphas, gammas, alpha_randomness,
                    As, Bs, ai, bi, ci, r, s, t, dijs):
@@ -858,7 +847,7 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
             """
             # c_i = SUM_j Dec_sk_i(gamma_ij) - SUM_j d_ji mod p.
             ls = decrypt_gammas(gammas)
-            ci = sum(ls) - sum(dijs)
+            ci = sum(ls, field(0)) - sum(dijs, field(0))
             # (b) pick random t_i in (Z_p)^2.
             t1 = random_number(field. modulus)
             t2 = random_number(field. modulus)
@@ -886,18 +875,19 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
             dijs = [None] * len(self.players.keys())
             results = [None] * len(self.players.keys())
             pc = tuple(self.program_counter)
+            p3 = field.modulus**3
             for pi in self.players.keys():
                 n = self.players[pi].pubkey[0]
                 nsq = n * n
                 # choose random d_i,j in Z_p^3
-                dij = random_number(field.modulus**3)
+                dij = random_number(p3)
                 # Enc_ek_i(1;1)^d_ij
                 enc = encrypt_r(1, 1, self.players[pi].pubkey)
                 t1 = pow(enc, dij.value, nsq)
                 # alpha_i^b_j.
                 t2 = pow(alphas[pi - 1], bj.value, nsq)
                 # gamma_ij = alpha_i^b_j Enc_ek_i(1;1)^d_ij
-                gammaij = (t2) * (t1) % nsq
+                gammaij = (t2 * t1) % nsq
                 # Broadcast gamma_ij
                 if pi != self.id:
                     self.protocols[pi].sendData(pc, PAILLIER, str(gammaij))
@@ -905,8 +895,7 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
                     d.addCallbacks(lambda value: long(value), self.error_handler)
                     self._expect_data(pi, PAILLIER, d)
                 else:
-                    d = Deferred()
-                    d.callback(gammaij)
+                    d = succeed(gammaij)
                 dijs[pi - 1] = dij
                 results[pi - 1] = d
             result = gatherResults(results)
