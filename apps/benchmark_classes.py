@@ -41,7 +41,7 @@ def record_stop(x, what, count):
     print "Total time used: %.3f sec" % (stop-start)
     print "Time per %s operation: %.0f ms" % (what, 1000*(stop-start) / count)
     print "Throughput: %d per second" % (count / (stop-start))
-    print "*" * 6
+    print "*" * 64
     return x
 
 

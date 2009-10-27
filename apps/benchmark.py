@@ -145,7 +145,7 @@ parser.set_defaults(modulus=2**65, threshold=1, count=10,
                     operation="mul", parallel=True, fake=False,
                     args="", needed_data="")
 
-print "*" * 60
+print "*" * 64
 
 # Add standard VIFF options.
 Runtime.add_options(parser)
