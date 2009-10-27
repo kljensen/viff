@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with VIFF. If not, see <http://www.gnu.org/licenses/>.
 
-from twisted.internet.defer import Deferred, gatherResults
+from twisted.internet.defer import Deferred, gatherResults, succeed
 
 from viff.runtime import Runtime, Share, ShareList, gather_shares, preprocess
 from viff.util import rand
@@ -1104,11 +1104,6 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
                 l.addCallbacks(long, self.error_handler)
                 return l
 
-            def defer_value(l):
-                d = Deferred()
-                d.callback(l)
-                return d
-
             def check((ais, bis, cis, alpha_randomness, dijs), alphas, gammas):
                 """So if B receives ai, bi, dij, ri, si, and the
                 randomness used in the computation of alpha, he then
@@ -1216,8 +1211,8 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
                         ds_a[player_id - 1] = defer_share(a.share, a.rho, a.commitment)
                         ds_b[player_id - 1] = defer_share(b.share, b.rho, b.commitment)
                         ds_c[player_id - 1] = defer_share(c.share, c.rho, c.commitment)
-                        ds_alpha_randomness[player_id - 1] = defer_value(alpha_randomness)
-                        ds_dijs[player_id - 1] = defer_value(dijs[player_id - 1])
+                        ds_alpha_randomness[player_id - 1] = succeed(alpha_randomness)
+                        ds_dijs[player_id - 1] = succeed(dijs[player_id - 1])
                     # Receive and recombine shares if this player is a
                     # receiver.
                     else:
