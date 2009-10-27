@@ -474,19 +474,15 @@ class BasicActiveRuntime(PassiveRuntime):
         Preprocessing: 1 multiplication triple.
         Communication: 2 openings.
         """
-        assert isinstance(share_x, Share) or isinstance(share_y, Share), \
-            "At least one of share_x and share_y must be a Share."
+        assert isinstance(share_x, Share), \
+            "share_x must be a Share."
 
-        if not isinstance(share_x, Share):
-            # Then share_y must be a Share => local multiplication. We
-            # clone first to avoid changing share_y.
-            result = share_y.clone()
-            result.addCallback(lambda y: share_x * y)
-            return result
         if not isinstance(share_y, Share):
-            # Likewise when share_y is a constant.
+            # Local multiplication. share_x always is a Share by
+            # operator overloading in Share. We clone share_x first
+            # to avoid changing it.
             result = share_x.clone()
-            result.addCallback(lambda x: x * share_y)
+            result.addCallback(lambda x: share_y * x)
             return result
 
         # At this point both share_x and share_y must be Share
