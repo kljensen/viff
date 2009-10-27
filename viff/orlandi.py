@@ -131,21 +131,13 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
         rhoi1 = self._expect_share(peer_id, field)
         rhoi2 = self._expect_share(peer_id, field)
         self._expect_data(peer_id, TEXT, Cx)
-        sls = ShareList([xi, rhoi1, rhoi2, Cx])
+        sls = gather_shares([xi, rhoi1, rhoi2, Cx])
         def combine(ls):
-            expected_num = 4;
-            if len(ls) is not expected_num:
-                raise OrlandiException("Cannot share number, trying to create a share,"
-                                       " expected %s components got %s."
-                                       % (expected_num, len(ls)))
-            s1, xi = ls[0]
-            s2, rhoi1 = ls[1]
-            s3, rhoi2 = ls[2]
-            s4, Cx = ls[3]
+            xi = ls[0]
+            rhoi1 = ls[1]
+            rhoi2 = ls[2]
+            Cx = ls[3]
             Cxx = commitment.deserialize(Cx)
-            if not (s1 and s2 and s3 and s4):
-                raise OrlandiException("Cannot share number, trying to create share,"
-                                       " but a component did arrive properly.")
             return OrlandiShare(self, field, xi, (rhoi1, rhoi2), Cxx)
         sls.addCallbacks(combine, self.error_handler)
         return sls
