@@ -1091,8 +1091,8 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
                 rho1 = self._expect_share(player_id, field)
                 rho2 = self._expect_share(player_id, field)
                 self._expect_data(player_id, TEXT, Cx)
-                Cx.addCallbacks(lambda Cx: commitment.deserialize(Cx),
-                                        self.error_handler)
+                Cx.addCallbacks(commitment.deserialize,
+                                self.error_handler)
                 return gatherResults([xi, rho1, rho2, Cx])
 
             def send_long(player_id, pc, l):
@@ -1101,7 +1101,7 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
             def receive_long(player_id):
                 l = Deferred()
                 self._expect_data(player_id, TEXT, l)
-                l.addCallbacks(lambda x: long(x), self.error_handler)
+                l.addCallbacks(long, self.error_handler)
                 return l
 
             def defer_value(l):
