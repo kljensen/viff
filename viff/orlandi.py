@@ -864,7 +864,7 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
                                               As, Bs, ai, bi, ci, r, s, t, dijs))
             return result
 
-        def step2c(Bs, As, alphas, alpha_randomness, ai, bj, r, s):
+        def step2c((alphas, As, Bs), alpha_randomness, ai, bj, r, s):
             """(c) P_j do, towards every other party:
                    i. choose random d_i,j in Z_p^3
                    ii. compute and send
@@ -904,26 +904,6 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
             result.addErrback(self.error_handler)
             return result
 
-        def step2ab((alphas, As), ai, r, alpha_randomness):
-            """2) Every party P_j does:
-                  (a) choose random b_j, s_j in Z_p X (Z_p)^2.
-
-                  (b) compute B_j = Com_ck(b_j, s_j) and broadcast it.
-            """
-            # (a) choose random b_j, s_j in Z_p X (Z_p)^2.
-            bj = random_number(field.modulus)
-            s1 = random_number(field.modulus)
-            s2 = random_number(field.modulus)
-            # (b) compute B_j = Com_ck(b_j, s_j).
-            Bj = commitment.commit(bj.value, s1.value, s2.value)
-
-            # Broadcast B_j.
-            results = self.broadcast(self.players.keys(), self.players.keys(), repr(Bj))
-            result = gatherResults(results)
-            self.schedule_callback(result, step2c, As, alphas, alpha_randomness,
-                                   ai, bj, r, (s1, s2))
-            result.addErrback(self.error_handler)
-            return result
 
         # 1) Every party P_i chooses random values a_i, r_i in Z_p X (Z_p)^2,
         #    compute alpha_i = Enc_eki(a_i) and Ai = Com_ck(a_i, r_i), and
@@ -941,24 +921,36 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
         # and A_i = Com_ck(a_i, r_i).
         Ai = commitment.commit(ai.value, r1.value, r2.value)
 
-        # broadcast alpha_i and A_i.
+        # choose random b_j, s_j in Z_p X (Z_p)^2.
+        bj = random_number(field.modulus)
+        s1 = random_number(field.modulus)
+        s2 = random_number(field.modulus)
+        # compute B_j = Com_ck(b_j, s_j).
+        Bj = commitment.commit(bj.value, s1.value, s2.value)
+
+        # broadcast alpha_i, A_i, B_j.
         ds = self.broadcast(sorted(self.players.keys()),
                             sorted(self.players.keys()),
-                            str(alphai) + ":" + repr(Ai))
+                            str(alphai) + ":" + repr(Ai) + ":" + repr(Bj))
 
-        result = gatherResults(ds)
-        def split_alphas_and_As(ls):
+        alphas_As_Bs = gatherResults(ds)
+        def split_alphas_As_Bs(ls):
             alphas = []
             As = []
+            Bs = []
             for x in ls:
-                alpha, Ai = x.split(':')
+                alpha, Ai, Bj = x.split(':')
                 alphas.append(long(alpha))
                 As.append(Ai)
-            return alphas, As
-        self.schedule_callback(result, split_alphas_and_As)
-        self.schedule_callback(result, step2ab, ai, (r1, r2), alpha_randomness)
-        result.addErrback(self.error_handler)
-        return result
+                Bs.append(Bj)
+            return alphas, As, Bs
+        alphas_As_Bs.addCallbacks(split_alphas_As_Bs, self.error_handler)
+
+        self.schedule_callback(alphas_As_Bs, step2c, alpha_randomness, 
+                               ai, bj, (r1, r2), (s1, s2))
+        alphas_As_Bs.addErrback(self.error_handler)
+        return alphas_As_Bs
+
 
     def triple_test(self, field):
         """Generate a triple ``(a, b, c)`` where ``c = a * b``.
