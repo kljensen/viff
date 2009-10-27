@@ -74,7 +74,7 @@ from viff.orlandi import OrlandiRuntime
 from viff.config import load_config
 from viff.util import find_prime
 
-from benchmark_classes import SelfcontainedBenchmarkStrategy, \
+from benchutil import SelfcontainedBenchmarkStrategy, \
     NeededDataBenchmarkStrategy, ParallelBenchmark, SequentialBenchmark, BinaryOperation, NullaryOperation
 
 # Hack in order to avoid Maximum recursion depth exceeded
