@@ -222,10 +222,10 @@ if options.needed_data:
     needed_data = eval(open(options.needed_data).read())
 
 if options.needed_data and options.pc:
-    bases = (benchmark, NeededDataBenchmarkStrategy, operation_arity, object)
+    bases = (benchmark, NeededDataBenchmarkStrategy, operation_arity)
     options.pc = eval(options.pc)
 else:
-    bases = (benchmark, SelfcontainedBenchmarkStrategy, operation_arity, object)
+    bases = (benchmark, SelfcontainedBenchmarkStrategy, operation_arity)
 
 print "Using the Benchmark bases:"
 for b in bases:
