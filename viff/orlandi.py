@@ -200,16 +200,11 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
                 shares, rho = additive_shares_with_rho(number)
                 Cx = commitment.commit(number, rho[0].value, rho[1].value)
                 # Distribute the shares
-                the_others = []
                 for other_id, xi, rhoi in shares:
-                    if other_id == self.id:
-                        results.append(OrlandiShare(self, field, xi, rhoi, Cx))
-                    else:
-                        # Send ``xi``, ``rhoi``, and commitment
-                        self._send_orlandi_share(other_id, pc, xi, rhoi, Cx)
-            else:
-                # Expect ``xi``, ``rhoi``, and commitment
-                results.append(self._expect_orlandi_share(peer_id, field))
+                    # Send ``xi``, ``rhoi``, and commitment
+                    self._send_orlandi_share(other_id, pc, xi, rhoi, Cx)
+            # Expect ``xi``, ``rhoi``, and commitment
+            results.append(self._expect_orlandi_share(peer_id, field))
         # do actual communication
         self.activate_reactor()
         # Unpack a singleton list.
