@@ -150,28 +150,6 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
         sls.addCallbacks(combine, self.error_handler)
         return sls
 
-    def _expect_orlandi_share_xi_rhoi(self, peer_id, field):
-        xi = self._expect_share(peer_id, field)
-        rhoi1 = self._expect_share(peer_id, field)
-        rhoi2 = self._expect_share(peer_id, field)
-        sls = ShareList([xi, rhoi1, rhoi2])
-        def combine(ls):
-            expected_num = 3;
-            if len(ls) is not expected_num:
-                raise OrlandiException("Cannot share number, trying to create a share,"
-                                       " expected %s components got %s."
-                                       % (expected_num, len(ls)))
-
-            s1, xi = ls[0]
-            s2, rhoi1 = ls[1]
-            s3, rhoi2 = ls[2]
-            if not (s1 and s2 and s3):
-                raise OrlandiException("Cannot share number, trying to create share "
-                                       "but a component did arrive properly.")
-            return OrlandiShare(self, field, xi, (rhoi1, rhoi2))
-        sls.addCallbacks(combine, self.error_handler)
-        return sls
-
     def secret_share(self, inputters, field, number=None, threshold=None):
         """Share the value *number* among all the parties using
         additive sharing.
@@ -1020,23 +998,17 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
         triple2 = self.triple_gen(field)
         r = self.open(self.random_share(field))
 
-        def check((v, oa, ob, oc, ox, oy, oz), a, b, c, ec):
-            if v is 0:
+        def check(v, a, b, c, ec):
+            if v.value != 0:
                 return None
             return (a, b, c, ec)
 
         def compute_value(((a, b, c, ec), (x, y, z, _), r)):
-            oa = self.open(a)
-            ob = self.open(b)
-            oc = self.open(c)
-            ox = self.open(x)
-            oy = self.open(y)
-            oz = self.open(z)
             l = self._cmul(r, x, field)
             m = self._cmul(r, y, field)
             n = self._cmul(r*r, z, field)
             d = c - self._basic_multiplication(a, b, l, m, n)
-            r = gather_shares([d, oa, ob, oc, ox, oy, oz])
+            r = self.open(d)
             r.addCallbacks(check, self.error_handler, callbackArgs=(a, b, c, ec))
             return r
 
