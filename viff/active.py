@@ -21,7 +21,7 @@ from math import ceil
 
 from gmpy import numdigits
 
-from twisted.internet.defer import gatherResults, Deferred, succeed
+from twisted.internet.defer import gatherResults, Deferred
 
 from viff import shamir
 from viff.util import rand

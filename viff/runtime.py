@@ -39,14 +39,14 @@ import os
 import sys
 
 from viff.field import GF256, FieldElement
-from viff.util import wrapper, rand, deep_wait, track_memory_usage, begin, end
+from viff.util import wrapper, rand, track_memory_usage, begin, end
 from viff.constants import SHARE
 import viff.reactor
 
 from twisted.internet import reactor
 from twisted.internet.task import LoopingCall
 from twisted.internet.error import ConnectionDone, CannotListenError
-from twisted.internet.defer import Deferred, DeferredList, gatherResults, succeed
+from twisted.internet.defer import Deferred, DeferredList, gatherResults
 from twisted.internet.defer import maybeDeferred
 from twisted.internet.protocol import ReconnectingClientFactory, ServerFactory
 from twisted.protocols.basic import Int16StringReceiver

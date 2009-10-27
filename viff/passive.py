@@ -27,7 +27,7 @@ from viff.prss import prss, prss_lsb, prss_zero, prss_multi
 from viff.field import GF256, FieldElement
 from viff.util import rand, profile
 
-from twisted.internet.defer import succeed, gatherResults
+from twisted.internet.defer import gatherResults
 
 
 class PassiveRuntime(Runtime):
