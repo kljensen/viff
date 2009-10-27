@@ -223,7 +223,7 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
         Every partyi broadcasts a share pair ``(x_i', rho_x,i')``.
 
         The parties compute the sums ``x'``, ``rho_x'`` and check
-        ``Com_ck(x',rho_x' = C_x``.
+        ``Com_ck(x',rho_x') = C_x``.
 
         If yes, return ``x = x'``, else else return :const:`None`.
         """
@@ -415,7 +415,7 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
         trusted dealer. Then we denote the following protocol but
         ``[x] = Shift(P_i, x, [r])``.
 
-        1. ``r = OpenTo(P_i, [r]``
+        1. ``r = OpenTo(P_i, [r])``
 
         2. ``P_i broadcasts Delta = r - x``
 
@@ -830,10 +830,10 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
 
         def step45(Cs, alphas, gammas, alpha_randomness,
                    As, Bs, ai, bi, ci, r, s, t, dijs):
-            """4) Everyone computes:
-                  ``A = PRODUCT_i A_i``
-                  ``B = PRODUCT_i B_i``
-                  ``C = PRODUCT_i C_i``
+            """4) Everyone computes::
+                  A = PRODUCT_i A_i
+                  B = PRODUCT_i B_i
+                  C = PRODUCT_i C_i
 
                5) Every party ``P_i`` outputs shares ``[a_i] = (a_i, r_i, A)``,
                   ``[b_i] = (b_i, s_i, B)``, and ``[c_i] = (c_i, t_i, C)``.
