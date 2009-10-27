@@ -455,7 +455,7 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
         3. ``[x] = [r] - Delta``
         """
         # TODO: Communitcation costs?
-        assert (self.id in inputters and number != None) or (self.id not in inputters)
+        assert (self.id in inputters and number is not None) or (self.id not in inputters)
 
         self.program_counter[-1] += 1
 

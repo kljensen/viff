@@ -108,7 +108,7 @@ class ParallelBenchmark(Benchmark):
 
     def run_test(self, shares):
         # print "rt", self.rt.program_counter, self.pc
-        if self.pc != None:
+        if self.pc is not None:
             self.rt.program_counter = self.pc
         else:
             self.pc = list(self.rt.program_counter)
