@@ -19,6 +19,8 @@
 
 from math import ceil
 
+from gmpy import numdigits
+
 from twisted.internet.defer import gatherResults, Deferred, succeed
 
 from viff import shamir
@@ -419,7 +421,7 @@ class TriplesPRSSMixin:
         result = self.generate_triples(field, quantity=1, gather=False)
         return result[0]
 
-    def generate_triples(self, field, quantity=20, gather=True):
+    def generate_triples(self, field, quantity=1, gather=True):
         """Generate *quantity* multiplication triples using PRSS.
 
         These are random numbers *a*, *b*, and *c* such that ``c =
@@ -428,7 +430,9 @@ class TriplesPRSSMixin:
         Returns a tuple with the number of triples generated and a
         Deferred which will yield a singleton-list with a 3-tuple.
         """
-        quantity = min(quantity, 20)
+
+        # This adjusted to the PRF based on SHA1 (160 bits).
+        quantity = min(quantity, max(int(160 /numdigits(field.modulus - 1, 2)), 1))
 
         a_t = self.prss_share_random_multi(field, quantity)
         b_t = self.prss_share_random_multi(field, quantity)
