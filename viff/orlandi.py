@@ -1032,17 +1032,6 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
             M_without_test_set = lists[0]
             T = lists[1]
 
-            def defer_share(xi, (rho1, rho2), commitment):
-                d1 = Deferred()
-                d2 = Deferred()
-                d3 = Deferred()
-                d4 = Deferred()
-                d1.callback(xi)
-                d2.callback(rho1)
-                d3.callback(rho2)
-                d4.callback(commitment)
-                return gatherResults([d1, d2, d3, d4])
-
             def get_share(x, ls):
                 share = ls[x * 4]
                 rho1 = ls[x * 4 + 1]
@@ -1176,9 +1165,9 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
 
                 for player_id in xrange(1, len(self.players.keys()) + 1):
                     if player_id == self.id:
-                        ds_a[player_id - 1] = defer_share(a.share, a.rho, a.commitment)
-                        ds_b[player_id - 1] = defer_share(b.share, b.rho, b.commitment)
-                        ds_c[player_id - 1] = defer_share(c.share, c.rho, c.commitment)
+                        ds_a[player_id - 1] = succeed([a.share, a.rho[0], a.rho[1], a.commitment])
+                        ds_b[player_id - 1] = succeed([b.share, b.rho[0], b.rho[1], b.commitment])
+                        ds_c[player_id - 1] = succeed([c.share, c.rho[0], c.rho[1], c.commitment])
                         ds_alpha_randomness[player_id - 1] = succeed(alpha_randomness)
                         ds_dijs[player_id - 1] = succeed(dijs[player_id - 1])
                     # Receive and recombine shares if this player is a
