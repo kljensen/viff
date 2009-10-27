@@ -65,8 +65,8 @@ from twisted.internet import reactor
 from viff.field import GF, FakeGF
 from viff.runtime import Runtime, create_runtime, make_runtime_class
 from viff.passive import PassiveRuntime
-from viff.active import BasicActiveRuntime, \
-    TriplesHyperinvertibleMatricesMixin, TriplesPRSSMixin
+from viff.active import (BasicActiveRuntime,
+                         TriplesHyperinvertibleMatricesMixin, TriplesPRSSMixin)
 from viff.comparison import ComparisonToft05Mixin, ComparisonToft07Mixin
 from viff.equality import ProbabilisticEqualityMixin
 from viff.paillier import PaillierRuntime
@@ -74,8 +74,10 @@ from viff.orlandi import OrlandiRuntime
 from viff.config import load_config
 from viff.util import find_prime
 
-from benchutil import SelfcontainedBenchmarkStrategy, \
-    NeededDataBenchmarkStrategy, ParallelBenchmark, SequentialBenchmark, BinaryOperation, NullaryOperation
+from benchutil import (SelfcontainedBenchmarkStrategy,
+                       NeededDataBenchmarkStrategy,
+                       ParallelBenchmark, SequentialBenchmark,
+                       BinaryOperation, NullaryOperation)
 
 # Hack in order to avoid Maximum recursion depth exceeded
 # exception;
@@ -235,7 +237,8 @@ benchmark = type("ExtendedBenchmark", bases, {})
 def do_benchmark(runtime, operation, benchmark, field, count, *args):
     benchmark(runtime, operation, field, count).benchmark(*args)
 
-pre_runtime.addCallback(do_benchmark, operation, benchmark, Zp, count, needed_data, options.pc)
+pre_runtime.addCallback(do_benchmark, operation, benchmark,
+                        Zp, count, needed_data, options.pc)
 
 print "#### Starting reactor ###"
 reactor.run()
