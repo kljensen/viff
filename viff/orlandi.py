@@ -740,13 +740,13 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
             x, y = t[0]
             f = []
             g = []
-            if 1 in t:
+            if len(t) == 3:
                 f = t[1]
-            if 2 in t:
                 g = t[2]
 #             print "==> poly", self.id
 #             print "x:", x
 #             print "y:", y
+#             print "t:", t, len(t)
 #             print "f:", f
 #             print "g:", g
             # 2) for j = 1, ..., 2d+1 do
@@ -795,10 +795,9 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
             return H0
 
         ls = [gather_shares([share_x, share_y])]
-        if g:
-            ls.append(gather_shares(g))
-        if f:
+        if g and f:
             ls.append(gather_shares(f))
+            ls.append(gather_shares(g))
         result = gather_shares(ls)
         self.schedule_callback(result, compute_polynomials)
         result.addErrback(self.error_handler)
