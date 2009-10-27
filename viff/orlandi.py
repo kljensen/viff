@@ -112,8 +112,8 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
             delta.append(product(j))
         return delta
 
-    def output(self, share, receivers=None, threshold=None):
-        return self.open(share, receivers, threshold)
+    def output(self, share, receivers=None):
+        return self.open(share, receivers)
 
     def _send_orlandi_share(self, other_id, pc, xi, rhoi, Cx):
         """Send the share *xi*, *rhoi*, and the commitment *Cx* to
@@ -150,7 +150,7 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
         sls.addCallbacks(combine, self.error_handler)
         return sls
 
-    def secret_share(self, inputters, field, number=None, threshold=None):
+    def secret_share(self, inputters, field, number=None):
         """Share the value *number* among all the parties using
         additive sharing.
 
@@ -164,7 +164,6 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
         Send ``[x]_i = (x_i, rho_xi, C_x)`` to party ``P_i``.
         """
         assert number is None or self.id in inputters
-        self.threshold = self.num_players - 1
 
         self.increment_pc()
 
@@ -226,7 +225,7 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
             return results[0]
         return results
 
-    def open(self, share, receivers=None, threshold=None):
+    def open(self, share, receivers=None):
         """Share reconstruction.
 
         Every partyi broadcasts a share pair ``(x_i', rho_x,i')``.
@@ -240,8 +239,6 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
         # all players receive result by default
         if receivers is None:
             receivers = self.players.keys()
-        assert threshold is None
-        threshold = self.num_players - 1
 
         field = share.field
 
@@ -407,7 +404,7 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
         result.addCallbacks(compute_subs, self.error_handler)
         return result
 
-    def input(self, inputters, field, number=None, threshold=None):
+    def input(self, inputters, field, number=None):
         """Input *number* to the computation.
 
         The input is shared using the :meth:`shift` method.
