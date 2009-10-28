@@ -19,7 +19,7 @@ import operator
 
 from twisted.internet.defer import Deferred, gatherResults, succeed
 
-from viff.runtime import Runtime, Share, ShareList, gather_shares, preprocess
+from viff.runtime import Runtime, Share, gather_shares, preprocess
 from viff.util import rand
 from viff.constants import TEXT, PAILLIER
 from viff.field import FieldElement
