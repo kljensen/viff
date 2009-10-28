@@ -130,13 +130,23 @@ def load_config(source):
         id = p_unstr(player)
         host = config[player]['host']
         port = int(config[player]['port'])
-        paillier_type = config[player]['paillier']['type']
-        pub_key = config[player]['paillier']['pubkey']
-        pubkey = paillierutil.deserializer(paillier_type, pub_key)
+
+        if 'paillier' in config[player]:
+            paillier_type = config[player]['paillier']['type']
+            pub_key = config[player]['paillier']['pubkey']
+            pubkey = paillierutil.deserializer(paillier_type, pub_key)
+        else:
+            # old format
+            pubkey = tuple(map(long, config[player]['pubkey']))
 
         if 'prss_keys' in config[player]:
-            sec_key = config[player]['paillier']['seckey']
-            seckey = paillierutil.deserializer(paillier_type, sec_key)
+            if 'paillier' in config[player]:
+                sec_key = config[player]['paillier']['seckey']
+                seckey = paillierutil.deserializer(paillier_type, sec_key)
+            else:
+                # old format
+                seckey = tuple(map(long, config[player]['seckey']))
+
             keys = {}
             for subset in config[player]['prss_keys']:
                 keys[s_unstr(subset)] = config[player]['prss_keys'][subset]
