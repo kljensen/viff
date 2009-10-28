@@ -32,7 +32,8 @@ function to generate a player config and save it in a number of
 from viff.libs.configobj import ConfigObj
 from viff.prss import generate_subsets, PRF
 from viff.util import rand
-from viff import paillier
+from viff.paillierutil import ViffPaillier
+from viff import paillierutil
 
 
 class Player:
@@ -129,10 +130,13 @@ def load_config(source):
         id = p_unstr(player)
         host = config[player]['host']
         port = int(config[player]['port'])
-        pubkey = tuple(map(long, config[player]['pubkey']))
+        paillier_type = config[player]['paillier']['type']
+        pub_key = config[player]['paillier']['pubkey']
+        pubkey = paillierutil.deserializer(paillier_type, pub_key)
 
         if 'prss_keys' in config[player]:
-            seckey = tuple(map(long, config[player]['seckey']))
+            sec_key = config[player]['paillier']['seckey']
+            seckey = paillierutil.deserializer(paillier_type, sec_key)
             keys = {}
             for subset in config[player]['prss_keys']:
                 keys[s_unstr(subset)] = config[player]['prss_keys'][subset]
@@ -156,7 +160,7 @@ def load_config(source):
     return owner_id, players
 
 
-def generate_configs(n, t, paillier_key_generator=lambda: paillier.generate_keys(1024),
+def generate_configs(n, t, paillier=ViffPaillier(1024),
                      addresses=None, prefix=None, skip_prss=False):
     """Generate player configurations.
 
@@ -193,7 +197,7 @@ def generate_configs(n, t, paillier_key_generator=lambda: paillier.generate_keys
         """Convert a dealer ID to a string."""
         return "Dealer " + str(dealer)
 
-    key_pairs = dict([(p, paillier_key_generator()) for p in players])
+    key_pairs = dict([(p, paillier.generate_keys()) for p in players])
 
     configs = {}
     for p in players:
@@ -215,10 +219,12 @@ def generate_configs(n, t, paillier_key_generator=lambda: paillier.generate_keys
             # in the configuration file, making it slightly easier to read
             config.comments[p_str(p)] = ['']
 
-            config[p_str(p)]['pubkey'] = key_pairs[p][0]
+            config[p_str(p)]['paillier'] = {}
+            config[p_str(p)]['paillier']['type'] = paillier.type
+            config[p_str(p)]['paillier']['pubkey'] = key_pairs[p][0]
 
             if player == p:
-                config[p_str(p)]['seckey'] = key_pairs[p][1]
+                config[p_str(p)]['paillier']['seckey'] = key_pairs[p][1]
 
                 # Prepare the config file for the keys
                 config[p_str(p)]['prss_keys'] = {}

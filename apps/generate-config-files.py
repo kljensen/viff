@@ -55,7 +55,7 @@ from __future__ import division
 from optparse import OptionParser
 
 from viff.config import generate_configs
-from viff import paillier
+from viff.paillierutil import ViffPaillier
 
 parser = OptionParser()
 parser.add_option("-p", "--prefix",
@@ -82,7 +82,7 @@ if len(args) != options.n:
     parser.error("must supply a hostname:port argument for each player")
 
 addresses = [arg.split(':', 1) for arg in args]
-configs = generate_configs(options.n, options.t, lambda: paillier.generate_keys(options.keysize), addresses,
+configs = generate_configs(options.n, options.t, ViffPaillier(options.keysize), addresses,
                            options.prefix, options.skip_prss)
 
 for config in configs.itervalues():
