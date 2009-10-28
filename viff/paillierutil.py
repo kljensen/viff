@@ -17,6 +17,12 @@
 
 from viff import paillier
 
+try:
+    import pypaillier
+except ImportError:
+    pypaillier = None
+
+
 class Paillier:
 
     def __init__(self, keysize):
@@ -35,8 +41,20 @@ class ViffPaillier:
 
     def generate_keys(self):
         return paillier.generate_keys(self.keysize)
+
+class NaClPaillier:
+
+    def __init__(self, keysize):
+        self.keysize = keysize
+        self.type = 'nacl'
+
+    def generate_keys(self):
+        return pypaillier.generate_keys(self.keysize)
     
 
 def deserializer(paillier_type, str):
-    return tuple(map(long, str))
+    if paillier_type == "viff":
+        return tuple(map(long, str))
+    if paillier_type == "nacl":
+        return str.dict()
         

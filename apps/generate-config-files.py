@@ -55,7 +55,17 @@ from __future__ import division
 from optparse import OptionParser
 
 from viff.config import generate_configs
-from viff.paillierutil import ViffPaillier
+from viff.paillierutil import ViffPaillier, NaClPaillier
+
+try:
+    import pypaillier
+except ImportError:
+    pypaillier = None
+
+paillier_choices = ['viff']
+
+if pypaillier:
+    paillier_choices += ['nacl']
 
 parser = OptionParser()
 parser.add_option("-p", "--prefix",
@@ -68,21 +78,27 @@ parser.add_option("-n", "--players", dest="n", type="int",
                   help="number of players")
 parser.add_option("-k", "--keysize", type="int",
                   help="Specify the key-size for Paillier encryption")
+parser.add_option("--paillier", type="choice", choices=paillier_choices,
+                  help="the implementation of Paillier encryption")
 parser.add_option("-t", "--threshold", dest="t", type="int",
                   help="threshold (it must hold that t < n/2)")
 parser.add_option("--skip-prss", action="store_true",
                   help="do not generate PRSS keys")
 
 parser.set_defaults(verbose=True, n=3, t=1, prefix='player', skip_prss=False,
-                    keysize=1024)
+                    keysize=1024, paillier='viff')
 
 (options, args) = parser.parse_args()
+
+paillier = ViffPaillier(options.keysize)
+if "nacl" == options.paillier:
+    paillier = NaClPaillier(options.keysize)
 
 if len(args) != options.n:
     parser.error("must supply a hostname:port argument for each player")
 
 addresses = [arg.split(':', 1) for arg in args]
-configs = generate_configs(options.n, options.t, ViffPaillier(options.keysize), addresses,
+configs = generate_configs(options.n, options.t, paillier, addresses,
                            options.prefix, options.skip_prss)
 
 for config in configs.itervalues():
