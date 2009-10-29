@@ -274,7 +274,7 @@ class OrlandiAdvancedCommandsTest(RuntimeTestCase):
     def generate_configs(self, *args):
         global keys
         if not keys:
-            keys = generate_configs(*args, paillier=NaClPaillier(1024))
+            keys = generate_configs(paillier=NaClPaillier(1024), *args)
         return keys
         
 
@@ -638,8 +638,9 @@ class TripleGenTest(RuntimeTestCase):
 
     def generate_configs(self, *args):
         global keys
+        print "AAA"
         if not keys:
-            keys = generate_configs(*args, paillier=NaClPaillier(1024))
+            keys = generate_configs(paillier=NaClPaillier(1024), *args)
         return keys
 
     @protocol
