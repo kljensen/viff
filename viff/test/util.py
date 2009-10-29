@@ -111,6 +111,9 @@ class RuntimeTestCase(TestCase):
             msg = "Type should be %s, but is %s" % (wanted_type, var.__class__)
             raise self.failureException(msg)
 
+    def generate_configs(self, *args):
+        return generate_configs(*args)
+
     def setUp(self):
         """Configure and connect three Runtimes.
 
@@ -123,7 +126,7 @@ class RuntimeTestCase(TestCase):
         # Our standard 65 bit Blum prime
         self.Zp = GF(30916444023318367583)
 
-        configs = generate_configs(self.num_players, self.threshold)
+        configs = self.generate_configs(self.num_players, self.threshold)
         self.protocols = {}
 
         # initialize the dictionary of random generators

@@ -28,6 +28,7 @@ from viff.paillier import encrypt_r, decrypt
 from hash_broadcast import HashBroadcastMixin
 
 try:
+    from pypaillier import encrypt_r, decrypt
     import commitment
     commitment.set_reference_string(23434347834783478783478L,
                                     489237823478234783478020L)
@@ -36,7 +37,10 @@ except ImportError:
     # import to work. Catching the ImportError here allows the
     # benchmark and tests to import viff.orlandi without blowing up.
     # It is only if the OrlandiRuntime is used that things blow up.
-    pass
+
+    # The pypaillier module is not released yet, so we cannot expect
+    # the import to work.
+    from viff.paillier import encrypt_r, decrypt
 
 # import logging
 # LOG_FILENAME = 'logging_example.out'

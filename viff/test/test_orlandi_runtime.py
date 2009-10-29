@@ -19,6 +19,9 @@ from twisted.internet.defer import gatherResults, DeferredList
 
 from viff.test.util import RuntimeTestCase, protocol
 from viff.runtime import gather_shares, Share
+from viff.paillierutil import NaClPaillier
+from viff.config import generate_configs
+
 try:
     from viff.orlandi import OrlandiRuntime, OrlandiShare
     import commitment
@@ -255,6 +258,9 @@ class OrlandiBasicCommandsTest(RuntimeTestCase):
         return d
 
 
+keys = None
+
+
 class OrlandiAdvancedCommandsTest(RuntimeTestCase):
     """Test for advanced commands."""
 
@@ -263,7 +269,14 @@ class OrlandiAdvancedCommandsTest(RuntimeTestCase):
 
     runtime_class = OrlandiRuntime
 
-    timeout = 700
+    timeout = 25
+
+    def generate_configs(self, *args):
+        global keys
+        if not keys:
+            keys = generate_configs(*args, paillier=NaClPaillier(1024))
+        return keys
+        
 
     @protocol
     def test_shift(self, runtime):
@@ -622,6 +635,12 @@ class TripleGenTest(RuntimeTestCase):
     runtime_class = OrlandiRuntime
 
     timeout = 1600
+
+    def generate_configs(self, *args):
+        global keys
+        if not keys:
+            keys = generate_configs(*args, paillier=NaClPaillier(1024))
+        return keys
 
     @protocol
     def test_tripleGen(self, runtime):
