@@ -90,9 +90,10 @@ parser.set_defaults(verbose=True, n=3, t=1, prefix='player', skip_prss=False,
 
 (options, args) = parser.parse_args()
 
-paillier = ViffPaillier(options.keysize)
 if "nacl" == options.paillier:
     paillier = NaClPaillier(options.keysize)
+else:
+    paillier = ViffPaillier(options.keysize)
 
 if len(args) != options.n:
     parser.error("must supply a hostname:port argument for each player")
