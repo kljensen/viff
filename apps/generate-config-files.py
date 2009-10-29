@@ -65,7 +65,7 @@ except ImportError:
 paillier_choices = ['viff']
 
 if pypaillier:
-    paillier_choices += ['nacl']
+    paillier_choices.append('nacl')
 
 parser = OptionParser()
 parser.add_option("-p", "--prefix",
