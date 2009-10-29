@@ -877,7 +877,7 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
             pc = tuple(self.program_counter)
             p3 = field.modulus**3
             for pi in self.players.keys():
-                n = self.players[pi].pubkey[0]
+                n = self.players[pi].pubkey['n']
                 nsq = n * n
                 # choose random d_i,j in Z_p^3
                 dij = random_number(p3)
@@ -915,9 +915,9 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
         r2 = random_number(field.modulus)
 
         # compute alpha_i = Enc_eki(a_i)
-        n, g = self.players[self.id].pubkey
-        alpha_randomness = rand.randint(1, long(n))
-        alphai = encrypt_r(ai.value, alpha_randomness, (n, g))
+        pubkey = self.players[self.id].pubkey
+        alpha_randomness = rand.randint(1, long(pubkey['n']))
+        alphai = encrypt_r(ai.value, alpha_randomness, pubkey)
         # and A_i = Com_ck(a_i, r_i).
         Ai = commitment.commit(ai.value, r1.value, r2.value)
 
@@ -1136,7 +1136,7 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
                 # 3) the gammaij he received is equal to the gammaij
                 # he now computes based on the values he reveives
                 for j in xrange(len(ais)):
-                    n = self.players[self.id].pubkey[0]
+                    n = self.players[self.id].pubkey['n']
                     nsq = n * n
                     dij = dijs[j]
                     # 5) ... and dij < p^3.

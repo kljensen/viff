@@ -52,20 +52,25 @@ def generate_keys(bit_length):
         g = rand.randint(1, long(nsq))
         if gmpy.gcd(L(pow(g, lm, nsq), n), n) == 1: break
 
-    return (n, g), (n, g, lm)
+    return {'n':n, 'g': g}, {'n': n, 'g': g, 'lm': lm}
 
-def encrypt(m, (n, g)):
-    r = rand.randint(1, long(n))
-    return encrypt_r(m, r, (n, g))
+def encrypt(m, pubkey):
+    r = rand.randint(1, long(pubkey['n']))
+    return encrypt_r(m, r, pubkey)
 
-def encrypt_r(m, r, (n, g)):
+def encrypt_r(m, r, pubkey):
+    n = pubkey['n']
+    g = pubkey['g']
     nsq = n*n
     return (pow(g, m, nsq)*pow(r, n, nsq)) % nsq
 
 #: Cache for ciphertext-independent factors.
 _decrypt_factors = {}
 
-def decrypt(c, (n, g, lm)):
+def decrypt(c, seckey):
+    n = seckey['n']
+    g = seckey['g']
+    lm = seckey['lm']
     numer = L(pow(c, lm, n*n), n)
     key = (n, g, lm)
     try:

@@ -53,9 +53,6 @@ class NaClPaillier:
     
 
 def deserializer(paillier_type, str):
-    if paillier_type == "viff":
-        return tuple(map(long, str))
-    if paillier_type == "nacl":
         d = {}
         for k, v in str.items():
             d[k] = long(v)
