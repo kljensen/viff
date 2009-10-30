@@ -804,14 +804,7 @@ class Runtime:
         example of a method fulfilling this interface.
         """
 
-        def update(results, program_counters, start_time, count, what):
-            stop = time.time()
-
-            print
-            print "Total time used: %.3f sec" % (stop - start_time)
-            print "Time per %s operation: %.0f ms" % (what, 1000*(stop - start_time) / count)
-            print "*" * 6
-
+        def update(results, program_counters):
             # Update the pool with pairs of program counter and data.
             self._pool.update(zip(program_counters, results))
 
@@ -831,7 +824,7 @@ class Runtime:
                 results = func(quantity=len(program_counters), *args)
                 self.unfork_pc()
                 ready = gatherResults(results)
-                ready.addCallback(update, program_counters[:len(results)], start_time, count, generator)
+                ready.addCallback(update, program_counters[:len(results)])
                 del program_counters[:len(results)]
                 wait_list.append(ready)
             self.unfork_pc()
