@@ -269,7 +269,7 @@ class OrlandiAdvancedCommandsTest(RuntimeTestCase):
 
     runtime_class = OrlandiRuntime
 
-    timeout = 25
+    timeout = 700
 
     def generate_configs(self, *args):
         global keys
@@ -638,7 +638,6 @@ class TripleGenTest(RuntimeTestCase):
 
     def generate_configs(self, *args):
         global keys
-        print "AAA"
         if not keys:
             keys = generate_configs(paillier=NaClPaillier(1024), *args)
         return keys
