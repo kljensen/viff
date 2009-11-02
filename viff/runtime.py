@@ -940,9 +940,11 @@ def make_runtime_class(runtime_class=None, mixins=None):
     if mixins is None:
         return runtime_class
     else:
-        # We must include at least one new-style class in bases. We
-        # include it last to avoid overriding __init__ from the other
-        # base classes.
+        # The order is important: we want the most specific classes to
+        # go first so that they can override methods from later
+        # classes. We must also include at least one new-style class
+        # in bases -- we include it last to avoid overriding __init__
+        # from the other base classes.
         bases = tuple(mixins) + (runtime_class, object)
         return type("ExtendedRuntime", bases, {})
 

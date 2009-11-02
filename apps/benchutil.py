@@ -80,11 +80,11 @@ class Benchmark(object):
         self.rt.schedule_callback(d, self.finished, termination_function)
         return d
 
-    def sync_test(self, x):
+    def sync_test(self, preprocessed_data):
         print "Synchronizing test start."
         sys.stdout.flush()
         sync = self.rt.synchronize()
-        self.rt.schedule_callback(sync, lambda y: x)
+        self.rt.schedule_callback(sync, lambda _: preprocessed_data)
         return sync
 
     def run_test(self, _):
