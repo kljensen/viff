@@ -209,6 +209,36 @@ class TriplesHyperinvertibleMatricesMixin:
         # and we can safely return the first T shares.
         return rvec[:T]
 
+    def _exchange_single(self, svec, rvec, T, field, degree, inputters):
+        """Exchange and (if possible) verify shares."""
+        pc = tuple(self.program_counter)
+
+        # We send our shares to the verifying players.
+        for offset, share in enumerate(svec):
+            if T+1+offset != self.id:
+                self.protocols[T+1+offset].sendShare(pc, share)
+
+        if self.id > T:
+            # The other players will send us their shares of si_1
+            # and si_2 and we will verify it.
+            si = []
+            for peer_id in inputters:
+                if self.id == peer_id:
+                    si.append(Share(self, field, svec[peer_id - T - 1]))
+                else:
+                    si.append(self._expect_share(peer_id, field))
+            result = gatherResults(si)
+            result.addCallback(self._verify_single, rvec, T, field, degree)
+            return result
+        else:
+            # We cannot verify anything, so we just return the
+            # first T shares.
+            return rvec[:T]
+
+        # do actual communication
+        self.activate_reactor()
+
+
     def single_share_random(self, T, degree, field):
         """Share a random secret.
 
@@ -231,37 +261,9 @@ class TriplesHyperinvertibleMatricesMixin:
         rvec = self._hyper * Matrix([svec]).transpose()
         rvec = rvec.transpose().rows[0]
 
-        def exchange(svec):
-            """Exchange and (if possible) verify shares."""
-            pc = tuple(self.program_counter)
-
-            # We send our shares to the verifying players.
-            for offset, share in enumerate(svec):
-                if T+1+offset != self.id:
-                    self.protocols[T+1+offset].sendShare(pc, share)
-
-            if self.id > T:
-                # The other players will send us their shares of si_1
-                # and si_2 and we will verify it.
-                si = []
-                for peer_id in inputters:
-                    if self.id == peer_id:
-                        si.append(Share(self, field, svec[peer_id - T - 1]))
-                    else:
-                        si.append(self._expect_share(peer_id, field))
-                result = gatherResults(si)
-                result.addCallback(self._verify_single, rvec, T, field, degree)
-                return result
-            else:
-                # We cannot verify anything, so we just return the
-                # first T shares.
-                return rvec[:T]
-
-            # do actual communication
-            self.activate_reactor()
-
         result = gather_shares(svec[T:])
-        self.schedule_callback(result, exchange)
+        self.schedule_callback(result, self._exchange_single,
+                               rvec, T, field, degree, inputters)
         return result
 
     def double_share_random(self, T, d1, d2, field):
