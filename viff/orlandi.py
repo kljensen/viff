@@ -282,6 +282,81 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
         if self.id in receivers:
             return result
 
+    def open_multiple_values(self, shares, receivers=None):
+        """Share reconstruction.
+
+        Open multiple values in one burst. 
+        If called with one value it is slower than the open method.
+        If called with more than two values it is faster than using 
+        multiple calls to the open method. 
+
+        Every partyi broadcasts a share pair ``(x_i', rho_x,i')``.
+
+        The parties compute the sums ``x'``, ``rho_x'`` and check
+        ``Com_ck(x',rho_x') = C_x``.
+
+        If yes, return ``x = x'``, else else return :const:`None`.
+        """
+        assert shares
+        # all players receive result by default
+        if receivers is None:
+            receivers = self.players.keys()
+
+        field = shares[0].field
+
+        self.increment_pc()
+
+        def recombine_value((shares, Cx)):
+            x = 0
+            rho1 = 0
+            rho2 = 0
+            for xi, rhoi1, rhoi2 in shares:
+                x += xi
+                rho1 += rhoi1
+                rho2 += rhoi2
+            Cx1 = commitment.commit(x.value, rho1.value, rho2.value)
+            if Cx1 == Cx:
+                return x
+            else:
+                #return x
+                raise OrlandiException("Wrong commitment for value %s, %s, %s, found %s expected %s." %
+                                       (x, rho1, rho2, Cx1, Cx))
+
+        def deserialize(ls, commitments):
+            def convert_from_string_to_field(s):
+                def field_long(x):
+                    return field(long(x))
+                xs = s[0:-1].split(';')
+                ys = [x.split(':') for x in xs]
+                return [map(field_long, xs) for xs in ys]
+            shares = map(convert_from_string_to_field, ls)
+            return map(recombine_value, zip(zip(*shares), commitments))
+
+        def exchange(ls, receivers):
+            commitments = [None] * len(ls)
+            broadcast_string = ""
+            for inx, (xi, (rhoi1, rhoi2), Cx) in enumerate(ls):
+                broadcast_string += "%s:%s:%s;" % (xi.value, rhoi1.value, rhoi2.value)
+                commitments[inx] = (Cx)
+            # Send share to all receivers.
+            ds = self.broadcast(self.players.keys(), receivers, broadcast_string)
+
+            if self.id in receivers:
+                result = gatherResults(ds)
+                result.addCallbacks(deserialize, self.error_handler,
+                                    callbackArgs=(commitments,))
+                return result
+
+        result = gather_shares(shares)
+        self.schedule_callback(result, exchange, receivers)
+        result.addErrback(self.error_handler)
+
+        # do actual communication
+        self.activate_reactor()
+
+        if self.id in receivers:
+            return result
+
     def random_share(self, field):
         """Generate a random share in the field, field.
 
