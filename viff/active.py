@@ -186,6 +186,29 @@ class TriplesHyperinvertibleMatricesMixin:
     #: to :const:`None` here and update it as necessary.
     _hyper = None
 
+    def _verify_single(self, shares, rvec, T, field, degree):
+        """Verify shares.
+
+        It is checked that they correspond to polynomial of the
+        expected degree.
+
+        If the verification succeeds, the T shares are returned,
+        otherwise the errback is called.
+        """
+        # TODO: This is necessary since shamir.recombine expects
+        # to receive a list of *pairs* of field elements.
+        shares = map(lambda (i, s): (field(i+1), s), enumerate(shares))
+
+        # Verify the sharings. If any of the assertions fail and
+        # raise an exception, the errbacks will be called on the
+        # share returned by single_share_random.
+        assert shamir.verify_sharing(shares, degree), \
+               "Could not verify %s, degree %d" % (shares, degree)
+
+        # If we reach this point the n - T shares were verified
+        # and we can safely return the first T shares.
+        return rvec[:T]
+
     def single_share_random(self, T, degree, field):
         """Share a random secret.
 
@@ -208,29 +231,6 @@ class TriplesHyperinvertibleMatricesMixin:
         rvec = self._hyper * Matrix([svec]).transpose()
         rvec = rvec.transpose().rows[0]
 
-        def verify(shares):
-            """Verify shares.
-
-            It is checked that they correspond to polynomial of the
-            expected degree.
-
-            If the verification succeeds, the T shares are returned,
-            otherwise the errback is called.
-            """
-            # TODO: This is necessary since shamir.recombine expects
-            # to receive a list of *pairs* of field elements.
-            shares = map(lambda (i, s): (field(i+1), s), enumerate(shares))
-
-            # Verify the sharings. If any of the assertions fail and
-            # raise an exception, the errbacks will be called on the
-            # share returned by single_share_random.
-            assert shamir.verify_sharing(shares, degree), \
-                   "Could not verify %s, degree %d" % (shares, degree)
-
-            # If we reach this point the n - T shares were verified
-            # and we can safely return the first T shares.
-            return rvec[:T]
-
         def exchange(svec):
             """Exchange and (if possible) verify shares."""
             pc = tuple(self.program_counter)
@@ -250,7 +250,7 @@ class TriplesHyperinvertibleMatricesMixin:
                     else:
                         si.append(self._expect_share(peer_id, field))
                 result = gatherResults(si)
-                result.addCallback(verify)
+                result.addCallback(self._verify_single, rvec, T, field, degree)
                 return result
             else:
                 # We cannot verify anything, so we just return the
