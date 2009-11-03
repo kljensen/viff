@@ -686,7 +686,9 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
         if cmul_result is  not None:
             return cmul_result
 
-        def multiply((x, y, d, e, c)):
+        def multiply((x, y, ds, c)):
+            d = ds[0]
+            e = ds[1]
             # [de]
             de = self._additive_constant(field(0), d * e)
             # e[x]
@@ -702,10 +704,9 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
             return OrlandiShare(self, field, zi, rhoz, Cz)
 
         # d = Open([x] - [a])
-        d = self.open(share_x - triple_a)
         # e = Open([y] - [b])
-        e = self.open(share_y - triple_b)
-        result = gather_shares([share_x, share_y, d, e, triple_c])
+        ds = self.open_multiple_values([share_x - triple_a, share_y - triple_b])
+        result = gather_shares([share_x, share_y, ds, triple_c])
         result.addCallbacks(multiply, self.error_handler)
 
         # do actual communication
