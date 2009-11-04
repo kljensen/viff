@@ -31,7 +31,7 @@
 #   python generate-certificates.py
 #
 # Run the program using three different shells using the command:
-#   python a-simpel-viff-program.py player-x.ini 79
+#   python beginner.py player-x.ini 79
 # where x is replaced by the player number
 
 # Some useful imports.
