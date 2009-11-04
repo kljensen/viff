@@ -304,6 +304,17 @@ class TriplesHyperinvertibleMatricesMixin:
         # do actual communication
         self.activate_reactor()
 
+    def _share_single(self, si, degree, field, inputters):
+        # TODO: Move common code between single_share and
+        # double_share_random out to their own methods.
+        if self._hyper is None:
+            self._hyper = hyper(self.num_players, field)
+
+        # Every player shares the random value with two thresholds.
+        svec = self.shamir_share(inputters, field, si, degree)
+        rvec = self._hyper * Matrix([svec]).transpose()
+        rvec = rvec.transpose().rows[0]
+        return svec, rvec
 
     def single_share_random(self, T, degree, field):
         """Share a random secret.
@@ -313,20 +324,10 @@ class TriplesHyperinvertibleMatricesMixin:
         correct sharings of a random number using *degree* as the
         polynomial degree.
         """
-        # TODO: Move common code between single_share and
-        # double_share_random out to their own methods.
         inputters = range(1, self.num_players + 1)
-        if self._hyper is None:
-            self._hyper = hyper(self.num_players, field)
-
         # Generate a random element.
         si = rand.randint(0, field.modulus - 1)
-
-        # Every player shares the random value with two thresholds.
-        svec = self.shamir_share(inputters, field, si, degree)
-        rvec = self._hyper * Matrix([svec]).transpose()
-        rvec = rvec.transpose().rows[0]
-
+        svec, rvec = self._share_single(si, degree, field, inputters)
         result = gather_shares(svec[T:])
         self.schedule_callback(result, self._exchange_single,
                                rvec, T, field, degree, inputters)
@@ -341,23 +342,10 @@ class TriplesHyperinvertibleMatricesMixin:
         polynomial degrees.
         """
         inputters = range(1, self.num_players + 1)
-        if self._hyper is None:
-            self._hyper = hyper(self.num_players, field)
-
         # Generate a random element.
         si = rand.randint(0, field.modulus - 1)
-
-        # Every player shares the random value with two thresholds.
-        svec1 = self.shamir_share(inputters, field, si, d1)
-        svec2 = self.shamir_share(inputters, field, si, d2)
-
-        # Apply the hyper-invertible matrix to svec1 and svec2.
-        rvec1 = self._hyper * Matrix([svec1]).transpose()
-        rvec2 = self._hyper * Matrix([svec2]).transpose()
-
-        # Get back to normal lists of shares.
-        rvec1 = rvec1.transpose().rows[0]
-        rvec2 = rvec2.transpose().rows[0]
+        svec1, rvec1 = self._share_single(si, d1, field, inputters)
+        svec2, rvec2 = self._share_single(si, d2, field, inputters)
 
         result = gather_shares([gather_shares(svec1[T:]), gather_shares(svec2[T:])])
         self.schedule_callback(result, self._exchange_double,
