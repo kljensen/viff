@@ -209,6 +209,37 @@ class TriplesHyperinvertibleMatricesMixin:
         # and we can safely return the first T shares.
         return rvec[:T]
 
+    def _verify_double(self, shares, rvec1, rvec2, T, field, d1, d2):
+        """Verify shares.
+
+        It is checked that they correspond to polynomial of the
+        expected degrees and that they can be recombined to the
+        same value.
+
+        If the verification succeeds, the T double shares are
+        returned, otherwise the errback is called.
+        """
+        si_1, si_2 = shares
+
+        # TODO: This is necessary since shamir.recombine expects
+        # to receive a list of *pairs* of field elements.
+        si_1 = map(lambda (i, s): (field(i+1), s), enumerate(si_1))
+        si_2 = map(lambda (i, s): (field(i+1), s), enumerate(si_2))
+
+        # Verify the sharings. If any of the assertions fail and
+        # raise an exception, the errbacks will be called on the
+        # double share returned by double_share_random.
+        assert shamir.verify_sharing(si_1, d1), \
+               "Could not verify %s, degree %d" % (si_1, d1)
+        assert shamir.verify_sharing(si_2, d2), \
+               "Could not verify %s, degree %d" % (si_2, d2)
+        assert shamir.recombine(si_1[:d1+1]) == shamir.recombine(si_2[:d2+1]), \
+            "Shares do not recombine to the same value"
+
+        # If we reach this point the n - T shares were verified
+        # and we can safely return the first T shares.
+        return (rvec1[:T], rvec2[:T])
+
     def _exchange_single(self, svec, rvec, T, field, degree, inputters):
         """Exchange and (if possible) verify shares."""
         pc = tuple(self.program_counter)
@@ -293,37 +324,6 @@ class TriplesHyperinvertibleMatricesMixin:
         rvec1 = rvec1.transpose().rows[0]
         rvec2 = rvec2.transpose().rows[0]
 
-        def verify(shares):
-            """Verify shares.
-
-            It is checked that they correspond to polynomial of the
-            expected degrees and that they can be recombined to the
-            same value.
-
-            If the verification succeeds, the T double shares are
-            returned, otherwise the errback is called.
-            """
-            si_1, si_2 = shares
-
-            # TODO: This is necessary since shamir.recombine expects
-            # to receive a list of *pairs* of field elements.
-            si_1 = map(lambda (i, s): (field(i+1), s), enumerate(si_1))
-            si_2 = map(lambda (i, s): (field(i+1), s), enumerate(si_2))
-
-            # Verify the sharings. If any of the assertions fail and
-            # raise an exception, the errbacks will be called on the
-            # double share returned by double_share_random.
-            assert shamir.verify_sharing(si_1, d1), \
-                   "Could not verify %s, degree %d" % (si_1, d1)
-            assert shamir.verify_sharing(si_2, d2), \
-                   "Could not verify %s, degree %d" % (si_2, d2)
-            assert shamir.recombine(si_1[:d1+1]) == shamir.recombine(si_2[:d2+1]), \
-                "Shares do not recombine to the same value"
-
-            # If we reach this point the n - T shares were verified
-            # and we can safely return the first T shares.
-            return (rvec1[:T], rvec2[:T])
-
         def exchange(shares):
             """Exchange and (if possible) verify shares."""
             svec1, svec2 = shares
@@ -348,7 +348,8 @@ class TriplesHyperinvertibleMatricesMixin:
                         si_1.append(self._expect_share(peer_id, field))
                         si_2.append(self._expect_share(peer_id, field))
                 result = gatherResults([gatherResults(si_1), gatherResults(si_2)])
-                result.addCallback(verify)
+                result.addCallback(self._verify_double,
+                                   rvec1, rvec2, T, field, d1, d2)
                 return result
             else:
                 # We cannot verify anything, so we just return the
