@@ -201,6 +201,9 @@ def prss_zero(n, t, j, field, prfs, key, quantity):
     all = frozenset(range(1, n+1))
     modulus = field.modulus
 
+    # This is needed for correct exponentiation.
+    j = field(j)
+
     for subset, shares in rep_shares:
         try:
             f_in_j = _f_in_j_cache[(field, n, j, subset)]
