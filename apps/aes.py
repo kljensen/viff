@@ -23,6 +23,7 @@
 import time
 from optparse import OptionParser
 from pprint import pformat
+import sys
 
 import viff.reactor
 viff.reactor.install()
@@ -178,7 +179,13 @@ else:
     from viff.passive import PassiveRuntime
     runtime_class = PassiveRuntime
 
-rt = create_runtime(id, players, 1, options, runtime_class)
+try:
+    threshold = len(players) - len(players[id].keys.keys()[0])
+except IndexError:
+    print >>sys.stderr, "PRSS keys in config file missing."
+    sys.exit(1)
+
+rt = create_runtime(id, players, threshold, options, runtime_class)
 
 if options.preproc:
     rt.addCallback(preprocess)
