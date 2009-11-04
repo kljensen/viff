@@ -250,6 +250,15 @@ class PassiveRuntime(Runtime):
         starting program counter. This ensures that consequetive calls
         to PRSS-related methods will use unique program counters.
         """
+
+        # This is called by every function using PRSS, so do it here.
+        # If the assertion is not met, things go wrong, i.e. the PRSS
+        # functions generate shares with higher degrees than what
+        # open() and mul() expect.
+        assert self.threshold >= \
+               len(self.players) - len(self.players[self.id].keys.keys()[0]), \
+               "PRSS functions have higher threshold than the runtime."
+
         self.increment_pc()
         return tuple(self.program_counter)
 
