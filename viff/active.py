@@ -195,8 +195,6 @@ class TriplesHyperinvertibleMatricesMixin:
         If the verification succeeds, the T shares are returned,
         otherwise the errback is called.
         """
-        # TODO: This is necessary since shamir.recombine expects
-        # to receive a list of *pairs* of field elements.
         shares = map(lambda (i, s): (field(i+1), s), enumerate(shares))
 
         # Verify the sharings. If any of the assertions fail and
@@ -220,9 +218,6 @@ class TriplesHyperinvertibleMatricesMixin:
         returned, otherwise the errback is called.
         """
         si_1, si_2 = shares
-
-        # TODO: This is necessary since shamir.recombine expects
-        # to receive a list of *pairs* of field elements.
         si_1 = map(lambda (i, s): (field(i+1), s), enumerate(si_1))
         si_2 = map(lambda (i, s): (field(i+1), s), enumerate(si_2))
 
@@ -263,8 +258,7 @@ class TriplesHyperinvertibleMatricesMixin:
             result.addCallback(self._verify_single, rvec, T, field, degree)
             return result
         else:
-            # We cannot verify anything, so we just return the
-            # first T shares.
+            # We cannot verify anything.
             return rvec[:T]
 
         # do actual communication
@@ -299,21 +293,17 @@ class TriplesHyperinvertibleMatricesMixin:
                                rvec1, rvec2, T, field, d1, d2)
             return result
         else:
-            # We cannot verify anything, so we just return the
-            # first T shares.
+            # We cannot verify anything.
             return (rvec1[:T], rvec2[:T])
 
         # do actual communication
         self.activate_reactor()
 
     def _share_single(self, si, degree, field):
-        # TODO: Move common code between single_share and
-        # double_share_random out to their own methods.
         inputters = range(1, self.num_players + 1)
         if self._hyper is None:
             self._hyper = hyper(self.num_players, field)
 
-        # Every player shares the random value with two thresholds.
         svec = self.shamir_share(inputters, field, si, degree)
         rvec = self._hyper * Matrix([svec]).transpose()
         rvec = rvec.transpose().rows[0]
@@ -327,7 +317,6 @@ class TriplesHyperinvertibleMatricesMixin:
         correct sharings of a random number using *degree* as the
         polynomial degree.
         """
-        # Generate a random element.
         si = rand.randint(0, field.modulus - 1)
         svec, rvec = self._share_single(si, degree, field)
         result = gather_shares(svec[T:])
@@ -343,7 +332,6 @@ class TriplesHyperinvertibleMatricesMixin:
         double-sharings of a random number using *d1* and *d2* as the
         polynomial degrees.
         """
-        # Generate a random element.
         si = rand.randint(0, field.modulus - 1)
         svec1, rvec1 = self._share_single(si, d1, field)
         svec2, rvec2 = self._share_single(si, d2, field)
