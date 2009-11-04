@@ -240,9 +240,10 @@ class TriplesHyperinvertibleMatricesMixin:
         # and we can safely return the first T shares.
         return (rvec1[:T], rvec2[:T])
 
-    def _exchange_single(self, svec, rvec, T, field, degree, inputters):
+    def _exchange_single(self, svec, rvec, T, field, degree):
         """Exchange and (if possible) verify shares."""
         pc = tuple(self.program_counter)
+        inputters = range(1, self.num_players + 1)
 
         # We send our shares to the verifying players.
         for offset, share in enumerate(svec):
@@ -269,10 +270,11 @@ class TriplesHyperinvertibleMatricesMixin:
         # do actual communication
         self.activate_reactor()
 
-    def _exchange_double(self, shares, rvec1, rvec2, T, field, d1, d2, inputters):
+    def _exchange_double(self, shares, rvec1, rvec2, T, field, d1, d2):
         """Exchange and (if possible) verify shares."""
         svec1, svec2 = shares
         pc = tuple(self.program_counter)
+        inputters = range(1, self.num_players + 1)
 
         # We send our shares to the verifying players.
         for offset, (s1, s2) in enumerate(zip(svec1, svec2)):
@@ -304,9 +306,10 @@ class TriplesHyperinvertibleMatricesMixin:
         # do actual communication
         self.activate_reactor()
 
-    def _share_single(self, si, degree, field, inputters):
+    def _share_single(self, si, degree, field):
         # TODO: Move common code between single_share and
         # double_share_random out to their own methods.
+        inputters = range(1, self.num_players + 1)
         if self._hyper is None:
             self._hyper = hyper(self.num_players, field)
 
@@ -324,13 +327,12 @@ class TriplesHyperinvertibleMatricesMixin:
         correct sharings of a random number using *degree* as the
         polynomial degree.
         """
-        inputters = range(1, self.num_players + 1)
         # Generate a random element.
         si = rand.randint(0, field.modulus - 1)
-        svec, rvec = self._share_single(si, degree, field, inputters)
+        svec, rvec = self._share_single(si, degree, field)
         result = gather_shares(svec[T:])
         self.schedule_callback(result, self._exchange_single,
-                               rvec, T, field, degree, inputters)
+                               rvec, T, field, degree)
         return result
 
     def double_share_random(self, T, d1, d2, field):
@@ -341,15 +343,14 @@ class TriplesHyperinvertibleMatricesMixin:
         double-sharings of a random number using *d1* and *d2* as the
         polynomial degrees.
         """
-        inputters = range(1, self.num_players + 1)
         # Generate a random element.
         si = rand.randint(0, field.modulus - 1)
-        svec1, rvec1 = self._share_single(si, d1, field, inputters)
-        svec2, rvec2 = self._share_single(si, d2, field, inputters)
+        svec1, rvec1 = self._share_single(si, d1, field)
+        svec2, rvec2 = self._share_single(si, d2, field)
 
         result = gather_shares([gather_shares(svec1[T:]), gather_shares(svec2[T:])])
         self.schedule_callback(result, self._exchange_double,
-                               rvec1, rvec2, T, field, d1, d2, inputters)
+                               rvec1, rvec2, T, field, d1, d2)
         return result
 
     @preprocess("generate_triples")
