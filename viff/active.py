@@ -269,6 +269,41 @@ class TriplesHyperinvertibleMatricesMixin:
         # do actual communication
         self.activate_reactor()
 
+    def _exchange_double(self, shares, rvec1, rvec2, T, field, d1, d2, inputters):
+        """Exchange and (if possible) verify shares."""
+        svec1, svec2 = shares
+        pc = tuple(self.program_counter)
+
+        # We send our shares to the verifying players.
+        for offset, (s1, s2) in enumerate(zip(svec1, svec2)):
+            if T+1+offset != self.id:
+                self.protocols[T+1+offset].sendShare(pc, s1)
+                self.protocols[T+1+offset].sendShare(pc, s2)
+
+        if self.id > T:
+            # The other players will send us their shares of si_1
+            # and si_2 and we will verify it.
+            si_1 = []
+            si_2 = []
+            for peer_id in inputters:
+                if self.id == peer_id:
+                    si_1.append(Share(self, field, svec1[peer_id - T - 1]))
+                    si_2.append(Share(self, field, svec2[peer_id - T - 1]))
+                else:
+                    si_1.append(self._expect_share(peer_id, field))
+                    si_2.append(self._expect_share(peer_id, field))
+            result = gatherResults([gatherResults(si_1), gatherResults(si_2)])
+            result.addCallback(self._verify_double,
+                               rvec1, rvec2, T, field, d1, d2)
+            return result
+        else:
+            # We cannot verify anything, so we just return the
+            # first T shares.
+            return (rvec1[:T], rvec2[:T])
+
+        # do actual communication
+        self.activate_reactor()
+
 
     def single_share_random(self, T, degree, field):
         """Share a random secret.
@@ -324,43 +359,9 @@ class TriplesHyperinvertibleMatricesMixin:
         rvec1 = rvec1.transpose().rows[0]
         rvec2 = rvec2.transpose().rows[0]
 
-        def exchange(shares):
-            """Exchange and (if possible) verify shares."""
-            svec1, svec2 = shares
-            pc = tuple(self.program_counter)
-
-            # We send our shares to the verifying players.
-            for offset, (s1, s2) in enumerate(zip(svec1, svec2)):
-                if T+1+offset != self.id:
-                    self.protocols[T+1+offset].sendShare(pc, s1)
-                    self.protocols[T+1+offset].sendShare(pc, s2)
-
-            if self.id > T:
-                # The other players will send us their shares of si_1
-                # and si_2 and we will verify it.
-                si_1 = []
-                si_2 = []
-                for peer_id in inputters:
-                    if self.id == peer_id:
-                        si_1.append(Share(self, field, svec1[peer_id - T - 1]))
-                        si_2.append(Share(self, field, svec2[peer_id - T - 1]))
-                    else:
-                        si_1.append(self._expect_share(peer_id, field))
-                        si_2.append(self._expect_share(peer_id, field))
-                result = gatherResults([gatherResults(si_1), gatherResults(si_2)])
-                result.addCallback(self._verify_double,
-                                   rvec1, rvec2, T, field, d1, d2)
-                return result
-            else:
-                # We cannot verify anything, so we just return the
-                # first T shares.
-                return (rvec1[:T], rvec2[:T])
-
-            # do actual communication
-            self.activate_reactor()
-
         result = gather_shares([gather_shares(svec1[T:]), gather_shares(svec2[T:])])
-        self.schedule_callback(result, exchange)
+        self.schedule_callback(result, self._exchange_double,
+                               rvec1, rvec2, T, field, d1, d2, inputters)
         return result
 
     @preprocess("generate_triples")
