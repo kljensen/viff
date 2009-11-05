@@ -196,15 +196,8 @@ class TriplesHyperinvertibleMatricesMixin:
         otherwise the errback is called.
         """
         shares = map(lambda (i, s): (field(i+1), s), enumerate(shares))
-
-        # Verify the sharings. If any of the assertions fail and
-        # raise an exception, the errbacks will be called on the
-        # share returned by single_share_random.
         assert shamir.verify_sharing(shares, degree), \
                "Could not verify %s, degree %d" % (shares, degree)
-
-        # If we reach this point the n - T shares were verified
-        # and we can safely return the first T shares.
         return rvec[:T]
 
     def _verify_double(self, shares, rvec1, rvec2, T, field, d1, d2):
@@ -218,21 +211,14 @@ class TriplesHyperinvertibleMatricesMixin:
         returned, otherwise the errback is called.
         """
         si_1, si_2 = shares
+        self._verify_single(si_1, rvec1, T, field, d1)
+        self._verify_single(si_2, rvec2, T, field, d2)
         si_1 = map(lambda (i, s): (field(i+1), s), enumerate(si_1))
         si_2 = map(lambda (i, s): (field(i+1), s), enumerate(si_2))
 
-        # Verify the sharings. If any of the assertions fail and
-        # raise an exception, the errbacks will be called on the
-        # double share returned by double_share_random.
-        assert shamir.verify_sharing(si_1, d1), \
-               "Could not verify %s, degree %d" % (si_1, d1)
-        assert shamir.verify_sharing(si_2, d2), \
-               "Could not verify %s, degree %d" % (si_2, d2)
         assert shamir.recombine(si_1[:d1+1]) == shamir.recombine(si_2[:d2+1]), \
             "Shares do not recombine to the same value"
 
-        # If we reach this point the n - T shares were verified
-        # and we can safely return the first T shares.
         return (rvec1[:T], rvec2[:T])
 
     def _exchange_single(self, svec, rvec, T, field, degree):
