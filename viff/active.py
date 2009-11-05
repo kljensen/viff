@@ -193,7 +193,7 @@ class TriplesHyperinvertibleMatricesMixin:
         expected degree.
 
         If the verification succeeds, the T shares are returned,
-        otherwise the errback is called.
+        otherwise an exception is thrown.
         """
         shares = map(lambda (i, s): (field(i+1), s), enumerate(shares))
         assert shamir.verify_sharing(shares, degree), \
@@ -208,7 +208,7 @@ class TriplesHyperinvertibleMatricesMixin:
         same value.
 
         If the verification succeeds, the T double shares are
-        returned, otherwise the errback is called.
+        returned, otherwise an exception is thrown.
         """
         si_1, si_2 = shares
         self._verify_single(si_1, rvec1, T, field, d1)
