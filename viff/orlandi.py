@@ -28,7 +28,7 @@ from viff.paillier import encrypt_r, decrypt
 from hash_broadcast import HashBroadcastMixin
 
 try:
-    from pypaillier import encrypt_r, decrypt
+    from pypaillier import encrypt_r, decrypt, tripple
     import commitment
     commitment.set_reference_string(23434347834783478783478L,
                                     489237823478234783478020L)
@@ -881,17 +881,10 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
             pc = tuple(self.program_counter)
             p3 = field.modulus**3
             for pi in self.players.keys():
-                n = self.players[pi].pubkey['n']
-                nsq = n * n
                 # choose random d_i,j in Z_p^3
                 dij = random_number(p3)
-                # Enc_ek_i(1;1)^d_ij
-                enc = encrypt_r(1, 1, self.players[pi].pubkey)
-                t1 = pow(enc, dij.value, nsq)
-                # alpha_i^b_j.
-                t2 = pow(alphas[pi - 1], bj.value, nsq)
                 # gamma_ij = alpha_i^b_j Enc_ek_i(1;1)^d_ij
-                gammaij = (t2 * t1) % nsq
+                gammaij = tripple(alphas[pi - 1], bj.value, dij.value, self.players[pi].pubkey)
                 # Broadcast gamma_ij
                 if pi != self.id:
                     self.protocols[pi].sendData(pc, PAILLIER, str(gammaij))
@@ -1140,19 +1133,13 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
                 # 3) the gammaij he received is equal to the gammaij
                 # he now computes based on the values he reveives
                 for j in xrange(len(ais)):
-                    n = self.players[self.id].pubkey['n']
-                    nsq = n * n
                     dij = dijs[j]
                     # 5) ... and dij < p^3.
                     if dij >= (field.modulus**3):
                         raise OrlandiException("Inconsistent random value dij %i from player %i" % (dij, j + 1))
-                    # Enc_ek_i(1;1)^d_ij
-                    enc = encrypt_r(1, 1, self.players[self.id].pubkey)
-                    t1 = pow(enc, dij.value, nsq)
-                    # alpha_i^b_j.
-                    t2 = pow(alphas[self.id - 1], bis[j][0].value, nsq)
                     # gamma_ij = alpha_i^b_j Enc_ek_i(1;1)^d_ij
-                    gammaij = (t2) * (t1) % nsq
+                    gammaij = tripple(alphas[self.id - 1], bis[j][0].value, 
+                                      dij.value, self.players[self.id].pubkey)
                     if gammaij != gammas[j]:
                         raise OrlandiException("Inconsistent gammaij, %i, %i" % (gammaij, gammas[j]))
 
