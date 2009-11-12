@@ -28,7 +28,7 @@ from viff.paillier import encrypt_r, decrypt
 from hash_broadcast import HashBroadcastMixin
 
 try:
-    from pypaillier import encrypt_r, decrypt
+    from pypaillier import encrypt_r, decrypt, tripple
     import commitment
     commitment.set_reference_string(23434347834783478783478L,
                                     489237823478234783478020L)
@@ -273,6 +273,81 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
                 return result
 
         result = share.clone()
+        self.schedule_callback(result, exchange, receivers)
+        result.addErrback(self.error_handler)
+
+        # do actual communication
+        self.activate_reactor()
+
+        if self.id in receivers:
+            return result
+
+    def open_multiple_values(self, shares, receivers=None):
+        """Share reconstruction.
+
+        Open multiple values in one burst. 
+        If called with one value it is slower than the open method.
+        If called with more than two values it is faster than using 
+        multiple calls to the open method. 
+
+        Every partyi broadcasts a share pair ``(x_i', rho_x,i')``.
+
+        The parties compute the sums ``x'``, ``rho_x'`` and check
+        ``Com_ck(x',rho_x') = C_x``.
+
+        If yes, return ``x = x'``, else else return :const:`None`.
+        """
+        assert shares
+        # all players receive result by default
+        if receivers is None:
+            receivers = self.players.keys()
+
+        field = shares[0].field
+
+        self.increment_pc()
+
+        def recombine_value((shares, Cx)):
+            x = 0
+            rho1 = 0
+            rho2 = 0
+            for xi, rhoi1, rhoi2 in shares:
+                x += xi
+                rho1 += rhoi1
+                rho2 += rhoi2
+            Cx1 = commitment.commit(x.value, rho1.value, rho2.value)
+            if Cx1 == Cx:
+                return x
+            else:
+                #return x
+                raise OrlandiException("Wrong commitment for value %s, %s, %s, found %s expected %s." %
+                                       (x, rho1, rho2, Cx1, Cx))
+
+        def deserialize(ls, commitments):
+            def convert_from_string_to_field(s):
+                def field_long(x):
+                    return field(long(x))
+                xs = s[0:-1].split(';')
+                ys = [x.split(':') for x in xs]
+                return [map(field_long, xs) for xs in ys]
+            shares = map(convert_from_string_to_field, ls)
+            return map(recombine_value, zip(zip(*shares), commitments))
+
+        def exchange(ls, receivers):
+            commitments = [None] * len(ls)
+            broadcast_string = ""
+            for inx, (xi, (rhoi1, rhoi2), Cx) in enumerate(ls):
+                broadcast_string += "%s:%s:%s;" % (xi.value, rhoi1.value, rhoi2.value)
+                commitments[inx] = (Cx)
+            # Send share to all receivers.
+            ds = self.broadcast(self.players.keys(), receivers, broadcast_string)
+
+            if self.id in receivers:
+                result = gatherResults(ds)
+                result.addCallbacks(deserialize, self.error_handler,
+                                    callbackArgs=(commitments,))
+                return result
+
+        result = gather_shares(shares)
         self.schedule_callback(result, exchange, receivers)
         result.addErrback(self.error_handler)
 
@@ -611,7 +686,9 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
         if cmul_result is  not None:
             return cmul_result
 
-        def multiply((x, y, d, e, c)):
+        def multiply((x, y, ds, c)):
+            d = ds[0]
+            e = ds[1]
             # [de]
             de = self._additive_constant(field(0), d * e)
             # e[x]
@@ -627,10 +704,9 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
             return OrlandiShare(self, field, zi, rhoz, Cz)
 
         # d = Open([x] - [a])
-        d = self.open(share_x - triple_a)
         # e = Open([y] - [b])
-        e = self.open(share_y - triple_b)
-        result = gather_shares([share_x, share_y, d, e, triple_c])
+        ds = self.open_multiple_values([share_x - triple_a, share_y - triple_b])
+        result = gather_shares([share_x, share_y, ds, triple_c])
         result.addCallbacks(multiply, self.error_handler)
 
         # do actual communication
@@ -881,17 +957,10 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
             pc = tuple(self.program_counter)
             p3 = field.modulus**3
             for pi in self.players.keys():
-                n = self.players[pi].pubkey['n']
-                nsq = n * n
                 # choose random d_i,j in Z_p^3
                 dij = random_number(p3)
-                # Enc_ek_i(1;1)^d_ij
-                enc = encrypt_r(1, 1, self.players[pi].pubkey)
-                t1 = pow(enc, dij.value, nsq)
-                # alpha_i^b_j.
-                t2 = pow(alphas[pi - 1], bj.value, nsq)
                 # gamma_ij = alpha_i^b_j Enc_ek_i(1;1)^d_ij
-                gammaij = (t2 * t1) % nsq
+                gammaij = tripple(alphas[pi - 1], bj.value, dij.value, self.players[pi].pubkey)
                 # Broadcast gamma_ij
                 if pi != self.id:
                     self.protocols[pi].sendData(pc, PAILLIER, str(gammaij))
@@ -1139,20 +1208,15 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
 
                 # 3) the gammaij he received is equal to the gammaij
                 # he now computes based on the values he reveives
+                modulus_3 = field.modulus**3
                 for j in xrange(len(ais)):
-                    n = self.players[self.id].pubkey['n']
-                    nsq = n * n
                     dij = dijs[j]
                     # 5) ... and dij < p^3.
-                    if dij >= (field.modulus**3):
+                    if dij >= (modulus_3):
                         raise OrlandiException("Inconsistent random value dij %i from player %i" % (dij, j + 1))
-                    # Enc_ek_i(1;1)^d_ij
-                    enc = encrypt_r(1, 1, self.players[self.id].pubkey)
-                    t1 = pow(enc, dij.value, nsq)
-                    # alpha_i^b_j.
-                    t2 = pow(alphas[self.id - 1], bis[j][0].value, nsq)
                     # gamma_ij = alpha_i^b_j Enc_ek_i(1;1)^d_ij
-                    gammaij = (t2) * (t1) % nsq
+                    gammaij = tripple(alphas[self.id - 1], bis[j][0].value, 
+                                      dij.value, self.players[self.id].pubkey)
                     if gammaij != gammas[j]:
                         raise OrlandiException("Inconsistent gammaij, %i, %i" % (gammaij, gammas[j]))
 
