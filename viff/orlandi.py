@@ -1132,10 +1132,11 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
 
                 # 3) the gammaij he received is equal to the gammaij
                 # he now computes based on the values he reveives
+                modulus_3 = field.modulus**3
                 for j in xrange(len(ais)):
                     dij = dijs[j]
                     # 5) ... and dij < p^3.
-                    if dij >= (field.modulus**3):
+                    if dij >= (modulus_3):
                         raise OrlandiException("Inconsistent random value dij %i from player %i" % (dij, j + 1))
                     # gamma_ij = alpha_i^b_j Enc_ek_i(1;1)^d_ij
                     gammaij = tripple(alphas[self.id - 1], bis[j][0].value, 
