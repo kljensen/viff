@@ -159,17 +159,10 @@ command the Python modules are installed into::
 
    $HOME/opt/lib/python
 
-and some programs are installed into::
-
-   $HOME/opt/bin
-
-You should add the first directory to the ``PYTHONPATH`` environment
-variable and the latter to the ``PATH`` environment variable.
-
-Bash users can normally do this by adding::
+You should add the directory to the ``PYTHONPATH`` environment
+variable. Bash users can normally do this by adding::
 
    export PYTHONPATH=$PYTHONPATH:$HOME/opt/lib/python
-   export PATH=$PATH:$HOME/opt/bin
 
 to their ``~/.bash_profile`` file, creating it if it is not already
 there. Consult the documentation for your shell to learn how
