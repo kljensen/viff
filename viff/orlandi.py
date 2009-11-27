@@ -28,7 +28,7 @@ from viff.paillier import encrypt_r, decrypt
 from hash_broadcast import HashBroadcastMixin
 
 try:
-    from pypaillier import encrypt_r, decrypt, tripple
+    from pypaillier import encrypt_r, decrypt, tripple_2c, tripple_3a
     import commitment
     commitment.set_reference_string(23434347834783478783478L,
                                     489237823478234783478020L)
@@ -929,8 +929,8 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
             ls = decrypt_gammas(gammas)
             ci = sum(ls, field(0)) - sum(dijs, field(0))
             # (b) pick random t_i in (Z_p)^2.
-            t1 = random_number(field. modulus)
-            t2 = random_number(field. modulus)
+            t1 = random_number(field.modulus)
+            t2 = random_number(field.modulus)
             t = (t1, t2)
             # C_i = Com_ck(c_i, t_i).
             Ci = commitment.commit(ci.value, t1.value, t2.value)
@@ -960,7 +960,7 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
                 # choose random d_i,j in Z_p^3
                 dij = random_number(p3)
                 # gamma_ij = alpha_i^b_j Enc_ek_i(1;1)^d_ij
-                gammaij = tripple(alphas[pi - 1], bj.value, dij.value, self.players[pi].pubkey)
+                gammaij = tripple_2c(alphas[pi - 1], bj.value, dij.value, self.players[pi].pubkey)
                 # Broadcast gamma_ij
                 if pi != self.id:
                     self.protocols[pi].sendData(pc, PAILLIER, str(gammaij))
@@ -1215,7 +1215,7 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
                     if dij >= (modulus_3):
                         raise OrlandiException("Inconsistent random value dij %i from player %i" % (dij, j + 1))
                     # gamma_ij = alpha_i^b_j Enc_ek_i(1;1)^d_ij
-                    gammaij = tripple(alphas[self.id - 1], bis[j][0].value, 
+                    gammaij = tripple_2c(alphas[self.id - 1], bis[j][0].value, 
                                       dij.value, self.players[self.id].pubkey)
                     if gammaij != gammas[j]:
                         raise OrlandiException("Inconsistent gammaij, %i, %i" % (gammaij, gammas[j]))
