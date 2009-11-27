@@ -28,7 +28,7 @@ from viff.paillier import encrypt_r, decrypt
 from hash_broadcast import HashBroadcastMixin
 
 try:
-    from pypaillier import encrypt_r, decrypt, tripple
+    from pypaillier import encrypt_r, decrypt, tripple_2c, tripple_3a
     import commitment
     commitment.set_reference_string(23434347834783478783478L,
                                     489237823478234783478020L)
@@ -926,11 +926,11 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
                       broadcast ``C_i = Com_ck(c_i, t_i)``
             """
             # c_i = SUM_j Dec_sk_i(gamma_ij) - SUM_j d_ji mod p.
-            ls = decrypt_gammas(gammas)
-            ci = sum(ls, field(0)) - sum(dijs, field(0))
+            ls = [list(x) for x in zip(gammas, dijs)]
+            ci = field(tripple_3a(ls, self.players[self.id].seckey))
             # (b) pick random t_i in (Z_p)^2.
-            t1 = random_number(field. modulus)
-            t2 = random_number(field. modulus)
+            t1 = random_number(field.modulus)
+            t2 = random_number(field.modulus)
             t = (t1, t2)
             # C_i = Com_ck(c_i, t_i).
             Ci = commitment.commit(ci.value, t1.value, t2.value)
@@ -958,9 +958,9 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
             p3 = field.modulus**3
             for pi in self.players.keys():
                 # choose random d_i,j in Z_p^3
-                dij = random_number(p3)
+                dij = random_number(p3).value
                 # gamma_ij = alpha_i^b_j Enc_ek_i(1;1)^d_ij
-                gammaij = tripple(alphas[pi - 1], bj.value, dij.value, self.players[pi].pubkey)
+                gammaij = tripple_2c(alphas[pi - 1], bj.value, dij, self.players[pi].pubkey)
                 # Broadcast gamma_ij
                 if pi != self.id:
                     self.protocols[pi].sendData(pc, PAILLIER, str(gammaij))
@@ -1215,8 +1215,8 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
                     if dij >= (modulus_3):
                         raise OrlandiException("Inconsistent random value dij %i from player %i" % (dij, j + 1))
                     # gamma_ij = alpha_i^b_j Enc_ek_i(1;1)^d_ij
-                    gammaij = tripple(alphas[self.id - 1], bis[j][0].value, 
-                                      dij.value, self.players[self.id].pubkey)
+                    gammaij = tripple_2c(alphas[self.id - 1], bis[j][0].value, 
+                                      dij, self.players[self.id].pubkey)
                     if gammaij != gammas[j]:
                         raise OrlandiException("Inconsistent gammaij, %i, %i" % (gammaij, gammas[j]))
 
@@ -1245,13 +1245,13 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
                         send_share(player_id, pc, b)
                         send_share(player_id, pc, c)
                         send_long(player_id, pc, alpha_randomness)
-                        self.protocols[player_id].sendShare(pc, dijs[player_id - 1])
+                        send_long(player_id, pc, dijs[player_id - 1])
 
                         ds_a[player_id - 1] = receive_shares(player_id)
                         ds_b[player_id - 1] = receive_shares(player_id)
                         ds_c[player_id - 1] = receive_shares(player_id)
                         ds_alpha_randomness[player_id - 1] = receive_long(player_id)
-                        ds_dijs[player_id - 1] = self._expect_share(player_id, field)
+                        ds_dijs[player_id - 1] = receive_long(player_id)
                 dls_a = gatherResults(ds_a)
                 dls_b = gatherResults(ds_b)
                 dls_c = gatherResults(ds_c)
