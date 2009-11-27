@@ -926,8 +926,12 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
                       broadcast ``C_i = Com_ck(c_i, t_i)``
             """
             # c_i = SUM_j Dec_sk_i(gamma_ij) - SUM_j d_ji mod p.
-            ls = decrypt_gammas(gammas)
-            ci = sum(ls, field(0)) - sum(dijs, field(0))
+            dls = []
+            for dij in dijs:
+                dls.append(dij.value)
+
+            ls = [list(x) for x in zip(gammas, dls)]
+            ci = field(tripple_3a(ls, self.players[self.id].seckey))
             # (b) pick random t_i in (Z_p)^2.
             t1 = random_number(field.modulus)
             t2 = random_number(field.modulus)
