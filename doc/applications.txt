@@ -44,7 +44,21 @@ aggressively.
 Distributed AES
 ---------------
 
-(TODO)
+The Advanced Encryption Standard (Rijndael) block cipher turns out to
+have nice arithmetic properties which makes its computation by
+arithmetic circuits relatively fast. Marcel Keller from the University
+of Aarhus has implemented a multiparty version of AES for VIFF.
+
+Using the :mod:`viff.aes` module, it is possible to securely
+compute a secret shared AES encrypted ciphertext of a (possibly)
+secret shared plaintext with a (possibly) secret shared key. The
+inputs have to be given either as a list of shares over
+:class:`~viff.field.GF256` (byte-wise) or as a string. The runtime has
+to be able to handle shares over GF256.
+
+Encrypting a 128-bit block using a 128-bit secret shared AES key takes
+about 2 seconds using three machines. Decryption is not implemented
+yet.
 
 
 Secure Voting
