@@ -1,0 +1,71 @@
+.. -*- coding: utf-8 -*-
+
+Applications
+============
+
+VIFF has been used for several small and some larger applications. The
+largest applications are listed below. Please see the ``apps/``
+directory in VIFF for more examples of small programs using VIFF.
+
+
+Nordic Sugar
+------------
+
+(TODO)
+
+
+Distributed RSA
+---------------
+
+Atle Mauland from the Norwegian University of Science and Technology
+(NTNU) used VIFF for his Master's Thesis titled "Realizing Distributed
+RSA using Secure Multiparty Computations".
+
+The private key from a RSA key pair must be kept in a highly secure
+location (to prevent unauthorized persons from stealing it) but
+because we want to use the key, we cannot just write it on a piece of
+paper and store that in a safe.
+
+This tension between high availability and high security makes a
+distributed solution attractive. Atle Mauland implemented a protocol
+by Boneh and Franklin for generating RSA keys in a distributed
+fashion. The protocol ensures that the private key is never available
+in the clear to any given party and an attacker must break into all
+machines to learn the private key. Meanwhile, the parties can use
+their shares of the private key to securely decrypt messages encrypted
+under the public key.
+
+Generating a 1024-bit RSA key using VIFF took about 30 minutes on
+average (the time varied between 7 seconds and 2.5 hours). These
+results can likely be improved by using the GMPY library more
+aggressively.
+
+
+Distributed AES
+---------------
+
+(TODO)
+
+
+Secure Voting
+-------------
+
+Typical Internet voting systems store all votes in a single location.
+Håvard Vegge  from the Norwegian University of Science and Technology
+(NTNU) used VIFF for his Master's Thesis titled "Realizing Secure
+Multiparty Computations" to implement a distributed voting system.
+
+The system removes the single point of failure by storing the votes in
+secret shared form between three servers. The voters will do the
+secret sharing on their own machine, encrypt the shares, and send the
+encrypted shares to a database. Each share is encrypted under the
+public key belonging to the computation server that will do the actual
+multiparty computation.
+
+This project shows how VIFF can be integrated with many other
+technologies. The user creates a vote on a website programmed in PHP
+and the voting is cast using a Java applet. The applet has the
+responsibility of encrypting the votes for the computation servers.
+When all voters have cast their vote, a XML-RPC message is sent to the
+Python program running on the servers. That program decrypts the
+shares and uses VIFF to compute the result.
