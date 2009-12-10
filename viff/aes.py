@@ -15,7 +15,16 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with VIFF. If not, see <http://www.gnu.org/licenses/>.
 
-"""MPC implementation of AES (Rijndael)."""
+"""MPC implementation of AES (Rijndael). This module can be used to
+securely compute a secret shared AES encrypted ciphertext of a
+(possibly) secret shared plaintext with a (possibly) secret shared
+key. The inputs have to be given either as a list of shares over GF256
+(byte-wise) or as a string. The runtime has to be able to handle
+shares over GF256. Decryption is not implemented yet.
+
+The implementation is based on the fact that AES has arithmetic
+properties which makes its computation by arithmetic circuits
+relatively fast."""
 
 import time
 import operator
