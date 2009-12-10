@@ -68,6 +68,7 @@ def encrypt_r(m, r, pubkey):
 _decrypt_factors = {}
 
 def decrypt(c, seckey):
+    c = long(c)
     n = seckey['n']
     g = seckey['g']
     lm = seckey['lm']
@@ -170,7 +171,7 @@ class PaillierRuntime(Runtime):
         field = getattr(share_a, "field", getattr(share_b, "field", None))
 
         k = self.options.security_parameter
-        n = min(self.player.pubkey[0], self.peer.pubkey[0])
+        n = min(self.player.pubkey['n'], self.peer.pubkey['n'])
         assert field.modulus**2 + 2**k < n, \
             "Need bigger Paillier keys to multiply."
 
@@ -188,8 +189,8 @@ class PaillierRuntime(Runtime):
                 a1, b1 = a, b
                 enc_a1 = encrypt(a1.value, self.player.pubkey)
                 enc_b1 = encrypt(b1.value, self.player.pubkey)
-                send_data(pc, PAILLIER, enc_a1)
-                send_data(pc, PAILLIER, enc_b1)
+                send_data(pc, PAILLIER, str(enc_a1))
+                send_data(pc, PAILLIER, str(enc_b1))
 
                 enc_c1 = Share(self, field)
                 self._expect_data(self.peer.id, PAILLIER, enc_c1)
@@ -201,10 +202,12 @@ class PaillierRuntime(Runtime):
                 a2, b2 = a, b
                 enc_a1 = Deferred()
                 self._expect_data(self.peer.id, PAILLIER, enc_a1)
+                enc_a1.addCallback(long)
                 enc_b1 = Deferred()
                 self._expect_data(self.peer.id, PAILLIER, enc_b1)
+                enc_b1.addCallback(long)
 
-                nsq = self.peer.pubkey[0]**2
+                nsq = self.peer.pubkey['n']**2
                 # Calculate a1 * b2 and b1 * a2 inside the encryption.
                 enc_a1_b2 = enc_a1.addCallback(pow, b2.value, nsq)
                 enc_b1_a2 = enc_b1.addCallback(pow, a2.value, nsq)
@@ -215,7 +218,7 @@ class PaillierRuntime(Runtime):
 
                 c1 = gatherResults([enc_a1_b2, enc_b1_a2])
                 c1.addCallback(lambda (a,b): a * b * enc_r)
-                c1.addCallback(lambda c: send_data(pc, PAILLIER, c))
+                c1.addCallback(lambda c: send_data(pc, PAILLIER, str(c)))
 
                 c2 = a2 * b2 - r
                 return Share(self, field, c2)
