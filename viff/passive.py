@@ -464,8 +464,7 @@ class PassiveRuntime(Runtime):
         return (b_p, b ^ r_lsb)
 
     def powerchain(self, share, max):
-        """Returns the list [*share*, *share*^2, *share*^4, ...,
-        *share*^(i^max)]."""
+        """Returns the list ``[share, share**2, share**4, ..., share**(2**max)]``."""
         result = [share]
         for i in range(max):
             share = share * share
@@ -475,7 +474,7 @@ class PassiveRuntime(Runtime):
     @preprocess("prss_powerchains")
     def prss_powerchain(self, max=7):
         """Generate a random secret share in GF256 and returns
-        [*share*, *share*^2, *share*^4, ..., *share*^(i^max)]."""
+        ``[share, share**2, share**4, ..., share**(2**max)]``."""
         share = self.prss_share_random(GF256)
         return self.powerchain(share, max)
 
