@@ -78,10 +78,10 @@ The working solution
 The solution used now in VIFF has two ingredients. First, callbacks
 that depend on the program counter (like `func`:shamir_share in our
 example above) are not added with :meth:`addCallback` but instead with
-the special :meth:`~viff.runtime.BasicRuntime.schedule_callback`
-method. This method saves the program counter in effect at the time of
-the its call, and ensures that the saved program counter is
-temporarily made active when the callback is called.
+the special :meth:`~viff.runtime.Runtime.schedule_callback` method.
+This method saves the program counter in effect at the time of the its
+call, and ensures that the saved program counter is temporarily made
+active when the callback is called.
 
 Secondly, the program counter is a *list* of counters. This is
 necessary to ensure that we can allocate new fresh counters at any
@@ -92,12 +92,12 @@ The program counter starts at the value ``[0]``. It is changed in two
 cases:
 
 * when a callback is scheduled using
-  :meth:`~viff.runtime.BasicRuntime.schedule_callback`, a new
-  sub-program counter is allocated. A sub-program counter is simply a
-  program counter with another digit. Because of the asynchronous
-  network, the callback will be invoked at an unknown later time. When
-  invoked, it sees the sub-program counter. This ensures that that the
-  parties agree on any network traffic produced in the callback.
+  :meth:`~viff.runtime.Runtime.schedule_callback`, a new sub-program
+  counter is allocated. A sub-program counter is simply a program
+  counter with another digit. Because of the asynchronous network, the
+  callback will be invoked at an unknown later time. When invoked, it
+  sees the sub-program counter. This ensures that that the parties
+  agree on any network traffic produced in the callback.
 
   When a piece of code like this::
 

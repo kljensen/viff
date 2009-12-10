@@ -800,8 +800,8 @@ class Runtime:
           list of Deferreds. Use :meth:`gatherResults` to avoid the
           latter.
 
-        The :meth:`ActiveRuntime.generate_triples` method is an
-        example of a method fulfilling this interface.
+        The :meth:`~viff.active.TriplesPRSSMixin.generate_triples` method
+        is an example of a method fulfilling this interface.
         """
 
         def update(results, program_counters):
@@ -853,16 +853,16 @@ class Runtime:
         """Secure addition.
         
         At least one of the arguments must be a :class:`Share`, the
-        other can be a :class:`FieldElement` or a (possible long)
-        Python integer."""
+        other can be a :class:`~viff.field.FieldElement` or a
+        (possible long) Python integer."""
         raise NotImplementedError
 
     def mul(self, share_a, share_b):
         """Secure multiplication.
         
         At least one of the arguments must be a :class:`Share`, the
-        other can be a :class:`FieldElement` or a (possible long)
-        Python integer."""
+        other can be a :class:`~viff.field.FieldElement` or a
+        (possible long) Python integer."""
         raise NotImplementedError
 
     def handle_deferred_data(self, deferred, data):

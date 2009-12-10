@@ -16,8 +16,8 @@
 # License along with VIFF. If not, see <http://www.gnu.org/licenses/>.
 
 """Comparison protocols. The mixin classes defined here provide a
-:meth:`greater_than_equal` method to the :class:`Runtime
-<viff.runtime.Runtime>` they are mixed with.
+:meth:`greater_than_equal` method to the
+:class:`~viff.runtime.Runtime` they are mixed with.
 """
 
 import math
@@ -68,10 +68,10 @@ class ComparisonToft05Mixin:
         """Compute ``share_a >= share_b``.
 
         Both arguments must be from the same field. The result is a
-        :class:`GF256 <viff.field.GF256>` share.
+        :class:`~viff.field.GF256` share.
 
         :warning:
-           The result type (:class:`viff.field.GF256`) is different
+           The result type (:class:`~viff.field.GF256`) is different
            from the argument types (general field elements).
 
         """
@@ -137,13 +137,13 @@ class ComparisonToft05Mixin:
 
 
 class Toft05Runtime(ComparisonToft05Mixin, PassiveRuntime):
-    """Default mix of :class:`ComparisonToft05Mixin` and
-    :class:`Runtime <viff.runtime.Runtime>`."""
+    """Default mix of :class:`~viff.comparison.ComparisonToft05Mixin`
+    and :class:`~viff.passive.PassiveRuntime`."""
     pass
 
 class ActiveToft05Runtime(ComparisonToft05Mixin, ActiveRuntime):
-    """Default mix of :class:`ComparisonToft05Mixin` and
-    :class:`ActiveRuntime <viff.runtime.ActiveRuntime>`."""
+    """Default mix of :class:`~viff.comparison.ComparisonToft05Mixin`
+    and :class:`~viff.active.ActiveRuntime`."""
     pass
 
 
@@ -329,12 +329,12 @@ class ComparisonToft07Mixin:
 
 
 class Toft07Runtime(ComparisonToft07Mixin, PassiveRuntime):
-    """Default mix of :class:`ComparisonToft07Mixin` and
-    :class:`Runtime <viff.runtime.Runtime>`.
+    """Default mix of :class:`~viff.comparison.ComparisonToft07Mixin`
+    and :class:`~viff.passive.PassiveRuntime`.
     """
     pass
 
 class ActiveToft07Runtime(ComparisonToft07Mixin, ActiveRuntime):
-    """Default mix of :class:`ComparisonToft07Mixin` and
-    :class:`ActiveRuntime <viff.runtime.ActiveRuntime>`."""
+    """Default mix of :class:`~viff.comparison.ComparisonToft07Mixin` and
+    :class:`~viff.active.ActiveRuntime`."""
     pass

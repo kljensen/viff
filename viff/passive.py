@@ -34,19 +34,20 @@ class PassiveRuntime(Runtime):
     """The VIFF runtime.
 
     The runtime is used for sharing values (:meth:`shamir_share` or
-    :meth:`prss_share`) into :class:`Share` object and opening such
-    shares (:meth:`open`) again. Calculations on shares is normally
-    done through overloaded arithmetic operations, but it is also
-    possible to call :meth:`add`, :meth:`mul`, etc. directly if one
-    prefers.
+    :meth:`prss_share`) into :class:`~viff.runtime.Share` object and
+    opening such shares (:meth:`open`) again. Calculations on shares
+    is normally done through overloaded arithmetic operations, but it
+    is also possible to call :meth:`add`, :meth:`mul`, etc. directly
+    if one prefers.
 
-    Each player in the protocol uses a :class:`Runtime` object. To
-    create an instance and connect it correctly with the other
-    players, please use the :func:`create_runtime` function instead of
-    instantiating a Runtime directly. The :func:`create_runtime`
-    function will take care of setting up network connections and
-    return a :class:`Deferred` which triggers with the
-    :class:`Runtime` object when it is ready.
+    Each player in the protocol uses a :class:`~viff.runtime.Runtime`
+    object. To create an instance and connect it correctly with the
+    other players, please use the :func:`~viff.runtime.create_runtime`
+    function instead of instantiating a :class:`~viff.runtime.Runtime`
+    directly. The :func:`~viff.runtime.create_runtime` function will
+    take care of setting up network connections and return a
+    :class:`Deferred` which triggers with the
+    :class:`~viff.runtime.Runtime` object when it is ready.
     """
 
     def __init__(self, player, threshold, options=None):

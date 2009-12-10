@@ -10,15 +10,17 @@ Constants Module
                   PAILLIER
                   TEXT
 
-      Constants used by :class:`ShareExchanger` and others when sending 
-      shares and other messages. They serve to distinguish messages sent 
-      with the same program counter from one another.
+      Constants used by :class:`~viff.runtime.ShareExchanger` and
+      others when sending shares and other messages. They serve to
+      distinguish messages sent with the same program counter from one
+      another.
 
    .. attribute::INCONSISTENTHASH
                   OK
                   HASH
                   SIGNAL
 
-      Constants used by :class:`HashBroadcastMixin` when sending shares
-      and other messages. They serve to distinguish messages sent with
-      the same program counter from one another.
+      Constants used by
+      :class:`~viff.hash_broadcast.HashBroadcastMixin` when sending
+      shares and other messages. They serve to distinguish messages
+      sent with the same program counter from one another.

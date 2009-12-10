@@ -37,8 +37,9 @@ Runtime Module
 
       .. attribute:: Runtime.threshold
 
-         Default threshold used by :meth:`Runtime.shamir_share`,
-         :meth:`Runtime.open`, and others.
+         Default threshold used by
+         :meth:`~viff.passive.PassiveRuntime.shamir_share`,
+         :meth:`~viff.passive.PassiveRuntime.open`, and others.
 
       .. attribute:: Runtime.program_counter
 

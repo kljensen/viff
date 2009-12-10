@@ -71,15 +71,15 @@ The main functionality in VIFF is implemented in the :class:`Runtime
 addition, multiplication, etc. These methods operate on :class:`Share
 <viff.runtime.Share>` instances.
 
-Shares hold either :class:`GFElement <viff.field.GF>` or :class:`GF256
-<viff.field.GF256>` elements and are created from the
-:meth:`shamir_share <viff.runtime.Runtime.shamir_share>` or
-:meth:`prss_share <viff.runtime.Runtime.prss_share>` :class:`Runtime
-<viff.runtime.Runtime>` methods. Shares overload the standard
+Shares hold either :class:`GFElement <viff.field.GF>` or
+:class:`~viff.field.GF256` elements and are created from the
+:meth:`~viff.passive.PassiveRuntime.shamir_share` or
+:meth:`~viff.passive.PassiveRuntime.prss_share`
+:class:`~viff.runtime.Runtime` methods. Shares overload the standard
 arithmetic operators, so you can write ``a + b - c * d`` with four
 shares, and it will be translated correctly into the appropriate
-method calls on the :class:`Runtime <viff.runtime.Runtime>` associated
-with the shares.
+method calls on the :class:`~viff.runtime.Runtime` associated with the
+shares.
 
 A field element contain the concrete value on which we do
 calculations. This is just a normal Python (long) integer. The value
