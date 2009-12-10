@@ -56,7 +56,7 @@ def bit_decompose(share, use_lin_comb=True):
 class AES:
     """AES instantiation.
 
-    This class is used together with a :class:`viff.runtime.Runtime`
+    This class is used together with a :class:`~viff.runtime.Runtime`
     object::
 
         aes = AES(runtime, 192)

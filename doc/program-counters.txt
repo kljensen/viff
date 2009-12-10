@@ -78,7 +78,7 @@ The working solution
 The solution used now in VIFF has two ingredients. First, callbacks
 that depend on the program counter (like `func`:shamir_share in our
 example above) are not added with :meth:`addCallback` but instead with
-the special :meth:`viff.runtime.BasicRuntime.schedule_callback`
+the special :meth:`~viff.runtime.BasicRuntime.schedule_callback`
 method. This method saves the program counter in effect at the time of
 the its call, and ensures that the saved program counter is
 temporarily made active when the callback is called.
@@ -92,7 +92,7 @@ The program counter starts at the value ``[0]``. It is changed in two
 cases:
 
 * when a callback is scheduled using
-  :meth:`viff.runtime.BasicRuntime.schedule_callback`, a new
+  :meth:`~viff.runtime.BasicRuntime.schedule_callback`, a new
   sub-program counter is allocated. A sub-program counter is simply a
   program counter with another digit. Because of the asynchronous
   network, the callback will be invoked at an unknown later time. When
@@ -143,8 +143,8 @@ with a cryptographic hash function to bring it down to a fixed size.
 
 The problem with this idea is that we sometimes need to assign a
 history to a variable that depends on no other variables. An example
-of this is the result of a call to :meth:`prss_share
-<viff.runtime.Runtime.prss_share>` which takes no useful arguments. A
+of this is the result of a call to
+:meth:`~viff.runtime.Runtime.prss_share` which takes no useful arguments. A
 possible solution would be to add some dummy arguments on which the
 history could be based, even though they wont be used by the method.
 So if you would normally call the function :func:`hat` with no

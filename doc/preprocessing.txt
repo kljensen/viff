@@ -73,7 +73,7 @@ Implementing preprocessing
 --------------------------
 
 Preprocessing is implemented using two tools: the
-:func:`viff.runtime.preprocess` decorator is used on methods that
+:func:`~viff.runtime.preprocess` decorator is used on methods that
 produce data which can be preprocessed. It replaces the methods with
 proxies which will attempt to return preprocessed data. If the data
 could not be satisfied from the pool of preprocessed data, then the
@@ -81,7 +81,7 @@ program counter and function arguments are stored before falling back
 to calculating the data online using the original method.
 
 To generate preprocessed data based on a trace of program counters one
-must call the :meth:`viff.runtime.BasicRuntime.preprocess` method. It
+must call the :meth:`~viff.runtime.BasicRuntime.preprocess` method. It
 returns a :class:`Deferred` which triggers when all preprocessed data
 is ready which means that the online part of the computation can
 begin.

@@ -30,7 +30,7 @@ papers.
 
 * The pseudo-random secret sharing (PRSS) in ``viff.prss`` is
   described in [CDI05]_. The
-  :meth:`viff.runtime.Runtime.prss_share_bit_double` method uses a
+  :meth:`~viff.runtime.Runtime.prss_share_bit_double` method uses a
   protocol described in [Damgård08]_.
 
 * The protocol for equality testing with secret shared result is from
