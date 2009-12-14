@@ -37,14 +37,31 @@ providing data to and retrieving data from the computation.
 * Made viff.prss.PRF produce consistent output on both 32-bit and
   64-bit systems.
 
+* Exponentiation of shares by square-and-multiply for public
+  exponents. This means that if x is a Share, x**7 now works.
+
+* Added multiparty AES encryption. A highly optimized version of AES
+  has been added to viff.aes. It allows multiparty encryption of a
+  secret shared message using a secret shared AES key.
+
+* Introduced our own Twisted reactor. This increases throughput by
+  sending data sooner, rather than later.
+
+* Added new full-threshold actively secure runtime in viff.orlandi. It
+  currently relies on a third-party proprietary library for computing
+  commitments over elliptic curves, so it cannot be use with a plain
+  VIFF installation.
+
+* Issue 4: Replace the marshal module. The marshal module is not safe
+  to use for malicious data, so we now use the struct module to parse
+  a fixed length format instead.
+
+* Issue 62: Proper error message when no SSL certificate present.
+
 * Issue 75: Test without local computations. The new FakeFieldElement
   class has the interface of a FieldElement but does no computations.
   A new --fake flag for benchmark.py enables these elements.
 
-* Exponentiation of shares by square-and-multiply for public
-  exponents. This means that if x is a Share, x**7 now works.
-
-* Added multi-party AES encryption.
 
 
 Version 0.7.1, released on 2008-10-09
