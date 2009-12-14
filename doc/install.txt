@@ -94,7 +94,7 @@ This describes installation of VIFF on Max OS X 10.5.
 5) Download and install GMPY_ following the instructions in
    ``gmpy-1.02.macosx.README.txt`` (under Downloads).
 
-6) Install VIFF from source (see below). If you prefer you can just
+6) Install VIFF `from source`_. If you prefer you can just
    install it in site-packages, it makes no difference.
 
    For developers, either add VIFF to the PYTHONPATH::
