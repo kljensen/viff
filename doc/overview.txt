@@ -23,10 +23,9 @@ In the real world there is no IF, but VIFF allows you to implement a
 virtual ideal functionality. The behavior of a bunch of programs using
 VIFF is indistinguishable from program running in the ideal world. It
 is indistinguishable in the sense that everything that can happen in
-the real world protocol could happen in the ideal world too. And since
-no attacks can occur in the ideal world, no attacks can occur in the
-real world as well. Such a multi-party computation (MPC) is called a
-secure multi-party computation (SMPC).
+the real world protocol could happen in the ideal world too. Since no
+attacks can occur in the ideal world, no attacks can occur in the real
+world as well. We call this a secure multi-party computation (MPC).
 
 Security Assumptions
 --------------------
@@ -36,40 +35,45 @@ as long as certain assumptions are fulfilled. These assumptions
 include:
 
 - The adversary can only corrupt up to a certain threshold of the
-  total number of players. The threshold will normally be 1/2 of the
-  players, so for three players, at most one player may be corrupted
-  (there must be an honest majority).
+  total number of players. The threshold is 1/2 of the players for
+  :mod:`viff.passive` and 1/3 of the players for :mod:`viff.active`.
+  This means that you need three players to tolerate one corruption
+  (there must be an honest majority) for security against and passive
+  adversary and four players for security against an active adversary.
 
 - The adversary is computationally bounded. The protocols used by VIFF
   rely on certain computational hardness assumptions, and therefore
-  only polynomial time adversaries are allowed.
+  only polynomial time adversaries are allowed. The BGW protocol used
+  in :mod:`viff.passive` is information theoretically secure, but we
+  still use cryptographic tools such as SSL to implement it.
 
-- The adversary is passive. Being passive means that the adversary
-  only monitors the network traffic, but still follows the protocol.
-  We plan to add support for active (Byzantine) adversaries in a
-  future version.
+- The adversary is passive or active, depending on the protocol. Being
+  passive means that the adversary only monitors the network traffic,
+  but still follows the protocol. An active adversary is allowed to
+  deviated from the protocol in arbitrary ways.
 
 The precise assumptions for each protocol will eventually be included
-in the documentation for the corresponding method, but this has not
-yet been done.
+in the documentation, but this has not yet been done in all cases.
 
 Architecture
 ------------
 
 VIFF consists of several modules. The :mod:`viff.runtime` module
-contains the :class:`Runtime <viff.runtime.Runtime>` and :class:`Share
-<viff.runtime.Share>` classes, in which the main functionality is
-implemented. The :mod:`viff.field` module contains implementations of
-finite fields --- these are the values inside the shares. Other
+contains the :class:`~viff.runtime.Runtime` and
+:class:`~viff.runtime.Share` classes, in which the main functionality
+is implemented. The :mod:`viff.field` module contains implementations
+of finite fields --- these are the values inside the shares. Other
 modules provide support functions.
 
 Layers
 """"""
 
-The main functionality in VIFF is implemented in the :class:`Runtime
-<viff.runtime.Runtime>` class. This class offers methods to do
-addition, multiplication, etc. These methods operate on :class:`Share
-<viff.runtime.Share>` instances.
+The basic functionality in VIFF is implemented in the
+:class:`~viff.runtime.Runtime` class. This class offers methods to do
+simple network communication. The
+:class:`~viff.passive.PassiveRuntime` class implements the BGW
+protocol and offers methods for addition, multiplication, etc. These
+methods operate on :class:`~viff.runtime.Share` instances.
 
 Shares hold either :class:`GFElement <viff.field.GF>` or
 :class:`~viff.field.GF256` elements and are created from the
@@ -89,7 +93,7 @@ reductions as appropriate.
 So in a nutshell, VIFF has these layers:
 
 - Top-level layer for application programs: There you manipulate
-  Python integers or :class:`viff.runtime.Share` instances.
+  Python integers or :class:`~viff.runtime.Share` instances.
 
 - Runtime layer: The runtime deals with Python integers or shares.
 
