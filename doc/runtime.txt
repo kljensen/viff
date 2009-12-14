@@ -5,7 +5,21 @@ Runtime Module
 .. automodule:: viff.runtime
 
    .. autoclass:: Share
-      :members: clone
+
+      .. automethod:: Share.__init__
+
+      .. automethod:: Share.clone
+
+      .. method:: __add__(other)
+      .. method:: __sub__(other)
+      .. method:: __mul__(other)
+      .. method:: __xor__(other)
+      .. method:: __lt__(other)
+      .. method:: __eq__(other)
+
+         Overloaded operators. They all call back to the Runtime used
+         when the Share was constructed. The reverse-argument versions
+         are defined too.
 
    .. autoclass:: ShareList
 
