@@ -11,7 +11,49 @@ directory in VIFF for more examples of small programs using VIFF.
 Nordic Sugar
 ------------
 
-(TODO)
+In Denmark, the production of sugarbeet is managed by sugarbeet
+contracts. A sugarbeet contract determines the quantity of sugarbeet
+that a farmer is allowed to produce. Traditionally, sugarbeet
+contracts have been traded between individual pairs of farmers. This
+has been done in spite of the fact that trading in a central market
+was known to increase the overall profit. A central market has,
+however, not been possible due to conflicting interests and lack of
+trust between the parties.
+
+In January 2008 the first large scale secure multiparty computation
+was carried out, effectively solving this problem. This was done by
+the SIMAP research project as reported in "`Multiparty Computation
+Goes Live`__" (also published at `Financial Crypto 2009`__). In the
+summer of 2009 the same computation was successfully repeated, this
+time using VIFF.
+
+.. __: http://eprint.iacr.org/2008/068
+.. __: http://www.springerlink.com/content/j4772m44r05x0527/
+
+The computation was a double auction in which the production rights
+for several thousand tons of sugarbeets were traded. During the first
+weeks of the auction, several hundred Danish sugarbeet farmers
+submitted their encrypted bids to a central database. Then the actual
+computation took place between three players:
+
+* Nordic Sugar, the Danish sugar company
+
+* DKS, the consolidation of Danish sugarbeet farmers
+
+* Partisia, a Danish company specialized in secure multiparty
+  solutions
+
+The computation took about 15 minutes using three laptops on a LAN.
+Most of the computation time was spend converting the encrypted bids
+to secret sharings. The actual multiparty computation took only a
+couple of minutes. As a result, the sugarbeet contracts could be
+traded at an optimal price without any sensitive information being
+disclosed.
+
+Using secure multiparty computation, trading sugarbeets using this
+kind of auction was possible without finding and paying a trusted
+third party to manage the auction. Such a trusted party would---if it
+could be found at all---probably have been quite expensive.
 
 
 Distributed RSA
