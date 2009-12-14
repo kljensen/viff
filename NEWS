@@ -17,7 +17,10 @@ Next version, not yet released
 
 The central class named Runtime was renamed to PassiveRuntime. All
 runtime classes now uses the common method names input and output for
-providing data to and retrieving data from the computation.
+providing data to and retrieving data from the computation. A
+multiparty version of AES was added: it allows parties to encrypt a
+Shamir secret shared message under a secret shared AES key to obtain a
+secret shared ciphertext.
 
 * Moved the crypto-related code from the viff.runtime.Runtime class to
   a new class called viff.passive.PassiveRuntime. This is a backwards
