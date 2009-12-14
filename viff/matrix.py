@@ -55,7 +55,7 @@ class Matrix(object):
             self._init_zeros(*args)
 
     def __setitem__(self, (i, j), value):
-        """Allows matrix entry assignment using ``[,]``.
+        """Allows matrix entry assignment using ``M[x, y] = z``.
 
         The assignment works as follows:
 
@@ -68,7 +68,7 @@ class Matrix(object):
         self.rows[i][j] = value
 
     def __getitem__(self, (i, j)):
-        """Allows matrix entry access using ``[, ]``.
+        """Allows matrix entry access using ``z = M[x, y]``.
 
         The access works as follows:
 
