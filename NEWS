@@ -12,8 +12,12 @@ please refer to it for details on the issues:
 
   http://tracker.viff.dk/
 
-Next version, not yet released
-------------------------------
+Version 1.0, released on 2009-12-14
+-----------------------------------
+
+We are happy to declare that we have reached VIFF version 1.0. The
+current code is useful, flexible and unlikely to change radically. The
+largest changes since 0.7.1 are summarized below.
 
 The central class named Runtime was renamed to PassiveRuntime. All
 runtime classes now uses the common method names input and output for

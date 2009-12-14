@@ -22,7 +22,7 @@ VIFF is a Python framework for writing multi-party computations (MPC)
 in an easy, efficient, and secure way.
 """
 
-__version__ = '0.7.1'
+__version__ = '1.0'
 __license__ = 'GNU LGPL'
 
 def release():
