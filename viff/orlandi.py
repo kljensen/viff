@@ -15,6 +15,14 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with VIFF. If not, see <http://www.gnu.org/licenses/>.
 
+"""Full threshold actively secure runtime.
+
+.. warning:: The code in this module relies on a proprietary
+   third-party module for doing commitments using elliptic curves. You
+   will therefore not be able to run it with a plain VIFF
+   installation.
+"""
+
 import operator
 
 from twisted.internet.defer import Deferred, gatherResults, succeed
