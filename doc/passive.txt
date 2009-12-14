@@ -6,3 +6,6 @@ Passive Secure Protocols
 
    .. autoclass:: PassiveRuntime
       :members:
+
+       .. inheritance-diagram:: PassiveRuntime
+          :parts: 1

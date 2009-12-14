@@ -10,6 +10,9 @@ Finite Fields Module
       :members: __add__, __mul__, __pow__, __div__, __neg__,
                 __invert__, __eq__, __nonzero__, __int__
 
+      .. inheritance-diagram:: GF256
+         :parts: 1
+
       .. attribute:: GF256.modulus
 
          Field modulus, always 256.

@@ -7,6 +7,9 @@ Paillier Crypto System
    .. autoclass:: PaillierRuntime
       :members:
 
+      .. inheritance-diagram:: PaillierRuntime
+         :parts: 1
+
    .. autofunction:: encrypt
 
    .. autofunction:: decrypt

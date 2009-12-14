@@ -6,6 +6,9 @@ Runtime Module
 
    .. autoclass:: Share
 
+      .. inheritance-diagram:: Share
+         :parts: 1
+
       .. automethod:: Share.__init__
 
       .. automethod:: Share.clone
@@ -23,10 +26,16 @@ Runtime Module
 
    .. autoclass:: ShareList
 
+      .. inheritance-diagram:: ShareList
+         :parts: 1
+
    .. autofunction gather_shares
 
    .. autoclass:: ShareExchanger
       :members: sendShare, sendData, loseConnection
+
+      .. inheritance-diagram:: ShareExchanger
+         :parts: 1
 
       .. attribute:: ShareExchanger.incoming_data
 

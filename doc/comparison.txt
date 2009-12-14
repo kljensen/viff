@@ -19,7 +19,13 @@ Two standard "flavors" are provided in the
 
 .. autoclass:: viff.comparison.Toft05Runtime
 
+   .. inheritance-diagram:: viff.comparison.Toft05Runtime
+      :parts: 1
+
 .. autoclass:: viff.comparison.ComparisonToft07Mixin
    :members: greater_than_equal
 
 .. autoclass:: viff.comparison.Toft07Runtime
+
+   .. inheritance-diagram:: viff.comparison.Toft07Runtime
+      :parts: 1

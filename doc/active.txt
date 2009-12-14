@@ -7,8 +7,14 @@ A Thresholdbased Actively Secure Runtime
    .. autoclass:: ActiveRuntime
       :members:
 
+      .. inheritance-diagram:: ActiveRuntime
+         :parts: 1
+
    .. autoclass:: BasicActiveRuntime
       :members:
+
+      .. inheritance-diagram:: BasicActiveRuntime
+         :parts: 1
 
    .. autoclass:: BrachaBroadcastMixin
       :members:

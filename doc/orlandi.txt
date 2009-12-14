@@ -10,6 +10,11 @@ The Orlandi Runtime - An Actively Secure Protocol with Full Threshold
    .. autoclass:: OrlandiShare
       :members:
 
+      .. inheritance-diagram:: OrlandiShare
+         :parts: 1
+
    .. autoclass:: OrlandiRuntime
       :members:
 
+      .. inheritance-diagram:: OrlandiRuntime
+         :parts: 1
