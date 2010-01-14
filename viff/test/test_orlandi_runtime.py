@@ -23,8 +23,15 @@ from viff.paillierutil import NaClPaillier
 from viff.config import generate_configs
 
 try:
-    from viff.orlandi import OrlandiRuntime, OrlandiShare
-    import commitment
+    import commitment  
+    try:
+        from pypaillier import encrypt_r, decrypt, tripple_2c, tripple_3a
+        from viff.orlandi import OrlandiRuntime, OrlandiShare
+    except ImportError:
+        pypaillier = None
+        OrlandiRuntime = None
+        OrlandiShare = None
+
 except ImportError:
     commitment = None
     OrlandiRuntime = None
@@ -852,7 +859,14 @@ class TripleGenTest(RuntimeTestCase):
         runtime.schedule_callback(shares_ready, cont)
         return shares_ready
 
+
+def skip_tests(module_name):
+    OrlandiAdvancedCommandsTest.skip = "Skipped due to missing " + module_name + " module."
+    OrlandiBasicCommandsTest.skip = "Skipped due to missing " + module_name + " module."
+    TripleGenTest.skip = "Skipped due to missing " + module_name + " module."
+
 if not commitment:
-    OrlandiAdvancedCommandsTest.skip = "Skipped due to missing commitment module."
-    OrlandiBasicCommandsTest.skip = "Skipped due to missing commitment module."
-    TripleGenTest.skip = "Skipped due to missing commitment module."
+    skip_tests("commitment")
+
+if not pypaillier:
+    skip_tests("pypaillier")

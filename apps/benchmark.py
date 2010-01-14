@@ -70,9 +70,24 @@ from viff.active import (BasicActiveRuntime,
 from viff.comparison import ComparisonToft05Mixin, ComparisonToft07Mixin
 from viff.equality import ProbabilisticEqualityMixin
 from viff.paillier import PaillierRuntime
-from viff.orlandi import OrlandiRuntime
 from viff.config import load_config
 from viff.util import find_prime
+
+try:
+    import commitment  
+except ImportError:
+    commitment = None
+
+try:
+    from pypaillier import encrypt_r, decrypt, tripple_2c, tripple_3a
+except:
+    pypaillier = None
+
+if commitment and pypaillier:
+    from viff.orlandi import OrlandiRuntime
+else:
+    OrlandiRuntime = None
+    OrlandiShare = None
 
 from benchutil import (SelfcontainedBenchmarkStrategy,
                        NeededDataBenchmarkStrategy,
@@ -180,6 +195,15 @@ print "I am player %d, will %s %d numbers" % (id, options.operation, count)
 
 
 # Identify the base runtime class.
+if options.runtime == "OrlandiRuntime" and not OrlandiRuntime:
+    print "Error: The following modules did not load correctly:"
+    if not commitment:
+        print "commitment"
+    if not pypaillier:
+        print "pypaillier"
+    if not OrlandiRuntime:
+        print "OrlandiRuntime"
+    exit(1)
 base_runtime_class = runtimes[options.runtime]
 
 # Identify the additional mixins.
