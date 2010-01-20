@@ -525,6 +525,9 @@ class Runtime:
                          help="Collect and print profiling information.")
         group.add_option("--track-memory", action="store_true",
                          help="Track memory usage over time.")
+        group.add_option("--no-socket-retry", action="store_true",
+                         default=False, help="Fail rather than keep retrying "
+                         "to connect if port is already in use.")
 
         try:
             # Using __import__ since we do not use the module, we are
@@ -1068,6 +1071,8 @@ def create_runtime(id, players, threshold, options=None, runtime_class=None):
         try:
             runtime.port = listen(port)
         except CannotListenError, e:
+            if options and options.no_socket_retry:
+                raise
             delay *= 1 + rand.random()
             print "Error listening on port %d: %s" % (port, e.socketError[1])
             print "Will try again in %d seconds" % delay
