@@ -73,6 +73,8 @@ from viff.paillier import PaillierRuntime
 from viff.config import load_config
 from viff.util import find_prime
 
+commitment = None
+pypaillier = None
 try:
     import commitment  
 except ImportError:
@@ -80,6 +82,7 @@ except ImportError:
 
 try:
     from pypaillier import encrypt_r, decrypt, tripple_2c, tripple_3a
+    pypaillier = "PyPaillier is loaded."
 except:
     pypaillier = None
 
