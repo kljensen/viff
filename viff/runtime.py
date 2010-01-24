@@ -525,6 +525,8 @@ class Runtime:
                          help="Collect and print profiling information.")
         group.add_option("--track-memory", action="store_true",
                          help="Track memory usage over time.")
+        group.add_option("--statistics", action="store_true",
+                         help="Print statistics on shutdown.")
         group.add_option("--no-socket-retry", action="store_true",
                          default=False, help="Fail rather than keep retrying "
                          "to connect if port is already in use.")
@@ -542,7 +544,8 @@ class Runtime:
                             ssl=have_openssl,
                             deferred_debug=False,
                             profile=False,
-                            track_memory=False)
+                            track_memory=False,
+                            statistics=False)
 
     def __init__(self, player, threshold, options=None):
         """Initialize runtime.
@@ -1025,6 +1028,10 @@ def create_runtime(id, players, threshold, options=None, runtime_class=None):
     # determined that all needed protocols are ready.
     runtime = runtime_class(players[id], threshold, options)
     factory = ShareExchangerFactory(runtime, players, result)
+
+    if options and options.statistics:
+        reactor.addSystemEventTrigger("after", "shutdown",
+                                      runtime.print_transferred_data)
 
     if options and options.ssl:
         print "Using SSL"
