@@ -22,11 +22,13 @@ from viff.runtime import gather_shares, Share
 from viff.paillierutil import NaClPaillier
 from viff.config import generate_configs
 
+pypaillier = None
 try:
     import commitment  
     try:
         from pypaillier import encrypt_r, decrypt, tripple_2c, tripple_3a
         from viff.orlandi import OrlandiRuntime, OrlandiShare
+        pypaillier = "Imported"
     except ImportError:
         pypaillier = None
         OrlandiRuntime = None
