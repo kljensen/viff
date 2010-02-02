@@ -23,7 +23,7 @@ try:
     from hashlib import sha1
 except ImportError:
     from sha import sha as sha1
-from viff.constants import TEXT, INCONSISTENTHASH, OK, HASH, SIGNAL
+from viff.constants import TEXT, INCONSISTENTHASH, OK, HASH
 
 error_msg = "Player %i, has received an inconsistent hash %s."
 
@@ -31,12 +31,13 @@ class InconsistentHashException(Exception):
     pass
 
 class HashBroadcastMixin:
-    """A non-consistent broadcast scheme mainly useful for full threshold security.
+    """A weak-crusader broadcast scheme.
 
-    A value is send using `send_value` and when received a hash is generated and
-    exchanged among the receivers. If a receiver receives a hash which is not equal
-    to the one he generated, then he sends an error signal to the others and 
-    they stop the computation. Else he sends an ok signal and the computation continues."""
+    A value is send using `send_value` and when received a hash is
+    generated and exchanged among the receivers. If a receiver
+    receives a hash which is not equal to the one he generated, then
+    he aborts. Else he returns the received value and the computation
+    continues."""
 
     def _send_message(self, pc, sender, receivers, message):
         for peer_id in receivers:
@@ -49,38 +50,20 @@ class HashBroadcastMixin:
         message = []
         # The hash store
         g_hashes = {}
-        # The signal store
-        signals = {}
-
-        def signal_received(signal, peer_id, message, num_receivers, hashes, signals):
-            # Store the signal.
-            signals[peer_id] = long(signal)
-            # If all signals are received then check if they are OK or INCONSISTENTHASH.
-            if num_receivers == len(signals.keys()):
-                s = reduce(lambda x, y: (OK == y and OK) or INCONSISTENTHASH, signals.values())
-                if OK == s:
-                    # Make the result ready.
-                    result.callback(message[0])
-                else:
-                    raise InconsistentHashException(error_msg % (self.id, hashes))
 
         def hash_received(h, unique_pc, peer_id, receivers, a_hashes):
             # Store the hash.
             a_hashes[peer_id] = h
-            # If we have received a hash from everybody, then compute the signal and send it.
+            # If we have received a hash from everybody, then compute check them.
             if len(receivers) == len(a_hashes.keys()):
-                signal = OK
-                # First we check if the hashes we received are equal to the hash we computed ourselves.
-                for peer_id in receivers:
-                    if a_hashes[peer_id] == a_hashes[self.id]:
-                        signal = signal
-                    else:
-                        signal = INCONSISTENTHASH
-                # Then we send the SAME signal to everybody. 
-                for peer_id in receivers:
-                    self.protocols[peer_id].sendData(unique_pc, SIGNAL, str(signal))           
-            # The return value does not matter.
-            return None
+                # We check if the hashes we received are equal to
+                # the hash we computed ourselves.
+                s = reduce(lambda x, y: (a_hashes[self.id] == y and x) or INCONSISTENTHASH, [OK] + a_hashes.values())
+                if OK == s:
+                    # Make the result ready.
+                    result.callback(message[0])
+                else:
+                    raise InconsistentHashException(error_msg % (self.id, a_hashes.values()))
 
         def message_received(m, unique_pc, message, receivers, hashes):
             # Store the message.
@@ -93,18 +76,14 @@ class HashBroadcastMixin:
             for peer_id in receivers:
                 self.protocols[peer_id].sendData(unique_pc, HASH, str(h))
 
-        # Set up receivers for hashes and signals.
-        # Note, we use the unique_pc to avoid data to cross method invocation boundaries.
+        # Set up receiver for hashes.
+        # Note, we use the unique_pc to avoid data to cross
+        # method invocation boundaries.
         for peer_id in receivers:
             d_hash = Deferred().addCallbacks(hash_received,
                                              self.error_handler, 
                                              callbackArgs=(unique_pc, peer_id, receivers, g_hashes))
             self._expect_data_with_pc(unique_pc, peer_id, HASH, d_hash)
-            d_signal = Deferred().addCallbacks(signal_received, 
-                                               self.error_handler, 
-                                               callbackArgs=(peer_id, message, len(receivers), 
-                                                             g_hashes, signals))
-            self._expect_data_with_pc(unique_pc, peer_id, SIGNAL, d_signal)
 
         # Set up receiving of the message.
         d_message = Deferred().addCallbacks(message_received, 
