@@ -61,9 +61,11 @@ Distributed RSA
 
 Atle Mauland from the Norwegian University of Science and Technology
 (NTNU) used VIFF for his Master's Thesis titled "`Realizing Distributed
-RSA using Secure Multiparty Computations`__".
+RSA using Secure Multiparty Computations`__". The `code is available
+for download`__.
 
 .. __: http://daim.idi.ntnu.no/masteroppgave?id=4699
+.. __: http://daim.idi.ntnu.no/vedlegg?id=4699
 
 The private key from a RSA key pair must be kept in a highly secure
 location (to prevent unauthorized persons from stealing it) but
@@ -112,8 +114,10 @@ Typical Internet voting systems store all votes in a single location.
 Håvard Vegge  from the Norwegian University of Science and Technology
 (NTNU) used VIFF for his Master's Thesis titled "`Realizing Secure
 Multiparty Computations`__" to implement a distributed voting system.
+The `code is available for download`__.
 
 .. __: http://daim.idi.ntnu.no/masteroppgave?id=4559
+.. __: http://daim.idi.ntnu.no/vedlegg?id=4559
 
 The system removes the single point of failure by storing the votes in
 secret shared form between three servers. The voters will do the
