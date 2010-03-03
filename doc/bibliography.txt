@@ -14,7 +14,10 @@ The algorithms used by VIFF are published in various academic papers.
 Here we will try to point out which parts of the code uses which
 papers.
 
-* The primary reference is [DGKN]_. This paper describes the
+* The primary reference is Martin Geisler's PhD dissertation
+  [Geisler10]_. It covers the design and implementation of VIFF.
+
+* An earlier reference is [DGKN]_. This paper describes the
   asynchronous protocol secure against active adversaries implemented
   in VIFF.
 
@@ -63,6 +66,12 @@ papers.
    Implementation*, Cryptology ePrint Archive: `Report 2008/415`__.
 
    .. __: http://eprint.iacr.org/2008/415
+
+.. [Geisler10] Martin Geisler, *Cryptographic Protocols: Theory and
+   Implementation*, PhD Dissertation, Aarhus University February 2010.
+   `Download`__.
+
+   .. __: http://bitbucket.org/mg/dissertation/downloads/
 
 .. [Nishide07] Takashi Nishide and Kazuo Ohta, *Constant-Round
    Multiparty Computation for Interval Test, Equality Test, and
