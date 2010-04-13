@@ -530,6 +530,12 @@ class Runtime:
         group.add_option("--no-socket-retry", action="store_true",
                          default=False, help="Fail rather than keep retrying "
                          "to connect if port is already in use.")
+        group.add_option("--host", metavar="HOST:PORT", action="append",
+                         help="Override host and port of players as specified "
+                         "in the configuration file. You can use this option "
+                         "multiple times on the command line; the first will "
+                         "override host and port of player 1, the second that "
+                         "of player 2, and so forth.")
 
         try:
             # Using __import__ since we do not use the module, we are
@@ -997,6 +1003,11 @@ def create_runtime(id, players, threshold, options=None, runtime_class=None):
         # between viff.runtime and viff.passive.
         from viff.passive import PassiveRuntime
         runtime_class = PassiveRuntime
+
+    if options and options.host:
+        for i in range(len(options.host)):
+            players[i + 1].host, port_str = options.host[i].rsplit(":")
+            players[i + 1].port = int(port_str)
 
     if options and options.profile:
         # To collect profiling information we monkey patch reactor.run
