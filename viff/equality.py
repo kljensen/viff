@@ -49,29 +49,30 @@ class ProbabilisticEqualityMixin:
         a = share_x - share_y # We will check if a == 0
         k = self.options.security_parameter
 
-        # The b's are random numbers in {-1, 1}
-        b = [self.prss_share_random(Zp, binary=True) * 2 - 1
-             for _ in range(k)]
-        r = [self.prss_share_random(Zp) for _ in range(k)]
-        rp = [self.prss_share_random(Zp) for _ in range(k)]
+        def gen_test_bit():
+            # The b's are random numbers in {-1, 1}
+            b = self.prss_share_random(Zp, binary=True) * 2 - 1
+            r = self.prss_share_random(Zp)
+            rp = self.prss_share_random(Zp)
 
-        # If b_i == 1 c_i will always be a square modulo p if a is
-        # zero and with probability 1/2 otherwise (except if rp == 0).
-        # If b_i == -1 it will be non-square.
-        c = [self.open(a * r[j] + b[j] * rp[j] * rp[j]) for j in range(k)]
+            # If b_i == 1 c_i will always be a square modulo p if a is
+            # zero and with probability 1/2 otherwise (except if rp == 0).
+            # If b_i == -1 it will be non-square.
+            c = self.open(a * r + b * rp * rp)
+            return self.schedule_callback(c, finish, b)
 
         def finish(cj, bj):
             l = legendre_mod_p(cj)
-            # This will only happen with negligible probability.
-            assert l != 0
             if l == 1:
                 xj = (1/Zp(2)) * (bj + 1)
-            else: # l == -1
-                assert(l == -1)
+            elif l == -1:
                 xj = (-1) * (1/Zp(2)) * (bj - 1)
+            else:
+                # Start over.
+                xj = gen_test_bit()
             return xj
 
-        x = [self.schedule_callback(cj, finish, bj) for cj, bj in zip(c, b)]
+        x = [gen_test_bit() for _ in range(k)]
 
         # Take the product (this is here the same as the "and") of all
         # the x'es
