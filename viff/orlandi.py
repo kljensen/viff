@@ -54,6 +54,14 @@ except ImportError:
     # It is only if the OrlandiRuntime is used that things blow up.
     print "Error: The commitment module is not available."
 
+try:
+    import tripple
+
+except ImportError:
+    # The tripple module is not released yet, so we cannot expect
+    # the import to work.
+    print "Error: The tripple module is not available."
+
 # import logging
 # LOG_FILENAME = 'logging_example.out'
 # logging.basicConfig(filename=LOG_FILENAME,level=logging.DEBUG,)
@@ -969,11 +977,16 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
             results = [None] * len(self.players.keys())
             pc = tuple(self.program_counter)
             p3 = field.modulus**3
+            bjvalue = bj.value
             for pi in self.players.keys():
                 # choose random d_i,j in Z_p^3
                 dij = random_number(p3).value
                 # gamma_ij = alpha_i^b_j Enc_ek_i(1;1)^d_ij
-                gammaij = tripple_2c(alphas[pi - 1], bj.value, dij, self.players[pi].pubkey)
+                # gammaij = tripple_2c(alphas[pi - 1], bj.value, dij, self.players[pi].pubkey)
+                player = self.players[pi]
+                fixed_base = player.pubkey['fixed_base']
+                gammaij = fixed_base.calc(dij, alphas[pi - 1], bjvalue)
+                
                 # Broadcast gamma_ij
                 if pi != self.id:
                     self.protocols[pi].sendData(pc, PAILLIER, str(gammaij))
@@ -1221,6 +1234,9 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
 
                 # 3) the gammaij he received is equal to the gammaij
                 # he now computes based on the values he reveives
+                player = self.players[self.id]
+                fixed_base = player.pubkey['fixed_base']
+                alpha = alphas[self.id - 1]
                 modulus_3 = field.modulus**3
                 for j in xrange(len(ais)):
                     dij = dijs[j]
@@ -1228,8 +1244,9 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
                     if dij >= (modulus_3):
                         raise OrlandiException("Inconsistent random value dij %i from player %i" % (dij, j + 1))
                     # gamma_ij = alpha_i^b_j Enc_ek_i(1;1)^d_ij
-                    gammaij = tripple_2c(alphas[self.id - 1], bis[j][0].value, 
-                                      dij, self.players[self.id].pubkey)
+                    # gammaij = tripple_2c(alphas[self.id - 1], bis[j][0].value, 
+                    #                   dij, self.players[self.id].pubkey)
+                    gammaij = fixed_base.calc(dij, alpha, bis[j][0].value)
                     if gammaij != gammas[j]:
                         raise OrlandiException("Inconsistent gammaij, %i, %i" % (gammaij, gammas[j]))
 
