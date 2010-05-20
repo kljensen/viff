@@ -15,6 +15,8 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with VIFF. If not, see <http://www.gnu.org/licenses/>.
 
+import sys
+
 from twisted.internet.defer import gatherResults, DeferredList
 
 from viff.test.util import RuntimeTestCase, protocol
@@ -43,6 +45,7 @@ from viff.field import FieldElement, GF
 
 from viff.util import rand
 
+sys.setrecursionlimit(10000)
 
 def _get_triple(runtime, field):
     n = field(0)
