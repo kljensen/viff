@@ -22,6 +22,12 @@ try:
 except ImportError:
     pypaillier = None
 
+try:
+    import tripple
+
+except ImportError:
+    tripple = None
+
 
 class Paillier:
 
@@ -49,12 +55,22 @@ class NaClPaillier:
         self.type = 'nacl'
 
     def generate_keys(self):
-        return pypaillier.generate_keys(self.keysize)
-    
+        return pypaillier.generate_keys(self.keysize)  
 
-def deserializer(paillier_type, str):
-        d = {}
+def deserializ_seckey(str):
+    d = {}
+    for k, v in str.items():
+        d[k] = long(v)
+    return d
+
+def deserializ_pubkey(paillier_type, str):
+        pubkey = {}
         for k, v in str.items():
-            d[k] = long(v)
-        return d
-        
+            pubkey[k] = long(v)
+        if paillier_type == "nacl":
+            g1 = pypaillier.encrypt_r(1, 1, pubkey)
+            pubkey['fixed_base'] = tripple.init(g1, pubkey['n_square'])            
+        return pubkey
+
+
+

@@ -134,7 +134,7 @@ def load_config(source):
         if 'paillier' in config[player]:
             paillier_type = config[player]['paillier']['type']
             pub_key = config[player]['paillier']['pubkey']
-            pubkey = paillierutil.deserializer(paillier_type, pub_key)
+            pubkey = paillierutil.deserializ_pubkey(paillier_type, pub_key)
         else:
             # old format
             pubkey = tuple(map(long, config[player]['pubkey']))
@@ -142,7 +142,7 @@ def load_config(source):
         if 'prss_keys' in config[player]:
             if 'paillier' in config[player]:
                 sec_key = config[player]['paillier']['seckey']
-                seckey = paillierutil.deserializer(paillier_type, sec_key)
+                seckey = paillierutil.deserializ_seckey(sec_key)
             else:
                 # old format
                 seckey = tuple(map(long, config[player]['seckey']))
