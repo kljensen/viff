@@ -1064,7 +1064,7 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
 
         def check(v, a, b, c, ec):
             if v.value != 0:
-                return None
+                raise OrlandiException("TripleTest failed - The two triples were inconsistent.")
             return (a, b, c, ec)
 
         def compute_value(((a, b, c, ec), (x, y, z, _), r)):
