@@ -1288,9 +1288,9 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
                 dls_dijs = gatherResults(ds_dijs)
                 dls_alpha_randomness = gatherResults(ds_alpha_randomness)
 
-            dls = gatherResults([dls_a, dls_b, dls_c, dls_alpha_randomness, dls_dijs])
-            dls.addCallbacks(check, self.error_handler, callbackArgs=[alphas, gammas])
-            dls_all.append(dls)
+                dls = gatherResults([dls_a, dls_b, dls_c, dls_alpha_randomness, dls_dijs])
+                dls.addCallbacks(check, self.error_handler, callbackArgs=[alphas, gammas])
+                dls_all.append(dls)
 
             def result(x):
                 ls = []
