@@ -17,13 +17,19 @@
 
 """Full threshold actively secure runtime."""
 
+from twisted.internet.defer import Deferred, gatherResults, succeed
+
+from viff.runtime import Runtime, Share
+
+from hash_broadcast import HashBroadcastMixin
+
 class BeDOZaShare(Share):
     """A share in the BeDOZa runtime.
 
-    A share in the BeDOZa runtime is a pair ``(x_i, Ks)`` of:
+    A share in the BeDOZa runtime is a pair ``(x_i, keys)`` of:
 
     - A share of a number, ``x_i``
-    - A n-tuple of keys, ``Ks``
+    - A n-tuple of keys, ``keys``
 
     The :class:`Runtime` operates on shares, represented by this class.
     Shares are asynchronous in the sense that they promise to attain a
@@ -36,11 +42,10 @@ class BeDOZaShare(Share):
     that runtime.
     """
 
-    def __init__(self, runtime, field, value=None, rho=None, commitment=None):
+    def __init__(self, runtime, field, value=None, keys=None):
         self.share = value
-        self.rho = rho
-        self.commitment = commitment
-        Share.__init__(self, runtime, field, (value, rho, commitment))
+        self.keys = keys
+        Share.__init__(self, runtime, field, (value, keys))
 
 
 class BeDOZaRuntime(Runtime, HashBroadcastMixin):
