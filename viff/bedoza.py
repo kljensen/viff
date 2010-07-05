@@ -26,10 +26,10 @@ from hash_broadcast import HashBroadcastMixin
 class BeDOZaShare(Share):
     """A share in the BeDOZa runtime.
 
-    A share in the BeDOZa runtime is a pair ``(x_i, keys)`` of:
+    A share in the BeDOZa runtime is a pair ``(x_i, authentication_codes)`` of:
 
     - A share of a number, ``x_i``
-    - A n-tuple of keys, ``keys``
+    - A list of authentication_codes, ``authentication_codes``
 
     The :class:`Runtime` operates on shares, represented by this class.
     Shares are asynchronous in the sense that they promise to attain a
@@ -42,10 +42,10 @@ class BeDOZaShare(Share):
     that runtime.
     """
 
-    def __init__(self, runtime, field, value=None, keys=None):
+    def __init__(self, runtime, field, value=None, authentication_codes=None):
         self.share = value
-        self.keys = keys
-        Share.__init__(self, runtime, field, (value, keys))
+        self.authentication_codes = authentication_codes
+        Share.__init__(self, runtime, field, (value, authentication_codes))
 
 
 class BeDOZaRuntime(Runtime, HashBroadcastMixin):
