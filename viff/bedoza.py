@@ -45,47 +45,69 @@ class BeDOZaShare(Share):
     that runtime.
     """
 
-    def __init__(self, runtime, field, value=None, authentication_codes=None):
+    def __init__(self, runtime, field, value=None, keyList=None, authentication_codes=None):
         self.share = value
+        self.keyList = keyList
         self.authentication_codes = authentication_codes
-        Share.__init__(self, runtime, field, (value, authentication_codes))
+        Share.__init__(self, runtime, field, (value, keyList, authentication_codes))
 
+class BeDOZaKeyList(object):
+
+    def __init__(self, alpha, keys):
+        self.alpha = alpha
+        self.keys = keys
+
+    def __add__(self, other):
+        """Addition."""
+        keys = []
+        for k1, k2 in zip(self.keys, other.keys):
+            keys.append(k1 + k2)
+        return BeDOZaKeyList(keys)
+
+    def __str__(self):
+        return "(%s, %s)" % (self.alpha, str(self.keys))
+    
 class RandomShareGenerator:
 
-    def authentication_codes(self, alpha, betas, v):
-        auth_codes = []
-        for beta in betas:
-            auth_codes.append(alpha*v + beta)
-        return auth_codes
-
     def generate_random_shares(self, field, number_of_shares):
-        alpha = self.get_keys()[0]
+        def keys_N_codes(value):
+            auth_codes = self.generate_auth_codes(self.id, v)
+            my_keys = self.generate_keys()
+            return BeDOZaShare(self, field, v, my_keys, auth_codes)
         shares = []
         for i in xrange(0, number_of_shares):
             if self.id == 1:
-                betas = map(lambda (alpha, betas): betas[0], self.keys.values())
                 v = field(1)
-                auth_codes= self.authentication_codes(alpha, betas, v)
-                shares.append(BeDOZaShare(self, field, v, auth_codes))
+                shares.append(keys_N_codes(v))
             if self.id == 2:
-                betas = map(lambda (alpha, betas): betas[1], self.keys.values())
                 v = field(2)
-                auth_codes= self.authentication_codes(alpha, betas, v)
-                shares.append(BeDOZaShare(self, field, v, auth_codes))
+                shares.append(keys_N_codes(v))
             if self.id == 3:
-                betas = map(lambda (alpha, betas): betas[2], self.keys.values())
                 v = field(3)
-                auth_codes= self.authentication_codes(alpha, betas, v)
-                shares.append(BeDOZaShare(self, field, v, auth_codes))
+                shares.append(keys_N_codes(v))
         return shares
+
+    def generate_auth_codes(self, playerId, value):
+        keys = map(lambda (alpha, akeys): (alpha, akeys[playerId - 1]), self.keys.values())
+        auth_codes = self.authentication_codes(keys, value)
+        return auth_codes
+
+    def authentication_codes(self, keys, v):
+        auth_codes = []
+        for alpha, beta in keys:
+            auth_codes.append(alpha * v + beta)
+        return auth_codes
+
+    def generate_keys(self):
+        alpha, betas = self.get_keys()
+        return BeDOZaKeyList(alpha, betas)
 
 class KeyLoader:
 
     def load_keys(self, field):
-        alpha = field(2)
-        return {1: (alpha, [field(1), field(2), field(3)]),
-                2: (alpha, [field(4), field(5), field(6)]),
-                3: (alpha, [field(7), field(8), field(9)])}
+        return {1: (field(2), [field(1), field(2), field(3)]),
+                2: (field(3), [field(4), field(5), field(6)]),
+                3: (field(4), [field(7), field(8), field(9)])}
 
 class BeDOZaRuntime(Runtime, HashBroadcastMixin, KeyLoader, RandomShareGenerator):
     """The BeDOZa runtime.
@@ -115,7 +137,7 @@ class BeDOZaRuntime(Runtime, HashBroadcastMixin, KeyLoader, RandomShareGenerator
         self.random_shares = []
  
     def MAC(self, alpha, beta, v):
-         return alpha*v + beta
+        return alpha * v + beta
 
     def random_share(self, field):
         """Retrieve a previously generated random share in the field, field.
@@ -150,11 +172,11 @@ class BeDOZaRuntime(Runtime, HashBroadcastMixin, KeyLoader, RandomShareGenerator
 
         self.increment_pc()
 
-        def recombine_value(shares_codes):
+        def recombine_value(shares_codes, keyList):
             isOK = True
             n = len(self.players)
-            alpha = self.get_keys()[0]
-            keys = self.get_keys()[1]
+            alpha = keyList.alpha
+            keys = keyList.keys
             x = 0
             for inx in xrange(0, n):
                 xi = shares_codes[inx]
@@ -166,13 +188,12 @@ class BeDOZaRuntime(Runtime, HashBroadcastMixin, KeyLoader, RandomShareGenerator
                 raise BeDOZaException("Wrong commitment for value %s." % x)
             return x
 
-        def exchange((xi, codes), receivers):
+        def exchange((xi, keyList, codes), receivers):
             # Send share to all receivers.
             pc = tuple(self.program_counter)
             for other_id in receivers:
                 self.protocols[other_id].sendShare(pc, xi)
                 self.protocols[other_id].sendShare(pc, codes[other_id - 1])
-
             if self.id in receivers:
                 num_players = len(self.players.keys())
                 values = num_players * [None]
@@ -181,7 +202,7 @@ class BeDOZaRuntime(Runtime, HashBroadcastMixin, KeyLoader, RandomShareGenerator
                     values[inx] =  self._expect_share(other_id, field)
                     codes[inx] = self._expect_share(other_id, field)
                 result = gatherResults(values + codes)
-                result.addCallbacks(recombine_value, self.error_handler)
+                result.addCallbacks(recombine_value, self.error_handler, callbackArgs=(keyList,))
                 return result
 
         result = share.clone()

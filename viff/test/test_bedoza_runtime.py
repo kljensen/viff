@@ -22,7 +22,7 @@ from twisted.internet.defer import gatherResults, DeferredList
 from viff.test.util import RuntimeTestCase, protocol
 from viff.runtime import gather_shares, Share
 from viff.config import generate_configs
-from viff.bedoza import BeDOZaRuntime, BeDOZaShare
+from viff.bedoza import BeDOZaRuntime, BeDOZaShare, BeDOZaKeyList
 from viff.field import FieldElement, GF
 from viff.util import rand
 
@@ -45,22 +45,16 @@ class KeyLoaderTest(RuntimeTestCase):
         keys2 = keys[2]
         keys3 = keys[3]
         if runtime.id == 1:
-            alpha = keys1[0]
-            self.assertEquals(alpha, 2)
             betas = keys1[1]
             self.assertEquals(betas[0], 1)
             self.assertEquals(betas[1], 2)
             self.assertEquals(betas[2], 3)
         if runtime.id == 2:
-            alpha = keys2[0]
-            self.assertEquals(alpha, 2)
             betas = keys2[1]
             self.assertEquals(betas[0], 4)
             self.assertEquals(betas[1], 5)
             self.assertEquals(betas[2], 6)
         if runtime.id == 3:
-            alpha = keys3[0]
-            self.assertEquals(alpha, 2)
             betas = keys3[1]
             self.assertEquals(betas[0], 7)
             self.assertEquals(betas[1], 8)
@@ -79,24 +73,24 @@ class KeyLoaderTest(RuntimeTestCase):
         codes = self.num_players * [None]
 
         for xid in runtime.players.keys():
-            betas = map(lambda (alpha, betas): betas[xid-1], runtime.keys.values())
-            codes[xid-1] = runtime.authentication_codes(alpha, betas, v)
+            keys = map(lambda (alpha, akeys): (alpha, akeys[xid - 1]), runtime.keys.values())
+            codes[xid-1] = runtime.authentication_codes(keys, v)
         
         if runtime.id == 1:
             my_codes = codes[0]
             self.assertEquals(my_codes[0], self.Zp(5))
-            self.assertEquals(my_codes[1], self.Zp(8))
-            self.assertEquals(my_codes[2], self.Zp(11))
+            self.assertEquals(my_codes[1], self.Zp(10))
+            self.assertEquals(my_codes[2], self.Zp(15))
         if runtime.id == 2:
             my_codes = codes[1]
             self.assertEquals(my_codes[0], self.Zp(6))
-            self.assertEquals(my_codes[1], self.Zp(9))
-            self.assertEquals(my_codes[2], self.Zp(12))
+            self.assertEquals(my_codes[1], self.Zp(11))
+            self.assertEquals(my_codes[2], self.Zp(16))
         if runtime.id == 3:
             my_codes = codes[2]
             self.assertEquals(my_codes[0], self.Zp(7))
-            self.assertEquals(my_codes[1], self.Zp(10))
-            self.assertEquals(my_codes[2], self.Zp(13))
+            self.assertEquals(my_codes[1], self.Zp(12))
+            self.assertEquals(my_codes[2], self.Zp(17))
 
 
 class BeDOZaBasicCommandsTest(RuntimeTestCase):
