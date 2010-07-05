@@ -47,8 +47,44 @@ class BeDOZaShare(Share):
         self.authentication_codes = authentication_codes
         Share.__init__(self, runtime, field, (value, authentication_codes))
 
+class RandomShareGenerator:
 
-class BeDOZaRuntime(Runtime, HashBroadcastMixin):
+    def authentication_codes(self, alpha, betas, v):
+        auth_codes = []
+        for beta in betas:
+            auth_codes.append(alpha*v + beta)
+        return auth_codes
+
+    def generate_random_shares(self, field, number_of_shares):
+        alpha = self.get_keys()[0]
+        shares = []
+        for i in xrange(0, number_of_shares):
+            if self.id == 1:
+                betas = map(lambda (alpha, betas): betas[0], self.keys.values())
+                v = field(1)
+                auth_codes= self.authentication_codes(alpha, betas, v)
+                shares.append(BeDOZaShare(self, field, v, auth_codes))
+            if self.id == 2:
+                betas = map(lambda (alpha, betas): betas[1], self.keys.values())
+                v = field(2)
+                auth_codes= self.authentication_codes(alpha, betas, v)
+                shares.append(BeDOZaShare(self, field, v, auth_codes))
+            if self.id == 3:
+                betas = map(lambda (alpha, betas): betas[2], self.keys.values())
+                v = field(3)
+                auth_codes= self.authentication_codes(alpha, betas, v)
+                shares.append(BeDOZaShare(self, field, v, auth_codes))
+        return shares
+
+class KeyLoader:
+
+    def load_keys(self, field):
+        alpha = field(2)
+        return {1: (alpha, [field(1), field(2), field(3)]),
+                2: (alpha, [field(4), field(5), field(6)]),
+                3: (alpha, [field(7), field(8), field(9)])}
+
+class BeDOZaRuntime(Runtime, HashBroadcastMixin, KeyLoader, RandomShareGenerator):
     """The BeDOZa runtime.
 
     The runtime is used for sharing values (:meth:`secret_share` or
@@ -72,6 +108,27 @@ class BeDOZaRuntime(Runtime, HashBroadcastMixin):
         """Initialize runtime."""
         Runtime.__init__(self, player, threshold, options)
         self.threshold = self.num_players - 1
-
+        self.random_share_number = 100
+        self.random_shares = []
+ 
     def MAC(self, alpha, beta, v):
-        return alpha*v + beta
+         return alpha*v + beta
+
+    def random_share(self, field):
+        """Retrieve a previously generated random share in the field, field.
+
+        If no more shares are left, generate self.random_share_number new ones.
+        """
+        self.keys = self.load_keys(field)
+        if len(self.random_shares) == 0:
+            self.random_shares = self.generate_random_shares(field, self.random_share_number)
+
+        return self.random_shares.pop()
+
+    def get_keys(self):
+        if self.id == 1:
+            return self.keys[1]
+        if self.id == 2:
+            return self.keys[2]
+        if self.id == 3:
+            return self.keys[3]

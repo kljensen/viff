@@ -26,6 +26,79 @@ from viff.bedoza import BeDOZaRuntime, BeDOZaShare
 from viff.field import FieldElement, GF
 from viff.util import rand
 
+class KeyLoaderTest(RuntimeTestCase):
+    """Test of KeyLoader."""
+
+    # Number of players.
+    num_players = 3
+
+    runtime_class = BeDOZaRuntime
+
+    @protocol
+    def test_load_keys(self, runtime):
+        """Test loading of keys."""
+
+        self.Zp = GF(6277101735386680763835789423176059013767194773182842284081)
+
+        keys = runtime.load_keys(self.Zp)
+        keys1 = keys[1]
+        keys2 = keys[2]
+        keys3 = keys[3]
+        if runtime.id == 1:
+            alpha = keys1[0]
+            self.assertEquals(alpha, 2)
+            betas = keys1[1]
+            self.assertEquals(betas[0], 1)
+            self.assertEquals(betas[1], 2)
+            self.assertEquals(betas[2], 3)
+        if runtime.id == 2:
+            alpha = keys2[0]
+            self.assertEquals(alpha, 2)
+            betas = keys2[1]
+            self.assertEquals(betas[0], 4)
+            self.assertEquals(betas[1], 5)
+            self.assertEquals(betas[2], 6)
+        if runtime.id == 3:
+            alpha = keys3[0]
+            self.assertEquals(alpha, 2)
+            betas = keys3[1]
+            self.assertEquals(betas[0], 7)
+            self.assertEquals(betas[1], 8)
+            self.assertEquals(betas[2], 9)
+
+    @protocol
+    def test_authentication_codes(self, runtime):
+        """Test generating random shares."""
+
+        self.Zp = GF(6277101735386680763835789423176059013767194773182842284081)
+
+        runtime.keys = runtime.load_keys(self.Zp)
+
+        v = self.Zp(2)
+        alpha = runtime.get_keys()[0]
+        codes = self.num_players * [None]
+
+        for xid in runtime.players.keys():
+            betas = map(lambda (alpha, betas): betas[xid-1], runtime.keys.values())
+            codes[xid-1] = runtime.authentication_codes(alpha, betas, v)
+        
+        if runtime.id == 1:
+            my_codes = codes[0]
+            self.assertEquals(my_codes[0], self.Zp(5))
+            self.assertEquals(my_codes[1], self.Zp(8))
+            self.assertEquals(my_codes[2], self.Zp(11))
+        if runtime.id == 2:
+            my_codes = codes[1]
+            self.assertEquals(my_codes[0], self.Zp(6))
+            self.assertEquals(my_codes[1], self.Zp(9))
+            self.assertEquals(my_codes[2], self.Zp(12))
+        if runtime.id == 3:
+            my_codes = codes[2]
+            self.assertEquals(my_codes[0], self.Zp(7))
+            self.assertEquals(my_codes[1], self.Zp(10))
+            self.assertEquals(my_codes[2], self.Zp(13))
+
+
 class BeDOZaBasicCommandsTest(RuntimeTestCase):
     """Test for basic commands."""
 
