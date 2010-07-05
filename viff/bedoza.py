@@ -72,3 +72,6 @@ class BeDOZaRuntime(Runtime, HashBroadcastMixin):
         """Initialize runtime."""
         Runtime.__init__(self, player, threshold, options)
         self.threshold = self.num_players - 1
+
+    def MAC(self, alpha, beta, v):
+        return alpha*v + beta
