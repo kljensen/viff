@@ -107,4 +107,17 @@ class BeDOZaBasicCommandsTest(RuntimeTestCase):
 
     runtime_class = BeDOZaRuntime
 
-BeDOZaBasicCommandsTest.skip = "Skipped because the tested code is not implemented."
+    @protocol
+    def test_random_share(self, runtime):
+        """Test creation of a random shared number."""
+
+        self.Zp = GF(6277101735386680763835789423176059013767194773182842284081)
+
+        def check(v):
+            self.assertEquals(True, True)
+
+        x = runtime.random_share(self.Zp)
+        d = runtime.open(x)
+        d.addCallback(check)
+        return d
+

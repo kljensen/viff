@@ -19,9 +19,12 @@
 
 from twisted.internet.defer import Deferred, gatherResults, succeed
 
-from viff.runtime import Runtime, Share
+from viff.runtime import Runtime, Share, ShareList
 
 from hash_broadcast import HashBroadcastMixin
+
+class BeDOZaException(Exception):
+    pass
 
 class BeDOZaShare(Share):
     """A share in the BeDOZa runtime.
@@ -124,6 +127,69 @@ class BeDOZaRuntime(Runtime, HashBroadcastMixin, KeyLoader, RandomShareGenerator
             self.random_shares = self.generate_random_shares(field, self.random_share_number)
 
         return self.random_shares.pop()
+
+    def open(self, share, receivers=None):
+        """Share reconstruction.
+ 
+        Every partyi broadcasts a share pair ``(x_i', rho_x,i')``.
+
+        The parties compute the sums ``x'``, ``rho_x'`` and check
+        ``Com_ck(x',rho_x') = C_x``.
+
+        If yes, return ``x = x'``, else else return :const:`None`.
+        """
+        assert isinstance(share, Share)
+        # all players receive result by default
+        if receivers is None:
+            receivers = self.players.keys()
+
+        field = share.field
+
+        self.increment_pc()
+
+        def recombine_value(shares_codes):
+            isOK = True
+            n = len(self.players)
+            alpha = self.get_keys()[0]
+            keys = self.get_keys()[1]
+            x = 0
+            for inx in xrange(0, n):
+                xi = shares_codes[inx]
+                mi = shares_codes[n + inx]
+                beta = keys[inx]
+                x += xi
+                isOK = isOK and mi == self.MAC(alpha, beta, xi)
+            if not isOK:
+                raise BeDOZaException("Wrong commitment for value %s." % x)
+            return x
+
+        def exchange((xi, codes), receivers):
+            # Send share to all receivers.
+            pc = tuple(self.program_counter)
+            for other_id in receivers:
+                self.protocols[other_id].sendShare(pc, xi)
+                self.protocols[other_id].sendShare(pc, codes[other_id - 1])
+
+            if self.id in receivers:
+                num_players = len(self.players.keys())
+                values = num_players * [None]
+                codes = num_players * [None]
+                for inx, other_id in enumerate(self.players.keys()):
+                    values[inx] =  self._expect_share(other_id, field)
+                    codes[inx] = self._expect_share(other_id, field)
+                result = gatherResults(values + codes)
+                result.addCallbacks(recombine_value, self.error_handler)
+                return result
+
+        result = share.clone()
+        self.schedule_callback(result, exchange, receivers)
+        result.addErrback(self.error_handler)
+
+        # do actual communication
+        self.activate_reactor()
+
+        if self.id in receivers:
+            return result
 
     def get_keys(self):
         if self.id == 1:
