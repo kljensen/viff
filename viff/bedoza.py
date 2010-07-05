@@ -128,6 +128,9 @@ class BeDOZaRuntime(Runtime, HashBroadcastMixin, KeyLoader, RandomShareGenerator
 
         return self.random_shares.pop()
 
+    def output(self, share, receivers=None):
+        return self.open(share, receivers)
+
     def open(self, share, receivers=None):
         """Share reconstruction.
  
