@@ -67,6 +67,9 @@ class BeDOZaKeyList(object):
     def __str__(self):
         return "(%s, %s)" % (self.alpha, str(self.keys))
 
+    def __repr__(self):
+        return str(self)
+    
 class BeDOZaMessageList(object):
 
     def __init__(self, auth_codes):
