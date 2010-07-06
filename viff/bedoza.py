@@ -66,6 +66,27 @@ class BeDOZaKeyList(object):
 
     def __str__(self):
         return "(%s, %s)" % (self.alpha, str(self.keys))
+
+class BeDOZaMessageList(object):
+
+    def __init__(self, auth_codes):
+        self.auth_codes = auth_codes
+
+    def __add__(self, other):
+        """Addition."""
+        auth_codes = []
+        for c1, c2 in zip(self.auth_codes, other.auth_codes):
+            auth_codes.append(c1 + c2)
+        return BeDOZaMessageList(auth_codes)
+
+    def __eq__(self, other):
+        return self.auth_codes == other.auth_codes
+
+    def __str__(self):
+        return str(self.auth_codes)
+
+    def __repr__(self):
+        return str(self)
     
 class RandomShareGenerator:
 
@@ -96,7 +117,7 @@ class RandomShareGenerator:
         auth_codes = []
         for alpha, beta in keys:
             auth_codes.append(alpha * v + beta)
-        return auth_codes
+        return BeDOZaMessageList(auth_codes)
 
     def generate_keys(self):
         alpha, betas = self.get_keys()
@@ -193,7 +214,7 @@ class BeDOZaRuntime(Runtime, HashBroadcastMixin, KeyLoader, RandomShareGenerator
             pc = tuple(self.program_counter)
             for other_id in receivers:
                 self.protocols[other_id].sendShare(pc, xi)
-                self.protocols[other_id].sendShare(pc, codes[other_id - 1])
+                self.protocols[other_id].sendShare(pc, codes.auth_codes[other_id - 1])
             if self.id in receivers:
                 num_players = len(self.players.keys())
                 values = num_players * [None]

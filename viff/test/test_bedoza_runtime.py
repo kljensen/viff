@@ -22,7 +22,7 @@ from twisted.internet.defer import gatherResults, DeferredList
 from viff.test.util import RuntimeTestCase, protocol
 from viff.runtime import gather_shares, Share
 from viff.config import generate_configs
-from viff.bedoza import BeDOZaRuntime, BeDOZaShare, BeDOZaKeyList
+from viff.bedoza import BeDOZaRuntime, BeDOZaShare, BeDOZaKeyList, BeDOZaMessageList
 from viff.field import FieldElement, GF
 from viff.util import rand
 
@@ -74,7 +74,7 @@ class KeyLoaderTest(RuntimeTestCase):
 
         for xid in runtime.players.keys():
             keys = map(lambda (alpha, akeys): (alpha, akeys[xid - 1]), runtime.keys.values())
-            codes[xid-1] = runtime.authentication_codes(keys, v)
+            codes[xid-1] = runtime.authentication_codes(keys, v).auth_codes
         
         if runtime.id == 1:
             my_codes = codes[0]
@@ -91,6 +91,21 @@ class KeyLoaderTest(RuntimeTestCase):
             self.assertEquals(my_codes[0], self.Zp(7))
             self.assertEquals(my_codes[1], self.Zp(12))
             self.assertEquals(my_codes[2], self.Zp(17))
+
+    @protocol
+    def test_messagelist(self, runtime):
+        """Test loading of keys."""
+
+        Zp = GF(6277101735386680763835789423176059013767194773182842284081)
+
+        m1 = BeDOZaMessageList([Zp(2), Zp(34)])
+        m2 = BeDOZaMessageList([Zp(11), Zp(4)])
+        m3 = m1 + m2
+        self.assertEquals(m3.auth_codes[0], 13)
+        self.assertEquals(m3.auth_codes[1], 38)
+        self.assertEquals(len(m3.auth_codes), 2)
+        return m3
+        
 
 
 class BeDOZaBasicCommandsTest(RuntimeTestCase):
