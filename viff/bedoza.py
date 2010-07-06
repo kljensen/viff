@@ -65,6 +65,9 @@ class BeDOZaKeyList(object):
             keys.append(k1 + k2)
         return BeDOZaKeyList(keys)
 
+    def __eq__(self, other):
+        return self.alpha == other.alpha and self.keys == other.keys
+
     def __str__(self):
         return "(%s, %s)" % (self.alpha, str(self.keys))
 
