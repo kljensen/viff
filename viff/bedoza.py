@@ -207,9 +207,9 @@ class BeDOZaRuntime(Runtime, HashBroadcastMixin, KeyLoader, RandomShareGenerator
                 mi = shares_codes[n + inx]
                 beta = keys[inx]
                 x += xi
-                isOK = isOK and mi == self.MAC(alpha, beta, xi)
-            if not isOK:
-                raise BeDOZaException("Wrong commitment for value %s." % x)
+                mi_prime = self.MAC(alpha, beta, xi)
+                if not (isOK and mi == mi_prime):
+                    raise BeDOZaException("Wrong commitment, expected %s, got %s = %s*%s + %s." % (mi.value, mi_prime.value, alpha.value, xi.value, beta.value))
             return x
 
         def exchange((xi, keyList, codes), receivers):
