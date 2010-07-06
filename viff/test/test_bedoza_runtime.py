@@ -276,19 +276,39 @@ class BeDOZaBasicCommandsTest(RuntimeTestCase):
         return d
 
     @protocol
-    def test_sub_constant_left(self, runtime):
-        """Test subtraction of a public number and secret shared number."""
+    def test_constant_multiplication_constant_left(self, runtime):
+        """Test multiplication of two numbers."""
 
         self.Zp = GF(6277101735386680763835789423176059013767194773182842284081)
 
-        x1 = 42
+        x1 = 6
         y1 = 7
 
         def check(v):
-            self.assertEquals(v, 1)
+            self.assertEquals(v, x1 * y1)
 
         x2 = runtime.random_share(self.Zp)
-        z2 = y1 - x2
+
+        z2 = runtime._cmul(self.Zp(y1), x2, self.Zp)
+        d = runtime.open(z2)
+        d.addCallback(check)
+        return d
+
+    @protocol
+    def test_constant_multiplication_constant_right(self, runtime):
+        """Test multiplication of two numbers."""
+
+        self.Zp = GF(6277101735386680763835789423176059013767194773182842284081)
+
+        x1 = 6
+        y1 = 7
+
+        def check(v):
+            self.assertEquals(v, x1 * y1)
+
+        x2 = runtime.random_share(self.Zp)
+
+        z2 = runtime._cmul(x2, self.Zp(y1), self.Zp)
         d = runtime.open(z2)
         d.addCallback(check)
         return d
