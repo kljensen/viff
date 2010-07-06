@@ -156,7 +156,8 @@ class ComparisonToft07Mixin:
 
     def convert_bit_share(self, share, dst_field):
         """Convert a 0/1 share into *dst_field*."""
-        l = self.options.security_parameter + math.log(dst_field.modulus, 2)
+        l = self.options.security_parameter + \
+            int(math.ceil(math.log(dst_field.modulus, 2)))
         # TODO assert field sizes are OK...
 
         this_mask = rand.randint(0, (2**l) -1)
