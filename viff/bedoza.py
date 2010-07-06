@@ -63,7 +63,7 @@ class BeDOZaKeyList(object):
         keys = []
         for k1, k2 in zip(self.keys, other.keys):
             keys.append(k1 + k2)
-        return BeDOZaKeyList(keys)
+        return BeDOZaKeyList(self.alpha, keys)
 
     def __eq__(self, other):
         return self.alpha == other.alpha and self.keys == other.keys
