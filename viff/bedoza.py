@@ -19,7 +19,8 @@
 
 from twisted.internet.defer import Deferred, gatherResults, succeed
 
-from viff.runtime import Runtime, Share, ShareList
+from viff.runtime import Runtime, Share, ShareList, gather_shares
+from viff.field import FieldElement
 
 from hash_broadcast import HashBroadcastMixin
 
@@ -253,3 +254,50 @@ class BeDOZaRuntime(Runtime, HashBroadcastMixin, KeyLoader, RandomShareGenerator
 
     def get_alpha(self):
         return self.keys[0]
+        
+    def add(self, share_a, share_b):
+        """Addition of shares.
+
+        Communication cost: none.
+
+        Each party ``P_i`` computes::
+
+          [z]_i = [x]_i + [y]_i
+                = (x_i + y_i mod p, {xk^{i}_{j} + yk^{i}_{j} mod p}_{j=0}^{j=n}, {xm^{i}_{j} + ym^{i}_{j} mod p}_{j=0}^{j=n})
+
+        """
+        # Either share_a or share_b must have an attribute called "field".
+        field = share_a.field
+        if not isinstance(share_b, Share):
+            if not isinstance(share_b, FieldElement):
+                share_b = field(share_b)
+            share_a.addCallbacks(self._add_public, self.error_handler, callbackArgs=(share_b, field))
+            return share_a
+        else:
+            result = gather_shares([share_a, share_b])
+            result.addCallbacks(self._plus, self.error_handler, callbackArgs=(field,))
+            return result
+
+    def _add_public(self, x, y, field):
+        """Greate an additive constant."""
+        (xi, xks, xms) = x
+        if self.id == 1:
+            xi = xi + y
+        xks.keys[0] = xks.keys[0] - xks.alpha * y
+        return BeDOZaShare(self, field, xi, xks, xms)
+
+    def _plus(self, (x, y), field):
+        """Addition of share-tuples *x* and *y*.
+
+        Each party ``P_i`` computes:
+        ``[x]_i = (x_i, xk, xm)``
+        ``[y]_i = (y_i, yk, ym)``
+        ``[z]_i = [x]_i + [y]_i
+                = (x_i + y_i mod p, {xk^{i}_{j} + yk^{i}_{j} mod p}_{j=0}^{j=n}, {xm^{i}_{j} + ym^{i}_{j} mod p}_{j=0}^{j=n})
+        """
+        (xi, xks, xms) = x
+        (yi, yks, yms) = y
+        zi = xi + yi
+        zks = xks + yks
+        zms = xms + yms
+        return (zi, zks, zms)

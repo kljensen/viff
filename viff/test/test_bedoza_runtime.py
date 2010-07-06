@@ -130,3 +130,84 @@ class BeDOZaBasicCommandsTest(RuntimeTestCase):
         d.addCallback(check)
         return d
 
+    @protocol
+    def test_plus(self, runtime):
+        """Test addition of two numbers."""
+
+        Zp = GF(6277101735386680763835789423176059013767194773182842284081)
+       
+        x = (Zp(2), BeDOZaKeyList(Zp(23), [Zp(3), Zp(4), Zp(1)]), BeDOZaMessageList([Zp(2), Zp(74), Zp(23), Zp(2)]))
+        y = (Zp(2), BeDOZaKeyList(Zp(23), [Zp(5), Zp(2), Zp(7)]), BeDOZaMessageList([Zp(2), Zp(74), Zp(23), Zp(2)]))
+        zi, zks, zms = runtime._plus((x, y), Zp)
+        self.assertEquals(zi, Zp(4))
+        self.assertEquals(zks, BeDOZaKeyList(Zp(23), [Zp(8), Zp(6), Zp(8)]))
+        self.assertEquals(zms, BeDOZaMessageList([Zp(4), Zp(148), Zp(46), Zp(4)]))
+        return zi
+
+    @protocol
+    def test_sum(self, runtime):
+        """Test addition of two numbers."""
+
+        self.Zp = GF(6277101735386680763835789423176059013767194773182842284081)
+
+        def check(v):
+            self.assertEquals(v, 12)
+
+        x2 = runtime.random_share(self.Zp)
+        y2 = runtime.random_share(self.Zp)
+        z2 = runtime.add(x2, y2)
+        d = runtime.open(z2)
+        d.addCallback(check)
+        return d
+
+    @protocol
+    def test_sum_plus(self, runtime):
+        """Test addition of two numbers."""
+
+        self.Zp = GF(6277101735386680763835789423176059013767194773182842284081)
+
+        def check(v):
+            self.assertEquals(v, 12)
+
+        x2 = runtime.random_share(self.Zp)
+        y2 = runtime.random_share(self.Zp)
+        z2 = x2 + y2
+        d = runtime.open(z2)
+        d.addCallback(check)
+        return d
+
+    @protocol
+    def test_sum_constant_right(self, runtime):
+        """Test addition of secret shared number and a public number."""
+
+        self.Zp = GF(31)
+
+        x1 = 42
+        y1 = 7
+
+        def check(v):
+            self.assertEquals(v, 13)
+
+        x2 = runtime.random_share(self.Zp)
+        z2 = x2 + y1
+        d = runtime.open(z2)
+        d.addCallback(check)
+        return d
+
+    @protocol
+    def test_sum_constant_left(self, runtime):
+        """Test addition of a public number and secret shared number."""
+
+        self.Zp = GF(6277101735386680763835789423176059013767194773182842284081)
+
+        x1 = 42
+        y1 = 7
+
+        def check(v):
+            self.assertEquals(v, 13)
+
+        x2 = runtime.random_share(self.Zp)
+        z2 = y1 + x2
+        d = runtime.open(z2)
+        d.addCallback(check)
+        return d
