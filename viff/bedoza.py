@@ -250,3 +250,6 @@ class BeDOZaRuntime(Runtime, HashBroadcastMixin, KeyLoader, RandomShareGenerator
             return self.keys[2]
         if self.id == 3:
             return self.keys[3]
+
+    def get_alpha(self):
+        return self.keys[0]
