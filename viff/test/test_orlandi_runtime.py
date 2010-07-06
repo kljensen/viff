@@ -140,6 +140,22 @@ class OrlandiBasicCommandsTest(RuntimeTestCase):
         return d
 
     @protocol
+    def test_plus(self, runtime):
+        """Test addition of two numbers."""
+
+        Zp = GF(6277101735386680763835789423176059013767194773182842284081)
+
+        Cx = commitment.commit(7, 4, 5)
+        x = (Zp(2), (Zp(2), Zp(2)), Cx)
+        y = (Zp(2), (Zp(2), Zp(2)), Cx)
+        zi, (rho1, rho2), Cz = runtime._plus((x, y), Zp)
+        self.assertEquals(zi, Zp(4))
+        self.assertEquals(rho1, 4)
+        self.assertEquals(rho2, 4)
+        self.assertEquals(Cz, Cx * Cx) 
+        return zi
+
+    @protocol
     def test_sum(self, runtime):
         """Test addition of two numbers."""
 

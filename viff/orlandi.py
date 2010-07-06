@@ -33,6 +33,8 @@ from viff.constants import TEXT, PAILLIER
 from viff.field import FieldElement
 from viff.paillier import encrypt_r, decrypt
 
+from viff.simplearithmetic import SimpleArithmetic
+
 from hash_broadcast import HashBroadcastMixin
 
 try:
@@ -96,7 +98,7 @@ class OrlandiShare(Share):
         Share.__init__(self, runtime, field, (value, rho, commitment))
 
 
-class OrlandiRuntime(Runtime, HashBroadcastMixin):
+class OrlandiRuntime(SimpleArithmetic, Runtime, HashBroadcastMixin):
     """The Orlandi runtime.
 
     The runtime is used for sharing values (:meth:`secret_share` or
@@ -423,72 +425,69 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
 
         return s
 
-    def add(self, share_a, share_b):
-        """Addition of shares.
-
-        Communication cost: none.
-
-        Each party ``P_i`` computes::
-
-          [z]_i = [x]_i + [y]_i
-                = (x_i + y_i mod p, rho_xi + rho_yi mod p, C_x * C_y)
-
+    def _convert_public_to_share(self, c, field):
+        """Convert a public value to a share.
+        
+        Any additive constant can be interpreted as:
+        ``[c]_1 = (c, 0, Com_ck(c,0))`` and
+        ``[c]_i = (0, 0, Com_ck(c,0)) for i != 1``.
         """
-        def is_share(s, field):
-            if not isinstance(s, Share):
-                if not isinstance(s, FieldElement):
-                    s = field(s)
-                (v, rhov, Cv) = self._additive_constant(field(0), s)
-                return OrlandiShare(self, field, v, rhov, Cv)
-            return s
+        zero = field(0)
+        ci = zero
+        if self.id == 1:
+            ci = c
+        return self._constant(ci, c, field)
 
-        # Either share_a or share_b must have an attribute called "field".
-        field = share_a.field
+    def _constant(self, xi, x, field):
+        """Greate a share *xi* with commitment to value *x*."""
+        zero = field(0)
+        Cx = commitment.commit(x.value, 0, 0)
+        return (xi, (zero, zero), Cx)
 
-        share_b = is_share(share_b, field)
+    def _plus_public(self, x, c, field):
+        return self._do_arithmetic_op(x, c, field, self._plus)
 
-        # Add rho_xi and rho_yi and compute the commitment.
-        def compute_sums((x, y)):
-            (zi, (rhozi1, rhozi2), Cz) = self._plus(x, y)
-            return OrlandiShare(self, field, zi, (rhozi1, rhozi2), Cz)
+    def _plus(self, (x, y), field):
+        """Addition of share-tuples *x* and *y*.
 
-        result = gather_shares([share_a, share_b])
-        result.addCallbacks(compute_sums, self.error_handler)
-        return result
-
-    def sub(self, share_a, share_b):
-        """Subtraction of shares.
-
-        Communication cost: none.
-
-        Each party ``P_i`` computes::
-
-          [z]_i = [x]_i - [y]_i
-                = (x_i - y_i mod p, rho_x,i - rho_y,i mod p, C_x * C_y)
-
+        Each party ``P_i`` computes:
+        ``[x]_i = (x_i, rho_xi, C_x)``
+        ``[y]_i = (y_i, rho_yi, C_y)``
+        ``[z]_i = [x]_i + [y]_i
+                = (x_i + y_i mod p, rho_xi + rho_yi mod p, C_x * C_y)``.
         """
-        def is_share(s, field):
-            if not isinstance(s, Share):
-                if not isinstance(s, FieldElement):
-                    s = field(s)
-                (v, rhov, Cv) = self._additive_constant(field(0), s)
-                return OrlandiShare(self, field, v, rhov, Cv)
-            return s
+        (xi, (rhoxi1, rhoxi2), Cx) = x
+        (yi, (rhoyi1, rhoyi2), Cy) = y
+        zi = xi + yi
+        rhozi1 = rhoxi1 + rhoyi1
+        rhozi2 = rhoxi2 + rhoyi2
+        Cz = Cx * Cy
+        return (zi, (rhozi1, rhozi2), Cz)
 
-        # Either share_a or share_b must have an attribute called "field".
-        field = getattr(share_a, "field", getattr(share_b, "field", None))
+    def _minus_public(self, x, c, field):
+        return self._do_arithmetic_op(x, c, field, self._minus)
 
-        share_a = is_share(share_a, field)
-        share_b = is_share(share_b, field)
+    def _do_arithmetic_op(self, x, c, field, op):
+        y = self._convert_public_to_share(c, field)
+        (zi, (rhozi1, rhozi2), Cz) = op((x, y), field)
+        return OrlandiShare(self, field, zi, (rhozi1, rhozi2), Cz)
 
-        # Subtract xi and yi, rhoxi and rhoyi, and compute the commitment
-        def compute_subs((x, y)):
-            zi, (rhozi1, rhozi2), Cz = self._minus(x, y)
-            return OrlandiShare(self, field, zi, (rhozi1, rhozi2), Cz)
+    def _minus(self, (x, y), field):
+        """Subtraction of share-tuples *x* and *y*.
 
-        result = gather_shares([share_a, share_b])
-        result.addCallbacks(compute_subs, self.error_handler)
-        return result
+        Each party ``P_i`` computes:
+        ``[x]_i = (x_i, rho_x,i, C_x)``
+        ``[y]_i = (y_i, rho_y,i, C_y)``
+        ``[z]_i = [x]_i - [y]_i
+                = (x_i - y_i mod p, rho_x,i - rho_y,i mod p, C_x / C_y)``.
+        """
+        xi, (rhoxi1, rhoxi2), Cx = x
+        yi, (rhoyi1, rhoyi2), Cy = y
+        zi = xi - yi
+        rhozi1 = rhoxi1 - rhoyi1
+        rhozi2 = rhoxi2 - rhoyi2
+        Cz = Cx / Cy
+        return (zi, (rhozi1, rhozi2), Cz)
 
     def input(self, inputters, field, number=None):
         """Input *number* to the computation.
@@ -587,53 +586,6 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
             triple = [Share(self, field, i) for i in triple]
         return self._basic_multiplication(share_x, share_y, *triple)
 
-    def _additive_constant(self, zero, field_element):
-        """Greate an additive constant.
-
-        Any additive constant can be interpreted as:
-        ``[c]_1 = (c, 0, Com_ck(c,0))`` and
-        ``[c]_i = (0, 0, Com_ck(c,0)) for i != 1``.
-        """
-        v = zero
-        if self.id == 1:
-            v = field_element
-        Cx = commitment.commit(field_element.value, zero.value, zero.value)
-        return (v, (zero, zero), Cx)
-
-    def _plus(self, x, y):
-        """Addition of share-tuples *x* and *y*.
-
-        Each party ``P_i`` computes:
-        ``[x]_i = (x_i, rho_xi, C_x)``
-        ``[y]_i = (y_i, rho_yi, C_y)``
-        ``[z]_i = [x]_i + [y]_i
-                = (x_i + y_i mod p, rho_xi + rho_yi mod p, C_x * C_y)``.
-        """
-        (xi, (rhoxi1, rhoxi2), Cx) = x
-        (yi, (rhoyi1, rhoyi2), Cy) = y
-        zi = xi + yi
-        rhozi1 = rhoxi1 + rhoyi1
-        rhozi2 = rhoxi2 + rhoyi2
-        Cz = Cx * Cy
-        return (zi, (rhozi1, rhozi2), Cz)
-
-    def _minus(self, x, y):
-        """Subtraction of share-tuples *x* and *y*.
-
-        Each party ``P_i`` computes:
-        ``[x]_i = (x_i, rho_x,i, C_x)``
-        ``[y]_i = (y_i, rho_y,i, C_y)``
-        ``[z]_i = [x]_i - [y]_i
-                = (x_i - y_i mod p, rho_x,i - rho_y,i mod p, C_x / C_y)``.
-        """
-        xi, (rhoxi1, rhoxi2), Cx = x
-        yi, (rhoyi1, rhoyi2), Cy = y
-        zi = xi - yi
-        rhozi1 = rhoxi1 - rhoyi1
-        rhozi2 = rhoxi2 - rhoyi2
-        Cz = Cx / Cy
-        return (zi, (rhozi1, rhozi2), Cz)
-
     def _cmul(self, share_x, share_y, field):
         """Multiplication of a share with a constant.
 
@@ -685,7 +637,7 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
         self.random_triple(field, 1)[0].addCallbacks(chain, self.error_handler,
                                                      (results,))
         return results
-
+    
     def _basic_multiplication(self, share_x, share_y, triple_a, triple_b, triple_c):
         """Multiplication of shares give a triple.
 
@@ -711,17 +663,17 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
             d = ds[0]
             e = ds[1]
             # [de]
-            de = self._additive_constant(field(0), d * e)
+            de = self._convert_public_to_share(d * e, field)
             # e[x]
             t1 = self._const_mul(e.value, x)
             # d[y]
             t2 = self._const_mul(d.value, y)
             # d[y] - [de]
-            t3 = self._minus(t2, de)
+            t3 = self._minus((t2, de), field)
             # d[y] - [de] + [c]
-            t4 = self._plus(t3, c)
+            t4 = self._plus((t3, c), field)
             # [z] = e[x] + d[y] - [de] + [c]
-            zi, rhoz, Cz = self._plus(t1, t4)
+            zi, rhoz, Cz = self._plus((t1, t4), field)
             return OrlandiShare(self, field, zi, rhoz, Cz)
 
         # d = Open([x] - [a])
@@ -815,7 +767,7 @@ class OrlandiRuntime(Runtime, HashBroadcastMixin):
             # [F_j] = [x] + SUM_i=1^d [f_i]*j^i
             # and
             # [G_j] = [y] + SUM_i=1^d [g_i]*j^i
-            h0i, rhoh0, Ch0 = self._additive_constant(field(0), n)
+            h0i, rhoh0, Ch0 = self._convert_public_to_share(n, field)
             H0 = OrlandiShare(self, field, h0i, rhoh0, Ch0)
             xi, (rhoxi1, rhoxi2), Cx = x
             yi, (rhoyi1, rhoyi2), Cy = y
