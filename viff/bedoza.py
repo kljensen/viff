@@ -22,6 +22,8 @@ from twisted.internet.defer import Deferred, gatherResults, succeed
 from viff.runtime import Runtime, Share, ShareList, gather_shares
 from viff.field import FieldElement
 
+from viff.simplearithmetic import SimpleArithmetic
+
 from hash_broadcast import HashBroadcastMixin
 
 class BeDOZaException(Exception):
@@ -66,6 +68,14 @@ class BeDOZaKeyList(object):
             keys.append(k1 + k2)
         return BeDOZaKeyList(self.alpha, keys)
 
+    def __sub__(self, other):
+        """Subtraction."""
+        assert self.alpha == other.alpha
+        keys = []
+        for k1, k2 in zip(self.keys, other.keys):
+            keys.append(k1 - k2)
+        return BeDOZaKeyList(self.alpha, keys)
+
     def __eq__(self, other):
         return self.alpha == other.alpha and self.keys == other.keys
 
@@ -85,6 +95,13 @@ class BeDOZaMessageList(object):
         auth_codes = []
         for c1, c2 in zip(self.auth_codes, other.auth_codes):
             auth_codes.append(c1 + c2)
+        return BeDOZaMessageList(auth_codes)
+
+    def __sub__(self, other):
+        """Subtraction."""
+        auth_codes = []
+        for c1, c2 in zip(self.auth_codes, other.auth_codes):
+            auth_codes.append(c1 - c2)
         return BeDOZaMessageList(auth_codes)
 
     def __eq__(self, other):
@@ -138,7 +155,7 @@ class KeyLoader:
                 2: (field(3), [field(4), field(5), field(6)]),
                 3: (field(4), [field(7), field(8), field(9)])}
 
-class BeDOZaRuntime(Runtime, HashBroadcastMixin, KeyLoader, RandomShareGenerator):
+class BeDOZaRuntime(SimpleArithmetic, Runtime, HashBroadcastMixin, KeyLoader, RandomShareGenerator):
     """The BeDOZa runtime.
 
     The runtime is used for sharing values (:meth:`secret_share` or
@@ -254,36 +271,12 @@ class BeDOZaRuntime(Runtime, HashBroadcastMixin, KeyLoader, RandomShareGenerator
 
     def get_alpha(self):
         return self.keys[0]
-        
-    def add(self, share_a, share_b):
-        """Addition of shares.
 
-        Communication cost: none.
-
-        Each party ``P_i`` computes::
-
-          [z]_i = [x]_i + [y]_i
-                = (x_i + y_i mod p, {xk^{i}_{j} + yk^{i}_{j} mod p}_{j=0}^{j=n}, {xm^{i}_{j} + ym^{i}_{j} mod p}_{j=0}^{j=n})
-
-        """
-        # Either share_a or share_b must have an attribute called "field".
-        field = share_a.field
-        if not isinstance(share_b, Share):
-            if not isinstance(share_b, FieldElement):
-                share_b = field(share_b)
-            share_a.addCallbacks(self._add_public, self.error_handler, callbackArgs=(share_b, field))
-            return share_a
-        else:
-            result = gather_shares([share_a, share_b])
-            result.addCallbacks(self._plus, self.error_handler, callbackArgs=(field,))
-            return result
-
-    def _add_public(self, x, y, field):
-        """Greate an additive constant."""
+    def _plus_public(self, x, c, field):
         (xi, xks, xms) = x
         if self.id == 1:
-            xi = xi + y
-        xks.keys[0] = xks.keys[0] - xks.alpha * y
+            xi = xi + c
+        xks.keys[0] = xks.keys[0] - xks.alpha * c
         return BeDOZaShare(self, field, xi, xks, xms)
 
     def _plus(self, (x, y), field):
@@ -300,4 +293,27 @@ class BeDOZaRuntime(Runtime, HashBroadcastMixin, KeyLoader, RandomShareGenerator
         zi = xi + yi
         zks = xks + yks
         zms = xms + yms
+        return (zi, zks, zms)
+
+    def _minus_public(self, x, c, field):
+        (xi, xks, xms) = x
+        if self.id == 1:
+            xi = xi - c
+        xks.keys[0] = xks.keys[0] + xks.alpha * c
+        return BeDOZaShare(self, field, xi, xks, xms)
+    
+    def _minus(self, (x, y), field):
+        """Subtraction of share-tuples *x* and *y*.
+
+        Each party ``P_i`` computes:
+        ``[x]_i = (x_i, xk, xm)``
+        ``[y]_i = (y_i, yk, ym)``
+        ``[z]_i = [x]_i - [y]_i
+                = (x_i - y_i mod p, {xk^{i}_{j} - yk^{i}_{j} mod p}_{j=0}^{j=n}, {xm^{i}_{j} - ym^{i}_{j} mod p}_{j=0}^{j=n})
+        """
+        (xi, xks, xms) = x
+        (yi, yks, yms) = y
+        zi = xi - yi
+        zks = xks - yks
+        zms = xms - yms
         return (zi, zks, zms)

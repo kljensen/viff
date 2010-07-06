@@ -211,3 +211,84 @@ class BeDOZaBasicCommandsTest(RuntimeTestCase):
         d = runtime.open(z2)
         d.addCallback(check)
         return d
+
+    @protocol
+    def test_minus(self, runtime):
+        """Test subtraction of two numbers."""
+
+        Zp = GF(6277101735386680763835789423176059013767194773182842284081)
+       
+        x = (Zp(2), BeDOZaKeyList(Zp(23), [Zp(5), Zp(4), Zp(7)]), BeDOZaMessageList([Zp(2), Zp(75), Zp(23), Zp(2)]))
+        y = (Zp(2), BeDOZaKeyList(Zp(23), [Zp(3), Zp(2), Zp(1)]), BeDOZaMessageList([Zp(2), Zp(74), Zp(23), Zp(2)]))
+        zi, zks, zms = runtime._minus((x, y), Zp)
+        self.assertEquals(zi, Zp(0))
+        self.assertEquals(zks, BeDOZaKeyList(Zp(23), [Zp(2), Zp(2), Zp(6)]))
+        self.assertEquals(zms, BeDOZaMessageList([Zp(0), Zp(1), Zp(0), Zp(0)]))
+        return zi
+
+    @protocol
+    def test_sub(self, runtime):
+        """Test subtraction of two numbers."""
+
+        self.Zp = GF(6277101735386680763835789423176059013767194773182842284081)
+
+        def check(v):
+            self.assertEquals(v, 0)
+
+        x2 = runtime.random_share(self.Zp)
+        y2 = runtime.random_share(self.Zp)
+        z2 = runtime.sub(x2, y2)
+        d = runtime.open(z2)
+        d.addCallback(check)
+        return d
+
+    @protocol
+    def test_sub_minus(self, runtime):
+        """Test subtraction of two numbers."""
+
+        self.Zp = GF(6277101735386680763835789423176059013767194773182842284081)
+
+        def check(v):
+            self.assertEquals(v, 0)
+
+        x2 = runtime.random_share(self.Zp)
+        y2 = runtime.random_share(self.Zp)
+        z2 = x2 - y2
+        d = runtime.open(z2)
+        d.addCallback(check)
+        return d
+
+    @protocol
+    def test_sub_constant_right(self, runtime):
+        """Test subtraction of secret shared number and a public number."""
+
+        self.Zp = GF(31)
+
+        y = 4
+
+        def check(v):
+            self.assertEquals(v, 2)
+
+        x2 = runtime.random_share(self.Zp)
+        z2 = x2 - y
+        d = runtime.open(x2)
+        d.addCallback(check)
+        return d
+
+    @protocol
+    def test_sub_constant_left(self, runtime):
+        """Test subtraction of a public number and secret shared number."""
+
+        self.Zp = GF(6277101735386680763835789423176059013767194773182842284081)
+
+        x1 = 42
+        y1 = 7
+
+        def check(v):
+            self.assertEquals(v, 1)
+
+        x2 = runtime.random_share(self.Zp)
+        z2 = y1 - x2
+        d = runtime.open(z2)
+        d.addCallback(check)
+        return d
