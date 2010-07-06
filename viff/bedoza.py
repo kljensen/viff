@@ -59,6 +59,7 @@ class BeDOZaKeyList(object):
 
     def __add__(self, other):
         """Addition."""
+        assert self.alpha == other.alpha
         keys = []
         for k1, k2 in zip(self.keys, other.keys):
             keys.append(k1 + k2)
