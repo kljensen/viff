@@ -295,12 +295,16 @@ class BeDOZaRuntime(SimpleArithmetic, Runtime, HashBroadcastMixin, KeyLoader, Ra
         zms = xms + yms
         return (zi, zks, zms)
 
-    def _minus_public(self, x, c, field):
+    def _minus_public_right(self, x, c, field):
         (xi, xks, xms) = x
         if self.id == 1:
             xi = xi - c
         xks.keys[0] = xks.keys[0] + xks.alpha * c
         return BeDOZaShare(self, field, xi, xks, xms)
+
+    def _minus_public_left(self, x, c, field):
+        y = self._constant_multiply(x, field(-1))
+        return self._plus_public(y, c, field)
     
     def _minus(self, (x, y), field):
         """Subtraction of share-tuples *x* and *y*.
@@ -316,4 +320,37 @@ class BeDOZaRuntime(SimpleArithmetic, Runtime, HashBroadcastMixin, KeyLoader, Ra
         zi = xi - yi
         zks = xks - yks
         zms = xms - yms
+        return (zi, zks, zms)
+
+    def _cmul(self, share_x, share_y, field):
+        """Multiplication of a share with a constant.
+
+        Either share_x or share_y must be a BeDOZaShare but not
+        both. Returns None if both share_x and share_y are
+        BeDOZaShares.
+        """
+        if not isinstance(share_x, Share):
+            # Then share_y must be a Share => local multiplication. We
+            # clone first to avoid changing share_y.
+            assert isinstance(share_y, Share), \
+                "At least one of the arguments must be a share."
+            result = share_y.clone()
+            result.addCallback(self._constant_multiply, share_x)
+            return result
+        if not isinstance(share_y, Share):
+            # Likewise when share_y is a constant.
+            assert isinstance(share_x, Share), \
+                "At least one of the arguments must be a share."
+            result = share_x.clone()
+            result.addCallback(self._constant_multiply, share_y)
+            return result
+        return None
+
+    def _constant_multiply(self, x, c):
+        """Multiplication of a share-tuple with a constant c."""
+        assert(isinstance(c, FieldElement))
+        xi, xks, xms = x
+        zi = c * xi
+        zks = BeDOZaKeyList(xks.alpha, map(lambda k: c * k, xks.keys))
+        zms = BeDOZaMessageList(map(lambda m: c * m, xms.auth_codes))
         return (zi, zks, zms)
