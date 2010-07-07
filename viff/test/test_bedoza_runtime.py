@@ -276,6 +276,23 @@ class BeDOZaBasicCommandsTest(RuntimeTestCase):
         return d
 
     @protocol
+    def test_sub_constant_left(self, runtime):
+        """Test subtraction of a public number and secret shared number."""
+
+        self.Zp = GF(31)
+
+        y = 8
+
+        def check(v):
+            self.assertEquals(v, 2)
+
+        x2 = runtime.random_share(self.Zp)
+        z2 = y - x2
+        d = runtime.open(x2)
+        d.addCallback(check)
+        return d
+
+    @protocol
     def test_constant_multiplication_constant_left(self, runtime):
         """Test multiplication of two numbers."""
 

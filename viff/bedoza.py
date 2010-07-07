@@ -295,12 +295,16 @@ class BeDOZaRuntime(SimpleArithmetic, Runtime, HashBroadcastMixin, KeyLoader, Ra
         zms = xms + yms
         return (zi, zks, zms)
 
-    def _minus_public(self, x, c, field):
+    def _minus_public_right(self, x, c, field):
         (xi, xks, xms) = x
         if self.id == 1:
             xi = xi - c
         xks.keys[0] = xks.keys[0] + xks.alpha * c
         return BeDOZaShare(self, field, xi, xks, xms)
+
+    def _minus_public_left(self, x, c, field):
+        y = self._constant_multiply(x, field(-1))
+        return self._plus_public(y, c, field)
     
     def _minus(self, (x, y), field):
         """Subtraction of share-tuples *x* and *y*.
@@ -317,7 +321,6 @@ class BeDOZaRuntime(SimpleArithmetic, Runtime, HashBroadcastMixin, KeyLoader, Ra
         zks = xks - yks
         zms = xms - yms
         return (zi, zks, zms)
-
 
     def _cmul(self, share_x, share_y, field):
         """Multiplication of a share with a constant.

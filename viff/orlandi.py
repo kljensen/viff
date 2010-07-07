@@ -464,8 +464,12 @@ class OrlandiRuntime(SimpleArithmetic, Runtime, HashBroadcastMixin):
         Cz = Cx * Cy
         return (zi, (rhozi1, rhozi2), Cz)
 
-    def _minus_public(self, x, c, field):
+    def _minus_public_right(self, x, c, field):
         return self._do_arithmetic_op(x, c, field, self._minus)
+
+    def _minus_public_left(self, x, c, field):
+        y = self._constant_multiply(x, field(-1))
+        return self._do_arithmetic_op(y, c, field, self._plus)
 
     def _do_arithmetic_op(self, x, c, field, op):
         y = self._convert_public_to_share(c, field)
@@ -595,7 +599,7 @@ class OrlandiRuntime(SimpleArithmetic, Runtime, HashBroadcastMixin):
         """
         def constant_multiply(x, c):
             assert(isinstance(c, FieldElement))
-            zi, rhoz, Cx = self._const_mul(c.value, x)
+            zi, rhoz, Cx = self._constant_multiply(x, c)
             return OrlandiShare(self, field, zi, rhoz, Cx)
         if not isinstance(share_x, Share):
             # Then share_y must be a Share => local multiplication. We
@@ -614,13 +618,13 @@ class OrlandiRuntime(SimpleArithmetic, Runtime, HashBroadcastMixin):
             return result
         return None
 
-    def _const_mul(self, c, x):
+    def _constant_multiply(self, x, c):
         """Multiplication of a share-tuple with a constant c."""
-        assert(isinstance(c, long) or isinstance(c, int))
+        assert(isinstance(c, FieldElement))
         xi, (rhoi1, rhoi2), Cx = x
         zi = xi * c
         rhoz = (rhoi1 * c, rhoi2 * c)
-        Cz = Cx**c
+        Cz = Cx**c.value
         return (zi, rhoz, Cz)
 
     def _get_share(self, field, value):
@@ -665,9 +669,9 @@ class OrlandiRuntime(SimpleArithmetic, Runtime, HashBroadcastMixin):
             # [de]
             de = self._convert_public_to_share(d * e, field)
             # e[x]
-            t1 = self._const_mul(e.value, x)
+            t1 = self._constant_multiply(x, e)
             # d[y]
-            t2 = self._const_mul(d.value, y)
+            t2 = self._constant_multiply(y, d)
             # d[y] - [de]
             t3 = self._minus((t2, de), field)
             # d[y] - [de] + [c]

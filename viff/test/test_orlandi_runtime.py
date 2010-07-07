@@ -307,6 +307,28 @@ class OrlandiBasicCommandsTest(RuntimeTestCase):
         d.addCallback(check)
         return d
 
+    @protocol
+    def test_sub_constant_left(self, runtime):
+        """Test subtraction of a public number and secret shared number."""
+
+        self.Zp = GF(6277101735386680763835789423176059013767194773182842284081)
+
+        x1 = 6
+        y1 = 8
+
+        def check(v):
+            self.assertEquals(v, y1 - x1)
+
+        if 1 == runtime.id:
+            x2 = runtime.secret_share([1], self.Zp, x1)
+        else:
+            x2 = runtime.secret_share([1], self.Zp)
+            
+        z2 = y1 - x2
+        d = runtime.open(x2)
+        d.addCallback(check)
+        return d
+    
 
 keys = None
 

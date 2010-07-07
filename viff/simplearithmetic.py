@@ -22,8 +22,11 @@ class SimpleArithmetic:
     """Provides methods for addition and subtraction.
 
     Provides set: {add, sub}.
-    Requires set: {self._plus((x,y), field), self._minus((x,y), field),
-                   self._convert_public_to_share_and_do(operation)}.
+    Requires set: {self._plus((x,y), field),
+                   self._minus((x,y), field),
+                   self._plus_public(x, c, field),
+                   self._minus_public_right(x, c, field),
+                   self._minus_public_left(x, c, field)}.
     """
 
     def add(self, share_a, share_b):
@@ -31,19 +34,9 @@ class SimpleArithmetic:
 
         share_a is assumed to be an instance of Share.
         If share_b is also an instance of Share then self._plus gets called.
-        If not then self._add_public get called.
+        If not then self._plus_public get called.
         """
         return self.both_shares(share_a, share_b, self._plus_public, self._plus)
-
-    def sub(self, share_a, share_b):
-        """Subtraction of shares.
-
-        share_a is assumed to be an instance of Share.
-        If share_b is also an instance of Share then self._minus gets called.
-        If not then self._sub_public get called.
-        """
-        return self.both_shares(share_a, share_b, self._minus_public, self._minus)
-
 
     def both_shares(self, share_a, share_b, if_not, if_so):
         field = share_a.field
@@ -55,4 +48,29 @@ class SimpleArithmetic:
         else:
             result = gather_shares([share_a, share_b])
             result.addCallbacks(if_so, self.error_handler, callbackArgs=(field,))
+            return result
+
+    def sub(self, share_a, share_b):
+        """Subtraction of shares.
+
+        If share_a is an instance of Share but not share_b, then self._minus_public_right gets called.
+        If share_b is an instance of Share but not share_b, then self._minus_public_left gets called.
+        If share_a and share_b are both instances of Share then self._minus get called.
+        """
+        if not isinstance(share_b, Share):
+            field = share_a.field
+            if not isinstance(share_b, FieldElement):
+                share_b = field(share_b)
+            share_a.addCallbacks(self._minus_public_right, self.error_handler, callbackArgs=(share_b, field))
+            return share_a
+        elif not isinstance(share_a, Share):
+            field = share_b.field
+            if not isinstance(share_a, FieldElement):
+                share_a = field(share_a)
+            share_b.addCallbacks(self._minus_public_left, self.error_handler, callbackArgs=(share_a, field))
+            return share_b
+        else:
+            field = share_a.field
+            result = gather_shares([share_a, share_b])
+            result.addCallbacks(self._minus, self.error_handler, callbackArgs=(field,))
             return result
