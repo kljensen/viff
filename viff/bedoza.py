@@ -231,9 +231,20 @@ class BeDOZaRuntime(SimpleArithmetic, Runtime, HashBroadcastMixin, KeyLoader, Ra
                 beta = keys[inx]
                 x += xi
                 mi_prime = self.MAC(alpha, beta, xi)
-                if not (isOK and mi == mi_prime):
-                    raise BeDOZaException("Wrong commitment, expected %s, got %s = %s*%s + %s." % (mi.value, mi_prime.value, alpha.value, xi.value, beta.value))
-            return x
+                isOK = isOK and mi == mi_prime
+
+            def check(ls, x, isOK):
+                true_str = str(True)
+                if reduce(lambda x, y: true_str == y, ls):
+                    return x
+                else:
+                    raise BeDOZaException("Wrong commitment. Some player revieved a wrong commitment. My commitments were: %s", isOK)
+                
+            ds = self.broadcast(self.players.keys(), self.players.keys(),
+                                str(isOK))
+            ds = gatherResults(ds)
+            ds.addCallbacks(check, self.error_handler, callbackArgs=(x,isOK))
+            return ds
 
         def exchange((xi, keyList, codes), receivers):
             # Send share to all receivers.
