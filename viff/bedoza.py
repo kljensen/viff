@@ -116,22 +116,23 @@ class BeDOZaMessageList(object):
 class RandomShareGenerator:
 
     def generate_random_shares(self, field, number_of_shares):
-        def keys_N_codes(value):
-            auth_codes = self.generate_auth_codes(self.id, v)
-            my_keys = self.generate_keys()
-            return BeDOZaShare(self, field, v, my_keys, auth_codes)
         shares = []
         for i in xrange(0, number_of_shares):
             if self.id == 1:
                 v = field(1)
-                shares.append(keys_N_codes(v))
+                shares.append(self.generate_share(field, v))
             if self.id == 2:
                 v = field(2)
-                shares.append(keys_N_codes(v))
+                shares.append(self.generate_share(field, v))
             if self.id == 3:
                 v = field(3)
-                shares.append(keys_N_codes(v))
+                shares.append(self.generate_share(field, v))
         return shares
+
+    def generate_share(self, field, value):
+        auth_codes = self.generate_auth_codes(self.id, value)
+        my_keys = self.generate_keys()
+        return BeDOZaShare(self, field, value, my_keys, auth_codes)
 
     def generate_auth_codes(self, playerId, value):
         keys = map(lambda (alpha, akeys): (alpha, akeys[playerId - 1]), self.keys.values())
