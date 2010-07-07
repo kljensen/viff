@@ -30,7 +30,6 @@ class SimpleArithmetic:
                    self._wrap_in_share(x, field),
                    self._get_triple(field),
                    self._constant_multiply(x, c),
-                   self._cmul(x, y, field),
                    self.open(x),
                    self.increment_pc(),
                    self.activate_reactor()}.
@@ -97,6 +96,30 @@ class SimpleArithmetic:
             triple = [Share(self, field, i) for i in triple]
         return self._basic_multiplication(share_x, share_y, *triple)
 
+    def _cmul(self, share_x, share_y, field):
+        """Multiplication of a share with a constant.
+
+        Either share_x or share_y must be an OrlandiShare but not
+        both. Returns None if both share_x and share_y are
+        OrlandiShares.
+        """
+        if not isinstance(share_x, Share):
+            # Then share_y must be a Share => local multiplication. We
+            # clone first to avoid changing share_y.
+            assert isinstance(share_y, Share), \
+                "At least one of the arguments must be a share."
+            result = share_y.clone()
+            result.addCallback(self._constant_multiply, share_x)
+            return result
+        if not isinstance(share_y, Share):
+            # Likewise when share_y is a constant.
+            assert isinstance(share_x, Share), \
+                "At least one of the arguments must be a share."
+            result = share_x.clone()
+            result.addCallback(self._constant_multiply, share_y)
+            return result
+        return None
+    
     def _basic_multiplication(self, share_x, share_y, triple_a, triple_b, triple_c):
         """Multiplication of shares give a triple.
 

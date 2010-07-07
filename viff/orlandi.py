@@ -571,34 +571,6 @@ class OrlandiRuntime(SimpleArithmetic, Runtime, HashBroadcastMixin):
              return results[0]
         return results
 
-    def _cmul(self, share_x, share_y, field):
-        """Multiplication of a share with a constant.
-
-        Either share_x or share_y must be an OrlandiShare but not
-        both. Returns None if both share_x and share_y are
-        OrlandiShares.
-        """
-        def constant_multiply(x, c):
-            assert(isinstance(c, FieldElement))
-            zi, rhoz, Cx = self._constant_multiply(x, c)
-            return OrlandiShare(self, field, zi, rhoz, Cx)
-        if not isinstance(share_x, Share):
-            # Then share_y must be a Share => local multiplication. We
-            # clone first to avoid changing share_y.
-            assert isinstance(share_y, Share), \
-                "At least one of the arguments must be a share."
-            result = share_y.clone()
-            result.addCallback(constant_multiply, share_x)
-            return result
-        if not isinstance(share_y, Share):
-            # Likewise when share_y is a constant.
-            assert isinstance(share_x, Share), \
-                "At least one of the arguments must be a share."
-            result = share_x.clone()
-            result.addCallback(constant_multiply, share_y)
-            return result
-        return None
-
     def _constant_multiply(self, x, c):
         """Multiplication of a share-tuple with a constant c."""
         assert(isinstance(c, FieldElement))
