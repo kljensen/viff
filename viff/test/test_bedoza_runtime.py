@@ -116,6 +116,8 @@ class BeDOZaBasicCommandsTest(RuntimeTestCase):
 
     runtime_class = BeDOZaRuntime
 
+    timeout = 3
+    
     @protocol
     def test_random_share(self, runtime):
         """Test creation of a random shared number."""
@@ -346,5 +348,26 @@ class BeDOZaBasicCommandsTest(RuntimeTestCase):
         d2 = runtime.open(triples[1])
         d3 = runtime.open(triples[2])
         d = gather_shares([d1, d2, d3])
+        d.addCallback(check)
+        return d
+
+    @protocol
+    def test_basic_multiply(self, runtime):
+        """Test multiplication of two numbers."""
+
+        self.Zp = GF(6277101735386680763835789423176059013767194773182842284081)
+
+        x1 = 6
+        y1 = 6
+
+        def check(v):
+            self.assertEquals(v, x1 * y1)
+
+        x2 = runtime.random_share(self.Zp)
+        y2 = runtime.random_share(self.Zp)
+
+        a, b, c = runtime._get_triple(self.Zp)
+        z2 = runtime._basic_multiplication(x2, y2, a, b, c)
+        d = runtime.open(z2)
         d.addCallback(check)
         return d
