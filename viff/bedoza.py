@@ -201,15 +201,7 @@ class BeDOZaRuntime(SimpleArithmetic, Runtime, HashBroadcastMixin, KeyLoader, Ra
         return self.open(share, receivers)
 
     def open(self, share, receivers=None):
-        """Share reconstruction.
- 
-        Every partyi broadcasts a share pair ``(x_i', rho_x,i')``.
-
-        The parties compute the sums ``x'``, ``rho_x'`` and check
-        ``Com_ck(x',rho_x') = C_x``.
-
-        If yes, return ``x = x'``, else else return :const:`None`.
-        """
+        """Share reconstruction."""
         assert isinstance(share, Share)
         # all players receive result by default
         if receivers is None:
