@@ -377,4 +377,4 @@ class BeDOZaRuntime(SimpleArithmetic, Runtime, HashBroadcastMixin, KeyLoader, Ra
                 b += share_b.value
                 triple_c = self.generate_share(field, share_c)
                 c += share_c.value
-        return [triple_a, triple_b, triple_c]
+        return [triple_a, triple_b, triple_c], False

@@ -343,10 +343,10 @@ class BeDOZaBasicCommandsTest(RuntimeTestCase):
         def check((a, b, c)):
             self.assertEquals(c, a * b)
 
-        triples = runtime._get_triple(self.Zp)
-        d1 = runtime.open(triples[0])
-        d2 = runtime.open(triples[1])
-        d3 = runtime.open(triples[2])
+        (a, b, c), _ = runtime._get_triple(self.Zp)
+        d1 = runtime.open(a)
+        d2 = runtime.open(b)
+        d3 = runtime.open(c)
         d = gather_shares([d1, d2, d3])
         d.addCallback(check)
         return d
@@ -366,7 +366,7 @@ class BeDOZaBasicCommandsTest(RuntimeTestCase):
         x2 = runtime.random_share(self.Zp)
         y2 = runtime.random_share(self.Zp)
 
-        a, b, c = runtime._get_triple(self.Zp)
+        (a, b, c), _ = runtime._get_triple(self.Zp)
         z2 = runtime._basic_multiplication(x2, y2, a, b, c)
         d = runtime.open(z2)
         d.addCallback(check)
@@ -405,7 +405,7 @@ class BeDOZaBasicCommandsTest(RuntimeTestCase):
 
         x2 = runtime.random_share(self.Zp)
 
-        a, b, c = runtime._get_triple(self.Zp)
+        (a, b, c), _ = runtime._get_triple(self.Zp)
         z2 = runtime._basic_multiplication(x2, self.Zp(y1), a, b, c)
         d = runtime.open(z2)
         d.addCallback(check)
@@ -425,7 +425,7 @@ class BeDOZaBasicCommandsTest(RuntimeTestCase):
 
         x2 = runtime.random_share(self.Zp)
 
-        a, b, c = runtime._get_triple(self.Zp)
+        (a, b, c), _ = runtime._get_triple(self.Zp)
         z2 = runtime._basic_multiplication(self.Zp(y1), x2, a, b, c)
         d = runtime.open(z2)
         d.addCallback(check)
