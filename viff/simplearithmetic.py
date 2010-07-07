@@ -21,12 +21,19 @@ from viff.field import FieldElement
 class SimpleArithmetic:
     """Provides methods for addition and subtraction.
 
-    Provides set: {add, sub}.
-    Requires set: {self._plus((x,y), field),
-                   self._minus((x,y), field),
+    Provides set: {add, sub, mul}.
+    Requires set: {self._plus((x, y), field),
+                   self._minus((x, y), field),
                    self._plus_public(x, c, field),
                    self._minus_public_right(x, c, field),
-                   self._minus_public_left(x, c, field)}.
+                   self._minus_public_left(x, c, field),
+                   self._wrap_in_share(x, field),
+                   self._get_triple(field),
+                   self._constant_multiply(x, c),
+                   self._cmul(x, y, field),
+                   self.open(x),
+                   self.increment_pc(),
+                   self.activate_reactor()}.
     """
 
     def add(self, share_a, share_b):
@@ -74,3 +81,63 @@ class SimpleArithmetic:
             result = gather_shares([share_a, share_b])
             result.addCallbacks(self._minus, self.error_handler, callbackArgs=(field,))
             return result
+
+    def mul(self, share_x, share_y):
+        """Multiplication of shares."""
+        assert isinstance(share_x, Share) or isinstance(share_y, Share), \
+            "At least one of share_x and share_y must be a Share."
+
+        self.increment_pc()
+
+        field = getattr(share_x, "field", getattr(share_y, "field", None))
+
+        triple = self._get_triple(field)
+        return self._basic_multiplication(share_x, share_y, *triple)
+
+    def _basic_multiplication(self, share_x, share_y, triple_a, triple_b, triple_c):
+        """Multiplication of shares give a triple.
+
+        Communication cost: ???.
+
+        ``d = Open([x] - [a])``
+        ``e = Open([y] - [b])``
+        ``[z] = e[x] + d[y] - [de] + [c]``
+        """
+        assert isinstance(share_x, Share) or isinstance(share_y, Share), \
+            "At least one of share_x and share_y must be a Share."
+
+        self.increment_pc()
+
+        field = getattr(share_x, "field", getattr(share_y, "field", None))
+        n = field(0)
+
+        cmul_result = self._cmul(share_x, share_y, field)
+        if cmul_result is  not None:
+            return cmul_result
+
+        def multiply((x, y, c, d, e)):
+            # [de]
+            de = d * e
+            # e[x]
+            t1 = self._constant_multiply(x, e)
+            # d[y]
+            t2 = self._constant_multiply(y, d)
+            # d[y] - [de]
+            t3 = self._minus_public_right_without_share(t2, de, field)
+            # d[y] - [de] + [c]
+            t4 = self._plus((t3, c), field)
+            # [z] = e[x] + d[y] - [de] + [c]
+            z = self._plus((t1, t4), field)
+            return self._wrap_in_share(z, field)
+
+        #d = Open([x] - [a])
+        d = self.output(share_x - triple_a)
+        # e = Open([y] - [b])
+        e = self.output(share_y - triple_b)
+        result = gather_shares([share_x, share_y, triple_c, d, e])
+        result.addCallbacks(multiply, self.error_handler)
+
+        # do actual communication
+        self.activate_reactor()
+
+        return result

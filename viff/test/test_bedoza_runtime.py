@@ -371,3 +371,62 @@ class BeDOZaBasicCommandsTest(RuntimeTestCase):
         d = runtime.open(z2)
         d.addCallback(check)
         return d
+
+    @protocol
+    def test_mul_mul(self, runtime):
+        """Test multiplication of two numbers."""
+
+        self.Zp = GF(6277101735386680763835789423176059013767194773182842284081)
+
+        x1 = 6
+        y1 = 6
+
+        def check(v):
+            self.assertEquals(v, x1 * y1)
+
+        x2 = runtime.random_share(self.Zp)
+        y2 = runtime.random_share(self.Zp)
+
+        z2 = x2 * y2
+        d = runtime.open(z2)
+        d.addCallback(check)
+        return d
+    @protocol
+    def test_basic_multiply_constant_right(self, runtime):
+        """Test multiplication of two numbers."""
+
+        self.Zp = GF(6277101735386680763835789423176059013767194773182842284081)
+
+        x1 = 6
+        y1 = 6
+
+        def check(v):
+            self.assertEquals(v, x1 * y1)
+
+        x2 = runtime.random_share(self.Zp)
+
+        a, b, c = runtime._get_triple(self.Zp)
+        z2 = runtime._basic_multiplication(x2, self.Zp(y1), a, b, c)
+        d = runtime.open(z2)
+        d.addCallback(check)
+        return d
+
+    @protocol
+    def test_basic_multiply_constant_left(self, runtime):
+        """Test multiplication of two numbers."""
+
+        self.Zp = GF(6277101735386680763835789423176059013767194773182842284081)
+
+        x1 = 6
+        y1 = 6
+
+        def check(v):
+            self.assertEquals(v, x1 * y1)
+
+        x2 = runtime.random_share(self.Zp)
+
+        a, b, c = runtime._get_triple(self.Zp)
+        z2 = runtime._basic_multiplication(self.Zp(y1), x2, a, b, c)
+        d = runtime.open(z2)
+        d.addCallback(check)
+        return d
