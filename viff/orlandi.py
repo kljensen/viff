@@ -473,8 +473,8 @@ class OrlandiRuntime(SimpleArithmetic, Runtime, HashBroadcastMixin):
 
     def _do_arithmetic_op(self, x, c, field, op):
         y = self._convert_public_to_share(c, field)
-        (zi, (rhozi1, rhozi2), Cz) = op((x, y), field)
-        return OrlandiShare(self, field, zi, (rhozi1, rhozi2), Cz)
+        (zi, rhoz, Cz) = op((x, y), field)
+        return OrlandiShare(self, field, zi, rhoz, Cz)
 
     def _minus(self, (x, y), field):
         """Subtraction of share-tuples *x* and *y*.
