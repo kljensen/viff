@@ -134,6 +134,7 @@ class SimpleArithmetic:
         d = self.output(share_x - triple_a)
         # e = Open([y] - [b])
         e = self.output(share_y - triple_b)
+        # ds = self.open_multiple_values([share_x - triple_a, share_y - triple_b])
         result = gather_shares([share_x, share_y, triple_c, d, e])
         result.addCallbacks(multiply, self.error_handler)
 

@@ -307,6 +307,8 @@ class BeDOZaRuntime(SimpleArithmetic, Runtime, HashBroadcastMixin, KeyLoader, Ra
         xks.keys[0] = xks.keys[0] + xks.alpha * c
         return xi, xks, xms
 
+    def _wrap_in_share(self, (zi, zks, zms), field):
+        return BeDOZaShare(self, field, zi, zks, zms)
 
     def _minus_public_left(self, x, c, field):
         y = self._constant_multiply(x, field(-1))
@@ -376,6 +378,3 @@ class BeDOZaRuntime(SimpleArithmetic, Runtime, HashBroadcastMixin, KeyLoader, Ra
                 triple_c = self.generate_share(field, share_c)
                 c += share_c.value
         return [triple_a, triple_b, triple_c]
-
-    def _wrap_in_share(self, (zi, zks, zms), field):
-        return BeDOZaShare(self, field, zi, zks, zms)

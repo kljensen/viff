@@ -572,11 +572,7 @@ class OrlandiRuntime(SimpleArithmetic, Runtime, HashBroadcastMixin):
         return results
 
     def mul(self, share_x, share_y):
-        """Multiplication of shares.
-
-        Communication cost: ???.
-        """
-        # TODO: Communication cost?
+        """Multiplication of shares."""
         assert isinstance(share_x, Share) or isinstance(share_y, Share), \
             "At least one of share_x and share_y must be a Share."
 
@@ -632,6 +628,13 @@ class OrlandiRuntime(SimpleArithmetic, Runtime, HashBroadcastMixin):
         c = OrlandiShare(self, field, field(value), (field(0), field(0)), Cc)
         return c
 
+    def _minus_public_right_without_share(self, x, c, field):
+        y = self._convert_public_to_share(c, field)
+        return self._minus((x, y), field)
+    
+    def _wrap_in_share(self, (zi, rhoz, Cz), field):
+        return OrlandiShare(self, field, zi, rhoz, Cz)
+
     @preprocess("random_triple")
     def _get_triple(self, field):
         results = [Share(self, field) for i in range(3)]
@@ -642,55 +645,6 @@ class OrlandiRuntime(SimpleArithmetic, Runtime, HashBroadcastMixin):
                                                      (results,))
         return results
     
-    def _basic_multiplication(self, share_x, share_y, triple_a, triple_b, triple_c):
-        """Multiplication of shares give a triple.
-
-        Communication cost: ???.
-
-        ``d = Open([x] - [a])``
-        ``e = Open([y] - [b])``
-        ``[z] = e[x] + d[y] - [de] + [c]``
-        """
-        assert isinstance(share_x, Share) or isinstance(share_y, Share), \
-            "At least one of share_x and share_y must be a Share."
-
-        self.increment_pc()
-
-        field = getattr(share_x, "field", getattr(share_y, "field", None))
-        n = field(0)
-
-        cmul_result = self._cmul(share_x, share_y, field)
-        if cmul_result is  not None:
-            return cmul_result
-
-        def multiply((x, y, ds, c)):
-            d = ds[0]
-            e = ds[1]
-            # [de]
-            de = self._convert_public_to_share(d * e, field)
-            # e[x]
-            t1 = self._constant_multiply(x, e)
-            # d[y]
-            t2 = self._constant_multiply(y, d)
-            # d[y] - [de]
-            t3 = self._minus((t2, de), field)
-            # d[y] - [de] + [c]
-            t4 = self._plus((t3, c), field)
-            # [z] = e[x] + d[y] - [de] + [c]
-            zi, rhoz, Cz = self._plus((t1, t4), field)
-            return OrlandiShare(self, field, zi, rhoz, Cz)
-
-        # d = Open([x] - [a])
-        # e = Open([y] - [b])
-        ds = self.open_multiple_values([share_x - triple_a, share_y - triple_b])
-        result = gather_shares([share_x, share_y, ds, triple_c])
-        result.addCallbacks(multiply, self.error_handler)
-
-        # do actual communication
-        self.activate_reactor()
-
-        return result
-
     def sum_poly(self, j, ls):
         exp  = j
         fj, (rhoj1, rhoj2), Cfj = ls[0]
