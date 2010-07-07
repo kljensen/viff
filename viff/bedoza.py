@@ -355,3 +355,19 @@ class BeDOZaRuntime(SimpleArithmetic, Runtime, HashBroadcastMixin, KeyLoader, Ra
         zks = BeDOZaKeyList(xks.alpha, map(lambda k: c * k, xks.keys))
         zms = BeDOZaMessageList(map(lambda m: c * m, xms.auth_codes))
         return (zi, zks, zms)
+
+    def _get_triple(self, field):
+        a, b, c = 0, 0, 0
+        share_a = field(2)
+        share_b = field(4)
+        n = len(self.players)
+        share_c = n * share_a * share_b
+        for playerid in self.players.keys():
+            if self.id == playerid:
+                triple_a = self.generate_share(field, share_a)
+                a += share_a.value
+                triple_b = self.generate_share(field, share_b)
+                b += share_b.value
+                triple_c = self.generate_share(field, share_c)
+                c += share_c.value
+        return [triple_a, triple_b, triple_c]

@@ -329,3 +329,22 @@ class BeDOZaBasicCommandsTest(RuntimeTestCase):
         d = runtime.open(z2)
         d.addCallback(check)
         return d
+
+    @protocol
+    def test_get_triple(self, runtime):
+        """Test generation of a triple."""
+
+        self.Zp = GF(6277101735386680763835789423176059013767194773182842284081)
+
+        runtime.keys = runtime.load_keys(self.Zp)
+        
+        def check((a, b, c)):
+            self.assertEquals(c, a * b)
+
+        triples = runtime._get_triple(self.Zp)
+        d1 = runtime.open(triples[0])
+        d2 = runtime.open(triples[1])
+        d3 = runtime.open(triples[2])
+        d = gather_shares([d1, d2, d3])
+        d.addCallback(check)
+        return d
