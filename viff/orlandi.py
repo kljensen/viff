@@ -571,21 +571,6 @@ class OrlandiRuntime(SimpleArithmetic, Runtime, HashBroadcastMixin):
              return results[0]
         return results
 
-    def mul(self, share_x, share_y):
-        """Multiplication of shares."""
-        assert isinstance(share_x, Share) or isinstance(share_y, Share), \
-            "At least one of share_x and share_y must be a Share."
-
-        self.increment_pc()
-
-        field = getattr(share_x, "field", getattr(share_y, "field", None))
-
-        triple, prep = self._get_triple(field)
-        if prep:
-            # The data from the pool must be wrapped in Shares.
-            triple = [Share(self, field, i) for i in triple]
-        return self._basic_multiplication(share_x, share_y, *triple)
-
     def _cmul(self, share_x, share_y, field):
         """Multiplication of a share with a constant.
 
