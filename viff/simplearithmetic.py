@@ -141,7 +141,7 @@ class SimpleArithmetic:
         if cmul_result is  not None:
             return cmul_result
 
-        def multiply((x, y, c, d, e)):
+        def multiply((x, y, c, (d, e))):
             # [de]
             de = d * e
             # e[x]
@@ -156,12 +156,11 @@ class SimpleArithmetic:
             z = self._plus((t1, t4), field)
             return self._wrap_in_share(z, field)
 
-        #d = Open([x] - [a])
-        d = self.output(share_x - triple_a)
+        # d = Open([x] - [a])
         # e = Open([y] - [b])
-        e = self.output(share_y - triple_b)
+        de = self.open_two_values(share_x - triple_a, share_y - triple_b)
         # ds = self.open_multiple_values([share_x - triple_a, share_y - triple_b])
-        result = gather_shares([share_x, share_y, triple_c, d, e])
+        result = gather_shares([share_x, share_y, triple_c, de])
         result.addCallbacks(multiply, self.error_handler)
 
         # do actual communication
