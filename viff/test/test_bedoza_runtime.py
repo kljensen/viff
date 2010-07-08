@@ -448,7 +448,7 @@ class BeDOZaBasicCommandsTest(RuntimeTestCase):
         return d
 
     @protocol
-    def test_open_multiple_secret_share(self, runtime):
+    def test_open_two_secret_share(self, runtime):
         """Test sharing and open of a number."""
 
         self.Zp = GF(6277101735386680763835789423176059013767194773182842284081)
