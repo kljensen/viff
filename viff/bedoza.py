@@ -211,7 +211,7 @@ class BeDOZaRuntime(SimpleArithmetic, Runtime, HashBroadcastMixin, KeyLoader, Ra
 
         self.increment_pc()
 
-        def recombine_value(player_shares_codes, keyList, num_shares):
+        def recombine_value(player_shares_codes, keyLists, num_shares):
             def check(ls, x, isOK):
                 true_str = str(True)
                 if reduce(lambda x, y: true_str == y, ls):
@@ -220,12 +220,12 @@ class BeDOZaRuntime(SimpleArithmetic, Runtime, HashBroadcastMixin, KeyLoader, Ra
                     raise BeDOZaException("Wrong commitment. Some player revieved a wrong commitment. My commitments were: %s", isOK)
 
             n = len(self.players)
-            alpha = keyList.alpha
-            keys = keyList.keys
+            alpha = keyLists[0].alpha
 
             values = num_shares * [0]
             isOK = num_shares * [True]
             for iny in xrange(num_shares):
+                keys = keyLists[iny].keys
                 for inx, xs in enumerate(player_shares_codes):
                     xi, mi = xs[iny]
                     beta = keys[inx]
@@ -243,11 +243,13 @@ class BeDOZaRuntime(SimpleArithmetic, Runtime, HashBroadcastMixin, KeyLoader, Ra
         def exchange(ls, receivers):
             # Send share to all receivers.
             pc = tuple(self.program_counter)
+            keyLists = []
             for other_id in receivers:
                 # self.protocols[other_id].sendShare(pc, xi)
                 # self.protocols[other_id].sendShare(pc, codes.auth_codes[other_id - 1])
                 message_string = ""
                 for inx, (xi, keyList, codes) in enumerate(ls):
+                    keyLists.append(keyList)
                     message_string += "%s:%s;" % \
                            (xi.value, codes.auth_codes[other_id - 1].value)
                 self.protocols[other_id].sendData(pc, TEXT, message_string)
@@ -267,7 +269,7 @@ class BeDOZaRuntime(SimpleArithmetic, Runtime, HashBroadcastMixin, KeyLoader, Ra
                     self._expect_data(other_id, TEXT, d)
                     values[inx] = d
                 result = gatherResults(values)
-                result.addCallbacks(recombine_value, self.error_handler, callbackArgs=(keyList, len(shares)))
+                result.addCallbacks(recombine_value, self.error_handler, callbackArgs=(keyLists, len(shares)))
                 return result
 
         result = gather_shares(shares)
@@ -279,7 +281,7 @@ class BeDOZaRuntime(SimpleArithmetic, Runtime, HashBroadcastMixin, KeyLoader, Ra
 
         if self.id in receivers:
             return result
-        
+
     def open(self, share, receivers=None):
         """Share reconstruction."""
         assert isinstance(share, Share)
