@@ -21,7 +21,7 @@ from twisted.internet.defer import Deferred, gatherResults, succeed
 
 from viff.runtime import Runtime, Share, ShareList, gather_shares
 from viff.field import FieldElement
-
+from viff.constants import TEXT
 from viff.simplearithmetic import SimpleArithmetic
 
 from hash_broadcast import HashBroadcastMixin
@@ -200,6 +200,86 @@ class BeDOZaRuntime(SimpleArithmetic, Runtime, HashBroadcastMixin, KeyLoader, Ra
     def output(self, share, receivers=None):
         return self.open(share, receivers)
 
+    def open_multiple_values(self, shares, receivers=None):
+        """Share reconstruction of a list of shares."""
+        assert shares
+        # all players receive result by default
+        if receivers is None:
+            receivers = self.players.keys()
+
+        field = shares[0].field
+
+        self.increment_pc()
+
+        def recombine_value(player_shares_codes, keyList, num_shares):
+            def check(ls, x, isOK):
+                true_str = str(True)
+                if reduce(lambda x, y: true_str == y, ls):
+                    return x
+                else:
+                    raise BeDOZaException("Wrong commitment. Some player revieved a wrong commitment. My commitments were: %s", isOK)
+
+            n = len(self.players)
+            alpha = keyList.alpha
+            keys = keyList.keys
+
+            values = num_shares * [0]
+            isOK = num_shares * [True]
+            for iny in xrange(num_shares):
+                for inx, xs in enumerate(player_shares_codes):
+                    xi, mi = xs[iny]
+                    beta = keys[inx]
+                    values[iny] += xi
+                    mi_prime = self.MAC(alpha, beta, xi)
+                    isOK[iny] = isOK[iny] and mi == mi_prime
+
+            isOK = reduce(lambda x, y: True == y, isOK)
+            ds = self.broadcast(self.players.keys(), self.players.keys(),
+                                str(isOK))
+            ds = gatherResults(ds)
+            ds.addCallbacks(check, self.error_handler, callbackArgs=(values, isOK))
+            return ds
+        
+        def exchange(ls, receivers):
+            # Send share to all receivers.
+            pc = tuple(self.program_counter)
+            for other_id in receivers:
+                # self.protocols[other_id].sendShare(pc, xi)
+                # self.protocols[other_id].sendShare(pc, codes.auth_codes[other_id - 1])
+                message_string = ""
+                for inx, (xi, keyList, codes) in enumerate(ls):
+                    message_string += "%s:%s;" % \
+                           (xi.value, codes.auth_codes[other_id - 1].value)
+                self.protocols[other_id].sendData(pc, TEXT, message_string)
+
+            if self.id in receivers:
+                def deserialize(s):
+                    def field_long(x):
+                        return field(long(x))
+                    xs = s[0:-1].split(';')
+                    ys = [x.split(':') for x in xs]
+                    return [map(field_long, xs) for xs in ys]
+                num_players = len(self.players.keys())
+                values = num_players * [None]
+                for inx, other_id in enumerate(self.players.keys()):
+                    d = Deferred()
+                    d.addCallbacks(deserialize, self.error_handler)
+                    self._expect_data(other_id, TEXT, d)
+                    values[inx] = d
+                result = gatherResults(values)
+                result.addCallbacks(recombine_value, self.error_handler, callbackArgs=(keyList, len(shares)))
+                return result
+
+        result = gather_shares(shares)
+        self.schedule_callback(result, exchange, receivers)
+        result.addErrback(self.error_handler)
+
+        # do actual communication
+        self.activate_reactor()
+
+        if self.id in receivers:
+            return result
+        
     def open(self, share, receivers=None):
         """Share reconstruction."""
         assert isinstance(share, Share)

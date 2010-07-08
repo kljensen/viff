@@ -430,3 +430,19 @@ class BeDOZaBasicCommandsTest(RuntimeTestCase):
         d = runtime.open(z2)
         d.addCallback(check)
         return d
+
+    @protocol
+    def test_open_multiple_secret_share(self, runtime):
+        """Test sharing and open of a number."""
+
+        self.Zp = GF(6277101735386680763835789423176059013767194773182842284081)
+
+        def check(ls):
+            for v in ls:
+                self.assertEquals(v, 6)
+
+        x = runtime.random_share(self.Zp)
+        y = runtime.random_share(self.Zp)
+        d = runtime.open_multiple_values([x, y])
+        d.addCallback(check)
+        return d
