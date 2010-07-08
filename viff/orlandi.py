@@ -305,6 +305,73 @@ class OrlandiRuntime(SimpleArithmetic, Runtime, HashBroadcastMixin):
         if self.id in receivers:
             return result
 
+    def open_two_values(self, share_a, share_b, receivers=None):
+        """Share reconstruction of two shares."""
+        assert isinstance(share_a, Share)
+        assert isinstance(share_b, Share)
+        # all players receive result by default
+        if receivers is None:
+            receivers = self.players.keys()
+
+        field = share_a.field
+
+        self.increment_pc()
+
+        def recombine_value(shares, Ca, Cb):
+            a, b = 0, 0
+            rhoa1, rhob1 = 0, 0
+            rhoa2, rhob2 = 0, 0
+            for ai, rhoai1, rhoai2, bi, rhobi1, rhobi2 in shares:
+                a += ai
+                b += bi
+                rhoa1 += rhoai1
+                rhob1 += rhobi1
+                rhoa2 += rhoai2
+                rhob2 += rhobi2
+            Ca1 = commitment.commit(a.value, rhoa1.value, rhoa2.value)
+            Cb1 = commitment.commit(b.value, rhob1.value, rhob2.value)
+            if Ca1 == Ca and Cb1 == Cb:
+                return a, b
+            else:
+                #return x
+                raise OrlandiException("Wrong commitment for value %s, %s, %s, %s, %s, %s, found %s, %s expected %s, %s." %
+                                       (a, rhoa1, rhoa2, b, rhob1, rhob2, Ca1, Cb1, Ca, Cb))
+
+        def deserialize(ls):
+            shares = [(field(long(ai)), field(long(rhoa1)), field(long(rhoa2)),
+                       field(long(bi)), field(long(rhob1)), field(long(rhob2)))
+                      for ai, rhoa1, rhoa2, bi, rhob1, rhob2 in map(self.list_str, ls)]
+            return shares
+
+        def exchange((a, b), receivers):
+            (ai, (rhoai1, rhoai2), Ca) = a
+            (bi, (rhobi1, rhobi2), Cb) = b
+            # Send share to all receivers.
+            ds = self.broadcast(self.players.keys(), receivers,
+                                str((str(ai.value),
+                                     str(rhoai1.value),
+                                     str(rhoai2.value),
+                                     str(bi.value),
+                                     str(rhobi1.value),
+                                     str(rhobi2.value))))
+
+            if self.id in receivers:
+                result = gatherResults(ds)
+                result.addCallbacks(deserialize, self.error_handler)
+                result.addCallbacks(recombine_value, self.error_handler,
+                                    callbackArgs=(Ca, Cb))
+                return result
+
+        result = gather_shares([share_a, share_b])
+        self.schedule_callback(result, exchange, receivers)
+        result.addErrback(self.error_handler)
+
+        # do actual communication
+        self.activate_reactor()
+
+        if self.id in receivers:
+            return result
+
     def open_multiple_values(self, shares, receivers=None):
         """Share reconstruction.
 
