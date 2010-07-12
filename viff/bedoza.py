@@ -116,6 +116,7 @@ class BeDOZaMessageList(object):
 class RandomShareGenerator:
 
     def generate_random_shares(self, field, number_of_shares):
+        self.init_keys(field)
         shares = []
         for i in xrange(0, number_of_shares):
             if self.id == 1:
@@ -130,8 +131,8 @@ class RandomShareGenerator:
         return shares
 
     def generate_share(self, field, value):
+        my_keys = self.generate_keys(field)
         auth_codes = self.generate_auth_codes(self.id, value)
-        my_keys = self.generate_keys()
         return BeDOZaShare(self, field, value, my_keys, auth_codes)
 
     def generate_auth_codes(self, playerId, value):
@@ -145,18 +146,19 @@ class RandomShareGenerator:
             auth_codes.append(alpha * v + beta)
         return BeDOZaMessageList(auth_codes)
 
-    def generate_keys(self):
+    def generate_keys(self, field):
         alpha, betas = self.get_keys()
         return BeDOZaKeyList(alpha, betas)
 
-class KeyLoader:
+    def init_keys(self, field):
+        self.keys = {1: (field(2), [field(1), field(2), field(3)]),
+                     2: (field(3), [field(4), field(5), field(6)]),
+                     3: (field(4), [field(7), field(8), field(9)])}
 
-    def load_keys(self, field):
-        return {1: (field(2), [field(1), field(2), field(3)]),
-                2: (field(3), [field(4), field(5), field(6)]),
-                3: (field(4), [field(7), field(8), field(9)])}
+    def get_keys(self):   
+        return self.keys[self.id]
 
-class BeDOZaRuntime(SimpleArithmetic, Runtime, HashBroadcastMixin, KeyLoader, RandomShareGenerator):
+class BeDOZaRuntime(SimpleArithmetic, Runtime, HashBroadcastMixin, RandomShareGenerator):
     """The BeDOZa runtime.
 
     The runtime is used for sharing values (:meth:`secret_share` or
@@ -191,7 +193,6 @@ class BeDOZaRuntime(SimpleArithmetic, Runtime, HashBroadcastMixin, KeyLoader, Ra
 
         If no more shares are left, generate self.random_share_number new ones.
         """
-        self.keys = self.load_keys(field)
         if len(self.random_shares) == 0:
             self.random_shares = self.generate_random_shares(field, self.random_share_number)
 
@@ -432,14 +433,6 @@ class BeDOZaRuntime(SimpleArithmetic, Runtime, HashBroadcastMixin, KeyLoader, Ra
         if self.id in receivers:
             return result
 
-    def get_keys(self):
-        if self.id == 1:
-            return self.keys[1]
-        if self.id == 2:
-            return self.keys[2]
-        if self.id == 3:
-            return self.keys[3]
-
     def _plus_public(self, x, c, field):
         (xi, xks, xms) = x
         if self.id == 1:
@@ -507,6 +500,7 @@ class BeDOZaRuntime(SimpleArithmetic, Runtime, HashBroadcastMixin, KeyLoader, Ra
         return (zi, zks, zms)
 
     def _get_triple(self, field):
+        self.init_keys(field)
         a, b, c = 0, 0, 0
         share_a = field(2)
         share_b = field(4)

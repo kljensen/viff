@@ -40,22 +40,20 @@ class KeyLoaderTest(RuntimeTestCase):
 
         self.Zp = GF(6277101735386680763835789423176059013767194773182842284081)
 
-        keys = runtime.load_keys(self.Zp)
-        keys1 = keys[1]
-        keys2 = keys[2]
-        keys3 = keys[3]
+        runtime.init_keys(self.Zp)
+        keys = runtime.get_keys()
         if runtime.id == 1:
-            betas = keys1[1]
+            betas = keys[1]
             self.assertEquals(betas[0], 1)
             self.assertEquals(betas[1], 2)
             self.assertEquals(betas[2], 3)
         if runtime.id == 2:
-            betas = keys2[1]
+            betas = keys[1]
             self.assertEquals(betas[0], 4)
             self.assertEquals(betas[1], 5)
             self.assertEquals(betas[2], 6)
         if runtime.id == 3:
-            betas = keys3[1]
+            betas = keys[1]
             self.assertEquals(betas[0], 7)
             self.assertEquals(betas[1], 8)
             self.assertEquals(betas[2], 9)
@@ -66,10 +64,9 @@ class KeyLoaderTest(RuntimeTestCase):
 
         self.Zp = GF(6277101735386680763835789423176059013767194773182842284081)
 
-        runtime.keys = runtime.load_keys(self.Zp)
-
         v = self.Zp(2)
-        alpha = runtime.get_keys()[0]
+        runtime.init_keys(self.Zp)
+        alpha, betas = runtime.get_keys()
         codes = self.num_players * [None]
 
         for xid in runtime.players.keys():
@@ -337,9 +334,7 @@ class BeDOZaBasicCommandsTest(RuntimeTestCase):
         """Test generation of a triple."""
 
         self.Zp = GF(6277101735386680763835789423176059013767194773182842284081)
-
-        runtime.keys = runtime.load_keys(self.Zp)
-        
+      
         def check((a, b, c)):
             self.assertEquals(c, a * b)
 
