@@ -440,9 +440,6 @@ class BeDOZaRuntime(SimpleArithmetic, Runtime, HashBroadcastMixin, KeyLoader, Ra
         if self.id == 3:
             return self.keys[3]
 
-    def get_alpha(self):
-        return self.keys[0]
-
     def _plus_public(self, x, c, field):
         (xi, xks, xms) = x
         if self.id == 1:
