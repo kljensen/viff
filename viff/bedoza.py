@@ -114,7 +114,8 @@ class BeDOZaMessageList(object):
         return str(self)
     
 class RandomShareGenerator:
-
+    """ TODO: This is a dummy implementation, and should be replaced with proper code."""
+    
     def generate_random_shares(self, field, number_of_shares):
         self.init_keys(field)
         shares = []
@@ -500,6 +501,7 @@ class BeDOZaRuntime(SimpleArithmetic, Runtime, HashBroadcastMixin, RandomShareGe
         return (zi, zks, zms)
 
     def _get_triple(self, field):
+        """ TODO: This is a dummy implementation, and should be replaced with proper code."""
         self.init_keys(field)
         a, b, c = 0, 0, 0
         share_a = field(2)
