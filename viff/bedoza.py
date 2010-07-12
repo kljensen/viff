@@ -121,15 +121,8 @@ class RandomShareGenerator:
         self.init_keys(field)
         shares = []
         for i in xrange(0, number_of_shares):
-            if self.id == 1:
-                v = field(1)
-                shares.append(self.generate_share(field, v))
-            if self.id == 2:
-                v = field(2)
-                shares.append(self.generate_share(field, v))
-            if self.id == 3:
-                v = field(3)
-                shares.append(self.generate_share(field, v))
+            v = field(self.id)
+            shares.append(self.generate_share(field, v))
         return shares
 
     def generate_share(self, field, value):
