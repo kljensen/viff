@@ -35,61 +35,6 @@ class KeyLoaderTest(RuntimeTestCase):
     runtime_class = BeDOZaRuntime
 
     @protocol
-    def test_load_keys(self, runtime):
-        """Test loading of keys."""
-
-        Zp = GF(6277101735386680763835789423176059013767194773182842284081)
-
-        runtime.init_keys(Zp)
-        keys = runtime.get_keys()
-        if runtime.id == 1:
-            betas = keys[1]
-            self.assertEquals(betas[0], 1)
-            self.assertEquals(betas[1], 2)
-            self.assertEquals(betas[2], 3)
-        if runtime.id == 2:
-            betas = keys[1]
-            self.assertEquals(betas[0], 4)
-            self.assertEquals(betas[1], 5)
-            self.assertEquals(betas[2], 6)
-        if runtime.id == 3:
-            betas = keys[1]
-            self.assertEquals(betas[0], 7)
-            self.assertEquals(betas[1], 8)
-            self.assertEquals(betas[2], 9)
-
-    @protocol
-    def test_authentication_codes(self, runtime):
-        """Test generating random shares."""
-
-        Zp = GF(6277101735386680763835789423176059013767194773182842284081)
-
-        v = Zp(2)
-        runtime.init_keys(Zp)
-        alpha, betas = runtime.get_keys()
-        codes = self.num_players * [None]
-
-        for xid in runtime.players.keys():
-            keys = map(lambda (alpha, akeys): (alpha, akeys[xid - 1]), runtime.keys.values())
-            codes[xid-1] = runtime.authentication_codes(keys, v).auth_codes
-        
-        if runtime.id == 1:
-            my_codes = codes[0]
-            self.assertEquals(my_codes[0], Zp(5))
-            self.assertEquals(my_codes[1], Zp(10))
-            self.assertEquals(my_codes[2], Zp(15))
-        if runtime.id == 2:
-            my_codes = codes[1]
-            self.assertEquals(my_codes[0], Zp(6))
-            self.assertEquals(my_codes[1], Zp(11))
-            self.assertEquals(my_codes[2], Zp(16))
-        if runtime.id == 3:
-            my_codes = codes[2]
-            self.assertEquals(my_codes[0], Zp(7))
-            self.assertEquals(my_codes[1], Zp(12))
-            self.assertEquals(my_codes[2], Zp(17))
-
-    @protocol
     def test_messagelist(self, runtime):
         """Test loading of keys."""
 

@@ -19,6 +19,7 @@
 
 from twisted.internet.defer import Deferred, gatherResults, succeed
 
+from viff.util import rand
 from viff.runtime import Runtime, Share, ShareList, gather_shares
 from viff.field import FieldElement
 from viff.constants import TEXT
@@ -152,9 +153,18 @@ class RandomShareGenerator:
         return BeDOZaKeyList(alpha, betas)
 
     def init_keys(self, field):
-        self.keys = {1: (field(2), [field(1), field(2), field(3)]),
-                     2: (field(3), [field(4), field(5), field(6)]),
-                     3: (field(4), [field(7), field(8), field(9)])}
+
+        self.keys = {}
+        for player_id in self.players:
+            betas = [field(56387295767672113),
+                     field(89238458945400961),
+                     field(12340004554789025),
+                     field(12907853897457058),
+                     field(90457903592570134),
+                     field(56256262346343232),
+                     field(23897437894556562),
+                     field(90297849575975574)]
+            self.keys[player_id] = (field(player_id), betas)
 
     def get_keys(self):   
         return self.keys[self.id]
