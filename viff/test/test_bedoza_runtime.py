@@ -38,9 +38,9 @@ class KeyLoaderTest(RuntimeTestCase):
     def test_load_keys(self, runtime):
         """Test loading of keys."""
 
-        self.Zp = GF(6277101735386680763835789423176059013767194773182842284081)
+        Zp = GF(6277101735386680763835789423176059013767194773182842284081)
 
-        runtime.init_keys(self.Zp)
+        runtime.init_keys(Zp)
         keys = runtime.get_keys()
         if runtime.id == 1:
             betas = keys[1]
@@ -62,10 +62,10 @@ class KeyLoaderTest(RuntimeTestCase):
     def test_authentication_codes(self, runtime):
         """Test generating random shares."""
 
-        self.Zp = GF(6277101735386680763835789423176059013767194773182842284081)
+        Zp = GF(6277101735386680763835789423176059013767194773182842284081)
 
-        v = self.Zp(2)
-        runtime.init_keys(self.Zp)
+        v = Zp(2)
+        runtime.init_keys(Zp)
         alpha, betas = runtime.get_keys()
         codes = self.num_players * [None]
 
@@ -75,19 +75,19 @@ class KeyLoaderTest(RuntimeTestCase):
         
         if runtime.id == 1:
             my_codes = codes[0]
-            self.assertEquals(my_codes[0], self.Zp(5))
-            self.assertEquals(my_codes[1], self.Zp(10))
-            self.assertEquals(my_codes[2], self.Zp(15))
+            self.assertEquals(my_codes[0], Zp(5))
+            self.assertEquals(my_codes[1], Zp(10))
+            self.assertEquals(my_codes[2], Zp(15))
         if runtime.id == 2:
             my_codes = codes[1]
-            self.assertEquals(my_codes[0], self.Zp(6))
-            self.assertEquals(my_codes[1], self.Zp(11))
-            self.assertEquals(my_codes[2], self.Zp(16))
+            self.assertEquals(my_codes[0], Zp(6))
+            self.assertEquals(my_codes[1], Zp(11))
+            self.assertEquals(my_codes[2], Zp(16))
         if runtime.id == 3:
             my_codes = codes[2]
-            self.assertEquals(my_codes[0], self.Zp(7))
-            self.assertEquals(my_codes[1], self.Zp(12))
-            self.assertEquals(my_codes[2], self.Zp(17))
+            self.assertEquals(my_codes[0], Zp(7))
+            self.assertEquals(my_codes[1], Zp(12))
+            self.assertEquals(my_codes[2], Zp(17))
 
     @protocol
     def test_messagelist(self, runtime):
@@ -119,12 +119,12 @@ class BeDOZaBasicCommandsTest(RuntimeTestCase):
     def test_random_share(self, runtime):
         """Test creation of a random shared number."""
 
-        self.Zp = GF(6277101735386680763835789423176059013767194773182842284081)
+        Zp = GF(6277101735386680763835789423176059013767194773182842284081)
 
         def check(v):
             self.assertEquals(True, True)
 
-        x = runtime.random_share(self.Zp)
+        x = runtime.random_share(Zp)
         d = runtime.open(x)
         d.addCallback(check)
         return d
@@ -147,13 +147,13 @@ class BeDOZaBasicCommandsTest(RuntimeTestCase):
     def test_sum(self, runtime):
         """Test addition of two numbers."""
 
-        self.Zp = GF(6277101735386680763835789423176059013767194773182842284081)
+        Zp = GF(6277101735386680763835789423176059013767194773182842284081)
 
         def check(v):
             self.assertEquals(v, 12)
 
-        x2 = runtime.random_share(self.Zp)
-        y2 = runtime.random_share(self.Zp)
+        x2 = runtime.random_share(Zp)
+        y2 = runtime.random_share(Zp)
         z2 = runtime.add(x2, y2)
         d = runtime.open(z2)
         d.addCallback(check)
@@ -163,13 +163,13 @@ class BeDOZaBasicCommandsTest(RuntimeTestCase):
     def test_sum_plus(self, runtime):
         """Test addition of two numbers."""
 
-        self.Zp = GF(6277101735386680763835789423176059013767194773182842284081)
+        Zp = GF(6277101735386680763835789423176059013767194773182842284081)
 
         def check(v):
             self.assertEquals(v, 12)
 
-        x2 = runtime.random_share(self.Zp)
-        y2 = runtime.random_share(self.Zp)
+        x2 = runtime.random_share(Zp)
+        y2 = runtime.random_share(Zp)
         z2 = x2 + y2
         d = runtime.open(z2)
         d.addCallback(check)
@@ -179,7 +179,7 @@ class BeDOZaBasicCommandsTest(RuntimeTestCase):
     def test_sum_constant_right(self, runtime):
         """Test addition of secret shared number and a public number."""
 
-        self.Zp = GF(31)
+        Zp = GF(31)
 
         x1 = 42
         y1 = 7
@@ -187,7 +187,7 @@ class BeDOZaBasicCommandsTest(RuntimeTestCase):
         def check(v):
             self.assertEquals(v, 13)
 
-        x2 = runtime.random_share(self.Zp)
+        x2 = runtime.random_share(Zp)
         z2 = x2 + y1
         d = runtime.open(z2)
         d.addCallback(check)
@@ -197,7 +197,7 @@ class BeDOZaBasicCommandsTest(RuntimeTestCase):
     def test_sum_constant_left(self, runtime):
         """Test addition of a public number and secret shared number."""
 
-        self.Zp = GF(6277101735386680763835789423176059013767194773182842284081)
+        Zp = GF(6277101735386680763835789423176059013767194773182842284081)
 
         x1 = 42
         y1 = 7
@@ -205,7 +205,7 @@ class BeDOZaBasicCommandsTest(RuntimeTestCase):
         def check(v):
             self.assertEquals(v, 13)
 
-        x2 = runtime.random_share(self.Zp)
+        x2 = runtime.random_share(Zp)
         z2 = y1 + x2
         d = runtime.open(z2)
         d.addCallback(check)
@@ -229,13 +229,13 @@ class BeDOZaBasicCommandsTest(RuntimeTestCase):
     def test_sub(self, runtime):
         """Test subtraction of two numbers."""
 
-        self.Zp = GF(6277101735386680763835789423176059013767194773182842284081)
+        Zp = GF(6277101735386680763835789423176059013767194773182842284081)
 
         def check(v):
             self.assertEquals(v, 0)
 
-        x2 = runtime.random_share(self.Zp)
-        y2 = runtime.random_share(self.Zp)
+        x2 = runtime.random_share(Zp)
+        y2 = runtime.random_share(Zp)
         z2 = runtime.sub(x2, y2)
         d = runtime.open(z2)
         d.addCallback(check)
@@ -245,13 +245,13 @@ class BeDOZaBasicCommandsTest(RuntimeTestCase):
     def test_sub_minus(self, runtime):
         """Test subtraction of two numbers."""
 
-        self.Zp = GF(6277101735386680763835789423176059013767194773182842284081)
+        Zp = GF(6277101735386680763835789423176059013767194773182842284081)
 
         def check(v):
             self.assertEquals(v, 0)
 
-        x2 = runtime.random_share(self.Zp)
-        y2 = runtime.random_share(self.Zp)
+        x2 = runtime.random_share(Zp)
+        y2 = runtime.random_share(Zp)
         z2 = x2 - y2
         d = runtime.open(z2)
         d.addCallback(check)
@@ -261,14 +261,14 @@ class BeDOZaBasicCommandsTest(RuntimeTestCase):
     def test_sub_constant_right(self, runtime):
         """Test subtraction of secret shared number and a public number."""
 
-        self.Zp = GF(31)
+        Zp = GF(31)
 
         y = 4
 
         def check(v):
             self.assertEquals(v, 2)
 
-        x2 = runtime.random_share(self.Zp)
+        x2 = runtime.random_share(Zp)
         z2 = x2 - y
         d = runtime.open(x2)
         d.addCallback(check)
@@ -278,14 +278,14 @@ class BeDOZaBasicCommandsTest(RuntimeTestCase):
     def test_sub_constant_left(self, runtime):
         """Test subtraction of a public number and secret shared number."""
 
-        self.Zp = GF(31)
+        Zp = GF(31)
 
         y = 8
 
         def check(v):
             self.assertEquals(v, 2)
 
-        x2 = runtime.random_share(self.Zp)
+        x2 = runtime.random_share(Zp)
         z2 = y - x2
         d = runtime.open(x2)
         d.addCallback(check)
@@ -295,7 +295,7 @@ class BeDOZaBasicCommandsTest(RuntimeTestCase):
     def test_constant_multiplication_constant_left(self, runtime):
         """Test multiplication of two numbers."""
 
-        self.Zp = GF(6277101735386680763835789423176059013767194773182842284081)
+        Zp = GF(6277101735386680763835789423176059013767194773182842284081)
 
         x1 = 6
         y1 = 7
@@ -303,9 +303,9 @@ class BeDOZaBasicCommandsTest(RuntimeTestCase):
         def check(v):
             self.assertEquals(v, x1 * y1)
 
-        x2 = runtime.random_share(self.Zp)
+        x2 = runtime.random_share(Zp)
 
-        z2 = runtime._cmul(self.Zp(y1), x2, self.Zp)
+        z2 = runtime._cmul(Zp(y1), x2, Zp)
         d = runtime.open(z2)
         d.addCallback(check)
         return d
@@ -314,7 +314,7 @@ class BeDOZaBasicCommandsTest(RuntimeTestCase):
     def test_constant_multiplication_constant_right(self, runtime):
         """Test multiplication of two numbers."""
 
-        self.Zp = GF(6277101735386680763835789423176059013767194773182842284081)
+        Zp = GF(6277101735386680763835789423176059013767194773182842284081)
 
         x1 = 6
         y1 = 7
@@ -322,9 +322,9 @@ class BeDOZaBasicCommandsTest(RuntimeTestCase):
         def check(v):
             self.assertEquals(v, x1 * y1)
 
-        x2 = runtime.random_share(self.Zp)
+        x2 = runtime.random_share(Zp)
 
-        z2 = runtime._cmul(x2, self.Zp(y1), self.Zp)
+        z2 = runtime._cmul(x2, Zp(y1), Zp)
         d = runtime.open(z2)
         d.addCallback(check)
         return d
@@ -333,12 +333,12 @@ class BeDOZaBasicCommandsTest(RuntimeTestCase):
     def test_get_triple(self, runtime):
         """Test generation of a triple."""
 
-        self.Zp = GF(6277101735386680763835789423176059013767194773182842284081)
+        Zp = GF(6277101735386680763835789423176059013767194773182842284081)
       
         def check((a, b, c)):
             self.assertEquals(c, a * b)
 
-        (a, b, c), _ = runtime._get_triple(self.Zp)
+        (a, b, c), _ = runtime._get_triple(Zp)
         d1 = runtime.open(a)
         d2 = runtime.open(b)
         d3 = runtime.open(c)
@@ -350,7 +350,7 @@ class BeDOZaBasicCommandsTest(RuntimeTestCase):
     def test_basic_multiply(self, runtime):
         """Test multiplication of two numbers."""
 
-        self.Zp = GF(6277101735386680763835789423176059013767194773182842284081)
+        Zp = GF(6277101735386680763835789423176059013767194773182842284081)
 
         x1 = 6
         y1 = 6
@@ -358,10 +358,10 @@ class BeDOZaBasicCommandsTest(RuntimeTestCase):
         def check(v):
             self.assertEquals(v, x1 * y1)
 
-        x2 = runtime.random_share(self.Zp)
-        y2 = runtime.random_share(self.Zp)
+        x2 = runtime.random_share(Zp)
+        y2 = runtime.random_share(Zp)
 
-        (a, b, c), _ = runtime._get_triple(self.Zp)
+        (a, b, c), _ = runtime._get_triple(Zp)
         z2 = runtime._basic_multiplication(x2, y2, a, b, c)
         d = runtime.open(z2)
         d.addCallback(check)
@@ -371,7 +371,7 @@ class BeDOZaBasicCommandsTest(RuntimeTestCase):
     def test_mul_mul(self, runtime):
         """Test multiplication of two numbers."""
 
-        self.Zp = GF(6277101735386680763835789423176059013767194773182842284081)
+        Zp = GF(6277101735386680763835789423176059013767194773182842284081)
 
         x1 = 6
         y1 = 6
@@ -379,8 +379,8 @@ class BeDOZaBasicCommandsTest(RuntimeTestCase):
         def check(v):
             self.assertEquals(v, x1 * y1)
 
-        x2 = runtime.random_share(self.Zp)
-        y2 = runtime.random_share(self.Zp)
+        x2 = runtime.random_share(Zp)
+        y2 = runtime.random_share(Zp)
 
         z2 = x2 * y2
         d = runtime.open(z2)
@@ -390,7 +390,7 @@ class BeDOZaBasicCommandsTest(RuntimeTestCase):
     def test_basic_multiply_constant_right(self, runtime):
         """Test multiplication of two numbers."""
 
-        self.Zp = GF(6277101735386680763835789423176059013767194773182842284081)
+        Zp = GF(6277101735386680763835789423176059013767194773182842284081)
 
         x1 = 6
         y1 = 6
@@ -398,10 +398,10 @@ class BeDOZaBasicCommandsTest(RuntimeTestCase):
         def check(v):
             self.assertEquals(v, x1 * y1)
 
-        x2 = runtime.random_share(self.Zp)
+        x2 = runtime.random_share(Zp)
 
-        (a, b, c), _ = runtime._get_triple(self.Zp)
-        z2 = runtime._basic_multiplication(x2, self.Zp(y1), a, b, c)
+        (a, b, c), _ = runtime._get_triple(Zp)
+        z2 = runtime._basic_multiplication(x2, Zp(y1), a, b, c)
         d = runtime.open(z2)
         d.addCallback(check)
         return d
@@ -410,7 +410,7 @@ class BeDOZaBasicCommandsTest(RuntimeTestCase):
     def test_basic_multiply_constant_left(self, runtime):
         """Test multiplication of two numbers."""
 
-        self.Zp = GF(6277101735386680763835789423176059013767194773182842284081)
+        Zp = GF(6277101735386680763835789423176059013767194773182842284081)
 
         x1 = 6
         y1 = 6
@@ -418,10 +418,10 @@ class BeDOZaBasicCommandsTest(RuntimeTestCase):
         def check(v):
             self.assertEquals(v, x1 * y1)
 
-        x2 = runtime.random_share(self.Zp)
+        x2 = runtime.random_share(Zp)
 
-        (a, b, c), _ = runtime._get_triple(self.Zp)
-        z2 = runtime._basic_multiplication(self.Zp(y1), x2, a, b, c)
+        (a, b, c), _ = runtime._get_triple(Zp)
+        z2 = runtime._basic_multiplication(Zp(y1), x2, a, b, c)
         d = runtime.open(z2)
         d.addCallback(check)
         return d
@@ -430,14 +430,14 @@ class BeDOZaBasicCommandsTest(RuntimeTestCase):
     def test_open_multiple_secret_share(self, runtime):
         """Test sharing and open of a number."""
 
-        self.Zp = GF(6277101735386680763835789423176059013767194773182842284081)
+        Zp = GF(6277101735386680763835789423176059013767194773182842284081)
 
         def check(ls):
             for v in ls:
                 self.assertEquals(v, 6)
 
-        x = runtime.random_share(self.Zp)
-        y = runtime.random_share(self.Zp)
+        x = runtime.random_share(Zp)
+        y = runtime.random_share(Zp)
         d = runtime.open_multiple_values([x, y])
         d.addCallback(check)
         return d
@@ -446,14 +446,14 @@ class BeDOZaBasicCommandsTest(RuntimeTestCase):
     def test_open_two_secret_share(self, runtime):
         """Test sharing and open of a number."""
 
-        self.Zp = GF(6277101735386680763835789423176059013767194773182842284081)
+        Zp = GF(6277101735386680763835789423176059013767194773182842284081)
 
         def check((a, b)):
             self.assertEquals(a, 6)
             self.assertEquals(b, 6)
 
-        x = runtime.random_share(self.Zp)
-        y = runtime.random_share(self.Zp)
+        x = runtime.random_share(Zp)
+        y = runtime.random_share(Zp)
         d = runtime.open_two_values(x, y)
         d.addCallback(check)
         return d
