@@ -24,7 +24,6 @@ from twisted.internet.defer import Deferred, gatherResults, succeed
 from viff.runtime import Runtime, Share, ShareList, gather_shares
 from viff.field import FieldElement, GF
 from viff.constants import TEXT
-from viff.simplearithmetic import SimpleArithmetic
 from viff.util import rand
 
 from bedoza import BeDOZaKeyList, BeDOZaMessageList, BeDOZaShare

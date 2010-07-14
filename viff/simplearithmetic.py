@@ -18,7 +18,9 @@
 from viff.runtime import Share, gather_shares
 from viff.field import FieldElement
 
-class SimpleArithmetic:
+from viff.runtime import Runtime
+
+class SimpleArithmeticRuntime(Runtime):
     """Provides methods for addition and subtraction.
 
     Provides set: {add, sub, mul}.

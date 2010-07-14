@@ -27,13 +27,13 @@ import operator
 
 from twisted.internet.defer import Deferred, gatherResults, succeed
 
-from viff.runtime import Runtime, Share, gather_shares, preprocess
+from viff.runtime import Share, gather_shares, preprocess
 from viff.util import rand
 from viff.constants import TEXT, PAILLIER
 from viff.field import FieldElement
 from viff.paillier import encrypt_r, decrypt
 
-from viff.simplearithmetic import SimpleArithmetic
+from viff.simplearithmetic import SimpleArithmeticRuntime
 
 from hash_broadcast import HashBroadcastMixin
 
@@ -96,35 +96,8 @@ class OrlandiShare(Share):
         self.rho = rho
         self.commitment = commitment
         Share.__init__(self, runtime, field, (value, rho, commitment))
-
-
-class OrlandiRuntime(SimpleArithmetic, Runtime, HashBroadcastMixin):
-    """The Orlandi runtime.
-
-    The runtime is used for sharing values (:meth:`secret_share` or
-    :meth:`shift`) into :class:`OrlandiShare` object and opening such
-    shares (:meth:`open`) again. Calculations on shares is normally
-    done through overloaded arithmetic operations, but it is also
-    possible to call :meth:`add`, :meth:`mul`, etc. directly if one
-    prefers.
-
-    Each player in the protocol uses a :class:`~viff.runtime.Runtime`
-    object. To create an instance and connect it correctly with the
-    other players, please use the :func:`~viff.runtime.create_runtime`
-    function instead of instantiating a Runtime directly. The
-    :func:`~viff.runtime.create_runtime` function will take care of
-    setting up network connections and return a :class:`Deferred`
-    which triggers with the :class:`~viff.runtime.Runtime` object when
-    it is ready.
-    """
-
-    def __init__(self, player, threshold=None, options=None):
-        """Initialize runtime."""
-        Runtime.__init__(self, player, threshold, options)
-        self.threshold = self.num_players - 1
-        self.s = 1
-        self.d = 0
-        self.s_lambda = 1
+      
+class OrlandiMixin(HashBroadcastMixin):
 
     def compute_delta(self, d):
         def product(j):
@@ -1302,3 +1275,32 @@ class OrlandiRuntime(SimpleArithmetic, Runtime, HashBroadcastMixin):
         self.s = args['s']
         self.d = args['d']
         self.s_lambda = args['lambda']
+
+
+class OrlandiRuntime(OrlandiMixin, SimpleArithmeticRuntime):
+    """The Orlandi runtime.
+
+    The runtime is used for sharing values (:meth:`secret_share` or
+    :meth:`shift`) into :class:`OrlandiShare` object and opening such
+    shares (:meth:`open`) again. Calculations on shares is normally
+    done through overloaded arithmetic operations, but it is also
+    possible to call :meth:`add`, :meth:`mul`, etc. directly if one
+    prefers.
+
+    Each player in the protocol uses a :class:`~viff.runtime.Runtime`
+    object. To create an instance and connect it correctly with the
+    other players, please use the :func:`~viff.runtime.create_runtime`
+    function instead of instantiating a Runtime directly. The
+    :func:`~viff.runtime.create_runtime` function will take care of
+    setting up network connections and return a :class:`Deferred`
+    which triggers with the :class:`~viff.runtime.Runtime` object when
+    it is ready.
+    """
+
+    def __init__(self, player, threshold=None, options=None):
+        """Initialize runtime."""
+        SimpleArithmeticRuntime.__init__(self, player, threshold, options)
+        self.threshold = self.num_players - 1
+        self.s = 1
+        self.d = 0
+        self.s_lambda = 1

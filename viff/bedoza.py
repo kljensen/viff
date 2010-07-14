@@ -20,10 +20,10 @@
 from twisted.internet.defer import Deferred, gatherResults, succeed
 
 from viff.util import rand
-from viff.runtime import Runtime, Share, ShareList, gather_shares
+from viff.runtime import Share, ShareList, gather_shares
 from viff.field import FieldElement
 from viff.constants import TEXT
-from viff.simplearithmetic import SimpleArithmetic
+from viff.simplearithmetic import SimpleArithmeticRuntime
 
 from hash_broadcast import HashBroadcastMixin
 
@@ -162,32 +162,7 @@ class RandomShareGenerator:
     def get_keys(self):   
         return self.keys[self.id]
 
-class BeDOZaRuntime(SimpleArithmetic, Runtime, HashBroadcastMixin, RandomShareGenerator):
-    """The BeDOZa runtime.
-
-    The runtime is used for sharing values (:meth:`secret_share` or
-    :meth:`shift`) into :class:`BeDOZaShare` object and opening such
-    shares (:meth:`open`) again. Calculations on shares is normally
-    done through overloaded arithmetic operations, but it is also
-    possible to call :meth:`add`, :meth:`mul`, etc. directly if one
-    prefers.
-
-    Each player in the protocol uses a :class:`~viff.runtime.Runtime`
-    object. To create an instance and connect it correctly with the
-    other players, please use the :func:`~viff.runtime.create_runtime`
-    function instead of instantiating a Runtime directly. The
-    :func:`~viff.runtime.create_runtime` function will take care of
-    setting up network connections and return a :class:`Deferred`
-    which triggers with the :class:`~viff.runtime.Runtime` object when
-    it is ready.
-    """
-
-    def __init__(self, player, threshold=None, options=None):
-        """Initialize runtime."""
-        Runtime.__init__(self, player, threshold, options)
-        self.threshold = self.num_players - 1
-        self.random_share_number = 100
-        self.random_shares = []
+class BeDOZaMixin(HashBroadcastMixin, RandomShareGenerator):
  
     def MAC(self, alpha, beta, v):
         return alpha * v + beta
@@ -520,3 +495,31 @@ class BeDOZaRuntime(SimpleArithmetic, Runtime, HashBroadcastMixin, RandomShareGe
                 triple_c = self.generate_share(field, share_c)
                 c += share_c.value
         return [triple_a, triple_b, triple_c], False
+
+
+class BeDOZaRuntime(BeDOZaMixin, SimpleArithmeticRuntime):
+    """The BeDOZa runtime.
+
+    The runtime is used for sharing values (:meth:`secret_share` or
+    :meth:`shift`) into :class:`BeDOZaShare` object and opening such
+    shares (:meth:`open`) again. Calculations on shares is normally
+    done through overloaded arithmetic operations, but it is also
+    possible to call :meth:`add`, :meth:`mul`, etc. directly if one
+    prefers.
+
+    Each player in the protocol uses a :class:`~viff.runtime.Runtime`
+    object. To create an instance and connect it correctly with the
+    other players, please use the :func:`~viff.runtime.create_runtime`
+    function instead of instantiating a Runtime directly. The
+    :func:`~viff.runtime.create_runtime` function will take care of
+    setting up network connections and return a :class:`Deferred`
+    which triggers with the :class:`~viff.runtime.Runtime` object when
+    it is ready.
+    """
+
+    def __init__(self, player, threshold=None, options=None):
+        """Initialize runtime."""
+        SimpleArithmeticRuntime.__init__(self, player, threshold, options)
+        self.threshold = self.num_players - 1
+        self.random_share_number = 100
+        self.random_shares = []
