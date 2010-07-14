@@ -114,35 +114,60 @@ class PartialShare(Share):
 
 
 class ModifiedPaillier(object):
-    """See Ivan's paper, beginning of section 6."""
+    """A slight modification of the Paillier cryptosystem.
+
+    This modification has plaintext space [-(n-1)/ ; (n-1)/2] rather
+    than the usual Z_n where n is the Paillier modulus.
+
+    See Ivan's paper, beginning of section 6.
+    """
 
     def __init__(self, runtime, random):
         self.runtime = runtime;
         self.random = random
 
+    def _f(self, x, n):
+        if x >= 0:
+            return x
+        else:
+            return n + x
+
+    def _f_inverse(self, y, n):
+        if 0 <= y <= (n + 1) / 2:
+            return y
+        else:
+            return y - n
+
     def encrypt(self, value, player_id=None):
-        """Encrypt using public key of player player_id. Defaults to own public key."""
-        assert isinstance(value, int), \
-            "paillier encrypts only integers, got %s" % value.__class__        
-        # TODO: Assert value in the right range.
-        
+        """Encrypt using public key of player player_id.
+
+        Defaults to own public key.
+        """
+        assert isinstance(value, int) or isinstance(value, long), \
+            "paillier: encrypts only integers and longs, got %s" % value.__class__
         if not player_id:
             player_id = self.runtime.id
-
+        n = self.runtime.players[player_id].pubkey['n']
+        min = -(n - 1) / 2 + 1
+        max = (n + 1) / 2
+        assert min <= value <= max, \
+            "paillier: plaintext %d outside legal range [-(n-1)/2+1 ; (n+1)/2] = " \
+            "[%d ; %d]"  % (value, min, max)
         pubkey = self.runtime.players[player_id].pubkey
-
-        randomness = self.random.randint(1, long(pubkey['n']))
-        # TODO: Transform value.
-        enc = pypaillier.encrypt_r(value, randomness, pubkey)
-        return enc
+        randomness = self.random.randint(1, long(n))
+        return pypaillier.encrypt_r(self._f(value, n), randomness, pubkey)
 
     def decrypt(self, enc_value):
         """Decrypt using own private key."""
-        assert isinstance(enc_value, long), \
+        assert isinstance(enc_value, int) or isinstance(enc_value, long), \
             "paillier decrypts only longs, got %s" % enc_value.__class__
-        # TODO: Assert enc_value in the right range.
+        n = self.runtime.players[self.runtime.id].pubkey['n']
+        n_square = self.runtime.players[self.runtime.id].pubkey['n_square']
+        assert 0 <= enc_value < n_square, \
+            "paillier: ciphertext %d not in range [0 ; n^2] = [0 ; %d]" \
+            % (enc_value, n_square)
         seckey = self.runtime.players[self.runtime.id].seckey
-        return pypaillier.decrypt(enc_value, seckey)
+        return self._f_inverse(pypaillier.decrypt(enc_value, seckey), n)
 
 
 class TripleGenerator(object):
@@ -202,12 +227,13 @@ class TripleGenerator(object):
     def _add_macs(self, partial_shares):
         """Adds macs to the set of PartialBeDOZaShares.
         
-        Returns a list of full shares, e.g. including macs.
-        (the full shares are deferreds of type BeDOZaShare.)
-        """
-        
-        # TODO: Currently only does this for one partial share.
+        Returns a tuple with a single element that is a list of full
+        shares, e.g. including macs.  (the full shares are deferreds
+        of type BeDOZaShare.)
 
+        TODO: We have to return the list in a tuple due to some
+        Twisted thing.
+        """        
         # TODO: Would be nice with a class ShareContents like the class
         # PartialShareContents used here.
         
@@ -215,6 +241,7 @@ class TripleGenerator(object):
 
         mac_keys = []
 
+        # TODO: Currently only support for one share.
         i = 0
 
         c_list = []
@@ -222,43 +249,20 @@ class TripleGenerator(object):
             # TODO: This is probably not the fastes way to generate
             # the betas.
             beta = self.random.randint(0, 2**(4 * self.k))
-        
             # TODO: Outcommented until mod paillier works for negative numbers.
             #if rand.choice([True, False]):
             #    beta = -beta
-            
             enc_beta = self.paillier.encrypt(beta, player_id=j+1)
             c_j = partial_shares[i].enc_shares[j]
-            c = (pow(c_j, self.alpha, self.n2) * enc_beta) % self.n2
-            if self.runtime.id == 1 and j + 1 == 2:
-                print
-                print
-                print "p=", self.p
-                print "player 1: public key of player %s is %s" % (j+1, 
-                                                                   self.runtime.players[j+1].pubkey)
-                print "player %s encrypted share: %s" % (j+1, partial_shares[i].enc_shares[j])
-                print "alpha = %s = %s" % (self.alpha, self.Zp(self.alpha))
-                print "beta = %s = %s" %  (beta, self.Zp(beta))
-                print "enc_beta =", enc_beta
-                print "Player 1 sends c = %s to player %d" % (c, j+1)
-                print
-                print
+            n2 = self.runtime.players[j + 1].pubkey['n_square']
+            c = (pow(c_j, self.alpha, n2) * enc_beta) % n2
             c_list.append(c)
             mac_keys.append(self.Zp(beta))
         received_cs = _send(self.runtime, c_list)
 
         def finish_sharing(recevied_cs):
             mac_key_list = BeDOZaKeyList(self.alpha, mac_keys)
-            # print "received cs:", received_cs.result
             decrypted_cs = [self.Zp(self.paillier.decrypt(c)) for c in received_cs.result]
-            if self.runtime.id == 2:
-                print
-                print
-                print "PLAYER2: Got %s from player 1" % received_cs.result[0]
-                print "PLAYER2: Decrypted c from player 1: %s" % decrypted_cs[0]
-                print "PLAYER2: My share a_2 =", partial_shares[0].value
-                print
-
             mac_msg_list = BeDOZaMessageList(decrypted_cs)
             # Twisted HACK: Need to pack share into tuple.
             return BeDOZaShare(self.runtime,

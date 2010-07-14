@@ -16,6 +16,7 @@
 # License along with VIFF. If not, see <http://www.gnu.org/licenses/>.
 
 import sys
+from exceptions import AssertionError
 
 # We don't need secure random numbers for test purposes.
 from random import Random
@@ -100,7 +101,7 @@ class BeDOZaTestCase(RuntimeTestCase):
         # In production, paillier keys should be something like 2000
         # bit. For test purposes, it is ok to use small keys.
         # TODO: paillier freezes if key size is too small, e.g. 13.
-        return generate_configs(paillier=NaClPaillier(70), *args)
+        return generate_configs(paillier=NaClPaillier(250), *args)
 
 
 class DataTransferTest(BeDOZaTestCase):
@@ -144,14 +145,62 @@ class ModifiedPaillierTest(BeDOZaTestCase):
         encrypted_val = paillier.encrypt(val)
         decrypted_val = paillier.decrypt(encrypted_val)
         self.assertEquals(val, decrypted_val)
+
+    @protocol
+    def test_modified_paillier_can_decrypt_encrypted_zero(self, runtime):
+        paillier = ModifiedPaillier(runtime, Random(338301))
+        val = 0
+        encrypted_val = paillier.encrypt(val)
+        decrypted_val = paillier.decrypt(encrypted_val)
+        self.assertEquals(val, decrypted_val)
+
+    @protocol
+    def test_modified_paillier_can_decrypt_encrypted_minus_one(self, runtime):
+        paillier = ModifiedPaillier(runtime, Random(19623))
+        val = -1
+        encrypted_val = paillier.encrypt(val)
+        decrypted_val = paillier.decrypt(encrypted_val)
+        self.assertEquals(val, decrypted_val)
+
+    @protocol
+    def test_modified_paillier_can_decrypt_encrypted_max_val(self, runtime):
+        paillier = ModifiedPaillier(runtime, Random(825604))
+        n = runtime.players[runtime.id].pubkey['n']
+        val = (n + 1) / 2
+        encrypted_val = paillier.encrypt(val)
+        decrypted_val = paillier.decrypt(encrypted_val)
+        self.assertEquals(val, decrypted_val)
+
+    @protocol
+    def test_modified_paillier_can_decrypt_encrypted_min_val(self, runtime):
+        paillier = ModifiedPaillier(runtime, Random(554424))
+        n = runtime.players[runtime.id].pubkey['n']
+        val = -(n - 1) / 2 + 1
+        encrypted_val = paillier.encrypt(val)
+        decrypted_val = paillier.decrypt(encrypted_val)
+        self.assertEquals(val, decrypted_val)
  
     @protocol
     def test_modified_paillier_can_decrypt_encrypted_positive(self, runtime):
         paillier = ModifiedPaillier(runtime, Random(777737))
-        val = 7
+        val = 73423
         encrypted_val = paillier.encrypt(val)
         decrypted_val = paillier.decrypt(encrypted_val)
         self.assertEquals(val, decrypted_val)
+
+    @protocol
+    def test_encrypting_too_large_number_raises_exception(self, runtime):
+        paillier = ModifiedPaillier(runtime, Random(825604))
+        n = runtime.players[runtime.id].pubkey['n']
+        val = 1 + (n + 1) / 2
+        self.assertRaises(AssertionError, paillier.encrypt, val)
+
+    @protocol
+    def test_encrypting_too_small_number_raises_exception(self, runtime):
+        paillier = ModifiedPaillier(runtime, Random(554424))
+        n = runtime.players[runtime.id].pubkey['n']
+        val = -(n - 1) / 2
+        self.assertRaises(AssertionError, paillier.encrypt, val)
 
     @protocol
     def test_modified_paillier_can_encrypt_to_other(self, runtime):
@@ -165,13 +214,7 @@ class ModifiedPaillierTest(BeDOZaTestCase):
             self.assertEquals(range(1, self.num_players + 1), plain)
         runtime.schedule_callback(received, verify)
         return received
-        
 
-#    @protocol
-#    def test_modified_paillier_can_decrypt_encrypted_negative(self, runtime):
-#        pass
-
-    # TODO: Boundary tests.
 
 def partial_share(random, runtime, Zp, val, paillier=None):
     if not paillier:
@@ -246,7 +289,6 @@ class TripleTest(BeDOZaTestCase):
                 # Twisted HACK: Need to unpack value ls[0] from tuple.
                 opened_share = runtime.open(ls[0][0])
                 def verify(open_share):
-                    print "Share opened:", open_share
                     self.assertEquals(secret, open_share.value)
                 runtime.schedule_callback(opened_share, verify)
                 return opened_share
@@ -254,8 +296,6 @@ class TripleTest(BeDOZaTestCase):
             return d
         runtime.schedule_callback(share, add_macs)
         return share
-
-    test_add_macs_produces_correct_sharing.skip = "add_macs not implemented fully yet"
 
         
 #    @protocol
