@@ -61,18 +61,18 @@ class BeDOZaShareContents(object):
     def add_public(self, c, my_id):
         if my_id == 1:
             self.value = self.value + c
-        self.keyList.keys[0] = self.keyList.keys[0] - self.keyList.alpha * c
+        self.keyList.get_keys()[0] = self.keyList.get_keys()[0] - self.keyList.alpha * c
         return self
     
     def sub_public(self, c, my_id):
         if my_id == 1:
             self.value = self.value - c
-        self.keyList.keys[0] = self.keyList.keys[0] + self.keyList.alpha * c
+        self.keyList.get_keys()[0] = self.keyList.get_keys()[0] + self.keyList.alpha * c
         return self
 
     def cmul(self, c):
         zi = c * self.value
-        zks = BeDOZaKeyList(self.keyList.alpha, map(lambda k: c * k, self.keyList.keys))
+        zks = BeDOZaKeyList(self.keyList.alpha, map(lambda k: c * k, self.keyList.get_keys()))
         zms = BeDOZaMessageList(map(lambda m: c * m, self.macs.auth_codes))
         return BeDOZaShareContents(zi, zks, zms)
 
@@ -107,6 +107,9 @@ class BeDOZaKeyList(object):
     def __init__(self, alpha, keys):
         self.alpha = alpha
         self.keys = keys
+
+    def get_keys(self):
+        return self.keys
 
     def __add__(self, other):
         """Addition."""
@@ -252,7 +255,7 @@ class BeDOZaMixin(HashBroadcastMixin, RandomShareGenerator):
             values = num_shares * [0]
             isOK = num_shares * [True]
             for iny in xrange(num_shares):
-                keys = keyLists[iny].keys
+                keys = keyLists[iny].get_keys()
                 for inx, xs in enumerate(player_shares_codes):
                     xi, mi = xs[iny]
                     beta = keys[inx]
@@ -331,9 +334,9 @@ class BeDOZaMixin(HashBroadcastMixin, RandomShareGenerator):
 
             n = len(self.players)
             alpha_a = keyList_a.alpha
-            keys_a = keyList_a.keys
+            keys_a = keyList_a.get_keys()
             alpha_b = keyList_b.alpha
-            keys_b = keyList_b.keys
+            keys_b = keyList_b.get_keys()
 
             a = 0
             b = 0
@@ -407,7 +410,7 @@ class BeDOZaMixin(HashBroadcastMixin, RandomShareGenerator):
             isOK = True
             n = len(self.players)
             alpha = keyList.alpha
-            keys = keyList.keys
+            keys = keyList.get_keys()
             x = 0
             for inx in xrange(0, n):
                 xi = shares_codes[inx]
