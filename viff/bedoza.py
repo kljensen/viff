@@ -75,6 +75,9 @@ class BeDOZaShareContents(object):
         zks = BeDOZaKeyList(self.keyList.alpha, map(lambda k: c * k, self.keyList.keys))
         zms = BeDOZaMessageList(map(lambda m: c * m, self.macs.auth_codes))
         return BeDOZaShareContents(zi, zks, zms)
+
+    def __str__(self):
+        return "(%s, %s, %s)" % (str(self.value), str(self.keyList), str(self.macs))
     
 class BeDOZaShare(Share):
     """A share in the BeDOZa runtime.
