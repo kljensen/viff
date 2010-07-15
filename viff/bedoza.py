@@ -485,7 +485,10 @@ class BeDOZaMixin(HashBroadcastMixin, RandomShareGenerator):
         return x.sub_public(c, self.id)
 
     def _wrap_in_share(self, shareContents, field):
-        return BeDOZaShare(self, field, shareContents.get_value(), shareContents.get_keys(), shareContents.get_macs())
+        return BeDOZaShare(self, field,
+                           shareContents.get_value(),
+                           shareContents.get_keys(),
+                           shareContents.get_macs())
 
     def _minus_public_left(self, x, c, field):
         y = self._constant_multiply(x, field(-1))
