@@ -76,7 +76,7 @@ class BeDOZaShareContents(object):
     def cmul(self, c):
         zi = c * self.value
         zks = BeDOZaKeyList(self.keyList.alpha, map(lambda k: c * k, self.keyList.get_keys()))
-        zms = BeDOZaMACList(map(lambda m: c * m, self.macs.auth_codes))
+        zms = BeDOZaMACList(map(lambda m: c * m, self.macs.get_macs()))
         return BeDOZaShareContents(zi, zks, zms)
 
     def __str__(self):
@@ -141,34 +141,34 @@ class BeDOZaKeyList(object):
     
 class BeDOZaMACList(object):
 
-    def __init__(self, auth_codes):
-        self.auth_codes = auth_codes
+    def __init__(self, macs):
+        self.macs = macs
 
     def get_macs(self):
-        return self.auth_codes
+        return self.macs
 
     def get_mac(self, inx):
-        return self.auth_codes[inx]
+        return self.macs[inx]
         
     def __add__(self, other):
         """Addition."""
-        auth_codes = []
-        for c1, c2 in zip(self.auth_codes, other.auth_codes):
-            auth_codes.append(c1 + c2)
-        return BeDOZaMACList(auth_codes)
+        macs = []
+        for c1, c2 in zip(self.macs, other.macs):
+            macs.append(c1 + c2)
+        return BeDOZaMACList(macs)
 
     def __sub__(self, other):
         """Subtraction."""
-        auth_codes = []
-        for c1, c2 in zip(self.auth_codes, other.auth_codes):
-            auth_codes.append(c1 - c2)
-        return BeDOZaMACList(auth_codes)
+        macs = []
+        for c1, c2 in zip(self.macs, other.macs):
+            macs.append(c1 - c2)
+        return BeDOZaMACList(macs)
 
     def __eq__(self, other):
-        return self.auth_codes == other.auth_codes
+        return self.macs == other.macs
 
     def __str__(self):
-        return str(self.auth_codes)
+        return str(self.macs)
 
     def __repr__(self):
         return str(self)
@@ -186,19 +186,19 @@ class RandomShareGenerator:
 
     def generate_share(self, field, value):
         my_keys = self.generate_keys(field)
-        auth_codes = self.generate_auth_codes(self.id, value)
-        return BeDOZaShare(self, field, value, my_keys, auth_codes)
+        macs = self.generate_auth_codes(self.id, value)
+        return BeDOZaShare(self, field, value, my_keys, macs)
 
     def generate_auth_codes(self, playerId, value):
         keys = map(lambda (alpha, akeys): (alpha, akeys[playerId - 1]), self.keys.values())
-        auth_codes = self.authentication_codes(keys, value)
-        return auth_codes
+        macs = self.authentication_codes(keys, value)
+        return macs
 
     def authentication_codes(self, keys, v):
-        auth_codes = []
+        macs = []
         for alpha, beta in keys:
-            auth_codes.append(alpha * v + beta)
-        return BeDOZaMACList(auth_codes)
+            macs.append(alpha * v + beta)
+        return BeDOZaMACList(macs)
 
     def generate_keys(self, field):
         alpha, betas = self.get_keys()
@@ -284,8 +284,6 @@ class BeDOZaMixin(HashBroadcastMixin, RandomShareGenerator):
             pc = tuple(self.program_counter)
             keyLists = []
             for other_id in receivers:
-                # self.protocols[other_id].sendShare(pc, xi)
-                # self.protocols[other_id].sendShare(pc, codes.auth_codes[other_id - 1])
                 message_string = ""
                 for inx, beDOZaContents in enumerate(ls):
                     keyLists.append(beDOZaContents.get_keys())

@@ -43,9 +43,9 @@ class KeyLoaderTest(RuntimeTestCase):
         m1 = BeDOZaMACList([Zp(2), Zp(34)])
         m2 = BeDOZaMACList([Zp(11), Zp(4)])
         m3 = m1 + m2
-        self.assertEquals(m3.auth_codes[0], 13)
-        self.assertEquals(m3.auth_codes[1], 38)
-        self.assertEquals(len(m3.auth_codes), 2)
+        self.assertEquals(m3.macs[0], 13)
+        self.assertEquals(m3.macs[1], 38)
+        self.assertEquals(len(m3.macs), 2)
         return m3
         
 
