@@ -76,7 +76,7 @@ class BeDOZaShareContents(object):
     def cmul(self, c):
         zi = c * self.value
         zks = self.keyList.cmul(c)
-        zms = BeDOZaMACList(map(lambda m: c * m, self.macs.get_macs()))
+        zms = self.macs.cmul(c)
         return BeDOZaShareContents(zi, zks, zms)
 
     def __str__(self):
@@ -160,6 +160,9 @@ class BeDOZaMACList(object):
 
     def get_mac(self, inx):
         return self.macs[inx]
+
+    def cmul(self, c):
+        return BeDOZaMACList(map(lambda m: c * m, self.macs))
         
     def __add__(self, other):
         """Addition."""
