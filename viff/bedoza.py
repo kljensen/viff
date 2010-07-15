@@ -46,6 +46,9 @@ class BeDOZaShareContents(object):
     def get_macs(self):
         return self.macs
 
+    def get_mac(self, inx):
+        return self.macs.get_mac(inx)
+
     def __add__(self, other):
         zi = self.value + other.value
         zks = self.keyList + other.keyList
@@ -141,6 +144,12 @@ class BeDOZaMessageList(object):
     def __init__(self, auth_codes):
         self.auth_codes = auth_codes
 
+    def get_macs(self):
+        return self.auth_codes
+
+    def get_mac(self, inx):
+        return self.auth_codes[inx]
+        
     def __add__(self, other):
         """Addition."""
         auth_codes = []
@@ -281,7 +290,7 @@ class BeDOZaMixin(HashBroadcastMixin, RandomShareGenerator):
                 for inx, beDOZaContents in enumerate(ls):
                     keyLists.append(beDOZaContents.get_keys())
                     message_string += "%s:%s;" % \
-                           (beDOZaContents.get_value().value, beDOZaContents.get_macs().auth_codes[other_id - 1].value)
+                           (beDOZaContents.get_value().value, beDOZaContents.get_mac(other_id - 1).value)
                 self.protocols[other_id].sendData(pc, TEXT, message_string)
 
             if self.id in receivers:
@@ -366,9 +375,9 @@ class BeDOZaMixin(HashBroadcastMixin, RandomShareGenerator):
             pc = tuple(self.program_counter)
             for other_id in receivers:
                 self.protocols[other_id].sendShare(pc, a.get_value())
-                self.protocols[other_id].sendShare(pc, a.get_macs().auth_codes[other_id - 1])
+                self.protocols[other_id].sendShare(pc, a.get_mac(other_id - 1))
                 self.protocols[other_id].sendShare(pc, b.get_value())
-                self.protocols[other_id].sendShare(pc, b.get_macs().auth_codes[other_id - 1])
+                self.protocols[other_id].sendShare(pc, b.get_mac(other_id - 1))
                 
             if self.id in receivers:
                 num_players = len(self.players.keys())
@@ -438,7 +447,7 @@ class BeDOZaMixin(HashBroadcastMixin, RandomShareGenerator):
             pc = tuple(self.program_counter)
             for other_id in receivers:
                 self.protocols[other_id].sendShare(pc, shareContent.get_value())
-                self.protocols[other_id].sendShare(pc, shareContent.get_macs().auth_codes[other_id - 1])
+                self.protocols[other_id].sendShare(pc, shareContent.get_mac(other_id - 1))
             if self.id in receivers:
                 num_players = len(self.players.keys())
                 values = num_players * [None]
