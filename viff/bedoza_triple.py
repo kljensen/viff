@@ -26,7 +26,7 @@ from viff.field import FieldElement, GF
 from viff.constants import TEXT
 from viff.util import rand
 
-from bedoza import BeDOZaKeyList, BeDOZaMessageList, BeDOZaShare
+from bedoza import BeDOZaKeyList, BeDOZaMACList, BeDOZaShare
 
 # TODO: Use secure random instead!
 from random import Random
@@ -263,7 +263,7 @@ class TripleGenerator(object):
         def finish_sharing(recevied_cs):
             mac_key_list = BeDOZaKeyList(self.alpha, mac_keys)
             decrypted_cs = [self.Zp(self.paillier.decrypt(c)) for c in received_cs.result]
-            mac_msg_list = BeDOZaMessageList(decrypted_cs)
+            mac_msg_list = BeDOZaMACList(decrypted_cs)
             # Twisted HACK: Need to pack share into tuple.
             return BeDOZaShare(self.runtime,
                                partial_shares[i].value.field,

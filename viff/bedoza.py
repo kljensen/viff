@@ -76,7 +76,7 @@ class BeDOZaShareContents(object):
     def cmul(self, c):
         zi = c * self.value
         zks = BeDOZaKeyList(self.keyList.alpha, map(lambda k: c * k, self.keyList.get_keys()))
-        zms = BeDOZaMessageList(map(lambda m: c * m, self.macs.auth_codes))
+        zms = BeDOZaMACList(map(lambda m: c * m, self.macs.auth_codes))
         return BeDOZaShareContents(zi, zks, zms)
 
     def __str__(self):
@@ -139,7 +139,7 @@ class BeDOZaKeyList(object):
     def __repr__(self):
         return str(self)
     
-class BeDOZaMessageList(object):
+class BeDOZaMACList(object):
 
     def __init__(self, auth_codes):
         self.auth_codes = auth_codes
@@ -155,14 +155,14 @@ class BeDOZaMessageList(object):
         auth_codes = []
         for c1, c2 in zip(self.auth_codes, other.auth_codes):
             auth_codes.append(c1 + c2)
-        return BeDOZaMessageList(auth_codes)
+        return BeDOZaMACList(auth_codes)
 
     def __sub__(self, other):
         """Subtraction."""
         auth_codes = []
         for c1, c2 in zip(self.auth_codes, other.auth_codes):
             auth_codes.append(c1 - c2)
-        return BeDOZaMessageList(auth_codes)
+        return BeDOZaMACList(auth_codes)
 
     def __eq__(self, other):
         return self.auth_codes == other.auth_codes
@@ -198,7 +198,7 @@ class RandomShareGenerator:
         auth_codes = []
         for alpha, beta in keys:
             auth_codes.append(alpha * v + beta)
-        return BeDOZaMessageList(auth_codes)
+        return BeDOZaMACList(auth_codes)
 
     def generate_keys(self, field):
         alpha, betas = self.get_keys()

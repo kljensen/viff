@@ -27,7 +27,7 @@ from viff.test.util import RuntimeTestCase, protocol
 from viff.constants import TEXT
 from viff.runtime import gather_shares, Share
 from viff.config import generate_configs
-from viff.bedoza import BeDOZaRuntime, BeDOZaShare, BeDOZaKeyList, BeDOZaMessageList
+from viff.bedoza import BeDOZaRuntime, BeDOZaShare, BeDOZaKeyList
 
 from viff.bedoza_triple import TripleGenerator, PartialShare, PartialShareContents, ModifiedPaillier
 from viff.bedoza_triple import _send, _convolute, _convolute_gf_elm
