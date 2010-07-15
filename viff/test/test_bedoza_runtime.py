@@ -22,7 +22,7 @@ from twisted.internet.defer import gatherResults, DeferredList
 from viff.test.util import RuntimeTestCase, protocol
 from viff.runtime import gather_shares, Share
 from viff.config import generate_configs
-from viff.bedoza import BeDOZaRuntime, BeDOZaShare, BeDOZaKeyList, BeDOZaMessageList
+from viff.bedoza import BeDOZaRuntime, BeDOZaShare, BeDOZaShareContents, BeDOZaKeyList, BeDOZaMessageList
 from viff.field import FieldElement, GF
 from viff.util import rand
 
@@ -80,13 +80,12 @@ class BeDOZaBasicCommandsTest(RuntimeTestCase):
 
         Zp = GF(6277101735386680763835789423176059013767194773182842284081)
        
-        x = (Zp(2), BeDOZaKeyList(Zp(23), [Zp(3), Zp(4), Zp(1)]), BeDOZaMessageList([Zp(2), Zp(74), Zp(23), Zp(2)]))
-        y = (Zp(2), BeDOZaKeyList(Zp(23), [Zp(5), Zp(2), Zp(7)]), BeDOZaMessageList([Zp(2), Zp(74), Zp(23), Zp(2)]))
-        zi, zks, zms = runtime._plus((x, y), Zp)
-        self.assertEquals(zi, Zp(4))
-        self.assertEquals(zks, BeDOZaKeyList(Zp(23), [Zp(8), Zp(6), Zp(8)]))
-        self.assertEquals(zms, BeDOZaMessageList([Zp(4), Zp(148), Zp(46), Zp(4)]))
-        return zi
+        x = BeDOZaShareContents(Zp(2), BeDOZaKeyList(Zp(23), [Zp(3), Zp(4), Zp(1)]), BeDOZaMessageList([Zp(2), Zp(74), Zp(23), Zp(2)]))
+        y = BeDOZaShareContents(Zp(2), BeDOZaKeyList(Zp(23), [Zp(5), Zp(2), Zp(7)]), BeDOZaMessageList([Zp(2), Zp(74), Zp(23), Zp(2)]))
+        z = runtime._plus((x, y), Zp)
+        self.assertEquals(z.get_value(), Zp(4))
+        self.assertEquals(z.get_keys(), BeDOZaKeyList(Zp(23), [Zp(8), Zp(6), Zp(8)]))
+        self.assertEquals(z.get_macs(), BeDOZaMessageList([Zp(4), Zp(148), Zp(46), Zp(4)]))
 
     @protocol
     def test_sum(self, runtime):
@@ -162,13 +161,12 @@ class BeDOZaBasicCommandsTest(RuntimeTestCase):
 
         Zp = GF(6277101735386680763835789423176059013767194773182842284081)
        
-        x = (Zp(2), BeDOZaKeyList(Zp(23), [Zp(5), Zp(4), Zp(7)]), BeDOZaMessageList([Zp(2), Zp(75), Zp(23), Zp(2)]))
-        y = (Zp(2), BeDOZaKeyList(Zp(23), [Zp(3), Zp(2), Zp(1)]), BeDOZaMessageList([Zp(2), Zp(74), Zp(23), Zp(2)]))
-        zi, zks, zms = runtime._minus((x, y), Zp)
-        self.assertEquals(zi, Zp(0))
-        self.assertEquals(zks, BeDOZaKeyList(Zp(23), [Zp(2), Zp(2), Zp(6)]))
-        self.assertEquals(zms, BeDOZaMessageList([Zp(0), Zp(1), Zp(0), Zp(0)]))
-        return zi
+        x = BeDOZaShareContents(Zp(2), BeDOZaKeyList(Zp(23), [Zp(5), Zp(4), Zp(7)]), BeDOZaMessageList([Zp(2), Zp(75), Zp(23), Zp(2)]))
+        y = BeDOZaShareContents(Zp(2), BeDOZaKeyList(Zp(23), [Zp(3), Zp(2), Zp(1)]), BeDOZaMessageList([Zp(2), Zp(74), Zp(23), Zp(2)]))
+        z = runtime._minus((x, y), Zp)
+        self.assertEquals(z.get_value(), Zp(0))
+        self.assertEquals(z.get_keys(), BeDOZaKeyList(Zp(23), [Zp(2), Zp(2), Zp(6)]))
+        self.assertEquals(z.get_macs(), BeDOZaMessageList([Zp(0), Zp(1), Zp(0), Zp(0)]))
 
     @protocol
     def test_sub(self, runtime):

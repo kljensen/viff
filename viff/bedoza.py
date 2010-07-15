@@ -30,6 +30,52 @@ from hash_broadcast import HashBroadcastMixin
 class BeDOZaException(Exception):
     pass
 
+class BeDOZaShareContents(object):
+
+    def __init__(self, value, keyList, macs):
+        self.value = value
+        self.keyList = keyList
+        self.macs = macs
+
+    def get_value(self):
+        return self.value
+
+    def get_keys(self):
+        return self.keyList
+
+    def get_macs(self):
+        return self.macs
+
+    def __add__(self, other):
+        zi = self.value + other.value
+        zks = self.keyList + other.keyList
+        zms = self.macs + other.macs
+        return BeDOZaShareContents(zi, zks, zms)
+
+    def __sub__(self, other):
+        zi = self.value - other.value
+        zks = self.keyList - other.keyList
+        zms = self.macs - other.macs
+        return BeDOZaShareContents(zi, zks, zms)
+
+    def add_public(self, c, my_id):
+        if my_id == 1:
+            self.value = self.value + c
+        self.keyList.keys[0] = self.keyList.keys[0] - self.keyList.alpha * c
+        return self
+    
+    def sub_public(self, c, my_id):
+        if my_id == 1:
+            self.value = self.value - c
+        self.keyList.keys[0] = self.keyList.keys[0] + self.keyList.alpha * c
+        return self
+
+    def cmul(self, c):
+        zi = c * self.value
+        zks = BeDOZaKeyList(self.keyList.alpha, map(lambda k: c * k, self.keyList.keys))
+        zms = BeDOZaMessageList(map(lambda m: c * m, self.macs.auth_codes))
+        return BeDOZaShareContents(zi, zks, zms)
+    
 class BeDOZaShare(Share):
     """A share in the BeDOZa runtime.
 
@@ -50,10 +96,8 @@ class BeDOZaShare(Share):
     """
 
     def __init__(self, runtime, field, value=None, keyList=None, authentication_codes=None):
-        self.share = value
-        self.keyList = keyList
-        self.authentication_codes = authentication_codes
-        Share.__init__(self, runtime, field, (value, keyList, authentication_codes))
+        Share.__init__(self, runtime, field, BeDOZaShareContents(value, keyList, authentication_codes))
+        
 
 class BeDOZaKeyList(object):
 
@@ -228,10 +272,10 @@ class BeDOZaMixin(HashBroadcastMixin, RandomShareGenerator):
                 # self.protocols[other_id].sendShare(pc, xi)
                 # self.protocols[other_id].sendShare(pc, codes.auth_codes[other_id - 1])
                 message_string = ""
-                for inx, (xi, keyList, codes) in enumerate(ls):
-                    keyLists.append(keyList)
+                for inx, beDOZaContents in enumerate(ls):
+                    keyLists.append(beDOZaContents.get_keys())
                     message_string += "%s:%s;" % \
-                           (xi.value, codes.auth_codes[other_id - 1].value)
+                           (beDOZaContents.get_value().value, beDOZaContents.get_macs().auth_codes[other_id - 1].value)
                 self.protocols[other_id].sendData(pc, TEXT, message_string)
 
             if self.id in receivers:
@@ -313,14 +357,12 @@ class BeDOZaMixin(HashBroadcastMixin, RandomShareGenerator):
         
         def exchange((a, b), receivers):
             # Send share to all receivers.
-            (ai, keyList_a, codes_a) = a
-            (bi, keyList_b, codes_b) = b
             pc = tuple(self.program_counter)
             for other_id in receivers:
-                self.protocols[other_id].sendShare(pc, ai)
-                self.protocols[other_id].sendShare(pc, codes_a.auth_codes[other_id - 1])
-                self.protocols[other_id].sendShare(pc, bi)
-                self.protocols[other_id].sendShare(pc, codes_b.auth_codes[other_id - 1])
+                self.protocols[other_id].sendShare(pc, a.get_value())
+                self.protocols[other_id].sendShare(pc, a.get_macs().auth_codes[other_id - 1])
+                self.protocols[other_id].sendShare(pc, b.get_value())
+                self.protocols[other_id].sendShare(pc, b.get_macs().auth_codes[other_id - 1])
                 
             if self.id in receivers:
                 num_players = len(self.players.keys())
@@ -334,7 +376,7 @@ class BeDOZaMixin(HashBroadcastMixin, RandomShareGenerator):
                     values_b[inx] =  self._expect_share(other_id, field)
                     codes_b[inx] = self._expect_share(other_id, field)
                 result = gatherResults(values_a + codes_a + values_b + codes_b)
-                result.addCallbacks(recombine_value, self.error_handler, callbackArgs=(keyList_a, keyList_b))
+                result.addCallbacks(recombine_value, self.error_handler, callbackArgs=(a.get_keys(), b.get_keys()))
                 return result
 
         result = gather_shares([share_a, share_b])
@@ -385,12 +427,12 @@ class BeDOZaMixin(HashBroadcastMixin, RandomShareGenerator):
             ds.addCallbacks(check, self.error_handler, callbackArgs=(x,isOK))
             return ds
 
-        def exchange((xi, keyList, codes), receivers):
+        def exchange(shareContent, receivers):
             # Send share to all receivers.
             pc = tuple(self.program_counter)
             for other_id in receivers:
-                self.protocols[other_id].sendShare(pc, xi)
-                self.protocols[other_id].sendShare(pc, codes.auth_codes[other_id - 1])
+                self.protocols[other_id].sendShare(pc, shareContent.get_value())
+                self.protocols[other_id].sendShare(pc, shareContent.get_macs().auth_codes[other_id - 1])
             if self.id in receivers:
                 num_players = len(self.players.keys())
                 values = num_players * [None]
@@ -399,7 +441,7 @@ class BeDOZaMixin(HashBroadcastMixin, RandomShareGenerator):
                     values[inx] =  self._expect_share(other_id, field)
                     codes[inx] = self._expect_share(other_id, field)
                 result = gatherResults(values + codes)
-                result.addCallbacks(recombine_value, self.error_handler, callbackArgs=(keyList,))
+                result.addCallbacks(recombine_value, self.error_handler, callbackArgs=(shareContent.get_keys(),))
                 return result
 
         result = share.clone()
@@ -413,70 +455,35 @@ class BeDOZaMixin(HashBroadcastMixin, RandomShareGenerator):
             return result
 
     def _plus_public(self, x, c, field):
-        (xi, xks, xms) = x
-        if self.id == 1:
-            xi = xi + c
-        xks.keys[0] = xks.keys[0] - xks.alpha * c
-        return BeDOZaShare(self, field, xi, xks, xms)
+        x = x.add_public(c, self.id)
+        return BeDOZaShare(self, field, x.get_value(), x.get_keys(), x.get_macs())
 
     def _plus(self, (x, y), field):
-        """Addition of share-tuples *x* and *y*.
-
-        Each party ``P_i`` computes:
-        ``[x]_i = (x_i, xk, xm)``
-        ``[y]_i = (y_i, yk, ym)``
-        ``[z]_i = [x]_i + [y]_i
-                = (x_i + y_i mod p, {xk^{i}_{j} + yk^{i}_{j} mod p}_{j=0}^{j=n}, {xm^{i}_{j} + ym^{i}_{j} mod p}_{j=0}^{j=n})
-        """
-        (xi, xks, xms) = x
-        (yi, yks, yms) = y
-        zi = xi + yi
-        zks = xks + yks
-        zms = xms + yms
-        return (zi, zks, zms)
+        """Addition of share-contents *x* and *y*."""
+        return x + y
 
     def _minus_public_right(self, x, c, field):
-        (zi, zks, zms) = self._minus_public_right_without_share(x, c, field)
-        return BeDOZaShare(self, field, zi, zks, zms)
+        z = self._minus_public_right_without_share(x, c, field)
+        return BeDOZaShare(self, field, z.get_value(), z.get_keys(), z.get_macs())
 
     def _minus_public_right_without_share(self, x, c, field):
-        (xi, xks, xms) = x
-        if self.id == 1:
-            xi = xi - c
-        xks.keys[0] = xks.keys[0] + xks.alpha * c
-        return xi, xks, xms
+        return x.sub_public(c, self.id)
 
-    def _wrap_in_share(self, (zi, zks, zms), field):
-        return BeDOZaShare(self, field, zi, zks, zms)
+    def _wrap_in_share(self, shareContents, field):
+        return BeDOZaShare(self, field, shareContents.get_value(), shareContents.get_keys(), shareContents.get_macs())
 
     def _minus_public_left(self, x, c, field):
         y = self._constant_multiply(x, field(-1))
         return self._plus_public(y, c, field)
     
     def _minus(self, (x, y), field):
-        """Subtraction of share-tuples *x* and *y*.
-
-        Each party ``P_i`` computes:
-        ``[x]_i = (x_i, xk, xm)``
-        ``[y]_i = (y_i, yk, ym)``
-        ``[z]_i = [x]_i - [y]_i
-                = (x_i - y_i mod p, {xk^{i}_{j} - yk^{i}_{j} mod p}_{j=0}^{j=n}, {xm^{i}_{j} - ym^{i}_{j} mod p}_{j=0}^{j=n})
-        """
-        (xi, xks, xms) = x
-        (yi, yks, yms) = y
-        zi = xi - yi
-        zks = xks - yks
-        zms = xms - yms
-        return (zi, zks, zms)
+        """Subtraction of share-tuples *x* and *y*."""
+        return x - y
 
     def _constant_multiply(self, x, c):
         """Multiplication of a share-tuple with a constant c."""
         assert(isinstance(c, FieldElement))
-        xi, xks, xms = x
-        zi = c * xi
-        zks = BeDOZaKeyList(xks.alpha, map(lambda k: c * k, xks.keys))
-        zms = BeDOZaMessageList(map(lambda m: c * m, xms.auth_codes))
-        return (zi, zks, zms)
+        return x.cmul(c)
 
     def _get_triple(self, field):
         """ TODO: This is a dummy implementation, and should be replaced with proper code."""
