@@ -19,6 +19,8 @@
     TODO: Explain more.
 """
 
+import itertools
+
 from twisted.internet.defer import Deferred, gatherResults, succeed
 
 from viff.runtime import Runtime, Share, ShareList, gather_shares
@@ -293,7 +295,7 @@ class TripleGenerator(object):
         #     receive c from player i and set 
         #         m^i=Decrypt(c)
     
-    def _mul(self, inx, jnx, ai=None, cj=None):
+    def _mul(self, inx, jnx, ais=None, cjs=None):
         CKIND = 1
         DiKIND = 2
         DjKIND = 3
@@ -301,74 +303,111 @@ class TripleGenerator(object):
         self.runtime.increment_pc()
 
         pc = tuple(self.runtime.program_counter)
-            
+
         deferreds = []
+        zis = []
         if self.runtime.id == inx:
-            u = rand.randint(0, self.u_bound)
-            Ej_u = self.paillier.encrypt(u, jnx)
             Nj_square = self.paillier.get_modulus_square(jnx)
-            c = (pow(cj, ai.value, Nj_square) * Ej_u) % Nj_square
-            self.runtime.protocols[jnx].sendData(pc, CKIND, str(c))
-            zi = self.Zp(-u)
-            di = self.paillier.encrypt(zi.value, inx)
+            cs = []
+            dis = []
+            for ai, cj in zip(ais, cjs):
+                u = rand.randint(0, self.u_bound)
+                Ej_u = self.paillier.encrypt(u, jnx)
+                cs.append( (pow(cj, ai.value, Nj_square) * Ej_u) % Nj_square )
+                zi = self.Zp(-u)
+                zis.append(zi)
+                dis.append(self.paillier.encrypt(zi.value, inx))
+            self.runtime.protocols[jnx].sendData(pc, CKIND, str(cs))
+
             for player_id in self.runtime.players:
-                self.runtime.protocols[player_id].sendData(pc, DiKIND, str(di))
-            zi_deferred = Deferred()
-            zi_deferred.callback(zi)
-            deferreds.append(zi_deferred)
+                self.runtime.protocols[player_id].sendData(pc, DiKIND, str(dis))
 
         if self.runtime.id == jnx:
-            c = Deferred()
-            self.runtime._expect_data(inx, CKIND, c)
-            def decrypt(c, pc):
-                t = self.paillier.decrypt(long(c))
-                zj = self.Zp(t)
-                dj = self.paillier.encrypt(zj.value, jnx)
+            cs = Deferred()
+            self.runtime._expect_data(inx, CKIND, cs)
+            def decrypt(cs, pc, zis):
+                zjs = []
+                djs = []
+                for c in eval(cs):
+                    t = self.paillier.decrypt(c)
+                    zj = self.Zp(t)
+                    zjs.append(zj)
+                    djs.append(self.paillier.encrypt(zj.value, jnx))
                 for player_id in self.runtime.players:
-                    self.runtime.protocols[player_id].sendData(pc, DjKIND, str(dj))
-                return zj 
-            c.addCallback(decrypt, pc)
-            deferreds.append(c)
+                    self.runtime.protocols[player_id].sendData(pc, DjKIND, str(djs))
+                if not zis == []:
+                    return [x + y for x, y in zip(zis, zjs)]
+                else:
+                    return zjs 
+            cs.addCallback(decrypt, pc, zis)
+            deferreds.append(cs)
+        else:
+            zis_deferred = Deferred()
+            zis_deferred.callback(zis)
+            deferreds.append(zis_deferred)
 
-        di = Deferred()
-        self.runtime._expect_data(inx, DiKIND, di)
-        dj = Deferred()
-        self.runtime._expect_data(jnx, DjKIND, dj)
+        dis = Deferred()
+        self.runtime._expect_data(inx, DiKIND, dis)
+        djs = Deferred()
+        self.runtime._expect_data(jnx, DjKIND, djs)
 
-        deferreds.append(di)
-        deferreds.append(dj)
+        deferreds.append(dis)
+        deferreds.append(djs)
         r = gatherResults(deferreds)
-        def wrap(ls, inx, jnx):
-            value = reduce(lambda x, y: x + y, [self.Zp(0)] + ls[0:-2])
+        def wrap((values, dis, djs), inx, jnx):
+            dis = eval(dis)
+            djs = eval(djs)
             n_square_i = self.paillier.get_modulus_square(inx)
             n_square_j = self.paillier.get_modulus_square(jnx)
-            enc_shares = len(self.runtime.players) * [1]
-            enc_shares[inx - 1] = (enc_shares[inx - 1] * long(ls[-2])) % n_square_i
-            enc_shares[jnx - 1] = (enc_shares[jnx - 1] * long(ls[-1])) % n_square_j
             N_squared_list = [self.paillier.get_modulus_square(player_id) for player_id in self.runtime.players]
-            return PartialShareContents(value, enc_shares, N_squared_list)
+            ps = []
+            for v, di, dj in itertools.izip_longest(values, dis, djs, fillvalue=self.Zp(0)):
+                value = v 
+                enc_shares = len(self.runtime.players) * [1]
+                enc_shares[inx - 1] = (enc_shares[inx - 1] * di) % n_square_i
+                enc_shares[jnx - 1] = (enc_shares[jnx - 1] * dj) % n_square_j
+                ps.append(PartialShareContents(value, enc_shares, N_squared_list))
+            return ps
         r.addCallback(wrap, inx, jnx)
         return r
 
     def _full_mul(self, a, b):
         self.runtime.increment_pc()
         
-        def do_full_mul((contents_a, contents_b)):
+        def do_full_mul(shares):
+            """Share content belonging to ai, bi are at:
+            shares[i], shares[len(shares) + i].
+            """
             deferreds = []
+            len_shares = len(shares)
+            a_values = [s.value for s in shares[0:len_shares/2]]
+            b_enc_shares = []
+            for inx in self.runtime.players:              
+                b_enc_shares.append([s.enc_shares[inx - 1] for s in shares[len_shares/2:]])
             for inx in xrange(0, len(self.runtime.players)):
                 for jnx in xrange(0, len(self.runtime.players)):
-                    deferreds.append(self._mul(inx + 1, jnx + 1, contents_a.value, contents_b.enc_shares[jnx]))
-            def compute_share(partialShares):
-                partialShareContents = reduce(lambda x, y: x + y, partialShares)
-                pid = self.runtime.id
-                share = partialShareContents.enc_shares[pid - 1]
-                share = self.paillier.decrypt(share)
-                share = self.Zp(share)
-                return PartialShare(self.runtime, partialShareContents.value, partialShareContents.enc_shares)
+                    deferreds.append(self._mul(inx + 1,
+                                               jnx + 1,
+                                               a_values,
+                                               b_enc_shares[jnx]))
+                        
+            def compute_shares(partialShareContents, len_shares):
+                num_players = len(self.runtime.players)
+                pcs = len(partialShareContents[0]) * [None]
+                for ps in partialShareContents:
+                    for inx in xrange(0, len(ps)):
+                        if pcs[inx] == None:
+                            pcs[inx] = ps[inx]
+                        else:
+                            pcs[inx] += ps[inx]
+                partialShares = [PartialShare(self.runtime,
+                                              p.value,
+                                              p.enc_shares) for p in pcs]
+                return partialShares
             d = gatherResults(deferreds)
-            d.addCallback(compute_share)
+            d.addCallback(compute_shares, len_shares)
             return d
-        s = gatherResults([a, b])
+        s = gatherResults(a + b)
         self.runtime.schedule_callback(s, do_full_mul)
         return s
 

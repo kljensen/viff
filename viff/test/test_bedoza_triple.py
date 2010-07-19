@@ -332,39 +332,44 @@ class MulTest(BeDOZaTestCase):
 
         Zp = GF(p)
 
-        a1 = Zp(6)
+        ais = [Zp(6), Zp(6), Zp(6), Zp(6)]
         b2 = Zp(7)
-        c2 = triple_generator.paillier.encrypt(b2.value, 2)
+        cs = []
+        for ai in ais:
+            cs.append(triple_generator.paillier.encrypt(b2.value, 2))      
         
         if runtime.id == 1:
-            r1 = triple_generator._mul(1, 2, a1, c2)
-            def check1(partialShare):
-                zi = triple_generator.paillier.decrypt(partialShare.enc_shares[0])
-                self.assertEquals(partialShare.value.value, zi)
-                pc = tuple(runtime.program_counter)
-                runtime.protocols[2].sendData(pc, TEXT, str(zi))
+            r1 = triple_generator._mul(1, 2, ais, cs)
+            def check1(partialShares):
+                for partialShare in partialShares:
+                    zi = triple_generator.paillier.decrypt(partialShare.enc_shares[0])
+                    self.assertEquals(partialShare.value.value, zi)
+                    pc = tuple(runtime.program_counter)
+                    runtime.protocols[2].sendData(pc, TEXT, str(zi))
                 return True
             r1.addCallback(check1)
             return r1
         else:
             r1 = triple_generator._mul(1, 2)
-            def check(partialShare):
-                if runtime.id == 2:
-                    zj = triple_generator.paillier.decrypt(partialShare.enc_shares[1])
-                    self.assertEquals(partialShare.value.value, zj)
-                    def check_additivity(zi, zj):
-                        self.assertEquals((Zp(long(zi)) + zj).value, 8)
-                        return None
-                    d = Deferred()
-                    d.addCallback(check_additivity, partialShare.value)
-                    runtime._expect_data(1, TEXT, d)
-                    return d
-                else:
-                    self.assertEquals(partialShare.value, 0)
-                    self.assertNotEquals(partialShare.enc_shares[0], 0)
-                    self.assertNotEquals(partialShare.enc_shares[1], 0)
-                    self.assertEquals(partialShare.enc_shares[2], 1)
-                return True
+            def check(partialShares):
+                deferreds = []
+                for partialShare in partialShares:
+                    if runtime.id == 2:
+                        zj = triple_generator.paillier.decrypt(partialShare.enc_shares[1])
+                        self.assertEquals(partialShare.value.value, zj)
+                        def check_additivity(zi, zj):
+                            self.assertEquals((Zp(long(zi)) + zj).value, 8)
+                            return None
+                        d = Deferred()
+                        d.addCallback(check_additivity, partialShare.value)
+                        runtime._expect_data(1, TEXT, d)
+                        deferreds.append(d)
+                    else:
+                        self.assertEquals(partialShare.value, 0)
+                        self.assertNotEquals(partialShare.enc_shares[0], 0)
+                        self.assertNotEquals(partialShare.enc_shares[1], 0)
+                        self.assertEquals(partialShare.enc_shares[2], 1)
+                return gatherResults(deferreds)
             r1.addCallback(check)
             return r1
 
@@ -376,16 +381,19 @@ class MulTest(BeDOZaTestCase):
 
         Zp = GF(p)
 
-        a1 = Zp(6)
+        ais = [Zp(6), Zp(6), Zp(6), Zp(6)]
         b2 = Zp(7)
-        c2 = triple_generator.paillier.encrypt(b2.value, 2)
+        cs = []
+        for ai in ais:
+            cs.append(triple_generator.paillier.encrypt(b2.value, 2))
         
-        r1 = triple_generator._mul(2, 2, a1, c2)
+        r1 = triple_generator._mul(2, 2, ais, cs)
         def check(partialShareContents):
-            if runtime.id == 2:
-                zi_enc = Zp(triple_generator.paillier.decrypt(partialShareContents.enc_shares[1]))
-                self.assertEquals(zi_enc, partialShareContents.value)
-                self.assertEquals(partialShareContents.value, 8)
+            for partialShareContent in partialShareContents:
+                if runtime.id == 2:
+                    zi_enc = Zp(triple_generator.paillier.decrypt(partialShareContent.enc_shares[1]))
+                    self.assertEquals(zi_enc, partialShareContent.value)
+                    self.assertEquals(partialShareContent.value, 8)
             return True
             
         r1.addCallback(check)
@@ -406,20 +414,36 @@ class FullMulTest(BeDOZaTestCase):
 
         paillier = triple_generator.paillier
         
-        share_a = partial_share(random, runtime, GF(p), 6, paillier=paillier)
-        share_b = partial_share(random, runtime, GF(p), 7, paillier=paillier)
+        share_as = []
+        share_bs = []      
+        share_as.append(partial_share(random, runtime, GF(p), 6, paillier=paillier))
+        share_bs.append(partial_share(random, runtime, GF(p), 7, paillier=paillier))
+        share_as.append(partial_share(random, runtime, GF(p), 5, paillier=paillier))
+        share_bs.append(partial_share(random, runtime, GF(p), 4, paillier=paillier))
+        share_as.append(partial_share(random, runtime, GF(p), 2, paillier=paillier))
+        share_bs.append(partial_share(random, runtime, GF(p), 3, paillier=paillier))
 
-        share_z = triple_generator._full_mul(share_a, share_b)
-        def check(share):
+
+        share_zs = triple_generator._full_mul(share_as, share_bs)
+        def check(shares):
             def test_sum(ls):
-                vals = ls[0]
-                self.assertEquals(8, Zp(sum(vals)))
-            value = _convolute(runtime, share.value.value)
-            runtime.schedule_callback(gatherResults([value]), test_sum)
-            return True
+                self.assertEquals(8, Zp(sum(ls[0])))
+                self.assertEquals(3, Zp(sum(ls[1])))
+                self.assertEquals(6, Zp(sum(ls[2])))
+            values = []
+            for share in shares:
+                value = _convolute(runtime, share.value.value)
+                values.append(value)
+            d = gatherResults(values)
+            runtime.schedule_callback(d, test_sum)
+            return d
             
-        share_z.addCallback(check)
-        return share_z
+        def indirection(shares):
+            d = gatherResults(shares)
+            d.addCallback(check)
+            return d
+        share_zs.addCallback(indirection)
+        return share_zs
 
     @protocol
     def test_fullmul_encrypted_values_are_the_same_as_the_share(self, runtime):
@@ -431,27 +455,38 @@ class FullMulTest(BeDOZaTestCase):
         triple_generator = TripleGenerator(runtime, p, random)
 
         paillier = triple_generator.paillier
-        
-        share_a = partial_share(random, runtime, GF(p), 6, paillier=paillier)
-        share_b = partial_share(random, runtime, GF(p), 7, paillier=paillier)
 
-        share_z = triple_generator._full_mul(share_a, share_b)
-        def check(share):
-            def test_enc(enc_shares, value):
-                all_the_same, zi_enc = reduce(lambda x, y: (x[0] and x[1] == y, y), enc_shares, (True, enc_shares[0]))
-                zi_enc = triple_generator.paillier.decrypt(zi_enc)
-                self.assertEquals(value, Zp(zi_enc))
-                return True
+        share_as = []
+        share_bs = []      
+        share_as.append(partial_share(random, runtime, GF(p), 6, paillier=paillier))
+        share_bs.append(partial_share(random, runtime, GF(p), 7, paillier=paillier))
+        share_as.append(partial_share(random, runtime, GF(p), 5, paillier=paillier))
+        share_bs.append(partial_share(random, runtime, GF(p), 4, paillier=paillier))
+        share_as.append(partial_share(random, runtime, GF(p), 2, paillier=paillier))
+        share_bs.append(partial_share(random, runtime, GF(p), 3, paillier=paillier))
+
+        share_zs = triple_generator._full_mul(share_as, share_bs)
+        def check(shares):
             all_enc_shares = []
-            for inx, enc_share in enumerate(share.enc_shares):
-                d = _convolute(runtime, enc_share)
-                if runtime.id == inx + 1:
-                    d.addCallback(test_enc, share.value)
+            for share in shares:
+                def test_enc(enc_shares, value):
+                    all_the_same, zi_enc = reduce(lambda x, y: (x[0] and x[1] == y, y), enc_shares, (True, enc_shares[0]))
+                    zi_enc = triple_generator.paillier.decrypt(zi_enc)
+                    self.assertEquals(value, Zp(zi_enc))
+                    return True
+                for inx, enc_share in enumerate(share.enc_shares):
+                    d = _convolute(runtime, enc_share)
+                    if runtime.id == inx + 1:
+                        d.addCallback(test_enc, share.value)
                 all_enc_shares.append(d)
             return gatherResults(all_enc_shares)
-            
-        share_z.addCallback(check)
-        return share_z
+        
+        def indirection(shares):
+            d = gatherResults(shares)
+            d.addCallback(check)
+            return d
+        share_zs.addCallback(indirection)
+        return share_zs
 
 
 missing_package = None
