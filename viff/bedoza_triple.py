@@ -54,6 +54,8 @@ def _send(runtime, vals, serialize=str, deserialize=int):
     Works as default for integers. If other stuff has to be
     sent, supply another serialization, deserialition.
     """
+    runtime.increment_pc()
+    
     pc = tuple(runtime.program_counter)
     for p in runtime.players:
         msg = serialize(vals[p - 1])
@@ -85,8 +87,6 @@ def _send_gf_elm(runtime, vals):
                  deserialize=lambda x: gf_elm.field(int(x)))
 
 
-
-
 class PartialShareContents(object):
     """A BeDOZa share without macs, e.g. < a >.
     TODO: BeDOZaShare should extend this class?
@@ -103,6 +103,13 @@ class PartialShareContents(object):
 
     def __str__(self):
         return "PartialShareContents(%d; %s; %s)" % (self.value, self.enc_shares, self.N_squared_list)
+
+    def __add__(self, other):
+        z = self.value + other.value
+        z_enc_shares = []
+        for x, y, N_squared in zip(self.enc_shares, other.enc_shares, self.N_squared_list):
+            z_enc_shares.append((x * y) % N_squared)
+        return PartialShareContents(z, z_enc_shares, self.N_squared_list)
 
 # In VIFF, callbacks get the *contents* of a share as input. Hence, in order
 # to get a PartialShare as input to callbacks, we need this extra level of
@@ -343,9 +350,27 @@ class TripleGenerator(object):
         r.addCallback(wrap, inx, jnx)
         return r
 
-    
-    def _full_mul(self):
-        pass
+    def _full_mul(self, a, b):
+        self.runtime.increment_pc()
+        
+        def do_full_mul((contents_a, contents_b)):
+            deferreds = []
+            for inx in xrange(0, len(self.runtime.players)):
+                for jnx in xrange(0, len(self.runtime.players)):
+                    deferreds.append(self._mul(inx + 1, jnx + 1, contents_a.value, contents_b.enc_shares[jnx]))
+            def compute_share(partialShares):
+                partialShareContents = reduce(lambda x, y: x + y, partialShares)
+                pid = self.runtime.id
+                share = partialShareContents.enc_shares[pid - 1]
+                share = self.paillier.decrypt(share)
+                share = self.Zp(share)
+                return PartialShare(self.runtime, partialShareContents.value, partialShareContents.enc_shares)
+            d = gatherResults(deferreds)
+            d.addCallback(compute_share)
+            return d
+        s = gatherResults([a, b])
+        self.runtime.schedule_callback(s, do_full_mul)
+        return s
 
 
 # TODO: Represent all numbers by GF objects, Zp, Zn, etc.

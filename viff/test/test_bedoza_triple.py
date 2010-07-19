@@ -18,6 +18,8 @@
 import sys
 from exceptions import AssertionError
 
+import operator
+
 # We don't need secure random numbers for test purposes.
 from random import Random
 
@@ -388,6 +390,68 @@ class MulTest(BeDOZaTestCase):
             
         r1.addCallback(check)
         return r1
+
+
+class FullMulTest(BeDOZaTestCase): 
+    num_players = 3
+    
+    @protocol
+    def test_fullmul_computes_the_correct_result(self, runtime):
+        p = 17
+
+        Zp = GF(p)
+        
+        random = Random(283883)        
+        triple_generator = TripleGenerator(runtime, p, random)
+
+        paillier = triple_generator.paillier
+        
+        share_a = partial_share(random, runtime, GF(p), 6, paillier=paillier)
+        share_b = partial_share(random, runtime, GF(p), 7, paillier=paillier)
+
+        share_z = triple_generator._full_mul(share_a, share_b)
+        def check(share):
+            def test_sum(ls):
+                vals = ls[0]
+                self.assertEquals(8, Zp(sum(vals)))
+            value = _convolute(runtime, share.value.value)
+            runtime.schedule_callback(gatherResults([value]), test_sum)
+            return True
+            
+        share_z.addCallback(check)
+        return share_z
+
+    @protocol
+    def test_fullmul_encrypted_values_are_the_same_as_the_share(self, runtime):
+        p = 17
+
+        Zp = GF(p)
+        
+        random = Random(283883)        
+        triple_generator = TripleGenerator(runtime, p, random)
+
+        paillier = triple_generator.paillier
+        
+        share_a = partial_share(random, runtime, GF(p), 6, paillier=paillier)
+        share_b = partial_share(random, runtime, GF(p), 7, paillier=paillier)
+
+        share_z = triple_generator._full_mul(share_a, share_b)
+        def check(share):
+            def test_enc(enc_shares, value):
+                all_the_same, zi_enc = reduce(lambda x, y: (x[0] and x[1] == y, y), enc_shares, (True, enc_shares[0]))
+                zi_enc = triple_generator.paillier.decrypt(zi_enc)
+                self.assertEquals(value, Zp(zi_enc))
+                return True
+            all_enc_shares = []
+            for inx, enc_share in enumerate(share.enc_shares):
+                d = _convolute(runtime, enc_share)
+                if runtime.id == inx + 1:
+                    d.addCallback(test_enc, share.value)
+                all_enc_shares.append(d)
+            return gatherResults(all_enc_shares)
+            
+        share_z.addCallback(check)
+        return share_z
 
 
 missing_package = None
