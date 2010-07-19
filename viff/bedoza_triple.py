@@ -96,19 +96,21 @@ class PartialShareContents(object):
       does it mean that the already public values get passed along on the
       network even though all players already posess them?
     """
-    def __init__(self, value, enc_shares):
+    def __init__(self, value, enc_shares, N_squared_list):
         self.value = value
         self.enc_shares = enc_shares
+        self.N_squared_list = N_squared_list
 
     def __str__(self):
-        return "PartialShareContents(%d; %s)" % (self.value, self.enc_shares)
+        return "PartialShareContents(%d; %s; %s)" % (self.value, self.enc_shares, self.N_squared_list)
 
 # In VIFF, callbacks get the *contents* of a share as input. Hence, in order
 # to get a PartialShare as input to callbacks, we need this extra level of
 # wrapper indirection.
 class PartialShare(Share):
     def __init__(self, runtime, value, enc_shares):
-        partial_share_contents = PartialShareContents(value, enc_shares)
+        N_squared_list = [ runtime.players[player_id].pubkey['n_square'] for player_id in runtime.players.keys()]
+        partial_share_contents = PartialShareContents(value, enc_shares, N_squared_list)
         Share.__init__(self, runtime, value.field, partial_share_contents)
 
 
@@ -169,6 +171,11 @@ class ModifiedPaillier(object):
         seckey = self.runtime.players[self.runtime.id].seckey
         return self._f_inverse(pypaillier.decrypt(enc_value, seckey), n)
 
+    def get_modulus(self, player_id):
+        return self.runtime.players[player_id].pubkey['n']
+
+    def get_modulus_square(self, player_id):
+        return self.runtime.players[player_id].pubkey['n_square']
 
 class TripleGenerator(object):
 
@@ -180,6 +187,7 @@ class TripleGenerator(object):
         self.p = p
         self.Zp = GF(p)
         self.k = self._bit_length_of(p)
+        self.u_bound = 2**(4 * self.k)
 
         paillier_random = Random(self.random.getrandbits(128))
         alpha_random = Random(self.random.getrandbits(128))
@@ -278,8 +286,63 @@ class TripleGenerator(object):
         #     receive c from player i and set 
         #         m^i=Decrypt(c)
     
-    def _mul(self):
-        pass
+    def _mul(self, inx, jnx, ai=None, cj=None):
+        CKIND = 1
+        DiKIND = 2
+        DjKIND = 3
+        
+        self.runtime.increment_pc()
+
+        pc = tuple(self.runtime.program_counter)
+            
+        deferreds = []
+        if self.runtime.id == inx:
+            u = rand.randint(0, self.u_bound)
+            Ej_u = self.paillier.encrypt(u, jnx)
+            Nj_square = self.paillier.get_modulus_square(jnx)
+            c = (pow(cj, ai.value, Nj_square) * Ej_u) % Nj_square
+            self.runtime.protocols[jnx].sendData(pc, CKIND, str(c))
+            zi = self.Zp(-u)
+            di = self.paillier.encrypt(zi.value, inx)
+            for player_id in self.runtime.players:
+                self.runtime.protocols[player_id].sendData(pc, DiKIND, str(di))
+            zi_deferred = Deferred()
+            zi_deferred.callback(zi)
+            deferreds.append(zi_deferred)
+
+        if self.runtime.id == jnx:
+            c = Deferred()
+            self.runtime._expect_data(inx, CKIND, c)
+            def decrypt(c, pc):
+                t = self.paillier.decrypt(long(c))
+                zj = self.Zp(t)
+                dj = self.paillier.encrypt(zj.value, jnx)
+                for player_id in self.runtime.players:
+                    self.runtime.protocols[player_id].sendData(pc, DjKIND, str(dj))
+                return zj 
+            c.addCallback(decrypt, pc)
+            deferreds.append(c)
+
+        di = Deferred()
+        self.runtime._expect_data(inx, DiKIND, di)
+        dj = Deferred()
+        self.runtime._expect_data(jnx, DjKIND, dj)
+
+        deferreds.append(di)
+        deferreds.append(dj)
+        r = gatherResults(deferreds)
+        def wrap(ls, inx, jnx):
+            value = reduce(lambda x, y: x + y, [self.Zp(0)] + ls[0:-2])
+            n_square_i = self.paillier.get_modulus_square(inx)
+            n_square_j = self.paillier.get_modulus_square(jnx)
+            enc_shares = len(self.runtime.players) * [1]
+            enc_shares[inx - 1] = (enc_shares[inx - 1] * long(ls[-2])) % n_square_i
+            enc_shares[jnx - 1] = (enc_shares[jnx - 1] * long(ls[-1])) % n_square_j
+            N_squared_list = [self.paillier.get_modulus_square(player_id) for player_id in self.runtime.players]
+            return PartialShareContents(value, enc_shares, N_squared_list)
+        r.addCallback(wrap, inx, jnx)
+        return r
+
     
     def _full_mul(self):
         pass

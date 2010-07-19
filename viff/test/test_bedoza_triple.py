@@ -317,6 +317,79 @@ class TripleTest(BeDOZaTestCase):
 #    #test_add_macs_preserves_value_of_zero_sharing.skip = "nyi"
 # 
 
+class MulTest(BeDOZaTestCase): 
+    num_players = 3
+
+    timeout = 10
+        
+    @protocol
+    def test_mul_computes_correct_result(self, runtime):
+        p = 17
+        random = Random(283883)        
+        triple_generator = TripleGenerator(runtime, p, random)
+
+        Zp = GF(p)
+
+        a1 = Zp(6)
+        b2 = Zp(7)
+        c2 = triple_generator.paillier.encrypt(b2.value, 2)
+        
+        if runtime.id == 1:
+            r1 = triple_generator._mul(1, 2, a1, c2)
+            def check1(partialShare):
+                zi = triple_generator.paillier.decrypt(partialShare.enc_shares[0])
+                self.assertEquals(partialShare.value.value, zi)
+                pc = tuple(runtime.program_counter)
+                runtime.protocols[2].sendData(pc, TEXT, str(zi))
+                return True
+            r1.addCallback(check1)
+            return r1
+        else:
+            r1 = triple_generator._mul(1, 2)
+            def check(partialShare):
+                if runtime.id == 2:
+                    zj = triple_generator.paillier.decrypt(partialShare.enc_shares[1])
+                    self.assertEquals(partialShare.value.value, zj)
+                    def check_additivity(zi, zj):
+                        self.assertEquals((Zp(long(zi)) + zj).value, 8)
+                        return None
+                    d = Deferred()
+                    d.addCallback(check_additivity, partialShare.value)
+                    runtime._expect_data(1, TEXT, d)
+                    return d
+                else:
+                    self.assertEquals(partialShare.value, 0)
+                    self.assertNotEquals(partialShare.enc_shares[0], 0)
+                    self.assertNotEquals(partialShare.enc_shares[1], 0)
+                    self.assertEquals(partialShare.enc_shares[2], 1)
+                return True
+            r1.addCallback(check)
+            return r1
+
+    @protocol
+    def test_mul_same_player_inputs_and_receives(self, runtime):
+        p = 17
+        random = Random(283883)        
+        triple_generator = TripleGenerator(runtime, p, random)
+
+        Zp = GF(p)
+
+        a1 = Zp(6)
+        b2 = Zp(7)
+        c2 = triple_generator.paillier.encrypt(b2.value, 2)
+        
+        r1 = triple_generator._mul(2, 2, a1, c2)
+        def check(partialShareContents):
+            if runtime.id == 2:
+                zi_enc = Zp(triple_generator.paillier.decrypt(partialShareContents.enc_shares[1]))
+                self.assertEquals(zi_enc, partialShareContents.value)
+                self.assertEquals(partialShareContents.value, 8)
+            return True
+            
+        r1.addCallback(check)
+        return r1
+
+
 missing_package = None
 if not pypaillier:
     missing_package = "pypaillier"
