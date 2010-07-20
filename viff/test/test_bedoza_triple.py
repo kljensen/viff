@@ -430,7 +430,7 @@ class FullMulTest(BeDOZaTestCase):
         share_bs.append(partial_share(random, runtime, GF(p), 3, paillier=paillier))
 
 
-        share_zs = triple_generator._full_mul(share_as, share_bs)
+        share_zs = triple_generator._full_mul(share_as, share_bs, Zp)
         def check(shares):
             def test_sum(ls):
                 self.assertEquals(8, Zp(sum(ls[0])))
@@ -444,12 +444,9 @@ class FullMulTest(BeDOZaTestCase):
             runtime.schedule_callback(d, test_sum)
             return d
             
-        def indirection(shares):
-            d = gatherResults(shares)
-            d.addCallback(check)
-            return d
-        share_zs.addCallback(indirection)
-        return share_zs
+        d = gatherResults(share_zs)
+        d.addCallback(check)
+        return d
 
     @protocol
     def test_fullmul_encrypted_values_are_the_same_as_the_share(self, runtime):
@@ -471,7 +468,7 @@ class FullMulTest(BeDOZaTestCase):
         share_as.append(partial_share(random, runtime, GF(p), 2, paillier=paillier))
         share_bs.append(partial_share(random, runtime, GF(p), 3, paillier=paillier))
 
-        share_zs = triple_generator._full_mul(share_as, share_bs)
+        share_zs = triple_generator._full_mul(share_as, share_bs, Zp)
         def check(shares):
             all_enc_shares = []
             for share in shares:
@@ -487,12 +484,10 @@ class FullMulTest(BeDOZaTestCase):
                 all_enc_shares.append(d)
             return gatherResults(all_enc_shares)
         
-        def indirection(shares):
-            d = gatherResults(shares)
-            d.addCallback(check)
-            return d
-        share_zs.addCallback(indirection)
-        return share_zs
+        d = gatherResults(share_zs)
+        d.addCallback(check)
+        return d
+        
 
 
 missing_package = None

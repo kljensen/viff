@@ -386,7 +386,7 @@ class TripleGenerator(object):
         r.addCallback(wrap, inx, jnx)
         return r
 
-    def _full_mul(self, a, b):
+    def _full_mul(self, a, b, field):
         """Multiply each of the PartialShares in the list *a* with the
         corresponding PartialShare in the list *b*.
         
@@ -394,7 +394,7 @@ class TripleGenerator(object):
         """
         self.runtime.increment_pc()
         
-        def do_full_mul(shares):
+        def do_full_mul(shares, result_shares):
             """Share content belonging to ai, bi are at:
             shares[i], shares[len(shares) + i].
             """
@@ -411,7 +411,7 @@ class TripleGenerator(object):
                                                a_values,
                                                b_enc_shares[jnx]))
                         
-            def compute_shares(partialShareContents, len_shares):
+            def compute_shares(partialShareContents, len_shares, result_shares):
                 num_players = len(self.runtime.players)
                 pcs = len(partialShareContents[0]) * [None]
                 for ps in partialShareContents:
@@ -420,16 +420,17 @@ class TripleGenerator(object):
                             pcs[inx] = ps[inx]
                         else:
                             pcs[inx] += ps[inx]
-                partialShares = [PartialShare(self.runtime,
-                                              p.value,
-                                              p.enc_shares) for p in pcs]
-                return partialShares
+                for p, s in zip(pcs, result_shares):
+                    s.callback(p)
+                return None
             d = gatherResults(deferreds)
-            d.addCallback(compute_shares, len_shares)
+            d.addCallback(compute_shares, len_shares, result_shares)
             return d
-        s = gatherResults(a + b)
-        self.runtime.schedule_callback(s, do_full_mul)
-        return s
+        result_shares = [Share(self.runtime, field) for x in a]
+        self.runtime.schedule_callback(gatherResults(a + b),
+                                       do_full_mul,
+                                       result_shares)
+        return result_shares
 
 
 # TODO: Represent all numbers by GF objects, Zp, Zn, etc.
