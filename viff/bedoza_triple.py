@@ -296,6 +296,11 @@ class TripleGenerator(object):
         #         m^i=Decrypt(c)
     
     def _mul(self, inx, jnx, ais=None, cjs=None):
+        """Multiply each of the field elements in *ais* with the
+        corresponding encrypted elements in *cjs*.
+        
+        Returns a deferred which will yield a list of PartialShareContents.
+        """
         CKIND = 1
         DiKIND = 2
         DjKIND = 3
@@ -372,6 +377,11 @@ class TripleGenerator(object):
         return r
 
     def _full_mul(self, a, b):
+        """Multiply each of the PartialShares in the list *a* with the
+        corresponding PartialShare in the list *b*.
+        
+        Returns a deferred which will yield a list of PartialShares.
+        """
         self.runtime.increment_pc()
         
         def do_full_mul(shares):
