@@ -271,7 +271,8 @@ class ParialShareGeneratorTest(BeDOZaTestCase):
 
 class TripleTest(BeDOZaTestCase): 
     num_players = 3
-    
+
+    timeout = 4
     @protocol
     def test_add_macs_produces_correct_sharing(self, runtime):
         # TODO: Here we use the open method of the BeDOZa runtime in
@@ -279,31 +280,29 @@ class TripleTest(BeDOZaTestCase):
         # order to be more unit testish, this test should use its own
         # way of verifying these.
         p = 17
+        Zp = GF(p)
         secret = 6
         random = Random(283883)        
         triple_generator = TripleGenerator(runtime, p, random)
         paillier = triple_generator.paillier
         shares = []
-        shares.append(partial_share(random, runtime, GF(p), secret, paillier=paillier))
-        shares.append(partial_share(random, runtime, GF(p), secret + 1, paillier=paillier))
-        shares.append(partial_share(random, runtime, GF(p), secret + 2, paillier=paillier))
-        shares.append(partial_share(random, runtime, GF(p), secret + 3, paillier=paillier))
+        shares.append(partial_share(random, runtime, Zp, secret, paillier=paillier))
+        shares.append(partial_share(random, runtime, Zp, secret + 1, paillier=paillier))
+        shares.append(partial_share(random, runtime, Zp, secret + 2, paillier=paillier))
+        shares.append(partial_share(random, runtime, Zp, secret + 3, paillier=paillier))
 
-        zs = triple_generator._add_macs(shares)
-        def foo(ls):
-            def verify(open_shares):
-                inx = secret
-                for open_share in open_shares:
-                    self.assertEquals(inx, open_share.value)
-                    inx += 1
-            opened_shares = []
-            for s in ls:
-                opened_shares.append(runtime.open(s))
-            shares = gather_shares(opened_shares)
-            runtime.schedule_callback(shares, verify)
-            return shares
-        zs.addCallback(foo)
-        return zs
+        zs = triple_generator._add_macs(shares, Zp)
+        def verify(open_shares):
+            inx = secret
+            for open_share in open_shares:
+                self.assertEquals(inx, open_share.value)
+                inx += 1
+        opened_shares = []
+        for s in zs:
+            opened_shares.append(runtime.open(s))
+        d = gather_shares(opened_shares)
+        d.addCallback(verify)
+        return d
 
         
 #    @protocol

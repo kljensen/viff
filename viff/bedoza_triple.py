@@ -28,7 +28,7 @@ from viff.field import FieldElement, GF
 from viff.constants import TEXT
 from viff.util import rand
 
-from bedoza import BeDOZaKeyList, BeDOZaMACList, BeDOZaShare
+from bedoza import BeDOZaKeyList, BeDOZaMACList, BeDOZaShare, BeDOZaShareContents
 
 # TODO: Use secure random instead!
 from random import Random
@@ -241,7 +241,7 @@ class TripleGenerator(object):
         """
         pass
     
-    def _add_macs(self, partial_shares):
+    def _add_macs(self, partial_shares, field):
         """Adds macs to the set of PartialBeDOZaShares.
         
         Returns a deferred which yields a list of full shares, e.g.
@@ -253,7 +253,7 @@ class TripleGenerator(object):
         
         self.runtime.increment_pc() # Huh!?
 
-        def do_add_macs(partial_share_contents):
+        def do_add_macs(partial_share_contents, result_shares):
             num_players = self.runtime.num_players
             lists_of_mac_keys = [ [] for x in self.runtime.players ]
             lists_of_c_list = [ [] for x in self.runtime.players ]
@@ -274,7 +274,7 @@ class TripleGenerator(object):
 
             received_cs = _send(self.runtime, lists_of_c_list, deserialize=eval)
 
-            def finish_sharing(recevied_cs, partial_share_contents, lists_of_mac_keys):
+            def finish_sharing(recevied_cs, partial_share_contents, lists_of_mac_keys, result_shares):
                 shares = []               
                 for inx in xrange(0, len(partial_share_contents)):
                     mac_keys = []
@@ -287,19 +287,19 @@ class TripleGenerator(object):
                     mac_key_list = BeDOZaKeyList(self.alpha, mac_keys)
 
                     mac_msg_list = BeDOZaMACList(decrypted_cs)
-                    shares.append(BeDOZaShare(self.runtime,
-                                              partial_share.value.field,
-                                              partial_share.value,
-                                              mac_key_list,
-                                              mac_msg_list))
+                    result_shares[inx].callback(BeDOZaShareContents(partial_share.value,
+                                                                   mac_key_list,
+                                                                   mac_msg_list))
                 return shares
 
-            self.runtime.schedule_callback(received_cs, finish_sharing, partial_share_contents, lists_of_mac_keys)
+            self.runtime.schedule_callback(received_cs, finish_sharing, partial_share_contents, lists_of_mac_keys, result_shares)
             return received_cs
 
-        d = gatherResults(partial_shares)
-        self.runtime.schedule_callback(d, do_add_macs)
-        return d
+        result_shares = [Share(self.runtime, field) for x in xrange(len(partial_shares))]
+        self.runtime.schedule_callback(gatherResults(partial_shares),
+                                       do_add_macs,
+                                       result_shares)
+        return result_shares
 
         # for player i:
         #     receive c from player i and set 
