@@ -244,52 +244,62 @@ class TripleGenerator(object):
     def _add_macs(self, partial_shares):
         """Adds macs to the set of PartialBeDOZaShares.
         
-        Returns a tuple with a single element that is a list of full
-        shares, e.g. including macs.  (the full shares are deferreds
-        of type BeDOZaShare.)
-
-        TODO: We have to return the list in a tuple due to some
-        Twisted thing.
+        Returns a deferred which yields a list of full shares, e.g.
+        including macs.  (the full shares are deferreds of type
+        BeDOZaShare.)
         """        
         # TODO: Would be nice with a class ShareContents like the class
         # PartialShareContents used here.
         
         self.runtime.increment_pc() # Huh!?
 
-        mac_keys = []
+        def do_add_macs(partial_share_contents):
+            num_players = self.runtime.num_players
+            lists_of_mac_keys = [ [] for x in self.runtime.players ]
+            lists_of_c_list = [ [] for x in self.runtime.players ]
+            for partial_share_content in partial_share_contents:
+                for j in xrange(0, num_players):
+                    # TODO: This is probably not the fastes way to generate
+                    # the betas.
+                    beta = self.random.randint(0, self.u_bound)
+                    # TODO: Outcommented until mod paillier works for negative numbers.
+                    # if rand.choice([True, False]):
+                    #    beta = -beta
+                    enc_beta = self.paillier.encrypt(beta, player_id=j + 1)
+                    c_j = partial_share_content.enc_shares[j]
+                    n2 = self.paillier.get_modulus_square(j + 1)
+                    c = (pow(c_j, self.alpha, n2) * enc_beta) % n2
+                    lists_of_c_list[j].append(c)
+                    lists_of_mac_keys[j].append(self.Zp(beta))
 
-        # TODO: Currently only support for one share.
-        i = 0
+            received_cs = _send(self.runtime, lists_of_c_list, deserialize=eval)
 
-        c_list = []
-        for j in range(self.runtime.num_players):
-            # TODO: This is probably not the fastes way to generate
-            # the betas.
-            beta = self.random.randint(0, self.u_bound)
-            # TODO: Outcommented until mod paillier works for negative numbers.
-            #if rand.choice([True, False]):
-            #    beta = -beta
-            enc_beta = self.paillier.encrypt(beta, player_id=j+1)
-            c_j = partial_shares[i].enc_shares[j]
-            n2 = self.runtime.players[j + 1].pubkey['n_square']
-            c = (pow(c_j, self.alpha, n2) * enc_beta) % n2
-            c_list.append(c)
-            mac_keys.append(self.Zp(beta))
-        received_cs = _send(self.runtime, c_list)
+            def finish_sharing(recevied_cs, partial_share_contents, lists_of_mac_keys):
+                shares = []               
+                for inx in xrange(0, len(partial_share_contents)):
+                    mac_keys = []
+                    decrypted_cs = []
+                    for c_list, mkeys in zip(recevied_cs,
+                                             lists_of_mac_keys):
+                        decrypted_cs.append(self.Zp(self.paillier.decrypt(c_list[inx])))
+                        mac_keys.append(mkeys[inx])
+                    partial_share = partial_share_contents[inx]
+                    mac_key_list = BeDOZaKeyList(self.alpha, mac_keys)
 
-        def finish_sharing(recevied_cs):
-            mac_key_list = BeDOZaKeyList(self.alpha, mac_keys)
-            decrypted_cs = [self.Zp(self.paillier.decrypt(c)) for c in received_cs.result]
-            mac_msg_list = BeDOZaMACList(decrypted_cs)
-            # Twisted HACK: Need to pack share into tuple.
-            return BeDOZaShare(self.runtime,
-                               partial_shares[i].value.field,
-                               partial_shares[i].value,
-                               mac_key_list,
-                               mac_msg_list),
+                    mac_msg_list = BeDOZaMACList(decrypted_cs)
+                    shares.append(BeDOZaShare(self.runtime,
+                                              partial_share.value.field,
+                                              partial_share.value,
+                                              mac_key_list,
+                                              mac_msg_list))
+                return shares
 
-        self.runtime.schedule_callback(received_cs, finish_sharing)
-        return [received_cs]
+            self.runtime.schedule_callback(received_cs, finish_sharing, partial_share_contents, lists_of_mac_keys)
+            return received_cs
+
+        d = gatherResults(partial_shares)
+        self.runtime.schedule_callback(d, do_add_macs)
+        return d
 
         # for player i:
         #     receive c from player i and set 

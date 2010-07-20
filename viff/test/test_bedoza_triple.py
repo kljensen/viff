@@ -279,25 +279,31 @@ class TripleTest(BeDOZaTestCase):
         # order to be more unit testish, this test should use its own
         # way of verifying these.
         p = 17
-        secret = 9
+        secret = 6
         random = Random(283883)        
         triple_generator = TripleGenerator(runtime, p, random)
         paillier = triple_generator.paillier
-        share = partial_share(random, runtime, GF(p), secret, paillier=paillier)
-        def add_macs(share):
-            full_share_list = triple_generator._add_macs([share])
-            d = gatherResults(full_share_list)
-            def foo(ls):
-                # Twisted HACK: Need to unpack value ls[0] from tuple.
-                opened_share = runtime.open(ls[0][0])
-                def verify(open_share):
-                    self.assertEquals(secret, open_share.value)
-                runtime.schedule_callback(opened_share, verify)
-                return opened_share
-            d.addCallback(foo)
-            return d
-        runtime.schedule_callback(share, add_macs)
-        return share
+        shares = []
+        shares.append(partial_share(random, runtime, GF(p), secret, paillier=paillier))
+        shares.append(partial_share(random, runtime, GF(p), secret + 1, paillier=paillier))
+        shares.append(partial_share(random, runtime, GF(p), secret + 2, paillier=paillier))
+        shares.append(partial_share(random, runtime, GF(p), secret + 3, paillier=paillier))
+
+        zs = triple_generator._add_macs(shares)
+        def foo(ls):
+            def verify(open_shares):
+                inx = secret
+                for open_share in open_shares:
+                    self.assertEquals(inx, open_share.value)
+                    inx += 1
+            opened_shares = []
+            for s in ls:
+                opened_shares.append(runtime.open(s))
+            shares = gather_shares(opened_shares)
+            runtime.schedule_callback(shares, verify)
+            return shares
+        zs.addCallback(foo)
+        return zs
 
         
 #    @protocol
