@@ -317,7 +317,7 @@ class TripleTest(BeDOZaTestCase):
         shares.append(partial_share(random, runtime, Zp, secret + 2, paillier=paillier))
         shares.append(partial_share(random, runtime, Zp, secret + 3, paillier=paillier))
 
-        zs = triple_generator._add_macs(shares, Zp)
+        zs = triple_generator._add_macs(shares)
         def verify(open_shares):
             inx = secret
             for open_share in open_shares:
@@ -455,7 +455,7 @@ class FullMulTest(BeDOZaTestCase):
         share_bs.append(partial_share(random, runtime, GF(p), 3, paillier=paillier))
 
 
-        share_zs = triple_generator._full_mul(share_as, share_bs, Zp)
+        share_zs = triple_generator._full_mul(share_as, share_bs)
         def check(shares):
             def test_sum(ls):
                 self.assertEquals(8, Zp(sum(ls[0])))
@@ -493,7 +493,7 @@ class FullMulTest(BeDOZaTestCase):
         share_as.append(partial_share(random, runtime, GF(p), 2, paillier=paillier))
         share_bs.append(partial_share(random, runtime, GF(p), 3, paillier=paillier))
 
-        share_zs = triple_generator._full_mul(share_as, share_bs, Zp)
+        share_zs = triple_generator._full_mul(share_as, share_bs)
         def check(shares):
             all_enc_shares = []
             for share in shares:

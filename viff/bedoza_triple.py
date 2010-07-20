@@ -267,13 +267,13 @@ class TripleGenerator(object):
              partial_shares.append(gen.generate_share(self.random.randint(0, self.Zp.modulus - 1)))
 
 
-        partial_shares_c = self._full_mul(partial_shares[0:n], partial_shares[n:2*n], self.Zp)
+        partial_shares_c = self._full_mul(partial_shares[0:n], partial_shares[n:2*n])
 
-        full_shares = self._add_macs(partial_shares + partial_shares_c, self.Zp)
+        full_shares = self._add_macs(partial_shares + partial_shares_c)
 
         return full_shares
     
-    def _add_macs(self, partial_shares, field):
+    def _add_macs(self, partial_shares):
         """Adds macs to the set of PartialBeDOZaShares.
         
         Returns a deferred which yields a list of full shares, e.g.
@@ -327,7 +327,7 @@ class TripleGenerator(object):
             self.runtime.schedule_callback(received_cs, finish_sharing, partial_share_contents, lists_of_mac_keys, result_shares)
             return received_cs
 
-        result_shares = [Share(self.runtime, field) for x in xrange(len(partial_shares))]
+        result_shares = [Share(self.runtime, self.Zp) for x in xrange(len(partial_shares))]
         self.runtime.schedule_callback(gatherResults(partial_shares),
                                        do_add_macs,
                                        result_shares)
@@ -418,7 +418,7 @@ class TripleGenerator(object):
         r.addCallback(wrap, inx, jnx)
         return r
 
-    def _full_mul(self, a, b, field):
+    def _full_mul(self, a, b):
         """Multiply each of the PartialShares in the list *a* with the
         corresponding PartialShare in the list *b*.
         
@@ -458,7 +458,7 @@ class TripleGenerator(object):
             d = gatherResults(deferreds)
             d.addCallback(compute_shares, len_shares, result_shares)
             return d
-        result_shares = [Share(self.runtime, field) for x in a]
+        result_shares = [Share(self.runtime, self.Zp) for x in a]
         self.runtime.schedule_callback(gatherResults(a + b),
                                        do_full_mul,
                                        result_shares)
