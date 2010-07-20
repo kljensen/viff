@@ -265,7 +265,7 @@ class TripleGenerator(object):
         for j in range(self.runtime.num_players):
             # TODO: This is probably not the fastes way to generate
             # the betas.
-            beta = self.random.randint(0, 2**(4 * self.k))
+            beta = self.random.randint(0, self.u_bound)
             # TODO: Outcommented until mod paillier works for negative numbers.
             #if rand.choice([True, False]):
             #    beta = -beta
