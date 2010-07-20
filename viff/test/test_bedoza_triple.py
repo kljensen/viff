@@ -269,6 +269,32 @@ class ParialShareGeneratorTest(BeDOZaTestCase):
         return share
 
 
+class PassiveTripleTest(BeDOZaTestCase): 
+    num_players = 3
+
+    timeout = 10
+    
+    @protocol
+    def test_passive_triples_generates_correct_triples(self, runtime):
+        p = 17
+
+        Zp = GF(p)
+        
+        random = Random(283883)        
+        triple_generator = TripleGenerator(runtime, p, random)
+
+        triples = triple_generator._generate_passive_triples(5)
+        def verify(triples):
+            for inx in xrange(len(triples) // 3):
+                self.assertEquals(triples[10 + inx], triples[inx] * triples[5 + inx])
+        opened_shares = []
+        for s in triples:
+            opened_shares.append(runtime.open(s))
+        d = gather_shares(opened_shares)
+        d.addCallback(verify)
+        return d
+
+
 class TripleTest(BeDOZaTestCase): 
     num_players = 3
 

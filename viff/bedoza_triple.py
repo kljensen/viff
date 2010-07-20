@@ -123,6 +123,27 @@ class PartialShare(Share):
         Share.__init__(self, runtime, value.field, partial_share_contents)
 
 
+class PartialShareGenerator:
+
+    def __init__(self, Zp, runtime, random, paillier):
+        self.paillier = paillier
+        self.Zp = Zp
+        self.runtime = runtime
+        self.random = random
+
+    def generate_share(self, value):
+        r = [self.Zp(self.random.randint(0, self.Zp.modulus - 1)) # TODO: Exclusve?
+             for _ in range(self.runtime.num_players - 1)]
+        if self.runtime.id == 1:
+            share = value - sum(r)
+        else:
+            share = r[self.runtime.id - 2]
+        enc_share = self.paillier.encrypt(share.value)
+        enc_shares = _convolute(self.runtime, enc_share)
+        def create_partial_share(enc_shares, share):
+            return PartialShare(self.runtime, share, enc_shares)
+        self.runtime.schedule_callback(enc_shares, create_partial_share, share)
+        return enc_shares
 
 class ModifiedPaillier(object):
     """A slight modification of the Paillier cryptosystem.
@@ -234,12 +255,23 @@ class TripleGenerator(object):
         # TODO: Do some ZK stuff.
 
     def _generate_passive_triples(self, n):
-        """Generates and returns a set of n passive tuples.
+        """Generates and returns a list of 3n shares corresponding to
+        n passive tuples. The first n are the a's, then comes n b's
+        followed by n c's.
         
-        E.g. where consistency is only guaranteed if all players follow the
-        protool.
+        Consistency is only guaranteed if all players follow the protool.
         """
-        pass
+        gen = PartialShareGenerator(self.Zp, self.runtime, self.random, self.paillier)
+        partial_shares = []
+        for _ in xrange(2 * n):
+             partial_shares.append(gen.generate_share(self.random.randint(0, self.Zp.modulus - 1)))
+
+
+        partial_shares_c = self._full_mul(partial_shares[0:n], partial_shares[n:2*n], self.Zp)
+
+        full_shares = self._add_macs(partial_shares + partial_shares_c, self.Zp)
+
+        return full_shares
     
     def _add_macs(self, partial_shares, field):
         """Adds macs to the set of PartialBeDOZaShares.
