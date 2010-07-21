@@ -309,7 +309,7 @@ class TripleTest(BeDOZaTestCase):
         random = Random(283883)        
         triple_generator = TripleGenerator(runtime, p, random)
 
-        triples = triple_generator._generate_passive_triples(1)
+        triples = triple_generator._generate_passive_triples(5)
         def verify(triples):
             for inx in xrange(len(triples) // 3):
                 self.assertEquals(triples[10 + inx], triples[inx] * triples[5 + inx])
