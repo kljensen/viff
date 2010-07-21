@@ -143,7 +143,8 @@ class SimpleArithmeticRuntime(Runtime):
         if cmul_result is  not None:
             return cmul_result
 
-        def multiply((x, y, c, (d, e))):
+        def multiply(ls):
+            x, y, c, (d, e) = ls
             # [de]
             de = d * e
             # e[x]
@@ -153,6 +154,7 @@ class SimpleArithmeticRuntime(Runtime):
             # d[y] - [de]
             t3 = self._minus_public_right_without_share(t2, de, field)
             # d[y] - [de] + [c]
+            z = self._plus((t3, c), field)
             t4 = self._plus((t3, c), field)
             # [z] = e[x] + d[y] - [de] + [c]
             z = self._plus((t1, t4), field)

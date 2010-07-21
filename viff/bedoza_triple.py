@@ -132,6 +132,8 @@ class PartialShareGenerator:
         self.random = random
 
     def generate_share(self, value):
+        self.runtime.increment_pc()
+        
         r = [self.Zp(self.random.randint(0, self.Zp.modulus - 1)) # TODO: Exclusve?
              for _ in range(self.runtime.num_players - 1)]
         if self.runtime.id == 1:
@@ -251,7 +253,47 @@ class TripleGenerator(object):
         triples in memory at the same time. Is there a nice way to
         stream this, e.g. by using Python generators?
         """
-        triples = self._generate_passive_triples(n)
+
+        self.runtime.increment_pc()
+        
+        gen = PartialShareGenerator(self.Zp, self.runtime, self.random, self.paillier)
+
+        def check(v, a, b, c):
+            if v.value != 0:
+                raise Exception("TripleTest failed - The two triples were inconsistent.")
+            return (a, b, c)
+        
+        def compute_value(r, a, b, c, x, y, z):
+            l = self.runtime._cmul(r, x, self.Zp)
+            m = self.runtime._cmul(r, y, self.Zp)
+            k = self.runtime._cmul(r*r, z, self.Zp)
+            v = c - self.runtime._basic_multiplication(a, b, l, m, k)
+            v = self.runtime.open(v)
+            v.addCallback(check, a, b, c)
+            return v
+
+        random_shares = []
+        for _ in xrange(n):
+             random_shares.append(gen.generate_share(self.random.randint(0, self.Zp.modulus - 1)))
+
+        random_shares = self._add_macs(random_shares)
+
+        results = [Deferred() for _ in xrange(n)]
+        
+        triples = self._generate_passive_triples(2 * n)
+
+        for inx in xrange(n):
+            a = triples[inx]
+            b = triples[inx + 2 * n]
+            c = triples[inx + 4 * n]
+            x = triples[inx + n]
+            y = triples[inx + 3 * n]
+            z = triples[inx + 5 * n]
+            r = self.runtime.open(random_shares[inx])
+            self.runtime.schedule_callback(r, compute_value, a, b, c, x, y, z)
+            r.chainDeferred(results[inx])
+        return results
+          
         # TODO: Do some ZK stuff.
 
     def _generate_passive_triples(self, n):
@@ -261,6 +303,9 @@ class TripleGenerator(object):
         
         Consistency is only guaranteed if all players follow the protool.
         """
+
+        self.runtime.increment_pc()
+        
         gen = PartialShareGenerator(self.Zp, self.runtime, self.random, self.paillier)
         partial_shares = []
         for _ in xrange(2 * n):

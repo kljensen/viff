@@ -269,11 +269,37 @@ class ParialShareGeneratorTest(BeDOZaTestCase):
         return share
 
 
-class PassiveTripleTest(BeDOZaTestCase): 
+class TripleTest(BeDOZaTestCase): 
     num_players = 3
 
-    timeout = 10
-    
+    timeout = 120
+
+    @protocol
+    def test_generate_triples_generates_correct_triples(self, runtime):
+        p = 17
+
+        Zp = GF(p)
+        
+        random = Random(283883)        
+        triple_generator = TripleGenerator(runtime, p, random)
+
+        triples = triple_generator.generate_triples(5)
+
+        def check((a, b, c)):
+            self.assertEquals(c, a * b)
+
+        def open((a, b, c)):
+            d1 = runtime.open(a)
+            d2 = runtime.open(b)
+            d3 = runtime.open(c)
+            d = gatherResults([d1, d2, d3])
+            runtime.schedule_callback(d, check)
+            return d
+
+        for triple in triples:
+            runtime.schedule_callback(triple, open)
+        return gatherResults(triples)
+
     @protocol
     def test_passive_triples_generates_correct_triples(self, runtime):
         p = 17
@@ -283,7 +309,7 @@ class PassiveTripleTest(BeDOZaTestCase):
         random = Random(283883)        
         triple_generator = TripleGenerator(runtime, p, random)
 
-        triples = triple_generator._generate_passive_triples(5)
+        triples = triple_generator._generate_passive_triples(1)
         def verify(triples):
             for inx in xrange(len(triples) // 3):
                 self.assertEquals(triples[10 + inx], triples[inx] * triples[5 + inx])
@@ -294,11 +320,6 @@ class PassiveTripleTest(BeDOZaTestCase):
         d.addCallback(verify)
         return d
 
-
-class TripleTest(BeDOZaTestCase): 
-    num_players = 3
-
-    timeout = 4
     @protocol
     def test_add_macs_produces_correct_sharing(self, runtime):
         # TODO: Here we use the open method of the BeDOZa runtime in

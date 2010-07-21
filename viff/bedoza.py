@@ -404,7 +404,7 @@ class BeDOZaMixin(HashBroadcastMixin, RandomShareGenerator):
                     values_b[inx] =  self._expect_share(other_id, field)
                     codes_b[inx] = self._expect_share(other_id, field)
                 result = gatherResults(values_a + codes_a + values_b + codes_b)
-                result.addCallbacks(recombine_value, self.error_handler, callbackArgs=(a.get_keys(), b.get_keys()))
+                self.schedule_callback(result, recombine_value, a.get_keys(), b.get_keys())
                 return result
 
         result = gather_shares([share_a, share_b])
@@ -440,7 +440,6 @@ class BeDOZaMixin(HashBroadcastMixin, RandomShareGenerator):
                 x += xi
                 mi_prime = self.MAC(alpha, beta, xi)
                 isOK = isOK and mi == mi_prime
-
             def check(ls, x, isOK):
                 true_str = str(True)
                 if reduce(lambda x, y: true_str == y, ls):
