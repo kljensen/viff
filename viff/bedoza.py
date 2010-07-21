@@ -102,7 +102,10 @@ class BeDOZaShare(Share):
     """
 
     def __init__(self, runtime, field, value=None, keyList=None, authentication_codes=None):
-        Share.__init__(self, runtime, field, BeDOZaShareContents(value, keyList, authentication_codes))
+        if value == None and keyList == None and authentication_codes == None:
+            Share.__init__(self, runtime, field)
+        else:
+            Share.__init__(self, runtime, field, BeDOZaShareContents(value, keyList, authentication_codes))
         
 
 class BeDOZaKeyList(object):
