@@ -146,7 +146,7 @@ class PartialShareGenerator:
         enc_share = self.paillier.encrypt(share.value)
         enc_shares = _convolute(self.runtime, enc_share)
         def create_partial_share(enc_shares, share):
-            return PartialShare(self.runtime, value.field, share, enc_shares)
+            return PartialShare(self.runtime, self.Zp, share, enc_shares)
         self.runtime.schedule_callback(enc_shares, create_partial_share, share)
         return enc_shares
 
@@ -166,8 +166,16 @@ class PartialShareGenerator:
                                            ri,
                                            shares[inx],
                                            N_squared_list)
-            
         return shares
+
+class ShareGenerator(PartialShareGenerator):
+
+    def __init__(self, Zp, runtime, random, paillier):
+        PartialShareGenerator.__init__(self, Zp, runtime, random, paillier)
+
+    def generate_random_shares(self, n):
+        partial_shares = PartialShareGenerator.generate_random_shares(self, n)
+
 
 class ModifiedPaillier(object):
     """A slight modification of the Paillier cryptosystem.
@@ -230,6 +238,67 @@ class ModifiedPaillier(object):
 
     def get_modulus_square(self, player_id):
         return self.runtime.players[player_id].pubkey['n_square']
+
+def add_macs(runtime, field, u_bound, alpha, random, paillier, partial_shares):
+    """Adds macs to the set of PartialBeDOZaShares.
+        
+    Returns a deferred which yields a list of full shares, e.g.
+    including macs.  (the full shares are deferreds of type
+    BeDOZaShare.)
+    """        
+    # TODO: Would be nice with a class ShareContents like the class
+    # PartialShareContents used here.
+        
+    runtime.increment_pc() # Huh!?
+
+    def do_add_macs(partial_share_contents, result_shares):
+        num_players = runtime.num_players
+        lists_of_mac_keys = [ [] for x in runtime.players ]
+        lists_of_c_list = [ [] for x in runtime.players ]
+        for partial_share_content in partial_share_contents:
+            for j in xrange(0, num_players):
+                # TODO: This is probably not the fastes way to generate
+                # the betas.
+                beta = random.randint(0, u_bound)
+                # TODO: Outcommented until mod paillier works for negative numbers.
+                # if rand.choice([True, False]):
+                #    beta = -beta
+                enc_beta = paillier.encrypt(beta, player_id=j + 1)
+                c_j = partial_share_content.enc_shares[j]
+                n2 = paillier.get_modulus_square(j + 1)
+                c = (pow(c_j, alpha, n2) * enc_beta) % n2
+                lists_of_c_list[j].append(c)
+                lists_of_mac_keys[j].append(field(beta))
+
+        received_cs = _send(runtime, lists_of_c_list, deserialize=eval)
+
+        def finish_sharing(recevied_cs, partial_share_contents, lists_of_mac_keys, result_shares):
+            shares = []               
+            for inx in xrange(0, len(partial_share_contents)):
+                mac_keys = []
+                decrypted_cs = []
+                for c_list, mkeys in zip(recevied_cs,
+                                         lists_of_mac_keys):
+                    decrypted_cs.append(field(paillier.decrypt(c_list[inx])))
+                    mac_keys.append(mkeys[inx])
+                partial_share = partial_share_contents[inx]
+                mac_key_list = BeDOZaKeyList(alpha, mac_keys)
+
+                mac_msg_list = BeDOZaMACList(decrypted_cs)
+                result_shares[inx].callback(BeDOZaShareContents(partial_share.value,
+                                                                mac_key_list,
+                                                                mac_msg_list))
+            return shares
+
+        runtime.schedule_callback(received_cs, finish_sharing, partial_share_contents, lists_of_mac_keys, result_shares)
+        return received_cs
+
+    result_shares = [Share(runtime, field) for x in xrange(len(partial_shares))]
+    runtime.schedule_callback(gatherResults(partial_shares),
+                              do_add_macs,
+                              result_shares)
+    return result_shares
+
 
 class TripleGenerator(object):
 
@@ -298,7 +367,7 @@ class TripleGenerator(object):
         for _ in xrange(n):
              random_shares.append(gen.generate_share(self.random.randint(0, self.Zp.modulus - 1)))
 
-        random_shares = self._add_macs(random_shares)
+        random_shares = add_macs(self.runtime, self.Zp, self.u_bound, self.alpha, self.random, self.paillier, random_shares)
 
         results = [Deferred() for _ in xrange(n)]
         
@@ -336,69 +405,9 @@ class TripleGenerator(object):
 
         partial_shares_c = self._full_mul(partial_shares[0:n], partial_shares[n:2*n])
 
-        full_shares = self._add_macs(partial_shares + partial_shares_c)
+        full_shares = add_macs(self.runtime, self.Zp, self.u_bound, self.alpha, self.random, self.paillier, partial_shares + partial_shares_c)
 
-        return full_shares
-    
-    def _add_macs(self, partial_shares):
-        """Adds macs to the set of PartialBeDOZaShares.
-        
-        Returns a deferred which yields a list of full shares, e.g.
-        including macs.  (the full shares are deferreds of type
-        BeDOZaShare.)
-        """        
-        # TODO: Would be nice with a class ShareContents like the class
-        # PartialShareContents used here.
-        
-        self.runtime.increment_pc() # Huh!?
-
-        def do_add_macs(partial_share_contents, result_shares):
-            num_players = self.runtime.num_players
-            lists_of_mac_keys = [ [] for x in self.runtime.players ]
-            lists_of_c_list = [ [] for x in self.runtime.players ]
-            for partial_share_content in partial_share_contents:
-                for j in xrange(0, num_players):
-                    # TODO: This is probably not the fastes way to generate
-                    # the betas.
-                    beta = self.random.randint(0, self.u_bound)
-                    # TODO: Outcommented until mod paillier works for negative numbers.
-                    # if rand.choice([True, False]):
-                    #    beta = -beta
-                    enc_beta = self.paillier.encrypt(beta, player_id=j + 1)
-                    c_j = partial_share_content.enc_shares[j]
-                    n2 = self.paillier.get_modulus_square(j + 1)
-                    c = (pow(c_j, self.alpha, n2) * enc_beta) % n2
-                    lists_of_c_list[j].append(c)
-                    lists_of_mac_keys[j].append(self.Zp(beta))
-
-            received_cs = _send(self.runtime, lists_of_c_list, deserialize=eval)
-
-            def finish_sharing(recevied_cs, partial_share_contents, lists_of_mac_keys, result_shares):
-                shares = []               
-                for inx in xrange(0, len(partial_share_contents)):
-                    mac_keys = []
-                    decrypted_cs = []
-                    for c_list, mkeys in zip(recevied_cs,
-                                             lists_of_mac_keys):
-                        decrypted_cs.append(self.Zp(self.paillier.decrypt(c_list[inx])))
-                        mac_keys.append(mkeys[inx])
-                    partial_share = partial_share_contents[inx]
-                    mac_key_list = BeDOZaKeyList(self.alpha, mac_keys)
-
-                    mac_msg_list = BeDOZaMACList(decrypted_cs)
-                    result_shares[inx].callback(BeDOZaShareContents(partial_share.value,
-                                                                   mac_key_list,
-                                                                   mac_msg_list))
-                return shares
-
-            self.runtime.schedule_callback(received_cs, finish_sharing, partial_share_contents, lists_of_mac_keys, result_shares)
-            return received_cs
-
-        result_shares = [Share(self.runtime, self.Zp) for x in xrange(len(partial_shares))]
-        self.runtime.schedule_callback(gatherResults(partial_shares),
-                                       do_add_macs,
-                                       result_shares)
-        return result_shares
+        return full_shares  
 
         # for player i:
         #     receive c from player i and set 

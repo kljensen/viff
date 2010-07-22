@@ -32,7 +32,7 @@ from viff.config import generate_configs
 from viff.bedoza import BeDOZaRuntime, BeDOZaShare, BeDOZaKeyList
 
 from viff.bedoza_triple import TripleGenerator, PartialShare, PartialShareContents, ModifiedPaillier, PartialShareGenerator
-from viff.bedoza_triple import _send, _convolute, _convolute_gf_elm
+from viff.bedoza_triple import _send, _convolute, _convolute_gf_elm, add_macs
 
 from viff.field import FieldElement, GF
 from viff.config import generate_configs
@@ -209,7 +209,6 @@ def partial_random_shares(random, runtime, Zp, n, paillier=None):
     gen = PartialShareGenerator(Zp, runtime, share_random, paillier)
     return gen.generate_random_shares(n)
 
-
 class ParialShareGeneratorTest(BeDOZaTestCase):
     num_players = 3
  
@@ -281,11 +280,76 @@ class ParialShareGeneratorTest(BeDOZaTestCase):
             
         return shares
 
+class AddMacsTest(BeDOZaTestCase): 
+    num_players = 3
+
+    timeout = 10
+
+    @protocol
+    def test_add_macs_produces_correct_sharing(self, runtime):
+        # TODO: Here we use the open method of the BeDOZa runtime in
+        # order to verify the macs of the generated full share. In
+        # order to be more unit testish, this test should use its own
+        # way of verifying these.
+        p = 17
+        Zp = GF(p)
+        secret = 6
+        random = Random(283883)
+        paillier_random = Random(random.getrandbits(128))
+        paillier = ModifiedPaillier(runtime, random)
+
+        add_macs_random = Random(random.getrandbits(128))
+
+        shares_random = Random(random.getrandbits(128))
+        shares = []
+        shares.append(partial_share(shares_random, runtime, Zp, secret, paillier=paillier))
+        shares.append(partial_share(shares_random, runtime, Zp, secret + 1, paillier=paillier))
+        shares.append(partial_share(shares_random, runtime, Zp, secret + 2, paillier=paillier))
+        shares.append(partial_share(shares_random, runtime, Zp, secret + 3, paillier=paillier))
+
+        bits_in_p = 5
+        u_bound = 2**(4 * bits_in_p)
+        alpha = 15
+
+        zs = add_macs(runtime, Zp, u_bound, alpha,
+                      add_macs_random, paillier, shares)
+        def verify(open_shares):
+            inx = secret
+            for open_share in open_shares:
+                self.assertEquals(inx, open_share.value)
+                inx += 1
+
+        opened_shares = []
+        for s in zs:
+            opened_shares.append(runtime.open(s))
+        d = gather_shares(opened_shares)
+        d.addCallback(verify)
+        return d
+
+        
+#    @protocol
+#    def test_add_macs_preserves_value_of_sharing(self, runtime):
+#        partial_share = self._generate_partial_share_of(42)
+#        full_share = TripleGenerator()._add_macs(partial_share)
+#        secret = self._open_sharing(full_share)
+#        self.assertEquals(42, secret)
+#        return partial_share
+#    #test_add_macs_preserves_value_of_sharing.skip = "nyi"
+#        
+#    @protocol
+#    def test_add_macs_preserves_value_of_zero_sharing(self, runtime):
+#        partial_share = self._generate_partial_share_of(0)
+#        full_share = TripleGenerator()._add_macs(partial_share)
+#        secret = self._open_sharing(full_share)
+#        self.assertEquals(0, secret)
+#        return partial_share
+#    #test_add_macs_preserves_value_of_zero_sharing.skip = "nyi"
+# 
 
 class TripleTest(BeDOZaTestCase): 
     num_players = 3
 
-    timeout = 120
+    timeout = 12
 
     @protocol
     def test_generate_triples_generates_correct_triples(self, runtime):
@@ -332,57 +396,6 @@ class TripleTest(BeDOZaTestCase):
         d = gather_shares(opened_shares)
         d.addCallback(verify)
         return d
-
-    @protocol
-    def test_add_macs_produces_correct_sharing(self, runtime):
-        # TODO: Here we use the open method of the BeDOZa runtime in
-        # order to verify the macs of the generated full share. In
-        # order to be more unit testish, this test should use its own
-        # way of verifying these.
-        p = 17
-        Zp = GF(p)
-        secret = 6
-        random = Random(283883)        
-        triple_generator = TripleGenerator(runtime, p, random)
-        paillier = triple_generator.paillier
-        shares = []
-        shares.append(partial_share(random, runtime, Zp, secret, paillier=paillier))
-        shares.append(partial_share(random, runtime, Zp, secret + 1, paillier=paillier))
-        shares.append(partial_share(random, runtime, Zp, secret + 2, paillier=paillier))
-        shares.append(partial_share(random, runtime, Zp, secret + 3, paillier=paillier))
-
-        zs = triple_generator._add_macs(shares)
-        def verify(open_shares):
-            inx = secret
-            for open_share in open_shares:
-                self.assertEquals(inx, open_share.value)
-                inx += 1
-        opened_shares = []
-        for s in zs:
-            opened_shares.append(runtime.open(s))
-        d = gather_shares(opened_shares)
-        d.addCallback(verify)
-        return d
-
-        
-#    @protocol
-#    def test_add_macs_preserves_value_of_sharing(self, runtime):
-#        partial_share = self._generate_partial_share_of(42)
-#        full_share = TripleGenerator()._add_macs(partial_share)
-#        secret = self._open_sharing(full_share)
-#        self.assertEquals(42, secret)
-#        return partial_share
-#    #test_add_macs_preserves_value_of_sharing.skip = "nyi"
-#        
-#    @protocol
-#    def test_add_macs_preserves_value_of_zero_sharing(self, runtime):
-#        partial_share = self._generate_partial_share_of(0)
-#        full_share = TripleGenerator()._add_macs(partial_share)
-#        secret = self._open_sharing(full_share)
-#        self.assertEquals(0, secret)
-#        return partial_share
-#    #test_add_macs_preserves_value_of_zero_sharing.skip = "nyi"
-# 
 
 class MulTest(BeDOZaTestCase): 
     num_players = 3
