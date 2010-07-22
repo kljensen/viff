@@ -117,10 +117,13 @@ class PartialShareContents(object):
 # to get a PartialShare as input to callbacks, we need this extra level of
 # wrapper indirection.
 class PartialShare(Share):
-    def __init__(self, runtime, value, enc_shares):
-        N_squared_list = [ runtime.players[player_id].pubkey['n_square'] for player_id in runtime.players.keys()]
-        partial_share_contents = PartialShareContents(value, enc_shares, N_squared_list)
-        Share.__init__(self, runtime, value.field, partial_share_contents)
+    def __init__(self, runtime, field, value=None, enc_shares=None):
+        if value == None and enc_shares == None:
+            Share.__init__(self, runtime, field)
+        else:
+            N_squared_list = [ runtime.players[player_id].pubkey['n_square'] for player_id in runtime.players.keys()]
+            partial_share_contents = PartialShareContents(value, enc_shares, N_squared_list)
+            Share.__init__(self, runtime, field, partial_share_contents)
 
 
 class PartialShareGenerator:
@@ -143,9 +146,28 @@ class PartialShareGenerator:
         enc_share = self.paillier.encrypt(share.value)
         enc_shares = _convolute(self.runtime, enc_share)
         def create_partial_share(enc_shares, share):
-            return PartialShare(self.runtime, share, enc_shares)
+            return PartialShare(self.runtime, value.field, share, enc_shares)
         self.runtime.schedule_callback(enc_shares, create_partial_share, share)
         return enc_shares
+
+    def generate_random_shares(self, n):
+        self.runtime.increment_pc()
+        N_squared_list = [ self.runtime.players[player_id].pubkey['n_square'] for player_id in self.runtime.players]
+        shares = [PartialShare(self.runtime, self.Zp) for _ in xrange(n)]
+        for inx in xrange(n):
+            r = self.random.randint(0, self.Zp.modulus - 1)
+            ri = self.Zp(r)
+            enc_share = self.paillier.encrypt(ri.value)
+            enc_shares = _convolute(self.runtime, enc_share)
+            def create_partial_share(enc_shares, ri, s, N_squared_list):
+                s.callback(PartialShareContents(ri, enc_shares, N_squared_list))
+            self.runtime.schedule_callback(enc_shares,
+                                           create_partial_share,
+                                           ri,
+                                           shares[inx],
+                                           N_squared_list)
+            
+        return shares
 
 class ModifiedPaillier(object):
     """A slight modification of the Paillier cryptosystem.

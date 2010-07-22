@@ -31,7 +31,7 @@ from viff.runtime import gather_shares, Share
 from viff.config import generate_configs
 from viff.bedoza import BeDOZaRuntime, BeDOZaShare, BeDOZaKeyList
 
-from viff.bedoza_triple import TripleGenerator, PartialShare, PartialShareContents, ModifiedPaillier
+from viff.bedoza_triple import TripleGenerator, PartialShare, PartialShareContents, ModifiedPaillier, PartialShareGenerator
 from viff.bedoza_triple import _send, _convolute, _convolute_gf_elm
 
 from viff.field import FieldElement, GF
@@ -67,31 +67,6 @@ except ImportError:
 def _log(rt, msg):
     print "player%d ------> %s" % (rt.id, msg)
 
-
-# TODO: Code duplication. There should be only one share generator, it should
-# be placed along with the tests, and it should be able to generate partial
-# as well as full bedoza shares.
-class PartialShareGenerator:
-
-    def __init__(self, Zp, runtime, random, paillier):
-        self.paillier = paillier
-        self.Zp = Zp
-        self.runtime = runtime
-        self.random = random
-
-    def generate_share(self, value):
-        r = [self.Zp(self.random.randint(0, self.Zp.modulus - 1)) # TODO: Exclusve?
-             for _ in range(self.runtime.num_players - 1)]
-        if self.runtime.id == 1:
-            share = value - sum(r)
-        else:
-            share = r[self.runtime.id - 2]
-        enc_share = self.paillier.encrypt(share.value)
-        enc_shares = _convolute(self.runtime, enc_share)
-        def create_partial_share(enc_shares, share):
-            return PartialShare(self.runtime, share, enc_shares)
-        self.runtime.schedule_callback(enc_shares, create_partial_share, share)
-        return enc_shares
 
 class BeDOZaTestCase(RuntimeTestCase):
 
@@ -226,6 +201,14 @@ def partial_share(random, runtime, Zp, val, paillier=None):
     gen = PartialShareGenerator(Zp, runtime, share_random, paillier)
     return gen.generate_share(Zp(val))
 
+def partial_random_shares(random, runtime, Zp, n, paillier=None):
+    if not paillier:
+        paillier_random = Random(random.getrandbits(128))
+        paillier = ModifiedPaillier(runtime, paillier_random)
+    share_random = Random(random.getrandbits(128))
+    gen = PartialShareGenerator(Zp, runtime, share_random, paillier)
+    return gen.generate_random_shares(n)
+
 
 class ParialShareGeneratorTest(BeDOZaTestCase):
     num_players = 3
@@ -251,7 +234,6 @@ class ParialShareGeneratorTest(BeDOZaTestCase):
         runtime.schedule_callback(share, convolute)
         return share
 
-
     @protocol
     def test_encrypted_shares_decrypt_correctly(self, runtime):
         random = Random(3423993)
@@ -267,6 +249,37 @@ class ParialShareGeneratorTest(BeDOZaTestCase):
             runtime.schedule_callback(decrypted_shares, test_sum)
         runtime.schedule_callback(share, decrypt)
         return share
+
+    @protocol
+    def test_random_shares_have_correct_type(self, runtime):
+        Zp = GF(23)
+        shares = partial_random_shares(Random(23499), runtime, Zp, 7)
+        for share in shares:
+            def test(share):
+                self.assertEquals(Zp, share.value.field)
+            runtime.schedule_callback(share, test)
+            
+        return shares
+ 
+    @protocol
+    def test_encrypted_random_shares_decrypt_correctly(self, runtime):
+        random = Random(3423993)
+        modulus = 17
+        Zp = GF(modulus)
+        paillier = ModifiedPaillier(runtime, Random(random.getrandbits(128)))
+        shares = partial_random_shares(random, runtime, Zp, 7, paillier=paillier)
+        expected_result = [9,16,7,12,3,5,6]
+        for inx, share in enumerate(shares):
+            def decrypt(share, expected_result):
+                decrypted_share = paillier.decrypt(share.enc_shares[runtime.id - 1])
+                decrypted_shares = _convolute(runtime, decrypted_share)
+                def test_sum(vals, expected_result):
+                    v = Zp(sum(vals))
+                    self.assertEquals(expected_result, v)
+                runtime.schedule_callback(decrypted_shares, test_sum, expected_result)
+            runtime.schedule_callback(share, decrypt, expected_result[inx])
+            
+        return shares
 
 
 class TripleTest(BeDOZaTestCase): 
