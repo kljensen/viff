@@ -170,12 +170,23 @@ class PartialShareGenerator:
 
 class ShareGenerator(PartialShareGenerator):
 
-    def __init__(self, Zp, runtime, random, paillier):
+    def __init__(self, Zp, runtime, random, paillier, u_bound, alpha):
+        self.u_bound = u_bound
+        self.alpha = alpha
         PartialShareGenerator.__init__(self, Zp, runtime, random, paillier)
 
+    def generate_share(self, value):
+        self.runtime.increment_pc()
+        partial_share = PartialShareGenerator.generate_share(self, value)
+        full_share = add_macs(self.runtime, self.Zp, self.u_bound, self.alpha,
+                             self.random, self.paillier, [partial_share])
+        return full_share[0]
+    
     def generate_random_shares(self, n):
+        self.runtime.increment_pc()
         partial_shares = PartialShareGenerator.generate_random_shares(self, n)
-
+        return add_macs(self.runtime, self.Zp, self.u_bound, self.alpha,
+                        self.random, self.paillier, partial_shares)
 
 class ModifiedPaillier(object):
     """A slight modification of the Paillier cryptosystem.

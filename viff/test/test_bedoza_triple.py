@@ -31,7 +31,7 @@ from viff.runtime import gather_shares, Share
 from viff.config import generate_configs
 from viff.bedoza import BeDOZaRuntime, BeDOZaShare, BeDOZaKeyList
 
-from viff.bedoza_triple import TripleGenerator, PartialShare, PartialShareContents, ModifiedPaillier, PartialShareGenerator
+from viff.bedoza_triple import TripleGenerator, PartialShare, PartialShareContents, ModifiedPaillier, PartialShareGenerator, ShareGenerator
 from viff.bedoza_triple import _send, _convolute, _convolute_gf_elm, add_macs
 
 from viff.field import FieldElement, GF
@@ -279,6 +279,53 @@ class ParialShareGeneratorTest(BeDOZaTestCase):
             runtime.schedule_callback(share, decrypt, expected_result[inx])
             
         return shares
+
+class ShareGeneratorTest(BeDOZaTestCase):
+    num_players = 3
+
+    @protocol
+    def test_encrypted_real_share_open_correctly(self, runtime):
+        random = Random(3423993)
+        modulus = 17
+        Zp = GF(modulus)
+        bits_in_p = 5
+        u_bound = 2**(4 * bits_in_p)
+        alpha = 15
+        
+        paillier = ModifiedPaillier(runtime, Random(random.getrandbits(128)))
+
+        share_random = Random(random.getrandbits(128))
+        gen = ShareGenerator(Zp, runtime, share_random, paillier, u_bound, alpha)
+        share = gen.generate_share(7)
+        def check(v):
+            self.assertEquals(7, v)
+        r = runtime.open(share)
+        runtime.schedule_callback(r, check)
+        return r
+
+    @protocol
+    def test_encrypted_random_real_shares_open_correctly(self, runtime):
+        random = Random(3423993)
+        modulus = 17
+        Zp = GF(modulus)
+        bits_in_p = 5
+        u_bound = 2**(4 * bits_in_p)
+        alpha = 15
+        
+        paillier = ModifiedPaillier(runtime, Random(random.getrandbits(128)))
+
+        share_random = Random(random.getrandbits(128))
+        gen = ShareGenerator(Zp, runtime, share_random, paillier, u_bound, alpha)
+        shares = gen.generate_random_shares(7)
+        expected_result = [9,16,7,12,3,5,6]
+        results = []
+        for inx, share in enumerate(shares):
+            def check(v, expected_result):
+                self.assertEquals(expected_result, v)
+            r = runtime.open(share)
+            results.append(r)
+            runtime.schedule_callback(r, check, expected_result[inx])
+        return gather_shares(results)
 
 class AddMacsTest(BeDOZaTestCase): 
     num_players = 3
