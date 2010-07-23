@@ -32,9 +32,11 @@ from viff.config import generate_configs
 
 from viff.bedoza.bedoza import BeDOZaRuntime, BeDOZaShare
 from viff.bedoza.keylist import BeDOZaKeyList
-from viff.bedoza.bedoza_triple import TripleGenerator, ModifiedPaillier, PartialShareGenerator, ShareGenerator
+from viff.bedoza.bedoza_triple import TripleGenerator, ModifiedPaillier
+from viff.bedoza.share_generators import PartialShareGenerator, ShareGenerator
 from viff.bedoza.shares import PartialShare, PartialShareContents
-from viff.bedoza.bedoza_triple import _send, _convolute, _convolute_gf_elm, add_macs
+from viff.bedoza.util import _send, _convolute, _convolute_gf_elm
+from viff.bedoza.add_macs import add_macs
 
 from viff.field import FieldElement, GF
 from viff.config import generate_configs

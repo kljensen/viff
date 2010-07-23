@@ -30,8 +30,13 @@ from viff.util import rand
 
 from viff.bedoza.shares import BeDOZaShare, BeDOZaShareContents, PartialShare, PartialShareContents
 
+from viff.bedoza.share_generators import PartialShareGenerator, ShareGenerator
+
 from viff.bedoza.keylist import BeDOZaKeyList
 from viff.bedoza.maclist import BeDOZaMACList
+
+from viff.bedoza.util import _send, _convolute
+from viff.bedoza.add_macs import add_macs
 
 # TODO: Use secure random instead!
 from random import Random
@@ -46,113 +51,13 @@ except ImportError:
     print "Error: The pypaillier module or one of the used functions " \
         "are not available."
 
+
 class Triple(object):
     def __init__(self, a, b, c):
         self.a, self.b, self.c = a, b, c
     def __str__(self):
         return "(%s,%s,%s)" % (self.a, self.b, self.c)
 
-
-def _send(runtime, vals, serialize=str, deserialize=int):
-    """Send vals[i] to player i + 1. Returns deferred list.
-
-    Works as default for integers. If other stuff has to be
-    sent, supply another serialization, deserialition.
-    """
-    runtime.increment_pc()
-    
-    pc = tuple(runtime.program_counter)
-    for p in runtime.players:
-        msg = serialize(vals[p - 1])
-        runtime.protocols[p].sendData(pc, TEXT, msg)
-    def err_handler(err):
-        print err
-    values = []
-    for p in runtime.players:
-        d = Deferred()
-        d.addCallbacks(deserialize, err_handler)
-        runtime._expect_data(p, TEXT, d)
-        values.append(d)
-    result = gatherResults(values)
-    return result
-
-def _convolute(runtime, val, serialize=str, deserialize=int):
-    """As send, but sends the same val to all players."""
-    return _send(runtime, [val] * runtime.num_players,
-                 serialize=serialize, deserialize=deserialize)
-
-def _convolute_gf_elm(runtime, gf_elm):
-    return _convolute(runtime, gf_elm,
-                      serialize=lambda x: str(x.value),
-                      deserialize=lambda x: gf_elm.field(int(x)))
-
-def _send_gf_elm(runtime, vals):
-    return _send(runtime, vals, 
-                 serialize=lambda x: str(x.value),
-                 deserialize=lambda x: gf_elm.field(int(x)))
-
-
-class PartialShareGenerator:
-
-    def __init__(self, Zp, runtime, random, paillier):
-        self.paillier = paillier
-        self.Zp = Zp
-        self.runtime = runtime
-        self.random = random
-
-    def generate_share(self, value):
-        self.runtime.increment_pc()
-        
-        r = [self.Zp(self.random.randint(0, self.Zp.modulus - 1)) # TODO: Exclusve?
-             for _ in range(self.runtime.num_players - 1)]
-        if self.runtime.id == 1:
-            share = value - sum(r)
-        else:
-            share = r[self.runtime.id - 2]
-        enc_share = self.paillier.encrypt(share.value)
-        enc_shares = _convolute(self.runtime, enc_share)
-        def create_partial_share(enc_shares, share):
-            return PartialShare(self.runtime, self.Zp, share, enc_shares)
-        self.runtime.schedule_callback(enc_shares, create_partial_share, share)
-        return enc_shares
-
-    def generate_random_shares(self, n):
-        self.runtime.increment_pc()
-        N_squared_list = [ self.runtime.players[player_id].pubkey['n_square'] for player_id in self.runtime.players]
-        shares = [PartialShare(self.runtime, self.Zp) for _ in xrange(n)]
-        for inx in xrange(n):
-            r = self.random.randint(0, self.Zp.modulus - 1)
-            ri = self.Zp(r)
-            enc_share = self.paillier.encrypt(ri.value)
-            enc_shares = _convolute(self.runtime, enc_share)
-            def create_partial_share(enc_shares, ri, s, N_squared_list):
-                s.callback(PartialShareContents(ri, enc_shares, N_squared_list))
-            self.runtime.schedule_callback(enc_shares,
-                                           create_partial_share,
-                                           ri,
-                                           shares[inx],
-                                           N_squared_list)
-        return shares
-
-class ShareGenerator(PartialShareGenerator):
-
-    def __init__(self, Zp, runtime, random, paillier, u_bound, alpha):
-        self.u_bound = u_bound
-        self.alpha = alpha
-        PartialShareGenerator.__init__(self, Zp, runtime, random, paillier)
-
-    def generate_share(self, value):
-        self.runtime.increment_pc()
-        partial_share = PartialShareGenerator.generate_share(self, value)
-        full_share = add_macs(self.runtime, self.Zp, self.u_bound, self.alpha,
-                             self.random, self.paillier, [partial_share])
-        return full_share[0]
-    
-    def generate_random_shares(self, n):
-        self.runtime.increment_pc()
-        partial_shares = PartialShareGenerator.generate_random_shares(self, n)
-        return add_macs(self.runtime, self.Zp, self.u_bound, self.alpha,
-                        self.random, self.paillier, partial_shares)
 
 class ModifiedPaillier(object):
     """A slight modification of the Paillier cryptosystem.
@@ -215,66 +120,6 @@ class ModifiedPaillier(object):
 
     def get_modulus_square(self, player_id):
         return self.runtime.players[player_id].pubkey['n_square']
-
-def add_macs(runtime, field, u_bound, alpha, random, paillier, partial_shares):
-    """Adds macs to the set of PartialBeDOZaShares.
-        
-    Returns a deferred which yields a list of full shares, e.g.
-    including macs.  (the full shares are deferreds of type
-    BeDOZaShare.)
-    """        
-    # TODO: Would be nice with a class ShareContents like the class
-    # PartialShareContents used here.
-        
-    runtime.increment_pc() # Huh!?
-
-    def do_add_macs(partial_share_contents, result_shares):
-        num_players = runtime.num_players
-        lists_of_mac_keys = [ [] for x in runtime.players ]
-        lists_of_c_list = [ [] for x in runtime.players ]
-        for partial_share_content in partial_share_contents:
-            for j in xrange(0, num_players):
-                # TODO: This is probably not the fastes way to generate
-                # the betas.
-                beta = random.randint(0, u_bound)
-                # TODO: Outcommented until mod paillier works for negative numbers.
-                # if rand.choice([True, False]):
-                #    beta = -beta
-                enc_beta = paillier.encrypt(beta, player_id=j + 1)
-                c_j = partial_share_content.enc_shares[j]
-                n2 = paillier.get_modulus_square(j + 1)
-                c = (pow(c_j, alpha, n2) * enc_beta) % n2
-                lists_of_c_list[j].append(c)
-                lists_of_mac_keys[j].append(field(beta))
-
-        received_cs = _send(runtime, lists_of_c_list, deserialize=eval)
-
-        def finish_sharing(recevied_cs, partial_share_contents, lists_of_mac_keys, result_shares):
-            shares = []               
-            for inx in xrange(0, len(partial_share_contents)):
-                mac_keys = []
-                decrypted_cs = []
-                for c_list, mkeys in zip(recevied_cs,
-                                         lists_of_mac_keys):
-                    decrypted_cs.append(field(paillier.decrypt(c_list[inx])))
-                    mac_keys.append(mkeys[inx])
-                partial_share = partial_share_contents[inx]
-                mac_key_list = BeDOZaKeyList(alpha, mac_keys)
-
-                mac_msg_list = BeDOZaMACList(decrypted_cs)
-                result_shares[inx].callback(BeDOZaShareContents(partial_share.value,
-                                                                mac_key_list,
-                                                                mac_msg_list))
-            return shares
-
-        runtime.schedule_callback(received_cs, finish_sharing, partial_share_contents, lists_of_mac_keys, result_shares)
-        return received_cs
-
-    result_shares = [Share(runtime, field) for x in xrange(len(partial_shares))]
-    runtime.schedule_callback(gatherResults(partial_shares),
-                              do_add_macs,
-                              result_shares)
-    return result_shares
 
 
 class TripleGenerator(object):
