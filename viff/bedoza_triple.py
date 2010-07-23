@@ -358,8 +358,6 @@ class TripleGenerator(object):
 
         self.runtime.increment_pc()
         
-        gen = PartialShareGenerator(self.Zp, self.runtime, self.random, self.paillier)
-
         def check(v, a, b, c):
             if v.value != 0:
                 raise Exception("TripleTest failed - The two triples were inconsistent.")
@@ -374,11 +372,9 @@ class TripleGenerator(object):
             v.addCallback(check, a, b, c)
             return v
 
-        random_shares = []
-        for _ in xrange(n):
-             random_shares.append(gen.generate_share(self.random.randint(0, self.Zp.modulus - 1)))
-
-        random_shares = add_macs(self.runtime, self.Zp, self.u_bound, self.alpha, self.random, self.paillier, random_shares)
+        gen = ShareGenerator(self.Zp, self.runtime, self.random, self.paillier, self.u_bound, self.alpha)
+        
+        random_shares = gen.generate_random_shares(n)
 
         results = [Deferred() for _ in xrange(n)]
         
