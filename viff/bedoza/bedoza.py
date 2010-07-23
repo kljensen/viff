@@ -27,88 +27,13 @@ from viff.simplearithmetic import SimpleArithmeticRuntime
 
 from viff.hash_broadcast import HashBroadcastMixin
 
+from viff.bedoza.shares import BeDOZaShare
+
 from viff.bedoza.keylist import BeDOZaKeyList
 from viff.bedoza.maclist import BeDOZaMACList
 
 class BeDOZaException(Exception):
     pass
-
-class BeDOZaShareContents(object):
-
-    def __init__(self, value, keyList, macs):
-        self.value = value
-        self.keyList = keyList
-        self.macs = macs
-
-    def get_value(self):
-        return self.value
-
-    def get_keys(self):
-        return self.keyList
-
-    def get_macs(self):
-        return self.macs
-
-    def get_mac(self, inx):
-        return self.macs.get_mac(inx)
-
-    def __add__(self, other):
-        zi = self.value + other.value
-        zks = self.keyList + other.keyList
-        zms = self.macs + other.macs
-        return BeDOZaShareContents(zi, zks, zms)
-
-    def __sub__(self, other):
-        zi = self.value - other.value
-        zks = self.keyList - other.keyList
-        zms = self.macs - other.macs
-        return BeDOZaShareContents(zi, zks, zms)
-
-    def add_public(self, c, my_id):
-        if my_id == 1:
-            self.value = self.value + c
-        self.keyList.set_key(0, self.keyList.get_key(0) - self.keyList.alpha * c)
-        return self
-    
-    def sub_public(self, c, my_id):
-        if my_id == 1:
-            self.value = self.value - c
-        self.keyList.set_key(0, self.keyList.get_key(0) + self.keyList.alpha * c)
-        return self
-
-    def cmul(self, c):
-        zi = c * self.value
-        zks = self.keyList.cmul(c)
-        zms = self.macs.cmul(c)
-        return BeDOZaShareContents(zi, zks, zms)
-
-    def __str__(self):
-        return "(%s, %s, %s)" % (str(self.value), str(self.keyList), str(self.macs))
-    
-class BeDOZaShare(Share):
-    """A share in the BeDOZa runtime.
-
-    A share in the BeDOZa runtime is a pair ``(x_i, authentication_codes)`` of:
-
-    - A share of a number, ``x_i``
-    - A list of authentication_codes, ``authentication_codes``
-
-    The :class:`Runtime` operates on shares, represented by this class.
-    Shares are asynchronous in the sense that they promise to attain a
-    value at some point in the future.
-
-    Shares overload the arithmetic operations so that ``x = a + b``
-    will create a new share *x*, which will eventually contain the
-    sum of *a* and *b*. Each share is associated with a
-    :class:`Runtime` and the arithmetic operations simply call back to
-    that runtime.
-    """
-
-    def __init__(self, runtime, field, value=None, keyList=None, authentication_codes=None):
-        if value == None and keyList == None and authentication_codes == None:
-            Share.__init__(self, runtime, field)
-        else:
-            Share.__init__(self, runtime, field, BeDOZaShareContents(value, keyList, authentication_codes))
         
 class RandomShareGenerator:
     """ TODO: This is a dummy implementation, and should be replaced with proper code."""

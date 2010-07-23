@@ -28,7 +28,7 @@ from viff.field import FieldElement, GF
 from viff.constants import TEXT
 from viff.util import rand
 
-from viff.bedoza.bedoza import BeDOZaShare, BeDOZaShareContents
+from viff.bedoza.shares import BeDOZaShare, BeDOZaShareContents, PartialShare, PartialShareContents
 
 from viff.bedoza.keylist import BeDOZaKeyList
 from viff.bedoza.maclist import BeDOZaMACList
@@ -90,43 +90,6 @@ def _send_gf_elm(runtime, vals):
     return _send(runtime, vals, 
                  serialize=lambda x: str(x.value),
                  deserialize=lambda x: gf_elm.field(int(x)))
-
-
-class PartialShareContents(object):
-    """A BeDOZa share without macs, e.g. < a >.
-    TODO: BeDOZaShare should extend this class?
-    
-    TODO: Should the partial share contain the public encrypted shares?
-    TODO: It may be wrong to pass encrypted_shares to super constructor; 
-      does it mean that the already public values get passed along on the
-      network even though all players already posess them?
-    """
-    def __init__(self, value, enc_shares, N_squared_list):
-        self.value = value
-        self.enc_shares = enc_shares
-        self.N_squared_list = N_squared_list
-
-    def __str__(self):
-        return "PartialShareContents(%d; %s; %s)" % (self.value, self.enc_shares, self.N_squared_list)
-
-    def __add__(self, other):
-        z = self.value + other.value
-        z_enc_shares = []
-        for x, y, N_squared in zip(self.enc_shares, other.enc_shares, self.N_squared_list):
-            z_enc_shares.append((x * y) % N_squared)
-        return PartialShareContents(z, z_enc_shares, self.N_squared_list)
-
-# In VIFF, callbacks get the *contents* of a share as input. Hence, in order
-# to get a PartialShare as input to callbacks, we need this extra level of
-# wrapper indirection.
-class PartialShare(Share):
-    def __init__(self, runtime, field, value=None, enc_shares=None):
-        if value == None and enc_shares == None:
-            Share.__init__(self, runtime, field)
-        else:
-            N_squared_list = [ runtime.players[player_id].pubkey['n_square'] for player_id in runtime.players.keys()]
-            partial_share_contents = PartialShareContents(value, enc_shares, N_squared_list)
-            Share.__init__(self, runtime, field, partial_share_contents)
 
 
 class PartialShareGenerator:

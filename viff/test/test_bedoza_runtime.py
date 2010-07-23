@@ -22,7 +22,8 @@ from twisted.internet.defer import gatherResults, DeferredList
 from viff.test.util import RuntimeTestCase, protocol
 from viff.runtime import gather_shares, Share
 from viff.config import generate_configs
-from viff.bedoza.bedoza import BeDOZaRuntime, BeDOZaShare, BeDOZaShareContents
+from viff.bedoza.bedoza import BeDOZaRuntime
+from viff.bedoza.shares import BeDOZaShare, BeDOZaShareContents
 from viff.bedoza.keylist import BeDOZaKeyList
 from viff.bedoza.maclist import BeDOZaMACList
 from viff.field import FieldElement, GF
