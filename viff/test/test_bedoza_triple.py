@@ -29,10 +29,11 @@ from viff.test.util import RuntimeTestCase, protocol
 from viff.constants import TEXT
 from viff.runtime import gather_shares, Share
 from viff.config import generate_configs
-from viff.bedoza import BeDOZaRuntime, BeDOZaShare, BeDOZaKeyList
 
-from viff.bedoza_triple import TripleGenerator, PartialShare, PartialShareContents, ModifiedPaillier, PartialShareGenerator, ShareGenerator
-from viff.bedoza_triple import _send, _convolute, _convolute_gf_elm, add_macs
+from viff.bedoza.bedoza import BeDOZaRuntime, BeDOZaShare
+from viff.bedoza.keylist import BeDOZaKeyList
+from viff.bedoza.bedoza_triple import TripleGenerator, PartialShare, PartialShareContents, ModifiedPaillier, PartialShareGenerator, ShareGenerator
+from viff.bedoza.bedoza_triple import _send, _convolute, _convolute_gf_elm, add_macs
 
 from viff.field import FieldElement, GF
 from viff.config import generate_configs

@@ -25,7 +25,10 @@ from viff.field import FieldElement
 from viff.constants import TEXT
 from viff.simplearithmetic import SimpleArithmeticRuntime
 
-from hash_broadcast import HashBroadcastMixin
+from viff.hash_broadcast import HashBroadcastMixin
+
+from viff.bedoza.keylist import BeDOZaKeyList
+from viff.bedoza.maclist import BeDOZaMACList
 
 class BeDOZaException(Exception):
     pass
@@ -107,89 +110,6 @@ class BeDOZaShare(Share):
         else:
             Share.__init__(self, runtime, field, BeDOZaShareContents(value, keyList, authentication_codes))
         
-
-class BeDOZaKeyList(object):
-    """A list of keys, one for each player.
-
-    We assume that the key for player *i* is stored in
-    location *i - 1* in the *keys* list given as argument to the constructor.
-    """
-
-    def __init__(self, alpha, keys):
-        self.alpha = alpha
-        self.keys = keys
-
-    def get_key(self, player_id):
-        return self.keys[player_id]
-
-    def set_key(self, player_id, v):
-        self.keys[player_id] = v
-
-    def cmul(self, c):
-        return BeDOZaKeyList(self.alpha, map(lambda k: c * k, self.keys))
-
-    def __add__(self, other):
-        """Addition."""
-        assert self.alpha == other.alpha
-        keys = []
-        for k1, k2 in zip(self.keys, other.keys):
-            keys.append(k1 + k2)
-        return BeDOZaKeyList(self.alpha, keys)
-
-    def __sub__(self, other):
-        """Subtraction."""
-        assert self.alpha == other.alpha
-        keys = []
-        for k1, k2 in zip(self.keys, other.keys):
-            keys.append(k1 - k2)
-        return BeDOZaKeyList(self.alpha, keys)
-
-    def __eq__(self, other):
-        return self.alpha == other.alpha and self.keys == other.keys
-
-    def __str__(self):
-        return "(%s, %s)" % (self.alpha, str(self.keys))
-
-    def __repr__(self):
-        return str(self)
-    
-class BeDOZaMACList(object):
-
-    def __init__(self, macs):
-        self.macs = macs
-
-    def get_macs(self):
-        return self.macs
-
-    def get_mac(self, inx):
-        return self.macs[inx]
-
-    def cmul(self, c):
-        return BeDOZaMACList(map(lambda m: c * m, self.macs))
-        
-    def __add__(self, other):
-        """Addition."""
-        macs = []
-        for c1, c2 in zip(self.macs, other.macs):
-            macs.append(c1 + c2)
-        return BeDOZaMACList(macs)
-
-    def __sub__(self, other):
-        """Subtraction."""
-        macs = []
-        for c1, c2 in zip(self.macs, other.macs):
-            macs.append(c1 - c2)
-        return BeDOZaMACList(macs)
-
-    def __eq__(self, other):
-        return self.macs == other.macs
-
-    def __str__(self):
-        return str(self.macs)
-
-    def __repr__(self):
-        return str(self)
-    
 class RandomShareGenerator:
     """ TODO: This is a dummy implementation, and should be replaced with proper code."""
     

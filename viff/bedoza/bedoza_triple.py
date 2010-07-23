@@ -28,12 +28,15 @@ from viff.field import FieldElement, GF
 from viff.constants import TEXT
 from viff.util import rand
 
-from bedoza import BeDOZaKeyList, BeDOZaMACList, BeDOZaShare, BeDOZaShareContents
+from viff.bedoza.bedoza import BeDOZaShare, BeDOZaShareContents
+
+from viff.bedoza.keylist import BeDOZaKeyList
+from viff.bedoza.maclist import BeDOZaMACList
 
 # TODO: Use secure random instead!
 from random import Random
 
-from hash_broadcast import HashBroadcastMixin
+from viff.hash_broadcast import HashBroadcastMixin
 
 try:
     import pypaillier
