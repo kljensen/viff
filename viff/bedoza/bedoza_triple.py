@@ -27,21 +27,16 @@ from viff.runtime import Runtime, Share, ShareList, gather_shares
 from viff.field import FieldElement, GF
 from viff.constants import TEXT
 from viff.util import rand
-
 from viff.bedoza.shares import BeDOZaShare, BeDOZaShareContents, PartialShare, PartialShareContents
-
 from viff.bedoza.share_generators import PartialShareGenerator, ShareGenerator
-
 from viff.bedoza.keylist import BeDOZaKeyList
 from viff.bedoza.maclist import BeDOZaMACList
-
 from viff.bedoza.util import _send, _convolute
 from viff.bedoza.add_macs import add_macs
+from viff.bedoza.modified_paillier import ModifiedPaillier
 
 # TODO: Use secure random instead!
 from random import Random
-
-from viff.hash_broadcast import HashBroadcastMixin
 
 try:
     import pypaillier
@@ -57,70 +52,6 @@ class Triple(object):
         self.a, self.b, self.c = a, b, c
     def __str__(self):
         return "(%s,%s,%s)" % (self.a, self.b, self.c)
-
-
-class ModifiedPaillier(object):
-    """A slight modification of the Paillier cryptosystem.
-
-    This modification has plaintext space [-(n-1)/ ; (n-1)/2] rather
-    than the usual Z_n where n is the Paillier modulus.
-
-    See Ivan's paper, beginning of section 6.
-    """
-
-    def __init__(self, runtime, random):
-        self.runtime = runtime;
-        self.random = random
-
-    def _f(self, x, n):
-        if x >= 0:
-            return x
-        else:
-            return n + x
-
-    def _f_inverse(self, y, n):
-        if 0 <= y <= (n + 1) / 2:
-            return y
-        else:
-            return y - n
-
-    def encrypt(self, value, player_id=None):
-        """Encrypt using public key of player player_id.
-
-        Defaults to own public key.
-        """
-        assert isinstance(value, int) or isinstance(value, long), \
-            "paillier: encrypts only integers and longs, got %s" % value.__class__
-        if not player_id:
-            player_id = self.runtime.id
-        n = self.runtime.players[player_id].pubkey['n']
-        min = -(n - 1) / 2 + 1
-        max = (n + 1) / 2
-        assert min <= value <= max, \
-            "paillier: plaintext %d outside legal range [-(n-1)/2+1 ; (n+1)/2] = " \
-            "[%d ; %d]"  % (value, min, max)
-        pubkey = self.runtime.players[player_id].pubkey
-        randomness = self.random.randint(1, long(n))
-        return pypaillier.encrypt_r(self._f(value, n), randomness, pubkey)
-
-    def decrypt(self, enc_value):
-        """Decrypt using own private key."""
-        assert isinstance(enc_value, int) or isinstance(enc_value, long), \
-            "paillier decrypts only longs, got %s" % enc_value.__class__
-        n = self.runtime.players[self.runtime.id].pubkey['n']
-        n_square = self.runtime.players[self.runtime.id].pubkey['n_square']
-        assert 0 <= enc_value < n_square, \
-            "paillier: ciphertext %d not in range [0 ; n^2] = [0 ; %d]" \
-            % (enc_value, n_square)
-        seckey = self.runtime.players[self.runtime.id].seckey
-        return self._f_inverse(pypaillier.decrypt(enc_value, seckey), n)
-
-    def get_modulus(self, player_id):
-        return self.runtime.players[player_id].pubkey['n']
-
-    def get_modulus_square(self, player_id):
-        return self.runtime.players[player_id].pubkey['n_square']
-
 
 class TripleGenerator(object):
 

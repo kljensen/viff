@@ -32,71 +32,16 @@ from viff.bedoza.shares import BeDOZaShare
 from viff.bedoza.keylist import BeDOZaKeyList
 from viff.bedoza.maclist import BeDOZaMACList
 
+from viff.bedoza.share_generators import ShareGenerator
+
 class BeDOZaException(Exception):
     pass
-        
-class RandomShareGenerator:
-    """ TODO: This is a dummy implementation, and should be replaced with proper code."""
-    
-    def generate_random_shares(self, field, number_of_shares):
-        self.init_keys(field)
-        shares = []
-        for i in xrange(0, number_of_shares):
-            v = field(self.id)
-            shares.append(self.generate_share(field, v))
-        return shares
 
-    def generate_share(self, field, value):
-        my_keys = self.generate_keys(field)
-        macs = self.generate_auth_codes(self.id, value)
-        return BeDOZaShare(self, field, value, my_keys, macs)
 
-    def generate_auth_codes(self, playerId, value):
-        keys = map(lambda (alpha, akeys): (alpha, akeys[playerId - 1]), self.keys.values())
-        macs = self.authentication_codes(keys, value)
-        return macs
-
-    def authentication_codes(self, keys, v):
-        macs = []
-        for alpha, beta in keys:
-            macs.append(alpha * v + beta)
-        return BeDOZaMACList(macs)
-
-    def generate_keys(self, field):
-        alpha, betas = self.get_keys()
-        return BeDOZaKeyList(alpha, betas)
-
-    def init_keys(self, field):
-
-        self.keys = {}
-        for player_id in self.players:
-            betas = [field(56387295767672113),
-                     field(89238458945400961),
-                     field(12340004554789025),
-                     field(12907853897457058),
-                     field(90457903592570134),
-                     field(56256262346343232),
-                     field(23897437894556562),
-                     field(90297849575975574)]
-            self.keys[player_id] = (field(player_id), betas)
-
-    def get_keys(self):   
-        return self.keys[self.id]
-
-class BeDOZaMixin(HashBroadcastMixin, RandomShareGenerator):
+class BeDOZaMixin(HashBroadcastMixin, ShareGenerator):
  
     def MAC(self, alpha, beta, v):
         return alpha * v + beta
-
-    def random_share(self, field):
-        """Retrieve a previously generated random share in the field, field.
-
-        If no more shares are left, generate self.random_share_number new ones.
-        """
-        if len(self.random_shares) == 0:
-            self.random_shares = self.generate_random_shares(field, self.random_share_number)
-
-        return self.random_shares.pop()
 
     def output(self, share, receivers=None):
         return self.open(share, receivers)
@@ -360,22 +305,7 @@ class BeDOZaMixin(HashBroadcastMixin, RandomShareGenerator):
         return x.cmul(c)
 
     def _get_triple(self, field):
-        """ TODO: This is a dummy implementation, and should be replaced with proper code."""
-        self.init_keys(field)
-        a, b, c = 0, 0, 0
-        share_a = field(2)
-        share_b = field(4)
-        n = len(self.players)
-        share_c = n * share_a * share_b
-        for playerid in self.players.keys():
-            if self.id == playerid:
-                triple_a = self.generate_share(field, share_a)
-                a += share_a.value
-                triple_b = self.generate_share(field, share_b)
-                b += share_b.value
-                triple_c = self.generate_share(field, share_c)
-                c += share_c.value
-        return [triple_a, triple_b, triple_c], False
+        return self.triples.pop(), False
 
 
 class BeDOZaRuntime(BeDOZaMixin, SimpleArithmeticRuntime):
@@ -402,5 +332,4 @@ class BeDOZaRuntime(BeDOZaMixin, SimpleArithmeticRuntime):
         """Initialize runtime."""
         SimpleArithmeticRuntime.__init__(self, player, threshold, options)
         self.threshold = self.num_players - 1
-        self.random_share_number = 100
-        self.random_shares = []
+
