@@ -34,6 +34,7 @@ from viff.bedoza.maclist import BeDOZaMACList
 
 from viff.bedoza.share_generators import ShareGenerator
 
+
 class BeDOZaException(Exception):
     pass
 
@@ -304,9 +305,6 @@ class BeDOZaMixin(HashBroadcastMixin, ShareGenerator):
         assert(isinstance(c, FieldElement))
         return x.cmul(c)
 
-    def _get_triple(self, field):
-        return self.triples.pop(), False
-
 
 class BeDOZaRuntime(BeDOZaMixin, SimpleArithmeticRuntime):
     """The BeDOZa runtime.
@@ -328,8 +326,12 @@ class BeDOZaRuntime(BeDOZaMixin, SimpleArithmeticRuntime):
     it is ready.
     """
 
-    def __init__(self, player, threshold=None, options=None):
-        """Initialize runtime."""
+    def __init__(self, player, threshold=None, options=None, triples=[]):
+        """Initialize runtime.
+
+        *triples* is a list of multiplicative triples previously
+        generated using the bedoza_triple.TripleGenerator.
+        """
         SimpleArithmeticRuntime.__init__(self, player, threshold, options)
         self.threshold = self.num_players - 1
-
+        self.triples = triples

@@ -92,11 +92,12 @@ class SimpleArithmeticRuntime(Runtime):
 
         field = getattr(share_x, "field", getattr(share_y, "field", None))
 
-        triple, prep = self._get_triple(field)
-        if prep:
-            # The data from the pool must be wrapped in Shares.
-            triple = [Share(self, field, i) for i in triple]
-        return self._basic_multiplication(share_x, share_y, *triple)
+        triple = self.triples.pop()
+        return self._basic_multiplication(share_x,
+                                          share_y,
+                                          triple.a,
+                                          triple.b,
+                                          triple.c)
 
     def _cmul(self, share_x, share_y, field):
         """Multiplication of a share with a constant.

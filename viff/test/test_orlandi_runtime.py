@@ -492,13 +492,20 @@ class OrlandiAdvancedCommandsTest(RuntimeTestCase):
         def check(v):
             self.assertEquals(v, x1 * y1)
 
-        x2 = runtime.shift([2], self.Zp, x1)
-        y2 = runtime.shift([3], self.Zp, y1)
+        triples = runtime.random_triple(self.Zp, 1)
+        
+        def do_mult(triples):
+            runtime.triples = triples
+            x2 = runtime.shift([2], self.Zp, x1)
+            y2 = runtime.shift([3], self.Zp, y1)
 
-        z2 = x2 * y2
-        d = runtime.open(z2)
-        d.addCallback(check)
-        return d
+            z2 = x2 * y2
+            d = runtime.open(z2)
+            d.addCallback(check)
+            return d
+        r = gatherResults(triples)
+        runtime.schedule_callback(r, do_mult)
+        return r
 
     @protocol
     def test_basic_multiply_constant_right(self, runtime):
@@ -667,20 +674,16 @@ class OrlandiAdvancedCommandsTest(RuntimeTestCase):
         x2 = runtime.shift([1], self.Zp, x1)
         y2 = runtime.shift([2], self.Zp, y1)
 
-        sls = gatherResults(runtime.random_triple(self.Zp, 2*runtime.d + 1))
+        triples = runtime.random_triple(self.Zp, 2*runtime.d + 1)
 
-        def cont(M):
-            M = [[Share(self, self.Zp, j) for j in i] for i in M]
-            z2 = runtime.leak_tolerant_mul(x2, y2, M)
+        def cont(triples):
+            z2 = runtime.leak_tolerant_mul(x2, y2, triples)
             d = runtime.open(z2)
             d.addCallback(check)
             return d
-        sls.addCallbacks(cont, runtime.error_handler)
-        return sls
-
-        z2 = runtime._cmul(y2, x2, self.Zp)
-        self.assertEquals(z2, None)
-        return z2
+        r = gatherResults(triples)
+        runtime.schedule_callback(r, cont)
+        return r
 
     @protocol
     def test_leak_mul1(self, runtime):
@@ -705,20 +708,17 @@ class OrlandiAdvancedCommandsTest(RuntimeTestCase):
         x2 = runtime.shift([1], self.Zp, x1)
         y2 = runtime.shift([2], self.Zp, y1)
 
-        sls = gatherResults(runtime.random_triple(self.Zp, 2*runtime.d + 1))
+        triples = runtime.random_triple(self.Zp, 2*runtime.d + 1)
 
-        def cont(M):
-            M = [[Share(self, self.Zp, j) for j in i] for i in M]
-            z2 = runtime.leak_tolerant_mul(x2, y2, M)
+        def cont(triples):
+            z2 = runtime.leak_tolerant_mul(x2, y2, triples)
             d = runtime.open(z2)
             d.addCallback(check)
             return d
-        sls.addCallbacks(cont, runtime.error_handler)
-        return sls
+        r = gatherResults(triples)
+        runtime.schedule_callback(r, cont)
+        return r
 
-        z2 = runtime._cmul(y2, x2, self.Zp)
-        self.assertEquals(z2, None)
-        return z2
 
 class TripleGenTest(RuntimeTestCase):
     """Test for generation of triples."""
@@ -728,7 +728,7 @@ class TripleGenTest(RuntimeTestCase):
 
     runtime_class = OrlandiRuntime
 
-    timeout = 1600
+    timeout = 10
 
     def generate_configs(self, *args):
         global keys
@@ -749,10 +749,10 @@ class TripleGenTest(RuntimeTestCase):
         def check((a, b, c)):
             self.assertEquals(c, a * b)
 
-        def open((a, b, c, _)):
-            d1 = runtime.open(a)
-            d2 = runtime.open(b)
-            d3 = runtime.open(c)
+        def open((triple, _)):
+            d1 = runtime.open(triple.a)
+            d2 = runtime.open(triple.b)
+            d3 = runtime.open(triple.c)
             d = gatherResults([d1, d2, d3])
             d.addCallback(check)
             return d
@@ -770,13 +770,13 @@ class TripleGenTest(RuntimeTestCase):
             self.assertEquals(c, a * b)
             self.assertEquals(dz, dx * dy)
 
-        def open(((a, b, c, control), (x, y, z, _))):
-            d1 = runtime.open(a)
-            d2 = runtime.open(b)
-            d3 = runtime.open(c)
-            dx = runtime.open(x)
-            dy = runtime.open(y)
-            dz = runtime.open(z)
+        def open(((t1, control), (t2, _))):
+            d1 = runtime.open(t1.a)
+            d2 = runtime.open(t1.b)
+            d3 = runtime.open(t1.c)
+            dx = runtime.open(t2.a)
+            dy = runtime.open(t2.b)
+            dz = runtime.open(t2.c)
             d = gatherResults([d1, d2, d3, dx, dy, dz])
             d.addCallback(check)
             return d
@@ -795,10 +795,10 @@ class TripleGenTest(RuntimeTestCase):
         def check((a, b, c)):
             self.assertEquals(c, a * b)
 
-        def open((a, b, c, _)):
-            d1 = runtime.open(a)
-            d2 = runtime.open(b)
-            d3 = runtime.open(c)
+        def open((triple, _)):
+            d1 = runtime.open(triple.a)
+            d2 = runtime.open(triple.b)
+            d3 = runtime.open(triple.c)
             d = gatherResults([d1, d2, d3])
             d.addCallback(check)
             return d
@@ -819,15 +819,15 @@ class TripleGenTest(RuntimeTestCase):
                 c = ls[x * 3 + 2]
                 self.assertEquals(c, a * b)
 
-        def open(ls):
+        def open(triples):
+            triple = triples[0]
             ds = []
-            for (a, b, c) in ls:
-                d1 = runtime.open(Share(self, self.Zp, a))
-                d2 = runtime.open(Share(self, self.Zp, b))
-                d3 = runtime.open(Share(self, self.Zp, c))
-                ds.append(d1)
-                ds.append(d2)
-                ds.append(d3)
+            d1 = runtime.open(triple.a)
+            d2 = runtime.open(triple.b)
+            d3 = runtime.open(triple.c)
+            ds.append(d1)
+            ds.append(d2)
+            ds.append(d3)
 
             d = gatherResults(ds)
             d.addCallback(check)
@@ -851,10 +851,10 @@ class TripleGenTest(RuntimeTestCase):
 
         def open(ls):
             ds = []
-            for [(a, b, c)] in ls:
-                d1 = runtime.open(Share(self, self.Zp, a))
-                d2 = runtime.open(Share(self, self.Zp, b))
-                d3 = runtime.open(Share(self, self.Zp, c))
+            for [triple] in ls:
+                d1 = runtime.open(triple.a)
+                d2 = runtime.open(triple.b)
+                d3 = runtime.open(triple.c)
                 ds.append(d1)
                 ds.append(d2)
                 ds.append(d3)
@@ -868,61 +868,6 @@ class TripleGenTest(RuntimeTestCase):
         d = gatherResults([a, b, c])
         d.addCallbacks(open, runtime.error_handler)
         return d
-
-    @protocol
-    def test_random_triple_parallel(self, runtime):
-        """Test the triple_combiner command."""
-
-        self.Zp = GF(6277101735386680763835789423176059013767194773182842284081)
-
-        def check(ls):
-            for x in xrange(len(ls) // 3):
-                a = ls[x * 3]
-                b = ls[x * 3 + 1]
-                c = ls[x * 3 + 2]
-                self.assertEquals(c, a * b)
-
-        def open(ls):
-            ds = []
-            for [(a, b, c)] in ls:
-                d1 = runtime.open(a)
-                d2 = runtime.open(b)
-                d3 = runtime.open(c)
-                ds.append(d1)
-                ds.append(d2)
-                ds.append(d3)
-
-            d = gatherResults(ds)
-            d.addCallback(check)
-            return d
-
-        a_shares = []
-        b_shares = []
-        c_shares = []
-
-        def cont(x):
-            while a_shares and b_shares:
-                a = a_shares.pop()
-                b = b_shares.pop()
-                c_shares.append(runtime.mul(a, b))
-            done = gather_shares(c_shares)
-            return done
-
-        count = 5
-
-        for i in range(count):
-            inputter = (i % len(runtime.players)) + 1
-            if inputter == runtime.id:
-                a = rand.randint(0, self.Zp.modulus)
-                b = rand.randint(0, self.Zp.modulus)
-            else:
-                a, b = None, None
-            a_shares.append(runtime.input([inputter], self.Zp, a))
-            b_shares.append(runtime.input([inputter], self.Zp, b))
-        shares_ready = gather_shares(a_shares + b_shares)
-
-        runtime.schedule_callback(shares_ready, cont)
-        return shares_ready
 
 
 def skip_tests(module_name):

@@ -35,6 +35,8 @@ from viff.paillier import encrypt_r, decrypt
 
 from viff.simplearithmetic import SimpleArithmeticRuntime
 
+from viff.triple import Triple
+
 from hash_broadcast import HashBroadcastMixin
 
 try:
@@ -631,16 +633,6 @@ class OrlandiMixin(HashBroadcastMixin):
     
     def _wrap_in_share(self, (zi, rhoz, Cz), field):
         return OrlandiShare(self, field, zi, rhoz, Cz)
-
-    @preprocess("random_triple")
-    def _get_triple(self, field):
-        results = [Share(self, field) for i in range(3)]
-        def chain(triple, results):
-            for i, result in zip(triple, results):
-                result.callback(i)
-        self.random_triple(field, 1)[0].addCallbacks(chain, self.error_handler,
-                                                     (results,))
-        return results
     
     def sum_poly(self, j, ls):
         exp  = j
@@ -665,7 +657,7 @@ class OrlandiMixin(HashBroadcastMixin):
         Communication cost: ???.
 
         Assuming a set of multiplicative triples:
-        ``M = ([a_i], [b_i], [c_i]) for 1 <= i <= 2d + 1``.
+        ``M = Triple([a_i], [b_i], [c_i]) for 1 <= i <= 2d + 1``.
 
         1. ``for i = 1, ..., d do [f_i] = rand(), [g_i] = rand()``
 
@@ -705,7 +697,7 @@ class OrlandiMixin(HashBroadcastMixin):
             f.append(self.random_share(field))
             g.append(self.random_share(field))
 
-        def compute_polynomials(t):
+        def compute_polynomials(t, M):
             x, y = t[0]
             f = []
             g = []
@@ -754,10 +746,13 @@ class OrlandiMixin(HashBroadcastMixin):
                     C_Gji *= Cw
                 Fj = OrlandiShare(self, field, Fji, (rho1_Fji, rho2_Fji), C_Fji)
                 Gj = OrlandiShare(self, field, Gji, (rho1_Gji, rho2_Gji), C_Gji)
-                a, b, c = M.pop(0)
+                triple = M.pop(0)
 
                 # [H_j] = Mul([F_j], [G_j], [a_j], [b_j], [c_j])
-                Hj = self._basic_multiplication(Fj, Gj, a, b, c)
+                Hj = self._basic_multiplication(Fj, Gj,
+                                                triple.a,
+                                                triple.b,
+                                                triple.c)
                 dj = self._cmul(field(deltas[j - 1]), Hj, field)
                 H0 = H0 + dj
             # 5) output [z] = [H_0]
@@ -768,7 +763,7 @@ class OrlandiMixin(HashBroadcastMixin):
             ls.append(gather_shares(f))
             ls.append(gather_shares(g))
         result = gather_shares(ls)
-        self.schedule_callback(result, compute_polynomials)
+        self.schedule_callback(result, compute_polynomials, M)
         result.addErrback(self.error_handler)
 
         # do actual communication
@@ -777,7 +772,7 @@ class OrlandiMixin(HashBroadcastMixin):
         return result
 
     def triple_gen(self, field):
-        """Generate a triple ``a, b, c`` s.t. ``c = a * b``.
+        """Generate a triple ``Tripel(a, b, c)`` s.t. ``c = a * b``.
 
         1. Every party ``P_i`` chooses random values ``a_i, r_i in Z_p
            X (Z_p)^2``, compute ``alpha_i = Enc_eki(a_i)`` and ``Ai =
@@ -836,7 +831,7 @@ class OrlandiMixin(HashBroadcastMixin):
             a = OrlandiShare(self, field, ai, r, A)
             b = OrlandiShare(self, field, bi, s, B)
             c = OrlandiShare(self, field, ci, t, C)
-            return (a, b, c, (alphas, alpha_randomness, gammas, dijs))
+            return (Triple(a, b, c), (alphas, alpha_randomness, gammas, dijs))
 
         def decrypt_gammas(ls):
             """Decrypt all the elements of the list *ls*."""
@@ -969,18 +964,18 @@ class OrlandiMixin(HashBroadcastMixin):
         triple2 = self.triple_gen(field)
         r = self.open(self.random_share(field))
 
-        def check(v, a, b, c, ec):
+        def check(v, triple, ec):
             if v.value != 0:
                 raise OrlandiException("TripleTest failed - The two triples were inconsistent.")
-            return (a, b, c, ec)
+            return (triple, ec)
 
-        def compute_value(((a, b, c, ec), (x, y, z, _), r)):
-            l = self._cmul(r, x, field)
-            m = self._cmul(r, y, field)
-            n = self._cmul(r*r, z, field)
-            d = c - self._basic_multiplication(a, b, l, m, n)
+        def compute_value(((t1, ec), (t2, _), r)):
+            l = self._cmul(r, t2.a, field)
+            m = self._cmul(r, t2.b, field)
+            n = self._cmul(r*r, t2.c, field)
+            d = t1.c - self._basic_multiplication(t1.a, t1.b, l, m, n)
             r = self.open(d)
-            r.addCallbacks(check, self.error_handler, callbackArgs=(a, b, c, ec))
+            r.addCallbacks(check, self.error_handler, callbackArgs=(t1, ec))
             return r
 
         result = gatherResults([triple1, triple2, r])
@@ -993,9 +988,9 @@ class OrlandiMixin(HashBroadcastMixin):
         return result
 
     def random_triple(self, field, quantity=1):
-        """Generate a list of triples ``(a, b, c)`` where ``c = a * b``.
+        """Generate a list of triples ``Triple(a, b, c)`` where ``c = a * b``.
 
-        The triple ``(a, b, c)`` is secure in the Fcrs-hybrid model.
+        The triple ``Triple(a, b, c)`` is secure in the Fcrs-hybrid model.
 
         """
         self.increment_pc()
@@ -1160,7 +1155,10 @@ class OrlandiMixin(HashBroadcastMixin):
                 return True
 
             dls_all = []
-            for (a, b, c, (alphas, alpha_randomness, gammas, dijs)) in T:
+            for (triple, (alphas, alpha_randomness, gammas, dijs)) in T:
+                a = triple.a
+                b = triple.b
+                c = triple.c
                 ds_a = [None] * len(self.players)
                 ds_b = [None] * len(self.players)
                 ds_c = [None] * len(self.players)
@@ -1201,8 +1199,8 @@ class OrlandiMixin(HashBroadcastMixin):
 
             def result(x):
                 ls = []
-                for a, b, c, _ in M_without_test_set:
-                    ls.append((a, b, c))
+                for triple, _ in M_without_test_set:
+                    ls.append(triple)
                 return ls
 
             dls_all = gatherResults(dls_all)
@@ -1252,7 +1250,7 @@ class OrlandiMixin(HashBroadcastMixin):
                 c = self.leak_tolerant_mul(a, b, Mi)
                 d = self.open(c + r)
                 def return_abc(x, a, b, c, result):
-                    gatherResults([a, b, c]).chainDeferred(result)
+                    result.callback(Triple(a, b, c))
                 d.addCallbacks(return_abc, self.error_handler, callbackArgs=(a, b, c, result))
 
         result = gatherResults(M)
@@ -1304,3 +1302,4 @@ class OrlandiRuntime(OrlandiMixin, SimpleArithmeticRuntime):
         self.s = 1
         self.d = 0
         self.s_lambda = 1
+        self.triples = []

@@ -382,34 +382,38 @@ class BeDOZaBasicCommandsTest(RuntimeTestCase):
         runtime.schedule_callback(triple, do_stuff, alpha)
         return triple
 
-    # @protocol
-    # def test_mul_mul(self, runtime):
-    #     """Test multiplication of two numbers."""
+    @protocol
+    def test_mul_mul(self, runtime):
+        """Test multiplication of two numbers."""
 
-    #     x1 = 6
-    #     y1 = 6
+        x1 = 6
+        y1 = 6
 
-    #     def check(v):
-    #         self.assertEquals(v, self.Zp(x1 * y1))
+        def check(v):
+            self.assertEquals(v, self.Zp(x1 * y1))
 
-    #     gen = TripleGenerator(runtime, self.Zp.modulus, Random(3423993))
-    #     alpha = gen.alpha
-    #     runtime.triples = gen.generate_triples(1)
+        gen = TripleGenerator(runtime, self.Zp.modulus, Random(3423993))
+        alpha = gen.alpha
+        triples = gen.generate_triples(1)
         
-
-    #     random = Random(3423993)
-    #     share_random = Random(random.getrandbits(128))
-    #     paillier = ModifiedPaillier(runtime, Random(random.getrandbits(128)))          
-    #     gen = ShareGenerator(self.Zp, runtime, share_random,
-    #                          paillier, self.u_bound, self.alpha)
+        def do_mult(triples, alpha):
+            runtime.triples = triples
+            random = Random(3423993)
+            share_random = Random(random.getrandbits(128))
+            paillier = ModifiedPaillier(runtime, Random(random.getrandbits(128)))          
+            gen = ShareGenerator(self.Zp, runtime, share_random,
+                                 paillier, self.u_bound, alpha)
         
-    #     x2 = gen.generate_share(x1)
-    #     y2 = gen.generate_share(y1)
+            x2 = gen.generate_share(x1)
+            y2 = gen.generate_share(y1)
         
-    #     z2 = x2 * y2
-    #     d = runtime.open(z2)
-    #     d.addCallback(check)
-    #     return d
+            z2 = x2 * y2
+            d = runtime.open(z2)
+            d.addCallback(check)
+            return d
+        r = gatherResults(triples)
+        runtime.schedule_callback(r, do_mult, alpha)
+        return r
     
     @protocol
     def test_basic_multiply_constant_right(self, runtime):
