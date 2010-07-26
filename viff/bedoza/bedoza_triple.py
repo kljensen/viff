@@ -35,6 +35,8 @@ from viff.bedoza.util import _send, _convolute
 from viff.bedoza.add_macs import add_macs
 from viff.bedoza.modified_paillier import ModifiedPaillier
 
+from viff.triple import Triple
+
 # TODO: Use secure random instead!
 from random import Random
 
@@ -46,12 +48,6 @@ except ImportError:
     print "Error: The pypaillier module or one of the used functions " \
         "are not available."
 
-
-class Triple(object):
-    def __init__(self, a, b, c):
-        self.a, self.b, self.c = a, b, c
-    def __str__(self):
-        return "(%s,%s,%s)" % (self.a, self.b, self.c)
 
 class TripleGenerator(object):
 
@@ -103,7 +99,7 @@ class TripleGenerator(object):
         def check(v, a, b, c):
             if v.value != 0:
                 raise Exception("TripleTest failed - The two triples were inconsistent.")
-            return (a, b, c)
+            return Triple(a, b, c)
         
         def compute_value(r, a, b, c, x, y, z):
             l = self.runtime._cmul(r, x, self.Zp)

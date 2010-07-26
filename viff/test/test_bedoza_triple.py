@@ -416,10 +416,10 @@ class TripleTest(BeDOZaTestCase):
         def check((a, b, c)):
             self.assertEquals(c, a * b)
 
-        def open((a, b, c)):
-            d1 = runtime.open(a)
-            d2 = runtime.open(b)
-            d3 = runtime.open(c)
+        def open(triple):
+            d1 = runtime.open(triple.a)
+            d2 = runtime.open(triple.b)
+            d3 = runtime.open(triple.c)
             d = gatherResults([d1, d2, d3])
             runtime.schedule_callback(d, check)
             return d
