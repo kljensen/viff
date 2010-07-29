@@ -44,6 +44,10 @@ def add_macs(runtime, field, u_bound, alpha, random, paillier, partial_shares):
         encrypted shares we can safely transmit in one call to
         sendData. The sendData method can only transmit up to
         65536 bytes.
+        The constant has been imperically determined by running
+        TripleGenerator.generate_triples.
+        TODO: How can we allow a user of the runtime to adjust this
+        constraint at a higher level of abstraction?
         """
         transmission_restraint_constant = 50
         
