@@ -466,9 +466,11 @@ class MulTest(BeDOZaTestCase):
         cs = []
         for ai in ais:
             cs.append(triple_generator.paillier.encrypt(b2.value, 2))      
+
+        n = len(ais)
         
         if runtime.id == 1:
-            r1 = triple_generator._mul(1, 2, ais, cs)
+            r1 = triple_generator._mul(1, 2, n, ais, cs)
             def check1(partialShares):
                 for partialShare in partialShares:
                     zi = triple_generator.paillier.decrypt(partialShare.enc_shares[0])
@@ -479,7 +481,7 @@ class MulTest(BeDOZaTestCase):
             r1.addCallback(check1)
             return r1
         else:
-            r1 = triple_generator._mul(1, 2)
+            r1 = triple_generator._mul(1, 2, n)
             def check(partialShares):
                 deferreds = []
                 for partialShare in partialShares:
@@ -515,8 +517,10 @@ class MulTest(BeDOZaTestCase):
         cs = []
         for ai in ais:
             cs.append(triple_generator.paillier.encrypt(b2.value, 2))
+
+        n = len(ais)
         
-        r1 = triple_generator._mul(2, 2, ais, cs)
+        r1 = triple_generator._mul(2, 2, n, ais, cs)
         def check(partialShareContents):
             for partialShareContent in partialShareContents:
                 if runtime.id == 2:
