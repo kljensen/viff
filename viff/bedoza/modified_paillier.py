@@ -54,15 +54,16 @@ class ModifiedPaillier(object):
         Defaults to own public key.
         """
         assert isinstance(value, int) or isinstance(value, long), \
-            "paillier: encrypts only integers and longs, got %s" % value.__class__
+            "paillier: encrypts only integers and longs, got %s" % \
+                value.__class__
         if not player_id:
             player_id = self.runtime.id
         n = self.runtime.players[player_id].pubkey['n']
         min = -(n - 1) / 2
         max = (n - 1) / 2
         assert min <= value <= max, \
-            "paillier: plaintext %d outside legal range [-(n-1)/2 ; (n-1)/2] = " \
-            "[%d ; %d]"  % (value, min, max)
+            "paillier: plaintext %d outside legal range [-(n-1)/2 " \
+            "; (n-1)/2] = [%d ; %d]"  % (value, min, max)
         pubkey = self.runtime.players[player_id].pubkey
         randomness = self.random.randint(1, long(n))
         return pypaillier.encrypt_r(self._f(value, n), randomness, pubkey)

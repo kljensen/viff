@@ -65,7 +65,8 @@ def add_macs(runtime, field, u_bound, alpha, random, paillier, partial_shares):
                 # TODO: This is probably not the fastes way to generate
                 # the betas.
                 beta = random.randint(0, u_bound)
-                # TODO: Outcommented until mod paillier works for negative numbers.
+                # TODO: Outcommented until mod paillier works for negative
+                #       numbers.
                 # if rand.choice([True, False]):
                 #    beta = -beta
                 enc_beta = paillier.encrypt(beta, player_id = j + 1)
@@ -86,7 +87,8 @@ def add_macs(runtime, field, u_bound, alpha, random, paillier, partial_shares):
                     r[inx] += xs
             return r
 
-        def finish_sharing(recevied_cs, partial_share_contents, lists_of_mac_keys, result_shares):
+        def finish_sharing(recevied_cs, partial_share_contents,
+                           lists_of_mac_keys, result_shares):
             recevied_cs = merge(recevied_cs)
             shares = []               
             for inx in xrange(0, len(partial_share_contents)):
@@ -100,9 +102,9 @@ def add_macs(runtime, field, u_bound, alpha, random, paillier, partial_shares):
                 mac_key_list = BeDOZaKeyList(alpha, mac_keys)
 
                 mac_msg_list = BeDOZaMACList(decrypted_cs)
-                result_shares[inx].callback(BeDOZaShareContents(partial_share.value,
-                                                                mac_key_list,
-                                                                mac_msg_list))
+                result_shares[inx].callback(
+                    BeDOZaShareContents(partial_share.value, mac_key_list,
+                                        mac_msg_list))
             return shares
 
         runtime.schedule_callback(gatherResults(received_cs),
@@ -112,7 +114,8 @@ def add_macs(runtime, field, u_bound, alpha, random, paillier, partial_shares):
                                   result_shares)
         return received_cs
 
-    result_shares = [Share(runtime, field) for x in xrange(len(partial_shares))]
+    result_shares = [Share(runtime, field)
+                     for x in xrange(len(partial_shares))]
     runtime.schedule_callback(gatherResults(partial_shares),
                               do_add_macs,
                               result_shares)

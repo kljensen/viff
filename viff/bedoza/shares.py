@@ -35,12 +35,14 @@ class PartialShareContents(object):
         self.N_squared_list = N_squared_list
 
     def __str__(self):
-        return "PartialShareContents(%d; %s; %s)" % (self.value, self.enc_shares, self.N_squared_list)
+        return "PartialShareContents(%d; %s; %s)" % \
+            (self.value, self.enc_shares, self.N_squared_list)
 
     def __add__(self, other):
         z = self.value + other.value
         z_enc_shares = []
-        for x, y, N_squared in zip(self.enc_shares, other.enc_shares, self.N_squared_list):
+        for x, y, N_squared in zip(self.enc_shares, other.enc_shares,
+                                   self.N_squared_list):
             z_enc_shares.append((x * y) % N_squared)
         return PartialShareContents(z, z_enc_shares, self.N_squared_list)
 
@@ -53,8 +55,10 @@ class PartialShare(Share):
         if value == None and enc_shares == None:
             Share.__init__(self, runtime, field)
         else:
-            N_squared_list = [ runtime.players[player_id].pubkey['n_square'] for player_id in runtime.players.keys()]
-            partial_share_contents = PartialShareContents(value, enc_shares, N_squared_list)
+            N_squared_list = [ runtime.players[player_id].pubkey['n_square']
+                              for player_id in runtime.players.keys()]
+            partial_share_contents = PartialShareContents(value, enc_shares,
+                                                          N_squared_list)
             Share.__init__(self, runtime, field, partial_share_contents)
 
 
@@ -92,13 +96,15 @@ class BeDOZaShareContents(object):
     def add_public(self, c, my_id):
         if my_id == 1:
             self.value = self.value + c
-        self.keyList.set_key(0, self.keyList.get_key(0) - self.keyList.alpha * c)
+        self.keyList.set_key(0, self.keyList.get_key(0) -
+                             self.keyList.alpha * c)
         return self
     
     def sub_public(self, c, my_id):
         if my_id == 1:
             self.value = self.value - c
-        self.keyList.set_key(0, self.keyList.get_key(0) + self.keyList.alpha * c)
+        self.keyList.set_key(0, self.keyList.get_key(0) +
+                             self.keyList.alpha * c)
         return self
 
     def cmul(self, c):
@@ -108,7 +114,8 @@ class BeDOZaShareContents(object):
         return BeDOZaShareContents(zi, zks, zms)
 
     def __str__(self):
-        return "(%s, %s, %s)" % (str(self.value), str(self.keyList), str(self.macs))
+        return "(%s, %s, %s)" % (str(self.value), str(self.keyList),
+                                 str(self.macs))
     
 class BeDOZaShare(Share):
     """A share in the BeDOZa runtime.
@@ -129,8 +136,11 @@ class BeDOZaShare(Share):
     that runtime.
     """
 
-    def __init__(self, runtime, field, value=None, keyList=None, authentication_codes=None):
+    def __init__(self, runtime, field, value=None, keyList=None,
+                 authentication_codes=None):
         if value == None and keyList == None and authentication_codes == None:
             Share.__init__(self, runtime, field)
         else:
-            Share.__init__(self, runtime, field, BeDOZaShareContents(value, keyList, authentication_codes))
+            Share.__init__(self, runtime, field,
+                           BeDOZaShareContents(value, keyList,
+                                               authentication_codes))

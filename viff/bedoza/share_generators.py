@@ -15,7 +15,8 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with VIFF. If not, see <http://www.gnu.org/licenses/>.
 
-from viff.bedoza.shares import BeDOZaShare, BeDOZaShareContents, PartialShare, PartialShareContents
+from viff.bedoza.shares import BeDOZaShare, BeDOZaShareContents, PartialShare
+from viff.bedoza.shares import PartialShareContents
 from viff.bedoza.util import _convolute
 from viff.bedoza.add_macs import add_macs
 
@@ -30,7 +31,8 @@ class PartialShareGenerator:
     def generate_share(self, value):
         self.runtime.increment_pc()
         
-        r = [self.Zp(self.random.randint(0, self.Zp.modulus - 1)) # TODO: Exclusve?
+        # TODO: Exclusve?
+        r = [self.Zp(self.random.randint(0, self.Zp.modulus - 1))
              for _ in range(self.runtime.num_players - 1)]
         if self.runtime.id == 1:
             share = value - sum(r)
@@ -45,7 +47,8 @@ class PartialShareGenerator:
 
     def generate_random_shares(self, n):
         self.runtime.increment_pc()
-        N_squared_list = [ self.runtime.players[player_id].pubkey['n_square'] for player_id in self.runtime.players]
+        N_squared_list = [self.runtime.players[player_id].pubkey['n_square']
+                          for player_id in self.runtime.players]
         shares = [PartialShare(self.runtime, self.Zp) for _ in xrange(n)]
         for inx in xrange(n):
             r = self.random.randint(0, self.Zp.modulus - 1)
@@ -53,7 +56,8 @@ class PartialShareGenerator:
             enc_share = self.paillier.encrypt(ri.value)
             enc_shares = _convolute(self.runtime, enc_share)
             def create_partial_share(enc_shares, ri, s, N_squared_list):
-                s.callback(PartialShareContents(ri, enc_shares, N_squared_list))
+                s.callback(PartialShareContents(ri, enc_shares,
+                                                N_squared_list))
             self.runtime.schedule_callback(enc_shares,
                                            create_partial_share,
                                            ri,

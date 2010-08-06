@@ -27,7 +27,8 @@ from viff.runtime import Runtime, Share, ShareList, gather_shares
 from viff.field import FieldElement, GF
 from viff.constants import TEXT
 from viff.util import rand
-from viff.bedoza.shares import BeDOZaShare, BeDOZaShareContents, PartialShare, PartialShareContents
+from viff.bedoza.shares import BeDOZaShare, BeDOZaShareContents, PartialShare
+from viff.bedoza.shares import PartialShareContents
 from viff.bedoza.share_generators import PartialShareGenerator, ShareGenerator
 from viff.bedoza.keylist import BeDOZaKeyList
 from viff.bedoza.maclist import BeDOZaMACList
@@ -68,7 +69,8 @@ class TripleGenerator(object):
         # Debug output.
         #print "n_%d**2:%d" % (runtime.id, self.paillier.pubkey['n_square'])
         #print "n_%d:%d" % (runtime.id, self.paillier.pubkey['n'])
-        #print "n_%d bitlength: %d" % (runtime.id, self._bit_length_of(self.paillier.pubkey['n']))
+        #print "n_%d bitlength: %d" % \
+        #    (runtime.id, self._bit_length_of(self.paillier.pubkey['n']))
 
         #self.Zp = GF(p)
         #self.Zn2 = GF(self.paillier.pubkey['n_square'])
@@ -98,7 +100,8 @@ class TripleGenerator(object):
         
         def check(v, a, b, c):
             if v.value != 0:
-                raise Exception("TripleTest failed - The two triples were inconsistent.")
+                raise Exception("TripleTest failed - The two triples were "
+                                "inconsistent.")
             return Triple(a, b, c)
         
         def compute_value(r, a, b, c, x, y, z):
@@ -110,7 +113,8 @@ class TripleGenerator(object):
             v.addCallback(check, a, b, c)
             return v
 
-        gen = ShareGenerator(self.Zp, self.runtime, self.random, self.paillier, self.u_bound, self.alpha)
+        gen = ShareGenerator(self.Zp, self.runtime, self.random, self.paillier,
+                             self.u_bound, self.alpha)
         
         random_shares = gen.generate_random_shares(n)
 
@@ -142,15 +146,21 @@ class TripleGenerator(object):
 
         self.runtime.increment_pc()
         
-        gen = PartialShareGenerator(self.Zp, self.runtime, self.random, self.paillier)
+        gen = PartialShareGenerator(self.Zp, self.runtime, self.random,
+                                    self.paillier)
         partial_shares = []
         for _ in xrange(2 * n):
-             partial_shares.append(gen.generate_share(self.random.randint(0, self.Zp.modulus - 1)))
+             partial_shares.append(
+                 gen.generate_share(
+                     self.random.randint(0, self.Zp.modulus - 1)))
 
 
-        partial_shares_c = self._full_mul(partial_shares[0:n], partial_shares[n:2*n])
+        partial_shares_c = self._full_mul(partial_shares[0:n],
+                                          partial_shares[n:2*n])
 
-        full_shares = add_macs(self.runtime, self.Zp, self.u_bound, self.alpha, self.random, self.paillier, partial_shares + partial_shares_c)
+        full_shares = add_macs(self.runtime, self.Zp, self.u_bound, self.alpha,
+                               self.random, self.paillier,
+                               partial_shares + partial_shares_c)
 
         return full_shares  
 
@@ -211,7 +221,8 @@ class TripleGenerator(object):
 
             for dis in all_dis:
                 for player_id in self.runtime.players:
-                    self.runtime.protocols[player_id].sendData(pc, DiKIND, str(dis))
+                    self.runtime.protocols[player_id].sendData(pc, DiKIND,
+                                                               str(dis))
 
         if self.runtime.id == jnx:
             all_cs = []
@@ -234,7 +245,8 @@ class TripleGenerator(object):
                     djs.append(self.paillier.encrypt(zj.value, jnx))
                 for djs in all_djs:
                     for player_id in self.runtime.players:
-                        self.runtime.protocols[player_id].sendData(pc, DjKIND, str(djs))
+                        self.runtime.protocols[player_id].sendData(pc, DjKIND,
+                                                                   str(djs))
                 if not zis == []:
                     return [x + y for x, y in zip(zis, zjs)]
                 else:
@@ -266,15 +278,18 @@ class TripleGenerator(object):
             djs = reduce(lambda x, y: x + eval(y), djs, [])
             n_square_i = self.paillier.get_modulus_square(inx)
             n_square_j = self.paillier.get_modulus_square(jnx)
-            N_squared_list = [self.paillier.get_modulus_square(player_id) for player_id in self.runtime.players]
+            N_squared_list = [self.paillier.get_modulus_square(player_id)
+                              for player_id in self.runtime.players]
             ps = []
             
-            for v, di, dj in itertools.izip_longest(values, dis, djs, fillvalue=self.Zp(0)):
+            for v, di, dj in itertools.izip_longest(values, dis, djs,
+                                                    fillvalue=self.Zp(0)):
                 value = v
                 enc_shares = len(self.runtime.players) * [1]
                 enc_shares[inx - 1] = (enc_shares[inx - 1] * di) % n_square_i
                 enc_shares[jnx - 1] = (enc_shares[jnx - 1] * dj) % n_square_j
-                ps.append(PartialShareContents(value, enc_shares, N_squared_list))
+                ps.append(PartialShareContents(value, enc_shares,
+                                               N_squared_list))
             return ps
         r.addCallback(wrap, inx, jnx)
         return r
@@ -296,7 +311,8 @@ class TripleGenerator(object):
             a_values = [s.value for s in shares[0:len_shares/2]]
             b_enc_shares = []
             for inx in self.runtime.players:              
-                b_enc_shares.append([s.enc_shares[inx - 1] for s in shares[len_shares/2:]])
+                b_enc_shares.append([s.enc_shares[inx - 1]
+                                     for s in shares[len_shares/2:]])
             for inx in xrange(0, len(self.runtime.players)):
                 for jnx in xrange(0, len(self.runtime.players)):
                     deferreds.append(self._mul(inx + 1,

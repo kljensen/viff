@@ -64,7 +64,9 @@ class BeDOZaMixin(HashBroadcastMixin, ShareGenerator):
                 if reduce(lambda x, y: true_str == y, ls):
                     return x
                 else:
-                    raise BeDOZaException("Wrong commitment. Some player revieved a wrong commitment. My commitments were: %s", isOK)
+                    raise BeDOZaException("Wrong commitment. Some player "
+                                          "revieved a wrong commitment. My "
+                                          "commitments were: %s", isOK)
 
             n = len(self.players)
             alpha = keyLists[0].alpha
@@ -84,7 +86,8 @@ class BeDOZaMixin(HashBroadcastMixin, ShareGenerator):
             ds = self.broadcast(self.players.keys(), self.players.keys(),
                                 str(isOK))
             ds = gatherResults(ds)
-            ds.addCallbacks(check, self.error_handler, callbackArgs=(values, isOK))
+            ds.addCallbacks(check, self.error_handler,
+                            callbackArgs=(values, isOK))
             return ds
         
         def exchange(ls, receivers):
@@ -96,7 +99,8 @@ class BeDOZaMixin(HashBroadcastMixin, ShareGenerator):
                 for inx, beDOZaContents in enumerate(ls):
                     keyLists.append(beDOZaContents.get_keys())
                     message_string += "%s:%s;" % \
-                           (beDOZaContents.get_value().value, beDOZaContents.get_mac(other_id - 1).value)
+                           (beDOZaContents.get_value().value,
+                            beDOZaContents.get_mac(other_id - 1).value)
                 self.protocols[other_id].sendData(pc, TEXT, message_string)
 
             if self.id in receivers:
@@ -114,7 +118,8 @@ class BeDOZaMixin(HashBroadcastMixin, ShareGenerator):
                     self._expect_data(other_id, TEXT, d)
                     values[inx] = d
                 result = gatherResults(values)
-                result.addCallbacks(recombine_value, self.error_handler, callbackArgs=(keyLists, len(shares)))
+                result.addCallbacks(recombine_value, self.error_handler,
+                                    callbackArgs=(keyLists, len(shares)))
                 return result
 
         result = gather_shares(shares)
@@ -145,7 +150,9 @@ class BeDOZaMixin(HashBroadcastMixin, ShareGenerator):
                 if reduce(lambda x, y: true_str == y, ls):
                     return a, b
                 else:
-                    raise BeDOZaException("Wrong commitment. Some player revieved a wrong commitment. My commitments were: %s", isOK)
+                    raise BeDOZaException("Wrong commitment. Some player "
+                                          "revieved a wrong commitment. My "
+                                          "commitments were: %s", isOK)
 
             n = len(self.players)
             alpha_a = keyList_a.alpha
@@ -171,7 +178,8 @@ class BeDOZaMixin(HashBroadcastMixin, ShareGenerator):
             ds = self.broadcast(self.players.keys(), self.players.keys(),
                                 str(isOK))
             ds = gatherResults(ds)
-            ds.addCallbacks(check, self.error_handler, callbackArgs=(a, b, isOK))
+            ds.addCallbacks(check, self.error_handler,
+                            callbackArgs=(a, b, isOK))
             return ds
         
         def exchange((a, b), receivers):
@@ -195,7 +203,8 @@ class BeDOZaMixin(HashBroadcastMixin, ShareGenerator):
                     values_b[inx] =  self._expect_share(other_id, field)
                     codes_b[inx] = self._expect_share(other_id, field)
                 result = gatherResults(values_a + codes_a + values_b + codes_b)
-                self.schedule_callback(result, recombine_value, a.get_keys(), b.get_keys())
+                self.schedule_callback(result, recombine_value, a.get_keys(),
+                                       b.get_keys())
                 return result
 
         result = gather_shares([share_a, share_b])
@@ -236,7 +245,9 @@ class BeDOZaMixin(HashBroadcastMixin, ShareGenerator):
                 if reduce(lambda x, y: true_str == y, ls):
                     return x
                 else:
-                    raise BeDOZaException("Wrong commitment. Some player revieved a wrong commitment. My commitments were: %s", isOK)
+                    raise BeDOZaException("Wrong commitment. Some player "
+                                          "revieved a wrong commitment. My "
+                                          "commitments were: %s", isOK)
                 
             ds = self.broadcast(self.players.keys(), self.players.keys(),
                                 str(isOK))
@@ -248,8 +259,10 @@ class BeDOZaMixin(HashBroadcastMixin, ShareGenerator):
             # Send share to all receivers.
             pc = tuple(self.program_counter)
             for other_id in receivers:
-                self.protocols[other_id].sendShare(pc, shareContent.get_value())
-                self.protocols[other_id].sendShare(pc, shareContent.get_mac(other_id - 1))
+                self.protocols[other_id].sendShare(
+                    pc, shareContent.get_value())
+                self.protocols[other_id].sendShare(
+                    pc, shareContent.get_mac(other_id - 1))
             if self.id in receivers:
                 num_players = len(self.players.keys())
                 values = num_players * [None]
@@ -258,7 +271,8 @@ class BeDOZaMixin(HashBroadcastMixin, ShareGenerator):
                     values[inx] =  self._expect_share(other_id, field)
                     codes[inx] = self._expect_share(other_id, field)
                 result = gatherResults(values + codes)
-                result.addCallbacks(recombine_value, self.error_handler, callbackArgs=(shareContent.get_keys(),))
+                result.addCallbacks(recombine_value, self.error_handler,
+                                    callbackArgs=(shareContent.get_keys(),))
                 return result
 
         result = share.clone()
@@ -273,7 +287,8 @@ class BeDOZaMixin(HashBroadcastMixin, ShareGenerator):
 
     def _plus_public(self, x, c, field):
         x = x.add_public(c, self.id)
-        return BeDOZaShare(self, field, x.get_value(), x.get_keys(), x.get_macs())
+        return BeDOZaShare(self, field, x.get_value(), x.get_keys(),
+                           x.get_macs())
 
     def _plus(self, (x, y), field):
         """Addition of share-contents *x* and *y*."""
@@ -281,7 +296,8 @@ class BeDOZaMixin(HashBroadcastMixin, ShareGenerator):
 
     def _minus_public_right(self, x, c, field):
         z = self._minus_public_right_without_share(x, c, field)
-        return BeDOZaShare(self, field, z.get_value(), z.get_keys(), z.get_macs())
+        return BeDOZaShare(self, field, z.get_value(), z.get_keys(),
+                           z.get_macs())
 
     def _minus_public_right_without_share(self, x, c, field):
         return x.sub_public(c, self.id)
