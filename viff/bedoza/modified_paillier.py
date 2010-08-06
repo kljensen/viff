@@ -26,7 +26,7 @@ except ImportError:
 class ModifiedPaillier(object):
     """A slight modification of the Paillier cryptosystem.
 
-    This modification has plaintext space [-(n-1)/ ; (n-1)/2] rather
+    This modification has plaintext space [-(n-1)/2 ; (n-1)/2] rather
     than the usual Z_n where n is the Paillier modulus.
 
     See Ivan's paper, beginning of section 6.
