@@ -147,7 +147,7 @@ class ModifiedPaillierTest(BeDOZaTestCase):
     def test_modified_paillier_can_decrypt_encrypted_max_val(self, runtime):
         paillier = ModifiedPaillier(runtime, Random(825604))
         n = runtime.players[runtime.id].pubkey['n']
-        val = (n + 1) / 2
+        val = (n - 1) / 2
         encrypted_val = paillier.encrypt(val)
         decrypted_val = paillier.decrypt(encrypted_val)
         self.assertEquals(val, decrypted_val)
@@ -156,7 +156,7 @@ class ModifiedPaillierTest(BeDOZaTestCase):
     def test_modified_paillier_can_decrypt_encrypted_min_val(self, runtime):
         paillier = ModifiedPaillier(runtime, Random(554424))
         n = runtime.players[runtime.id].pubkey['n']
-        val = -(n - 1) / 2 + 1
+        val = -(n - 1) / 2
         encrypted_val = paillier.encrypt(val)
         decrypted_val = paillier.decrypt(encrypted_val)
         self.assertEquals(val, decrypted_val)
@@ -173,14 +173,14 @@ class ModifiedPaillierTest(BeDOZaTestCase):
     def test_encrypting_too_large_number_raises_exception(self, runtime):
         paillier = ModifiedPaillier(runtime, Random(825604))
         n = runtime.players[runtime.id].pubkey['n']
-        val = 1 + (n + 1) / 2
+        val = 1 + (n - 1) / 2
         self.assertRaises(AssertionError, paillier.encrypt, val)
 
     @protocol
     def test_encrypting_too_small_number_raises_exception(self, runtime):
         paillier = ModifiedPaillier(runtime, Random(554424))
         n = runtime.players[runtime.id].pubkey['n']
-        val = -(n - 1) / 2
+        val = -(n - 1) / 2 - 1
         self.assertRaises(AssertionError, paillier.encrypt, val)
 
     @protocol

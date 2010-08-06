@@ -43,7 +43,7 @@ class ModifiedPaillier(object):
             return n + x
 
     def _f_inverse(self, y, n):
-        if 0 <= y <= (n + 1) / 2:
+        if 0 <= y <= (n - 1) / 2:
             return y
         else:
             return y - n
@@ -58,10 +58,10 @@ class ModifiedPaillier(object):
         if not player_id:
             player_id = self.runtime.id
         n = self.runtime.players[player_id].pubkey['n']
-        min = -(n - 1) / 2 + 1
-        max = (n + 1) / 2
+        min = -(n - 1) / 2
+        max = (n - 1) / 2
         assert min <= value <= max, \
-            "paillier: plaintext %d outside legal range [-(n-1)/2+1 ; (n+1)/2] = " \
+            "paillier: plaintext %d outside legal range [-(n-1)/2 ; (n-1)/2] = " \
             "[%d ; %d]"  % (value, min, max)
         pubkey = self.runtime.players[player_id].pubkey
         randomness = self.random.randint(1, long(n))
