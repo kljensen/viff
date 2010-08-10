@@ -32,7 +32,6 @@ from viff.bedoza.shares import PartialShareContents
 from viff.bedoza.share_generators import PartialShareGenerator, ShareGenerator
 from viff.bedoza.keylist import BeDOZaKeyList
 from viff.bedoza.maclist import BeDOZaMACList
-from viff.bedoza.util import _send, _convolute
 from viff.bedoza.add_macs import add_macs
 from viff.bedoza.modified_paillier import ModifiedPaillier
 
