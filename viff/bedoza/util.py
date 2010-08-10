@@ -17,6 +17,8 @@
 
 from twisted.internet.defer import Deferred, gatherResults
 
+from gmpy import mpz
+
 from viff.constants import TEXT
 
 def _send(runtime, vals, serialize=str, deserialize=int):
@@ -56,3 +58,6 @@ def _send_gf_elm(runtime, vals):
     return _send(runtime, vals, 
                  serialize=lambda x: str(x.value),
                  deserialize=lambda x: gf_elm.field(int(x)))
+
+def fast_pow(a, b, modulus):
+    return long(pow(mpz(a), b, modulus))

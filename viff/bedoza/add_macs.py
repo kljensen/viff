@@ -20,7 +20,7 @@ import struct
 from twisted.internet.defer import gatherResults
 from viff.runtime import Share
 
-from viff.bedoza.util import _send
+from viff.bedoza.util import _send, fast_pow
 from viff.bedoza.keylist import BeDOZaKeyList
 from viff.bedoza.maclist import BeDOZaMACList
 
@@ -70,7 +70,7 @@ def add_macs(runtime, field, u_bound, alpha, random, paillier, partial_shares):
                 enc_beta = paillier.encrypt(beta, player_id = j + 1)
                 c_j = partial_share_content.enc_shares[ j ]
                 n2 = paillier.get_modulus_square( j + 1 )
-                c = (pow(c_j, alpha, n2) * enc_beta) % n2
+                c = (fast_pow(c_j, alpha, n2) * enc_beta) % n2
                 player_to_enc_shares[j].append(c)
                 player_to_mac_keys[j].append(field(beta))
 

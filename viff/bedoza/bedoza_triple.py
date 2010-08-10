@@ -34,6 +34,7 @@ from viff.bedoza.keylist import BeDOZaKeyList
 from viff.bedoza.maclist import BeDOZaMACList
 from viff.bedoza.add_macs import add_macs
 from viff.bedoza.modified_paillier import ModifiedPaillier
+from viff.bedoza.util import fast_pow
 
 from viff.triple import Triple
 
@@ -210,7 +211,7 @@ class TripleGenerator(object):
                     all_dis.append(dis)
                 u = rand.randint(0, self.u_bound)
                 Ej_u = self.paillier.encrypt(u, jnx)
-                cs.append( (pow(cj, ai.value, Nj_square) * Ej_u) % Nj_square )
+                cs.append( (fast_pow(cj, ai.value, Nj_square) * Ej_u) % Nj_square )
                 zi = self.Zp(-u)
                 zis.append(zi)
                 dis.append(self.paillier.encrypt(zi.value, inx))
