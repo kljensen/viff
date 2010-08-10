@@ -400,7 +400,7 @@ class AddMacsTest(BeDOZaTestCase):
 class TripleTest(BeDOZaTestCase): 
     num_players = 3
 
-    timeout = 12
+    timeout = 25
 
     @protocol
     def test_generate_triples_generates_correct_triples(self, runtime):
