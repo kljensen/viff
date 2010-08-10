@@ -65,10 +65,8 @@ def add_macs(runtime, field, u_bound, alpha, random, paillier, partial_shares):
                 # TODO: This is probably not the fastes way to generate
                 # the betas.
                 beta = random.randint(0, u_bound)
-                # TODO: Outcommented until mod paillier works for negative
-                #       numbers.
-                # if rand.choice([True, False]):
-                #    beta = -beta
+                if random.choice([True, False]):
+                    beta = -beta
                 enc_beta = paillier.encrypt(beta, player_id = j + 1)
                 c_j = partial_share_content.enc_shares[ j ]
                 n2 = paillier.get_modulus_square( j + 1 )
