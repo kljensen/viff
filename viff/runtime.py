@@ -536,6 +536,11 @@ class Runtime:
                          "multiple times on the command line; the first will "
                          "override host and port of player 1, the second that "
                          "of player 2, and so forth.")
+        group.add_option("--computation-id", type="int", metavar="ID",
+                         help="Set the (positive, integer) ID for this "
+                         "computation. All IDs for runs using the same set "
+                         "of player configuration files must be unique "
+                         "to ensure security.")
 
         try:
             # Using __import__ since we do not use the module, we are
@@ -551,7 +556,8 @@ class Runtime:
                             deferred_debug=False,
                             profile=False,
                             track_memory=False,
-                            statistics=False)
+                            statistics=False,
+                            computation_id=None)
 
     def __init__(self, player, threshold, options=None):
         """Initialize runtime.
@@ -585,7 +591,12 @@ class Runtime:
         self._needed_data = {}
 
         #: Current program counter.
-        self.program_counter = [0]
+        __comp_id = self.options.computation_id
+        if __comp_id is None:
+            __comp_id = 0
+        else:
+            assert __comp_id > 0, "Non-positive ID: %d." % __comp_id
+        self.program_counter = [__comp_id, 0]
 
         #: Connections to the other players.
         #:

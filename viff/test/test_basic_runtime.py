@@ -25,7 +25,7 @@ class ProgramCounterTest(RuntimeTestCase):
 
     @protocol
     def test_initial_value(self, runtime):
-        self.assertEquals(runtime.program_counter, [0])
+        self.assertEquals(runtime.program_counter, [0, 0])
 
     @protocol
     def test_synchronize(self, runtime):
@@ -33,11 +33,11 @@ class ProgramCounterTest(RuntimeTestCase):
 
         Every synchronize operation should have its unique program
         counter."""
-        self.assertEquals(runtime.program_counter, [0])
+        self.assertEquals(runtime.program_counter, [0, 0])
         runtime.synchronize()
-        self.assertEquals(runtime.program_counter, [1])
+        self.assertEquals(runtime.program_counter, [0, 1])
         runtime.synchronize()
-        self.assertEquals(runtime.program_counter, [2])
+        self.assertEquals(runtime.program_counter, [0, 2])
 
     @protocol
     def test_callback(self, runtime):
@@ -49,15 +49,15 @@ class ProgramCounterTest(RuntimeTestCase):
 
         def verify_program_counter(_):
             # The callback is run with its own sub-program counter.
-            self.assertEquals(runtime.program_counter, [1, 0])
+            self.assertEquals(runtime.program_counter, [0, 1, 0])
 
         d = Deferred()
 
-        self.assertEquals(runtime.program_counter, [0])
+        self.assertEquals(runtime.program_counter, [0, 0])
 
         # Scheduling a callback increases the program counter.
         runtime.schedule_callback(d, verify_program_counter)
-        self.assertEquals(runtime.program_counter, [1])
+        self.assertEquals(runtime.program_counter, [0, 1])
 
         # Now trigger verify_program_counter.
         d.callback(None)
@@ -69,11 +69,11 @@ class ProgramCounterTest(RuntimeTestCase):
         d2 = Deferred()
 
         def verify_program_counter(_, count):
-            self.assertEquals(runtime.program_counter, [count, 0])
+            self.assertEquals(runtime.program_counter, [0, count, 0])
 
         def method_a(runtime):
             # No calls to schedule_callback yet.
-            self.assertEquals(runtime.program_counter, [0])
+            self.assertEquals(runtime.program_counter, [0, 0])
 
             runtime.schedule_callback(d1, verify_program_counter, 1)
             runtime.schedule_callback(d2, verify_program_counter, 2)

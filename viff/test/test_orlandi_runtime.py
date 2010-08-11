@@ -410,7 +410,7 @@ class OrlandiAdvancedCommandsTest(RuntimeTestCase):
 
         def r1(ls):
             x, y = ls
-            self.assertEquals(runtime.program_counter, [4])
+            self.assertEquals(runtime.program_counter, [0, 4])
 
         x = runtime.shift([1], self.Zp, 42)
         y = runtime.shift([2], self.Zp, 42)
