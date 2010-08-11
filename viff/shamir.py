@@ -97,6 +97,9 @@ def recombine(shares, x_recomb=0):
     Shares is a list of *threshold* + 1 ``(player id, share)`` pairs.
     Recombination is done in the optional point *x_recomb*.
     
+    Note that player ids must be elements in the same field as the
+    shares or otherwise the algorithm will not work.
+    
     >>> from field import GF
     >>> Zp = GF(19)
     >>> shares = [(Zp(i), 7 * Zp(i) + 3) for i in range(1, 4)]
