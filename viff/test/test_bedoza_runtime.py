@@ -525,3 +525,8 @@ class BeDOZaBasicCommandsTest(RuntimeTestCase):
         d.addCallback(check)
         return d
     
+def skip_tests(module_name):
+    BeDOZaBasicCommandsTest.skip = "Skipped due to missing " + module_name + " module."
+
+if not pypaillier:
+    skip_tests("pypaillier")

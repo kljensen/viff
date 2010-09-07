@@ -411,7 +411,7 @@ class TripleTest(BeDOZaTestCase):
         random = Random(283883)        
         triple_generator = TripleGenerator(runtime, p, random)
 
-        triples = triple_generator.generate_triples(100)
+        triples = triple_generator.generate_triples(10)
 
         def check((a, b, c)):
             self.assertEquals(c, a * b)
