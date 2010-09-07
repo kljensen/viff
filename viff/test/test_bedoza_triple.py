@@ -213,7 +213,7 @@ def partial_random_shares(random, runtime, Zp, n, paillier=None):
     gen = PartialShareGenerator(Zp, runtime, share_random, paillier)
     return gen.generate_random_shares(n)
 
-class ParialShareGeneratorTest(BeDOZaTestCase):
+class PartialShareGeneratorTest(BeDOZaTestCase):
     num_players = 3
  
     @protocol
