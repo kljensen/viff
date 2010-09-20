@@ -76,6 +76,10 @@ class BeDOZaTestCase(RuntimeTestCase):
 
     runtime_class = BeDOZaRuntime
 
+    def setUp(self):
+        RuntimeTestCase.setUp(self)
+        self.security_parameter = 32
+
     # TODO: During test, we would like generation of Paillier keys to
     # be deterministic. How do we obtain that?
     def generate_configs(self, *args):
@@ -407,9 +411,9 @@ class TripleTest(BeDOZaTestCase):
         p = 17
 
         Zp = GF(p)
-        
+      
         random = Random(283883)        
-        triple_generator = TripleGenerator(runtime, p, random)
+        triple_generator = TripleGenerator(runtime, self.security_parameter, p, random)
 
         triples = triple_generator.generate_triples(10)
 
@@ -433,9 +437,9 @@ class TripleTest(BeDOZaTestCase):
         p = 17
 
         Zp = GF(p)
-        
+       
         random = Random(283883)        
-        triple_generator = TripleGenerator(runtime, p, random)
+        triple_generator = TripleGenerator(runtime, self.security_parameter, p, random)
 
         triples = triple_generator._generate_passive_triples(5)
         def verify(triples):
@@ -456,8 +460,9 @@ class MulTest(BeDOZaTestCase):
     @protocol
     def test_mul_computes_correct_result(self, runtime):
         p = 17
+       
         random = Random(283883)        
-        triple_generator = TripleGenerator(runtime, p, random)
+        triple_generator = TripleGenerator(runtime, 32, p, random)
 
         Zp = GF(p)
 
@@ -471,35 +476,28 @@ class MulTest(BeDOZaTestCase):
         
         if runtime.id == 1:
             r1 = triple_generator._mul(1, 2, n, ais, cs)
-            def check1(partialShares):
-                for partialShare in partialShares:
-                    zi = triple_generator.paillier.decrypt(partialShare.enc_shares[0])
-                    self.assertEquals(partialShare.value.value, zi)
+            def check1(shares):
+                for share in shares:
                     pc = tuple(runtime.program_counter)
-                    runtime.protocols[2].sendData(pc, TEXT, str(zi))
+                    runtime.protocols[2].sendData(pc, TEXT, str(share.value))
                 return True
             r1.addCallback(check1)
             return r1
         else:
             r1 = triple_generator._mul(1, 2, n)
-            def check(partialShares):
+            def check(shares):
                 deferreds = []
-                for partialShare in partialShares:
+                for share in shares:
                     if runtime.id == 2:
-                        zj = triple_generator.paillier.decrypt(partialShare.enc_shares[1])
-                        self.assertEquals(partialShare.value.value, zj)
                         def check_additivity(zi, zj):
                             self.assertEquals((Zp(long(zi)) + zj).value, 8)
                             return None
                         d = Deferred()
-                        d.addCallback(check_additivity, partialShare.value)
+                        d.addCallback(check_additivity, share.value)
                         runtime._expect_data(1, TEXT, d)
                         deferreds.append(d)
                     else:
-                        self.assertEquals(partialShare.value, 0)
-                        self.assertNotEquals(partialShare.enc_shares[0], 0)
-                        self.assertNotEquals(partialShare.enc_shares[1], 0)
-                        self.assertEquals(partialShare.enc_shares[2], 1)
+                        self.assertEquals(share.value, 0)
                 return gatherResults(deferreds)
             r1.addCallback(check)
             return r1
@@ -507,8 +505,9 @@ class MulTest(BeDOZaTestCase):
     @protocol
     def test_mul_same_player_inputs_and_receives(self, runtime):
         p = 17
+      
         random = Random(283883)        
-        triple_generator = TripleGenerator(runtime, p, random)
+        triple_generator = TripleGenerator(runtime, self.security_parameter, p, random)
 
         Zp = GF(p)
 
@@ -521,12 +520,10 @@ class MulTest(BeDOZaTestCase):
         n = len(ais)
         
         r1 = triple_generator._mul(2, 2, n, ais, cs)
-        def check(partialShareContents):
-            for partialShareContent in partialShareContents:
+        def check(shares):
+            for share in shares:
                 if runtime.id == 2:
-                    zi_enc = Zp(triple_generator.paillier.decrypt(partialShareContent.enc_shares[1]))
-                    self.assertEquals(zi_enc, partialShareContent.value)
-                    self.assertEquals(partialShareContent.value, 8)
+                    self.assertEquals(share.value, 8)
             return True
             
         r1.addCallback(check)
@@ -535,7 +532,9 @@ class MulTest(BeDOZaTestCase):
 
 class FullMulTest(BeDOZaTestCase): 
     num_players = 3
-    
+
+    timeout = 10
+        
     @protocol
     def test_fullmul_computes_the_correct_result(self, runtime):
         p = 17
@@ -543,7 +542,7 @@ class FullMulTest(BeDOZaTestCase):
         Zp = GF(p)
         
         random = Random(283883)        
-        triple_generator = TripleGenerator(runtime, p, random)
+        triple_generator = TripleGenerator(runtime, self.security_parameter, p, random)
 
         paillier = triple_generator.paillier
         
@@ -565,7 +564,7 @@ class FullMulTest(BeDOZaTestCase):
                 self.assertEquals(6, Zp(sum(ls[2])))
             values = []
             for share in shares:
-                value = _convolute(runtime, share.value.value)
+                value = _convolute(runtime, share.value)
                 values.append(value)
             d = gatherResults(values)
             runtime.schedule_callback(d, test_sum)
@@ -582,7 +581,7 @@ class FullMulTest(BeDOZaTestCase):
         Zp = GF(p)
         
         random = Random(283883)        
-        triple_generator = TripleGenerator(runtime, p, random)
+        triple_generator = TripleGenerator(runtime, self.security_parameter, p, random)
 
         paillier = triple_generator.paillier
 

@@ -78,7 +78,8 @@ class BeDOZaBasicCommandsTest(RuntimeTestCase):
         RuntimeTestCase.setUp(self)
         self.Zp = GF(17)
         bits_in_p = 5
-        self.u_bound = 2**(4 * bits_in_p)
+        self.security_parameter = 32
+        self.u_bound = 2**(self.security_parameter + 4 * bits_in_p)
         self.alpha = 15
 
     @protocol
@@ -343,7 +344,7 @@ class BeDOZaBasicCommandsTest(RuntimeTestCase):
             return d
 
         random = Random(3423993)
-        gen = TripleGenerator(runtime, self.Zp.modulus, random)
+        gen = TripleGenerator(runtime, self.security_parameter, self.Zp.modulus, random)
         [triple] = gen.generate_triples(1)
         triple.addCallback(open)
         return triple
@@ -376,7 +377,7 @@ class BeDOZaBasicCommandsTest(RuntimeTestCase):
             d.addCallback(check)
             return d
 
-        gen = TripleGenerator(runtime, self.Zp.modulus, Random(3423993))
+        gen = TripleGenerator(runtime, self.security_parameter, self.Zp.modulus, Random(3423993))
         alpha = gen.alpha
         [triple] = gen.generate_triples(1)
         runtime.schedule_callback(triple, do_stuff, alpha)
@@ -392,7 +393,7 @@ class BeDOZaBasicCommandsTest(RuntimeTestCase):
         def check(v):
             self.assertEquals(v, self.Zp(x1 * y1))
 
-        gen = TripleGenerator(runtime, self.Zp.modulus, Random(3423993))
+        gen = TripleGenerator(runtime, self.security_parameter, self.Zp.modulus, Random(3423993))
         alpha = gen.alpha
         triples = gen.generate_triples(1)
         
@@ -443,7 +444,7 @@ class BeDOZaBasicCommandsTest(RuntimeTestCase):
             d.addCallback(check)
             return d
 
-        gen = TripleGenerator(runtime, self.Zp.modulus, Random(3423993))
+        gen = TripleGenerator(runtime, self.security_parameter, self.Zp.modulus, Random(3423993))
         alpha = gen.alpha
         [triple] = gen.generate_triples(1)
         runtime.schedule_callback(triple, do_stuff, alpha)
@@ -477,7 +478,7 @@ class BeDOZaBasicCommandsTest(RuntimeTestCase):
             d.addCallback(check)
             return d
 
-        gen = TripleGenerator(runtime, self.Zp.modulus, Random(3423993))
+        gen = TripleGenerator(runtime, self.security_parameter, self.Zp.modulus, Random(3423993))
         alpha = gen.alpha
         [triple] = gen.generate_triples(1)
         runtime.schedule_callback(triple, do_stuff, alpha)

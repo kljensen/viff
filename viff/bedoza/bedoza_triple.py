@@ -52,7 +52,7 @@ except ImportError:
 
 class TripleGenerator(object):
 
-    def __init__(self, runtime, p, random):
+    def __init__(self, runtime, security_parameter, p, random):
         assert p > 1
         self.random = random
         # TODO: Generate Paillier cipher with N_i sufficiently larger than p
@@ -60,7 +60,8 @@ class TripleGenerator(object):
         self.p = p
         self.Zp = GF(p)
         self.k = self._bit_length_of(p)
-        self.u_bound = 2**(4 * self.k)
+        self.security_parameter = security_parameter
+        self.u_bound = 2**(self.security_parameter + 4 * self.k)
 
         paillier_random = Random(self.random.getrandbits(128))
         alpha_random = Random(self.random.getrandbits(128))
@@ -85,6 +86,10 @@ class TripleGenerator(object):
             bit_length += 1
         return bit_length
 
+    def generate_triples(self):
+        """Generates and returns a set with *self.security_parameter* triples."""
+        return generate_triples(self, self.security_parameter)
+        
     def generate_triples(self, n):
         """Generates and returns a set of n triples.
         
@@ -172,12 +177,10 @@ class TripleGenerator(object):
         """Multiply each of the field elements in *ais* with the
         corresponding encrypted elements in *cjs*.
         
-        Returns a deferred which will yield a list of PartialShareContents.
+        Returns a deferred which will yield a list of field elements.
         """
         CKIND = 1
-        DiKIND = 2
-        DjKIND = 3
-
+ 
         """The transmission_restraint_constant is the number of
         encrypted shares we can safely transmit in one call to
         sendData. The sendData method can only transmit up to
@@ -197,32 +200,23 @@ class TripleGenerator(object):
 
         pc = tuple(self.runtime.program_counter)
 
-        deferreds = []
+        deferred = []
         zis = []
         if self.runtime.id == inx:
             Nj_square = self.paillier.get_modulus_square(jnx)
             all_cs = []
-            all_dis = []
             for iny, (ai, cj) in enumerate(zip(ais, cjs)):
                 if iny % transmission_restraint_constant == 0:
                     cs = []
                     all_cs.append(cs)
-                    dis = []
-                    all_dis.append(dis)
                 u = rand.randint(0, self.u_bound)
                 Ej_u = self.paillier.encrypt(u, jnx)
                 cs.append( (fast_pow(cj, ai.value, Nj_square) * Ej_u) % Nj_square )
                 zi = self.Zp(-u)
                 zis.append(zi)
-                dis.append(self.paillier.encrypt(zi.value, inx))
                 
             for cs in all_cs:
                 self.runtime.protocols[jnx].sendData(pc, CKIND, str(cs))
-
-            for dis in all_dis:
-                for player_id in self.runtime.players:
-                    self.runtime.protocols[player_id].sendData(pc, DiKIND,
-                                                               str(dis))
 
         if self.runtime.id == jnx:
             all_cs = []
@@ -234,65 +228,23 @@ class TripleGenerator(object):
             def decrypt(all_cs, pc, zis):
                 zjs = []
                 cs = reduce(lambda x, y: x + eval(y), all_cs, [])
-                all_djs = []
                 for iny, c in enumerate(cs):
-                    if iny % transmission_restraint_constant == 0:
-                        djs = []
-                        all_djs.append(djs)
                     t = self.paillier.decrypt(c)
                     zj = self.Zp(t)
                     zjs.append(zj)
-                    djs.append(self.paillier.encrypt(zj.value, jnx))
-                for djs in all_djs:
-                    for player_id in self.runtime.players:
-                        self.runtime.protocols[player_id].sendData(pc, DjKIND,
-                                                                   str(djs))
                 if not zis == []:
                     return [x + y for x, y in zip(zis, zjs)]
                 else:
                     return zjs 
             all_cs_d = gatherResults(all_cs)
             all_cs_d.addCallback(decrypt, pc, zis)
-            deferreds.append(all_cs_d)
+            deferred = all_cs_d
         else:
             zis_deferred = Deferred()
             zis_deferred.callback(zis)
-            deferreds.append(zis_deferred)
+            deferred = zis_deferred
 
-        all_dis = []
-        for _ in xrange(number_of_packets):
-            dis = Deferred()
-            self.runtime._expect_data(inx, DiKIND, dis)
-            all_dis.append(dis)
-        all_djs = []
-        for _ in xrange(number_of_packets):
-            djs = Deferred()
-            self.runtime._expect_data(jnx, DjKIND, djs)
-            all_djs.append(djs)
-
-        deferreds.append(gatherResults(all_dis))
-        deferreds.append(gatherResults(all_djs))
-        r = gatherResults(deferreds)
-        def wrap((values, dis, djs), inx, jnx):
-            dis = reduce(lambda x, y: x + eval(y), dis, [])
-            djs = reduce(lambda x, y: x + eval(y), djs, [])
-            n_square_i = self.paillier.get_modulus_square(inx)
-            n_square_j = self.paillier.get_modulus_square(jnx)
-            N_squared_list = [self.paillier.get_modulus_square(player_id)
-                              for player_id in self.runtime.players]
-            ps = []
-            
-            for v, di, dj in itertools.izip_longest(values, dis, djs,
-                                                    fillvalue=self.Zp(0)):
-                value = v
-                enc_shares = len(self.runtime.players) * [1]
-                enc_shares[inx - 1] = (enc_shares[inx - 1] * di) % n_square_i
-                enc_shares[jnx - 1] = (enc_shares[jnx - 1] * dj) % n_square_j
-                ps.append(PartialShareContents(value, enc_shares,
-                                               N_squared_list))
-            return ps
-        r.addCallback(wrap, inx, jnx)
-        return r
+        return deferred
 
     def _full_mul(self, a, b):
         """Multiply each of the PartialShares in the list *a* with the
@@ -302,39 +254,41 @@ class TripleGenerator(object):
         """
         self.runtime.increment_pc()
         
-        def do_full_mul(shares, result_shares):
+        def do_full_mul(shareContents, result_shares):
             """Share content belonging to ai, bi are at:
-            shares[i], shares[len(shares) + i].
+            shareContents[i], shareContents[len(shareContents) + i].
             """
             deferreds = []
-            len_shares = len(shares)
-            a_values = [s.value for s in shares[0:len_shares/2]]
+            len_shares = len(shareContents)
+
+            ais = [shareContent.value for shareContent in shareContents[0:len_shares/2]]
+            bis = [shareContent.value for shareContent in shareContents[len_shares/2:]]
+            
             b_enc_shares = []
-            for inx in self.runtime.players:              
+            for inx in self.runtime.players:
                 b_enc_shares.append([s.enc_shares[inx - 1]
-                                     for s in shares[len_shares/2:]])
+                                     for s in shareContents[len_shares/2:]])
+
+            values = len(ais) * [0]
+
             for inx in xrange(0, len(self.runtime.players)):
                 for jnx in xrange(0, len(self.runtime.players)):
                     deferreds.append(self._mul(inx + 1,
                                                jnx + 1,
-                                               len(a_values),
-                                               a_values,
+                                               len(ais),
+                                               ais,
                                                b_enc_shares[jnx]))
-                        
-            def compute_shares(partialShareContents, len_shares, result_shares):
-                num_players = len(self.runtime.players)
-                pcs = len(partialShareContents[0]) * [None]
-                for ps in partialShareContents:
-                    for inx in xrange(0, len(ps)):
-                        if pcs[inx] == None:
-                            pcs[inx] = ps[inx]
-                        else:
-                            pcs[inx] += ps[inx]
-                for p, s in zip(pcs, result_shares):
-                    s.callback(p)
+            
+            def compute_shares(list_of_list_of_field_elements, values, result_shares):
+                for field_elements in list_of_list_of_field_elements:
+                    for inx, field_element in enumerate(field_elements):
+                        values[inx] += field_element
+
+                for v, s in zip(values, result_shares):
+                    s.callback(v)
                 return None
             d = gatherResults(deferreds)
-            d.addCallback(compute_shares, len_shares, result_shares)
+            d.addCallback(compute_shares, values, result_shares)
             return d
         result_shares = [Share(self.runtime, self.Zp) for x in a]
         self.runtime.schedule_callback(gatherResults(a + b),
