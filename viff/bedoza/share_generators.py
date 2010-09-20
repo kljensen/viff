@@ -31,7 +31,7 @@ class PartialShareGenerator:
     def generate_share(self, value):
         self.runtime.increment_pc()
         
-        # TODO: Exclusve?
+        # TODO: Exclusive?
         r = [self.Zp(self.random.randint(0, self.Zp.modulus - 1))
              for _ in range(self.runtime.num_players - 1)]
         if self.runtime.id == 1:
