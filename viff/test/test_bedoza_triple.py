@@ -213,7 +213,7 @@ def partial_random_shares(random, runtime, Zp, n, paillier=None):
     gen = PartialShareGenerator(Zp, runtime, share_random, paillier)
     return gen.generate_random_shares(n)
 
-class ParialShareGeneratorTest(BeDOZaTestCase):
+class PartialShareGeneratorTest(BeDOZaTestCase):
     num_players = 3
  
     @protocol
@@ -411,7 +411,7 @@ class TripleTest(BeDOZaTestCase):
         random = Random(283883)        
         triple_generator = TripleGenerator(runtime, p, random)
 
-        triples = triple_generator.generate_triples(100)
+        triples = triple_generator.generate_triples(10)
 
         def check((a, b, c)):
             self.assertEquals(c, a * b)
