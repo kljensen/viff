@@ -35,6 +35,8 @@ from viff.bedoza.maclist import BeDOZaMACList
 from viff.bedoza.add_macs import add_macs
 from viff.bedoza.modified_paillier import ModifiedPaillier
 from viff.bedoza.util import fast_pow
+from viff.bedoza.util import _convolute
+from viff.bedoza.share import Share
 
 from viff.triple import Triple
 
@@ -245,7 +247,7 @@ class TripleGenerator(object):
             deferred = zis_deferred
 
         return deferred
-
+       
     def _full_mul(self, a, b):
         """Multiply each of the PartialShares in the list *a* with the
         corresponding PartialShare in the list *b*.
@@ -279,18 +281,25 @@ class TripleGenerator(object):
                                                ais,
                                                b_enc_shares[jnx]))
             
-            def compute_shares(list_of_list_of_field_elements, values, result_shares):
-                for field_elements in list_of_list_of_field_elements:
-                    for inx, field_element in enumerate(field_elements):
-                        values[inx] += field_element
+            def compute_shares(zils, values, result_shares):
+                for zil in zils:
+                    for inx, zi in enumerate(zil):
+                        values[inx] += zi
 
-                for v, s in zip(values, result_shares):
-                    s.callback(v)
-                return None
+                return values
+            
             d = gatherResults(deferreds)
             d.addCallback(compute_shares, values, result_shares)
+            
+            def callBackPartialShareContents(partialShareContents, result_shares):
+                for v, s in zip(partialShareContents, result_shares):
+                    s.callback(v)
+                return None
+            
+            d.addCallback(lambda values: Share(values, self.runtime, self.paillier))
+            d.addCallback(callBackPartialShareContents, result_shares)
             return d
-        result_shares = [Share(self.runtime, self.Zp) for x in a]
+        result_shares = [PartialShare(self.runtime, self.Zp) for _ in a]
         self.runtime.schedule_callback(gatherResults(a + b),
                                        do_full_mul,
                                        result_shares)

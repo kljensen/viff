@@ -564,7 +564,7 @@ class FullMulTest(BeDOZaTestCase):
                 self.assertEquals(6, Zp(sum(ls[2])))
             values = []
             for share in shares:
-                value = _convolute(runtime, share.value)
+                value = _convolute(runtime, share.value.value)
                 values.append(value)
             d = gatherResults(values)
             runtime.schedule_callback(d, test_sum)
