@@ -624,7 +624,12 @@ if not tripple:
 if missing_package:
     test_cases = [ModifiedPaillierTest,
                   PartialShareGeneratorTest,
-                  TripleTest
+                  TripleTest,
+                  DataTransferTest,
+                  MulTest,
+                  FullMulTest,
+                  ShareGeneratorTest,
+                  AddMacsTest
                   ]
     for test_case in test_cases:
         test_case.skip =  "Skipped due to missing %s package." % missing_package
