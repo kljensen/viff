@@ -15,6 +15,8 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with VIFF. If not, see <http://www.gnu.org/licenses/>.
 
+from twisted.internet.defer import gatherResults
+
 from viff.bedoza.shares import PartialShareContents
 from viff.bedoza.util import _convolute
 
@@ -34,9 +36,12 @@ def Share(field_elements, runtime, paillier):
     list_of_enc_shares = []
     for field_element in field_elements:
         list_of_enc_shares.append(paillier.encrypt(field_element.value))
-        
-    list_of_enc_shares = _convolute(runtime, list_of_enc_shares, deserialize=eval)
+       
+    list_of_enc_shares = runtime.broadcast(runtime.players.keys(), runtime.players.keys(),
+                                           str(list_of_enc_shares))
+    
     def create_partial_share(list_of_enc_shares, field_elements):
+        list_of_enc_shares = [eval(x) for x in list_of_enc_shares]
 
         reordered_encrypted_shares = [[] for _ in list_of_enc_shares[0]]
         for enc_shares in list_of_enc_shares:
@@ -47,7 +52,8 @@ def Share(field_elements, runtime, paillier):
         for enc_shares, field_element in zip(reordered_encrypted_shares, field_elements):
             partialShareContents.append(PartialShareContents(field_element, enc_shares, N_squared_list))
         return partialShareContents
-    
-    runtime.schedule_callback(list_of_enc_shares, create_partial_share, field_elements)
-    return list_of_enc_shares
+
+    d = gatherResults(list_of_enc_shares)
+    runtime.schedule_callback(d, create_partial_share, field_elements)
+    return d
         
