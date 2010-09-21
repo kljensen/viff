@@ -34,6 +34,7 @@ from viff.util import rand
 from viff.bedoza.modified_paillier import ModifiedPaillier
 from viff.bedoza.share_generators import ShareGenerator
 from viff.bedoza.bedoza_triple import TripleGenerator
+from viff.bedoza.zero_knowledge import ZKProof
 
 # The PyPaillier and commitment packages are not standard parts of VIFF so we
 # skip them instead of letting them fail if the packages are not available. 
@@ -524,7 +525,35 @@ class BeDOZaBasicCommandsTest(RuntimeTestCase):
         d = runtime.open_two_values(x, y)
         d.addCallback(check)
         return d
-    
+
+
+# TODO: Move to test.bedoza.test_zero_knowledge.
+class BeDOZaZeroKnowledgeTest(RuntimeTestCase):
+
+    num_players = 3
+
+    timeout = 3
+
+    runtime_class = BeDOZaRuntime
+
+    def test_zk_matrix_entries_are_correct(self):
+        zk = ZKProof(None, None)
+        zk._set_e([1, 0, 0, 1, 1])
+        for i in range(zk.s):
+            for j in range(zk.m):
+                if j >= i and j < i + zk.s:
+                    self.assertEquals(zk.e[j - i], zk._E(j, i))
+                else:
+                    self.assertEquals(0, zk._E(j, i))
+
+    def test_vec_pow_is_correct(self):
+        Zn = GF(17)
+        y = [Zn(i) for i in range(1, 6)]
+        zk = ZKProof(None, Zn)
+        zk._set_e([1, 0, 1, 1, 0])
+        y_pow_E = zk.vec_pow_E(y)
+        self.assertEquals([Zn(v) for v in [1, 2, 3, 8, 13, 12, 3, 5, 1]],
+                          y_pow_E)
 def skip_tests(module_name):
     BeDOZaBasicCommandsTest.skip = "Skipped due to missing " + module_name + " module."
 
