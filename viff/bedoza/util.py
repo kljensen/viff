@@ -61,3 +61,16 @@ def _send_gf_elm(runtime, vals):
 
 def fast_pow(a, b, modulus):
     return long(pow(mpz(a), b, modulus))
+
+
+def rand_int_signed(random, lim):
+    """Returns a pseudo-uniformly distributed random integer a
+    such that abs(a) <= lim.
+
+    random: A random generator.
+    """
+    # TODO: This is probably not the fastes way to do it.
+    res = random.randint(0, lim)
+    if random.choice([True, False]):
+        res = -res
+    return res

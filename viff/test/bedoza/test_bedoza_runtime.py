@@ -36,44 +36,16 @@ from viff.bedoza.share_generators import ShareGenerator
 from viff.bedoza.bedoza_triple import TripleGenerator
 from viff.bedoza.zero_knowledge import ZKProof
 
-# The PyPaillier and commitment packages are not standard parts of VIFF so we
-# skip them instead of letting them fail if the packages are not available. 
-try:
-    import pypaillier
-except ImportError:
-    pypaillier = None
-
-# HACK: The paillier keys that are available as standard in VIFF tests
-# are not suited for use with pypaillier. Hence, we use NaClPaillier
-# to generate test keys. This confusion will disappear when pypaillier
-# replaces the current Python-based paillier implementation.
-from viff.paillierutil import NaClPaillier
-
-# HACK^2: Currently, the NaClPaillier hack only works when triple is
-# imported. It should ideally work without the triple package.
-try:
-    import tripple
-except ImportError:
-    tripple = None
+from viff.test.bedoza.util import BeDOZaTestCase, skip_if_missing_packages
 
 
-class BeDOZaBasicCommandsTest(RuntimeTestCase):
+class BeDOZaBasicCommandsTest(BeDOZaTestCase):
     """Test for basic commands."""
 
     # Number of players.
     num_players = 3
 
     timeout = 3
-
-    runtime_class = BeDOZaRuntime
-
-    # TODO: During test, we would like generation of Paillier keys to
-    # be deterministic. How do we obtain that?
-    def generate_configs(self, *args):
-        # In production, paillier keys should be something like 2000
-        # bit. For test purposes, it is ok to use small keys.
-        # TODO: paillier freezes if key size is too small, e.g. 13.
-        return generate_configs(paillier=NaClPaillier(250), *args)
 
     def setUp(self):
         RuntimeTestCase.setUp(self)
@@ -528,35 +500,4 @@ class BeDOZaBasicCommandsTest(RuntimeTestCase):
         return d
 
 
-# TODO: Move to test.bedoza.test_zero_knowledge.
-class BeDOZaZeroKnowledgeTest(RuntimeTestCase):
-
-    num_players = 3
-
-    timeout = 3
-
-    runtime_class = BeDOZaRuntime
-
-    def test_zk_matrix_entries_are_correct(self):
-        zk = ZKProof(None, None)
-        zk._set_e([1, 0, 0, 1, 1])
-        for i in range(zk.s):
-            for j in range(zk.m):
-                if j >= i and j < i + zk.s:
-                    self.assertEquals(zk.e[j - i], zk._E(j, i))
-                else:
-                    self.assertEquals(0, zk._E(j, i))
-
-    def test_vec_pow_is_correct(self):
-        Zn = GF(17)
-        y = [Zn(i) for i in range(1, 6)]
-        zk = ZKProof(None, Zn)
-        zk._set_e([1, 0, 1, 1, 0])
-        y_pow_E = zk.vec_pow_E(y)
-        self.assertEquals([Zn(v) for v in [1, 2, 3, 8, 13, 12, 3, 5, 1]],
-                          y_pow_E)
-def skip_tests(module_name):
-    BeDOZaBasicCommandsTest.skip = "Skipped due to missing " + module_name + " module."
-
-if not pypaillier:
-    skip_tests("pypaillier")
+skip_if_missing_packages(BeDOZaBasicCommandsTest)

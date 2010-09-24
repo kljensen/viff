@@ -47,15 +47,20 @@ class ModifiedPaillier(object):
             return y
         else:
             return y - n
-
-    def encrypt(self, value, player_id=None):
-        """Encrypt using public key of player player_id.
-
-        Defaults to own public key.
-        """
+     
+    def _verify_input(self, value, player_id):
         assert isinstance(value, int) or isinstance(value, long), \
             "paillier: encrypts only integers and longs, got %s" % \
                 value.__class__
+
+    def encrypt_with_randomness(self, value, randomness, player_id=None):
+        """Encrypt using public key of player player_id using the
+        given randomness.
+
+        Defaults to own public key.
+
+        """
+        self._verify_input(value, player_id)
         if not player_id:
             player_id = self.runtime.id
         n = self.runtime.players[player_id].pubkey['n']
@@ -65,8 +70,23 @@ class ModifiedPaillier(object):
             "paillier: plaintext %d outside legal range [-(n-1)/2 " \
             "; (n-1)/2] = [%d ; %d]"  % (value, min, max)
         pubkey = self.runtime.players[player_id].pubkey
-        randomness = self.random.randint(1, long(n))
-        return pypaillier.encrypt_r(self._f(value, n), randomness, pubkey)
+        return randomness, pypaillier.encrypt_r(self._f(value, n), randomness, pubkey) 
+
+    def encrypt_r(self, value, player_id=None):
+       """As encrypt_with_randomness, but generates its own randomness."""
+       self._verify_input(value, player_id)
+       if not player_id:
+           player_id = self.runtime.id
+       n = self.runtime.players[player_id].pubkey['n']
+       randomness = self.random.randint(1, long(n))
+       return self.encrypt_with_randomness(value, randomness, player_id=player_id)
+
+
+    def encrypt(self, value, player_id=None):
+        """As encrypt_r, but doesn't return randomness used, only
+        encrypted value."""
+        return self.encrypt_r(value, player_id=player_id)[1]
+
 
     def decrypt(self, enc_value):
         """Decrypt using own private key."""

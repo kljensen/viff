@@ -15,43 +15,160 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with VIFF. If not, see <http://www.gnu.org/licenses/>.
 
+import gmpy
+import hashlib
+
+from viff.runtime import gatherResults
+from viff.bedoza.util import rand_int_signed
 
 class ZKProof(object):
     """Protocol proving that a player's plaintexts are of limited size.
     
-    This is a zero-knowledge protocol in which player player_id inputs s
-    ciphertexts c[i] = E(x[j], r[j]), i = 1, ..., s, created using the
-    modified Paillier cipher and proves to the other players that the x[i]'s
-    are of limited size, e.g. that abs(x[i]) <= 2**k.
+    This is a zero-knowledge protocol in which player with prover_id
+    inputs s ciphertexts c[i] = E(x[j], r[j]), i = 1, ..., s, created
+    using the modified Paillier cipher and proves to the other players
+    that the x[i]'s are of limited size, e.g. that abs(x[i]) <= 2**k.
     
-    Zn is the plaintext field of player player_id's modified Paillier cipher.
-    
-    While player player_id must input the ciphertexts, the other players
-    should call the method with c = None.
-    
+    Zn is the plaintext field of player prover_id's modified Paillier
+    cipher.
     """
     
-    def __init__(self, player_id, Zn, c=None):
-        self.player_id = player_id
+    def __init__(self, s, prover_id, Zn, k, runtime, c, random=None, paillier=None, x=None, r=None):
+        """
+        random: a random source (e.g. viff.util.Random)
+
+        All players must submit c, but only the player with id
+        prover_id should submit x and r.
+        """
+        self.x = x
+        self.r = r
+        self.s = s
+        self.m = 2 * s - 1
+        self.prover_id = prover_id
         self.Zn = Zn
+        self.k = k
+        self.runtime = runtime
         self.c = c
-        self.e = None
+        self.paillier = paillier
+        self.random = random
 
-    def start():
+
+
+    def start(self):
+        if self.runtime.id == self.prover_id:
+            self._generate_proof()
+        deferred_proof = self._get_proof_broadcasted_by_prover()
+        self.runtime.schedule_callback(deferred_proof, self._verify_proof)
+        return deferred_proof
+
+    def _generate_proof(self):
+        self._generate_u_v_and_d()
+        self._generate_e()
+        self._generate_Z_and_W()
+
+    def _verify_proof(self, serialized_proof):
+        # The prover don't need to prove to himself.
+        if self.runtime.id == self.prover_id:
+            #print 'x', len(self.x)
+            #print 'e', len(self.e)
+            #print 'u', len(self.u)
+            return
+        self._deserialize_proof(serialized_proof)
+        self._generate_e()
+        q = self._vec_mul(self.d, self._vec_pow_E(self.c))
         
-        pass
 
-    def _set_e(self, e):
-        self.e = e
-        self.s = len(e)
-        self.m = 2 * len(e) - 1
 
-    def _generate_challenge(self):
-        # TODO: Implement.
-        self.e = [0, 0, 1, 0, 1]
-        self.s = len(e)
-        self.m = 2 * len(e) - 1
+        #print 'Z', len(self.Z)
+        #print 'W', len(self.W)
+        
 
+        for j in xrange(self.m):
+            pass
+            #print
+            #print '---'
+            #print self.runtime.id,  self.paillier.encrypt_with_randomness(self.Z[j], self.W[j])[1]
+            #print self.runtime.id, q[j]
+
+            # TODO: Verify!
+
+
+    def _generate_u_v_and_d(self):
+        self.u, self.v, self.d = [], [], []
+        for i in range(self.m):
+            ui = rand_int_signed(self.random, 2**(2 * self.k))
+            vi, di = self.paillier.encrypt_r(ui)
+            self.u.append(ui)
+            self.v.append(vi)
+            self.d.append(di)
+
+    def _generate_Z_and_W(self):
+        self.Z = self._vec_add(self.u, self._vec_mul_E(self.x))
+        self.W = self._vec_mul(self.v, self._vec_pow_E(self.r))
+        
+    def _get_proof_broadcasted_by_prover(self):
+        serialized_proof = None
+        if self.runtime.id == self.prover_id:
+            # TODO: Should we somehow compress message for improved performance?
+            serialized_proof = self._serialize_proof()
+        deferred_proof = self._broadcast(serialized_proof)
+        return deferred_proof
+
+    def _serialize_proof(self):
+        return repr([self.d, self.Z, self.W])
+
+    def _deserialize_proof(self, serialized_proof):
+        # We remove quotes before evaluation in order to get a list.
+        proof = eval(serialized_proof[1:-1])
+        self.d = proof[0]
+        self.Z = proof[1]
+        self.W = proof[2]
+
+    def _extract_bits(self, string, no_of_bits):
+        """Returns list of first no_of_bits from the given string."""
+        word_size = 8 # No of bits in char.
+        assert no_of_bits <= word_size * len(string), "Not enough bits"
+        res = []
+        if no_of_bits == 0:
+            return res
+        no_of_chars = 1 + no_of_bits / word_size
+        for c in string[:no_of_chars]:
+            digits = [int(v) for v in gmpy.digits(ord(c), 2).zfill(word_size)]
+            if len(res) + word_size >= no_of_bits:
+                return res + digits[:no_of_bits - len(res)]
+            res += digits
+        return res
+
+
+    def _generate_e(self):
+        """Generating an s-bit challenge e by the Fiat-Shamir heuristic.
+        
+        In other security models, generating the challenge requires
+        interaction.
+       
+        The challenge is a list of 0's and 1's of length s.
+        """
+        # This can be easily fixed by using the hash as seed for a
+        # secure prng.
+        assert self.s <= 160, "Error: Algorithm only supports s <= 160"
+        assert hasattr(self, 'c')
+        assert hasattr(self, 'd')
+        h = hashlib.sha1()
+        for c, d in zip(self.c, self.d):
+            h.update(repr(c))
+            h.update(repr(d))
+        hash = h.digest()
+        self.e = self._extract_bits(hash, self.s)
+
+
+    def _broadcast(self, values):
+        msg = repr(values) if self.prover_id == self.runtime.id else None
+        return self.runtime.broadcast(
+            [self.prover_id], self.runtime.players.keys(), message=msg)
+
+    def _err_handler(self, err):
+        print err
+        return err # raise or what?
 
     def _E(self, row, col):
         """Computes the value of the entry in the matrix E at the given row
@@ -66,18 +183,32 @@ class ZKProof(object):
         else:
             return 0
 
-    def vec_add(self, x, y):
-        return [xi + yi for x, y in zip(x,y)]
-    
-    def vec_mul(self, x, y):
-        return [xi * yi for x, y in zip(x,y)]
+    def _vec_add(self, x, y):
+        return [x + y for x, y in zip(x,y)]
 
-    def vec_pow_E(self, y):
+    def _vec_mul_E(self, x):
+        """Takes an s x 1 vector x and returns the m x 1 vector xE."""
+        # TODO: This could probably be optimized since we know the
+        # structure of E.
+        res = []
+        for j in xrange(self.m):
+            t = 0
+            for i in xrange(self.s):
+                t = t + x[i] * self._E(j, i)
+            res.append(t)
+        return res
+    
+    def _vec_mul(self, x, y):
+        return [x * y for x, y in zip(x,y)]
+
+    def _vec_pow_E(self, y):
         """Computes and returns the m := 2s-1 length vector y**E."""
         assert self.s == len(y), \
             "not same length: %d != %d" % (self.s, len(y))
-        res = [self.Zn(1)] * self.m
-        for j in range(2 * self.s - 1):
+        #res = [self.Zn(1)] * self.m
+        # TODO: Should do all computations over some field.
+        res = [1] * self.m
+        for j in range(self.m):
             for i in range(self.s):
                 if self._E(j, i) == 1:
                     res[j] *= y[i]
