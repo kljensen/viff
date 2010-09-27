@@ -86,17 +86,6 @@ class BeDOZaZeroKnowledgeTest(BeDOZaTestCase):
         runtime.schedule_callback(res, verify)
         return res
 
-    @protocol
-    def test_proof(self, runtime):
-        k, s, random, Zn = 5, 5, Random(342344), GF(17)
-
-        paillier = ModifiedPaillier(runtime, Random(random.getrandbits(128)))
-        x, r, c = self._generate_test_ciphertexts(paillier, random, k, s)
-        zk = ZKProof(s, 1, Zn, k, runtime, c, paillier=paillier, random=random, x=x, r=r)
-        zk.e = [1, 0, 0, 1, 1]
-        deferred_proof = zk.start()
-        return deferred_proof
-
     def test_extract_bits(self):
         s = 5
         zk = ZKProof(s, None, None, 0, None, None)
@@ -147,7 +136,21 @@ class BeDOZaZeroKnowledgeTest(BeDOZaTestCase):
         zk._generate_Z_and_W()
         self.assertEquals([1, 0, -1, 3, -3], zk.Z)
         self.assertEquals([3, 5, 14, 14, 14], zk.W)
-            
+
+    @protocol
+    def test_proof(self, runtime):
+        k, s, random, Zn = 3, 3, Random(342344 + runtime.id), GF(17)
+        prover_id = 1
+
+        paillier = ModifiedPaillier(runtime, Random(random.getrandbits(128)))
+        x, r, c = self._generate_test_ciphertexts(paillier, random, k, s)
+        if runtime.id == prover_id: 
+            zk = ZKProof(s, prover_id, Zn, k, runtime, c, paillier=paillier, random=random, x=x, r=r)
+        else:
+            zk = ZKProof(s, prover_id, Zn, k, runtime, c, paillier=paillier, random=random)
+
+        deferred_proof = zk.start()
+        return deferred_proof
 
 # TODO: Test succeeding proof.
 # TODO: Test failing proof.

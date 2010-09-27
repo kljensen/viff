@@ -83,23 +83,20 @@ class ZKProof(object):
             #print 'x', len(self.x)
             #print 'e', len(self.e)
             #print 'u', len(self.u)
-            return
+            return True # TODO
         self._deserialize_proof(serialized_proof)
         self._generate_e()
-        q = self._vec_mul(self.d, self._vec_pow_E(self.c))
-        
-
-
+        S = self._vec_mul(self.d, self._vec_pow_E(self.c))
+        T = [self.paillier.encrypt(self.Z[j], player_id=self.prover_id, random_elm=self.W[j]) for j in range(self.m)]
         #print 'Z', len(self.Z)
         #print 'W', len(self.W)
         
-
         for j in xrange(self.m):
-            pass
-            #print
-            #print '---'
-            #print self.runtime.id,  self.paillier.encrypt_with_randomness(self.Z[j], self.W[j])[1]
-            #print self.runtime.id, q[j]
+            n = self.runtime.players[self.prover_id].pubkey['n']
+            print
+            print '---'
+            print self.runtime.id, j, S[j] % n
+            print self.runtime.id, j, T[j] % n
 
             # TODO: Verify!
 
@@ -113,9 +110,13 @@ class ZKProof(object):
             self.v.append(vi)
             self.d.append(di)
 
+
     def _generate_Z_and_W(self):
         self.Z = self._vec_add(self.u, self._vec_mul_E(self.x))
         self.W = self._vec_mul(self.v, self._vec_pow_E(self.r))
+
+        #n = self.runtime.players[self.runtime.id].pubkey['n']
+        #self.Z = [z % n for z in self.Z]
         
     def _get_proof_broadcasted_by_prover(self):
         serialized_proof = None
