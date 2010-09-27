@@ -91,6 +91,29 @@ class ModifiedPaillierTest(BeDOZaTestCase):
         self.assertEquals(val, decrypted_val)
 
     @protocol
+    def test_modified_paillier_with_different_randomness_are_not_equal(self, runtime):
+        random = Random(3423434)
+        n = runtime.players[runtime.id].pubkey['n']
+        paillier = ModifiedPaillier(runtime, Random(random.getrandbits(128)))
+        val = 47
+        random_elm = random.randint(1, long(n))
+        encrypted_val_1 = paillier.encrypt(val, random_elm=random_elm)
+        encrypted_val_2 = paillier.encrypt(val, random_elm=random_elm)
+        self.assertEquals(encrypted_val_1, encrypted_val_2)
+
+    @protocol
+    def test_modified_paillier_with_same_randomness_are_equal(self, runtime):
+        random = Random(234333)
+        paillier = ModifiedPaillier(runtime, Random(random.getrandbits(128)))
+        n = runtime.players[runtime.id].pubkey['n']
+        val = 46
+        random_elm_1 = random.randint(1, long(n))
+        random_elm_2 = (random_elm_1 + 1) % n
+        encrypted_val_1 = paillier.encrypt(val, random_elm=random_elm_1)
+        encrypted_val_2 = paillier.encrypt(val, random_elm=random_elm_1)
+        self.assertEquals(encrypted_val_1, encrypted_val_2)
+
+    @protocol
     def test_modified_paillier_can_decrypt_encrypted_zero(self, runtime):
         paillier = ModifiedPaillier(runtime, Random(338301))
         val = 0

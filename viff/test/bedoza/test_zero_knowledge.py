@@ -52,6 +52,14 @@ class BeDOZaZeroKnowledgeTest(BeDOZaTestCase):
         self.assertEquals([Zn(v) for v in [1, 2, 3, 8, 13, 12, 3, 5, 1]],
                           y_pow_E)
 
+    def test_vec_pow_is_correct_2(self):
+        s, Zn = 3, GF(17)
+        y = [Zn(i) for i in [1, 7, 2]]
+        zk = ZKProof(s, None, Zn, 0, None, None)
+        zk.e = [0, 1, 1]
+        y_pow_E = zk._vec_pow_E(y)
+        self.assertEquals([Zn(v) for v in [1, 1, 7, 14, 2]], y_pow_E)
+
     def test_vec_mul_E_is_correct(self):
         s, Zn = 5, GF(17)
         y = [Zn(i) for i in range(1, 6)]
@@ -60,6 +68,14 @@ class BeDOZaZeroKnowledgeTest(BeDOZaTestCase):
         x = [1, 2, 0, 1, 0]
         x_mul_E = zk._vec_mul_E(x)
         self.assertEquals([v for v in [1, 2, 1, 4, 2, 1, 1, 0, 0]], x_mul_E)
+
+    def test_vec_mul_E_is_correct_2(self):
+        s, Zn = 3, GF(17)
+        zk = ZKProof(s, None, Zn, 0, None, None)
+        zk.e = [0, 1, 1]
+        x = [2, -3, 0]
+        x_mul_E = zk._vec_mul_E(x)
+        self.assertEquals([v for v in [0, 2, -1, -3, 0]], x_mul_E)
 
     @protocol
     def test_broadcast(self, runtime):
@@ -119,6 +135,18 @@ class BeDOZaZeroKnowledgeTest(BeDOZaTestCase):
             rs.append(r)
             cs.append(c)
         return xs, rs, cs
+
+    def test_generate_Z_and_W_is_correct(self):
+        s, Zn = 3, GF(17)
+        zk = ZKProof(s, 1, Zn, 0, None, None)
+        zk.u = [1, -2, 0, 6, -3]
+        zk.v = [3, 5, 2, 1, 7]
+        zk.x = [2, -3, 0]
+        zk.r = [1, 7, 2]
+        zk.e = [0, 1, 1]
+        zk._generate_Z_and_W()
+        self.assertEquals([1, 0, -1, 3, -3], zk.Z)
+        self.assertEquals([3, 5, 14, 14, 14], zk.W)
             
 
 # TODO: Test succeeding proof.
