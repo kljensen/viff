@@ -47,20 +47,24 @@ class ModifiedPaillier(object):
             return y
         else:
             return y - n
-     
-    def _verify_input(self, value, player_id):
+
+
+    def encrypt_r(self, value, player_id=None, random_elm=None):
+        """Encryption of the given value.
+        
+        If player_id is given, encrypts using public key of that
+        player, otherwise just use public key of the player itself.
+        
+        The encryption requires some randomness in the form of an
+        element in Zn*. If random_elm is given, it is used as random
+        element. Otherwise, a random element is generated using the
+        pseudo-random generator given when the ModifiedPaillier object
+        was constructed.
+        """
+        # TODO: Assert that random_elm is None eller in Zn*.
         assert isinstance(value, int) or isinstance(value, long), \
             "paillier: encrypts only integers and longs, got %s" % \
                 value.__class__
-
-    def encrypt_with_randomness(self, value, randomness, player_id=None):
-        """Encrypt using public key of player player_id using the
-        given randomness.
-
-        Defaults to own public key.
-
-        """
-        self._verify_input(value, player_id)
         if not player_id:
             player_id = self.runtime.id
         n = self.runtime.players[player_id].pubkey['n']
@@ -69,23 +73,23 @@ class ModifiedPaillier(object):
         assert min <= value <= max, \
             "paillier: plaintext %d outside legal range [-(n-1)/2 " \
             "; (n-1)/2] = [%d ; %d]"  % (value, min, max)
+        # TODO: This is not correct. Since n=pq, Zn* is only a subset
+        # of Zn \ {0}.
+        if random_elm == None:
+            random_elm = self.random.randint(1, long(n))
         pubkey = self.runtime.players[player_id].pubkey
-        return randomness, pypaillier.encrypt_r(self._f(value, n), randomness, pubkey) 
-
-    def encrypt_r(self, value, player_id=None):
-       """As encrypt_with_randomness, but generates its own randomness."""
-       self._verify_input(value, player_id)
-       if not player_id:
-           player_id = self.runtime.id
-       n = self.runtime.players[player_id].pubkey['n']
-       randomness = self.random.randint(1, long(n))
-       return self.encrypt_with_randomness(value, randomness, player_id=player_id)
+        return random_elm, pypaillier.encrypt_r(
+            self._f(value, n), random_elm, pubkey)
 
 
-    def encrypt(self, value, player_id=None):
-        """As encrypt_r, but doesn't return randomness used, only
-        encrypted value."""
-        return self.encrypt_r(value, player_id=player_id)[1]
+    def encrypt(self, value, player_id=None, random_elm=None):
+        """Encryption of the given value.
+
+        As encrypt_r, but doesn't return randomness used, only
+        encrypted value.
+        """
+        return self.encrypt_r(value, player_id=player_id,
+                              random_elm=random_elm)[1]
 
 
     def decrypt(self, enc_value):
