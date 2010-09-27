@@ -55,6 +55,17 @@ class ZKProof(object):
 
 
     def start(self):
+        """Executes this zero-knowledge proof.
+
+        Returns a deferred evaluating to True if the proof succeeds
+        and False otherwise. The proof succeeds if the verifiers,
+        e.g. all players except the player with prover_id are able to
+        verify that each number inside the encryptions c are
+        numerically at most 2**(s + 2k).
+
+        The result also evaluates to True or False as above for the
+        proving player, even though this is not needed.
+        """
         if self.runtime.id == self.prover_id:
             self._generate_proof()
         deferred_proof = self._get_proof_broadcasted_by_prover()
