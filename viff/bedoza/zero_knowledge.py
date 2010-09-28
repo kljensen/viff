@@ -15,7 +15,8 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with VIFF. If not, see <http://www.gnu.org/licenses/>.
 
-import gmpy
+from gmpy import mpz, digits
+
 import hashlib
 
 from viff.runtime import gatherResults
@@ -90,7 +91,7 @@ class ZKProof(object):
         self._deserialize_proof(serialized_proof)
         self._generate_e()
         S = self._vec_mul(self.d, self._vec_pow_E(self.c))
-        T = [self.paillier.encrypt(self.Z[j], player_id=self.prover_id, random_elm=self.W[j])
+        T = [mpz(self.paillier.encrypt(int(self.Z[j]), player_id=self.prover_id, random_elm=int(self.W[j])))
              for j in range(self.m)]
         #print 'Z', len(self.Z)
         #print 'W', len(self.W)
@@ -117,9 +118,9 @@ class ZKProof(object):
             ui = rand_int_signed(self.random, 2**(2 * self.k))
             vi, di = self.paillier.encrypt_r(ui)
             assert abs(ui) <= 2**(2 * self.k)
-            self.u.append(ui)
-            self.v.append(vi)
-            self.d.append(di)
+            self.u.append(mpz(ui))
+            self.v.append(mpz(vi))
+            self.d.append(mpz(di))
         #print "Player", self.runtime.id, " d =", self.d
 
 
@@ -170,11 +171,11 @@ class ZKProof(object):
             return res
         no_of_chars = 1 + no_of_bits / word_size
         for c in string[:no_of_chars]:
-            digits = [int(v) for v in gmpy.digits(ord(c), 2).zfill(word_size)]
+            _digits = [int(v) for v in digits(ord(c), 2).zfill(word_size)]
             if len(res) + word_size >= no_of_bits:
-                return res + digits[:no_of_bits - len(res)]
-            res += digits
-        return res
+                return res + _digits[:no_of_bits - len(res)]
+            res += _digits
+        return [mpz(b) for b in res]
 
 
     def _generate_e(self):
@@ -242,11 +243,9 @@ class ZKProof(object):
         """Computes and returns the m := 2s-1 length vector y**E."""
         assert self.s == len(y), \
             "not same length: %d != %d" % (self.s, len(y))
-        #res = [self.Zn(1)] * self.m
-        # TODO: Should do all computations over some field.
-        res = [1] * self.m
+        res = [mpz(1)] * self.m
         for j in range(self.m):
             for i in range(self.s):
-                if self._E(j, i) == 1:
+                if self._E(j, i) == mpz(1):
                     res[j] *= y[i]
         return res

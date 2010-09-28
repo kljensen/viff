@@ -19,6 +19,8 @@
 # We don't need secure random numbers for test purposes.
 from random import Random
 
+from gmpy import mpz
+
 from viff.field import GF
 from viff.bedoza.modified_paillier import ModifiedPaillier
 from viff.bedoza.zero_knowledge import ZKProof
@@ -50,23 +52,23 @@ class BeDOZaZeroKnowledgeTest(BeDOZaTestCase):
                     self.assertEquals(0, zk._E(j, i))
 
     def test_vec_pow_is_correct(self):
-        s, prover_id, k, Zn = 5, 1, 0, GF(17)
+        s, prover_id, k = 5, 1, 0
         c = [None] * s
-        y = [Zn(i) for i in range(1, 6)]
+        y = [mpz(i) for i in range(1, 6)]
         zk = ZKProof(s, prover_id, k, RuntimeStub(), c)
         zk.e = [1, 0, 1, 1, 0]
         y_pow_E = zk._vec_pow_E(y)
-        self.assertEquals([Zn(v) for v in [1, 2, 3, 8, 13, 12, 3, 5, 1]],
+        self.assertEquals([mpz(v) for v in [1, 2, 3, 8, 30, 12, 20, 5, 1]],
                           y_pow_E)
 
     def test_vec_pow_is_correct_2(self):
-        s, k, Zn, prover_id = 3, 0, GF(17), 1
+        s, k, prover_id = 3, 0, 1
         c = [None] * s
-        y = [Zn(i) for i in [1, 7, 2]]
+        y = [mpz(i) for i in [1, 7, 2]]
         zk = ZKProof(s, prover_id, k, RuntimeStub(), c)
         zk.e = [0, 1, 1]
         y_pow_E = zk._vec_pow_E(y)
-        self.assertEquals([Zn(v) for v in [1, 1, 7, 14, 2]], y_pow_E)
+        self.assertEquals([mpz(v) for v in [1, 1, 7, 14, 2]], y_pow_E)
 
     def test_vec_mul_E_is_correct(self):
         s, prover_id, k, Zn = 5, 1, 0, GF(17)
@@ -150,9 +152,9 @@ class BeDOZaZeroKnowledgeTest(BeDOZaTestCase):
         for i in range(s):
             x = rand_int_signed(random, 2**k)
             r, c = paillier.encrypt_r(x, player_id=prover_id)
-            xs.append(x)
-            rs.append(r)
-            cs.append(c)
+            xs.append(mpz(x))
+            rs.append(mpz(r))
+            cs.append(mpz(c))
         return xs, rs, cs
 
     @protocol
