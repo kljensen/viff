@@ -28,12 +28,9 @@ class ZKProof(object):
     inputs s ciphertexts c[i] = E(x[j], r[j]), i = 1, ..., s, created
     using the modified Paillier cipher and proves to the other players
     that the x[i]'s are of limited size, e.g. that abs(x[i]) <= 2**k.
-    
-    Zn is the plaintext field of player prover_id's modified Paillier
-    cipher.
     """
     
-    def __init__(self, s, prover_id, Zn, k, runtime, c, random=None, paillier=None, x=None, r=None):
+    def __init__(self, s, prover_id, k, runtime, c, random=None, paillier=None, x=None, r=None):
         """
         random: a random source (e.g. viff.util.Random)
 
@@ -43,18 +40,19 @@ class ZKProof(object):
         """
         assert len(c) == s
         assert prover_id in runtime.players
+        if x != None:
+            for xi in x:
+                assert abs(xi) <= 2**k
         self.x = x
         self.r = r
         self.s = s
         self.m = 2 * s - 1
         self.prover_id = prover_id
-        self.Zn = Zn
         self.k = k
         self.runtime = runtime
         self.c = c
         self.paillier = paillier
         self.random = random
-
 
 
     def start(self):
@@ -87,21 +85,24 @@ class ZKProof(object):
             #print 'e', len(self.e)
             #print 'u', len(self.u)
             return True # TODO
+        n = self.runtime.players[self.prover_id].pubkey['n']
+        #print "N_1:", n
         self._deserialize_proof(serialized_proof)
         self._generate_e()
         S = self._vec_mul(self.d, self._vec_pow_E(self.c))
-        T = [self.paillier.encrypt(self.Z[j], player_id=self.prover_id, random_elm=self.W[j]) for j in range(self.m)]
+        T = [self.paillier.encrypt(self.Z[j], player_id=self.prover_id, random_elm=self.W[j])
+             for j in range(self.m)]
         #print 'Z', len(self.Z)
         #print 'W', len(self.W)
         
         for j in xrange(self.m):
-            n = self.runtime.players[self.prover_id].pubkey['n']
-            print
-            print '---'
-            print self.runtime.id, j, S[j] % n
-            print self.runtime.id, j, T[j] % n
-
-            # TODO: Verify!
+            #print
+            #print '---'
+            #print self.runtime.id, j, S[j] % n**2
+            #print self.runtime.id, j, T[j]
+            # TODO: Return false if S[j] != T[j].
+            if abs(self.Z[j]) > 2**(2 * self.k):
+                print "WOOOOOOOOOOPS, PROOF NOT ACCEPTED"
 
 
     def _generate_u_v_and_d(self):
@@ -109,6 +110,7 @@ class ZKProof(object):
         for i in range(self.m):
             ui = rand_int_signed(self.random, 2**(2 * self.k))
             vi, di = self.paillier.encrypt_r(ui)
+            assert abs(ui) <= 2**(2 * self.k)
             self.u.append(ui)
             self.v.append(vi)
             self.d.append(di)
@@ -118,6 +120,13 @@ class ZKProof(object):
     def _generate_Z_and_W(self):
         self.Z = self._vec_add(self.u, self._vec_mul_E(self.x))
         self.W = self._vec_mul(self.v, self._vec_pow_E(self.r))
+
+        #print self.runtime.id
+        #print self.prover_id
+        n = self.runtime.players[self.prover_id].pubkey['n']
+        #print "N_1:", n
+        self.W = [w % n**2 for w in self.W]
+
         #print "Player", self.runtime.id, " Z =", self.Z
         #print "Player", self.runtime.id, " W =", self.W
 
@@ -181,7 +190,7 @@ class ZKProof(object):
             h.update(repr(d))
         hash = h.digest()
         self.e = self._extract_bits(hash, self.s)
-        print "Player", self.runtime.id, " e =", self.e
+        #print "Player", self.runtime.id, " e =", self.e
 
     def _broadcast(self, values):
         msg = repr(values) if self.prover_id == self.runtime.id else None

@@ -44,7 +44,7 @@ class BeDOZaTestCase(RuntimeTestCase):
         # In production, paillier keys should be something like 2000
         # bit. For test purposes, it is ok to use small keys.
         # TODO: paillier freezes if key size is too small, e.g. 13.
-        return generate_configs(paillier=NaClPaillier(250), *args)
+        return generate_configs(paillier=NaClPaillier(100), *args)
 
 
 def skip_if_missing_packages(*test_cases):

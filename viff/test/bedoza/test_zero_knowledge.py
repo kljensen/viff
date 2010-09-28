@@ -28,13 +28,19 @@ from viff.test.util import protocol
 from viff.test.bedoza.util import BeDOZaTestCase, skip_if_missing_packages
 
 
+class RuntimeStub(object):
+    def __init__(self, players=[1, 2, 3], id=1):
+        self.players = players
+        self.id = id
+
 class BeDOZaZeroKnowledgeTest(BeDOZaTestCase):
 
     num_players = 3
 
     def test_zk_matrix_entries_are_correct(self):
-        s = 5
-        zk = ZKProof(s, None, None, 0, None, None)
+        s, k, prover_id = 5, 1, 1
+        c = [None] * s
+        zk = ZKProof(s, prover_id, k, RuntimeStub(), c)
         zk.e = [1, 0, 0, 1, 1]
         for i in range(zk.s):
             for j in range(zk.m):
@@ -44,34 +50,38 @@ class BeDOZaZeroKnowledgeTest(BeDOZaTestCase):
                     self.assertEquals(0, zk._E(j, i))
 
     def test_vec_pow_is_correct(self):
-        s, Zn = 5, GF(17)
+        s, prover_id, k, Zn = 5, 1, 0, GF(17)
+        c = [None] * s
         y = [Zn(i) for i in range(1, 6)]
-        zk = ZKProof(s, None, Zn, 0, None, None)
+        zk = ZKProof(s, prover_id, k, RuntimeStub(), c)
         zk.e = [1, 0, 1, 1, 0]
         y_pow_E = zk._vec_pow_E(y)
         self.assertEquals([Zn(v) for v in [1, 2, 3, 8, 13, 12, 3, 5, 1]],
                           y_pow_E)
 
     def test_vec_pow_is_correct_2(self):
-        s, Zn = 3, GF(17)
+        s, k, Zn, prover_id = 3, 0, GF(17), 1
+        c = [None] * s
         y = [Zn(i) for i in [1, 7, 2]]
-        zk = ZKProof(s, None, Zn, 0, None, None)
+        zk = ZKProof(s, prover_id, k, RuntimeStub(), c)
         zk.e = [0, 1, 1]
         y_pow_E = zk._vec_pow_E(y)
         self.assertEquals([Zn(v) for v in [1, 1, 7, 14, 2]], y_pow_E)
 
     def test_vec_mul_E_is_correct(self):
-        s, Zn = 5, GF(17)
+        s, prover_id, k, Zn = 5, 1, 0, GF(17)
+        c = [None] * s
         y = [Zn(i) for i in range(1, 6)]
-        zk = ZKProof(s, None, Zn, 0, None, None)
+        zk = ZKProof(s, prover_id, k, RuntimeStub(), c)
         zk.e = [1, 0, 1, 1, 0]
         x = [1, 2, 0, 1, 0]
         x_mul_E = zk._vec_mul_E(x)
         self.assertEquals([v for v in [1, 2, 1, 4, 2, 1, 1, 0, 0]], x_mul_E)
 
     def test_vec_mul_E_is_correct_2(self):
-        s, Zn = 3, GF(17)
-        zk = ZKProof(s, None, Zn, 0, None, None)
+        s, k, prover_id = 3, 0, 1
+        c = [None] * s
+        zk = ZKProof(s, prover_id, k, RuntimeStub(), c)
         zk.e = [0, 1, 1]
         x = [2, -3, 0]
         x_mul_E = zk._vec_mul_E(x)
@@ -79,7 +89,9 @@ class BeDOZaZeroKnowledgeTest(BeDOZaTestCase):
 
     @protocol
     def test_broadcast(self, runtime):
-        zk = ZKProof(0, 2, None, 0, runtime, None)
+        s, k, prover_id = 0, 2, 1
+        c = []
+        zk = ZKProof(s, prover_id, k, runtime, c)
         res = zk._broadcast([5, 6, 7])
         def verify(res):
             self.assertEquals(eval(res), [5, 6, 7])
@@ -87,8 +99,10 @@ class BeDOZaZeroKnowledgeTest(BeDOZaTestCase):
         return res
 
     def test_extract_bits(self):
-        s = 5
-        zk = ZKProof(s, None, None, 0, None, None)
+        s, k, prover_id = 5, 1, 1
+        c = [None] * s
+        runtime = RuntimeStub()
+        zk = ZKProof(s, prover_id, k, runtime, c)
         self.assertEquals([], zk._extract_bits('test', 0))
         self.assertEquals([0], zk._extract_bits('test', 1))
         self.assertEquals([0, 1], zk._extract_bits('test', 2))
@@ -98,26 +112,28 @@ class BeDOZaZeroKnowledgeTest(BeDOZaTestCase):
         self.assertEquals([0, 1, 1, 1, 0, 1, 0, 0, 0, 1, 1, 0, 0, 1], zk._extract_bits('test', 14))
 
     def test_generate_e_generates_e_of_right_length(self):
-        s = 5
+        s, prover_id, k = 9, 1, 0
         c = [1, 1, 0, 0, 1, 0, 1, 0, 1]
-        zk = ZKProof(s, None, None, 0, None, c)
+        zk = ZKProof(s, prover_id, k, RuntimeStub(), c)
         zk.d = [1, 0, 0, 1, 1, 0, 1, 1, 1]
         zk._generate_e()
-        self.assertEquals(5, len(zk.e))
+        self.assertEquals(s, len(zk.e))
 
     def test_generate_e_is_deterministic(self):
-        s = 5
+        s, prover_id, k = 9, 1, 0
         c = [1, 1, 0, 0, 1, 0, 1, 0, 1]
-        zk = ZKProof(s, None, None, 0, None, c)
+        zk = ZKProof(s, prover_id, k, RuntimeStub(), c)
         zk.d = [1, 0, 0, 1, 1, 0, 1, 1, 1]
         zk._generate_e()
         e1 = zk.e
         zk._generate_e()
         self.assertEquals(e1, zk.e)
 
-    def test_generate_Z_and_W_is_correct(self):
-        s, Zn = 3, GF(17)
-        zk = ZKProof(s, 1, Zn, 0, None, None)
+    @protocol
+    def test_generate_Z_and_W_is_correct(self, runtime):
+        s, prover_id, k = 3, 1, 0
+        c = [None] * s
+        zk = ZKProof(s, prover_id, k, runtime, c)
         zk.u = [1, -2, 0, 6, -3]
         zk.v = [3, 5, 2, 1, 7]
         zk.x = [2, -3, 0]
@@ -140,20 +156,20 @@ class BeDOZaZeroKnowledgeTest(BeDOZaTestCase):
         return xs, rs, cs
 
     @protocol
-    def test_proof(self, runtime):
+    def test_succeeding_proof(self, runtime):
         seed = 2348838
-        k, s, Zn, prover_id = 3, 3, GF(17), 1
+        k, s, prover_id = 5, 3, 1
         player_random = Random(seed + runtime.id)
         shared_random = Random(seed)
         paillier = ModifiedPaillier(runtime, Random(player_random.getrandbits(128)))
         x, r, c = self._generate_test_ciphertexts(shared_random, runtime, k, s, prover_id)
-        print "Player", runtime.id, " x =", x
-        print "Player", runtime.id, " r =", r
-        print "Player", runtime.id, " c =", c
+        #print "Player", runtime.id, " x =", x
+        #print "Player", runtime.id, " r =", r
+        #print "Player", runtime.id, " c =", c
         if runtime.id == prover_id: 
-            zk = ZKProof(s, prover_id, Zn, k, runtime, c, paillier=paillier, random=player_random, x=x, r=r)
+            zk = ZKProof(s, prover_id, k, runtime, c, paillier=paillier, random=player_random, x=x, r=r)
         else:
-            zk = ZKProof(s, prover_id, Zn, k, runtime, c, paillier=paillier, random=player_random)
+            zk = ZKProof(s, prover_id, k, runtime, c, paillier=paillier, random=player_random)
 
         deferred_proof = zk.start()
         return deferred_proof
