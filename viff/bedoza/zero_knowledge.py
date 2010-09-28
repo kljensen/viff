@@ -37,9 +37,12 @@ class ZKProof(object):
         """
         random: a random source (e.g. viff.util.Random)
 
-        All players must submit c, but only the player with id
-        prover_id should submit x and r.
+        All players must submit the same vector c, but only the player
+        with id prover_id should submit the corresponding x and r, e.g. where
+        c_i = E_i(x_i, r_i).
         """
+        assert len(c) == s
+        assert prover_id in runtime.players
         self.x = x
         self.r = r
         self.s = s
@@ -109,11 +112,14 @@ class ZKProof(object):
             self.u.append(ui)
             self.v.append(vi)
             self.d.append(di)
+        #print "Player", self.runtime.id, " d =", self.d
 
 
     def _generate_Z_and_W(self):
         self.Z = self._vec_add(self.u, self._vec_mul_E(self.x))
         self.W = self._vec_mul(self.v, self._vec_pow_E(self.r))
+        #print "Player", self.runtime.id, " Z =", self.Z
+        #print "Player", self.runtime.id, " W =", self.W
 
         #n = self.runtime.players[self.runtime.id].pubkey['n']
         #self.Z = [z % n for z in self.Z]
@@ -135,6 +141,10 @@ class ZKProof(object):
         self.d = proof[0]
         self.Z = proof[1]
         self.W = proof[2]
+        #print "Player", self.runtime.id, " Z =", self.Z
+        #print "Player", self.runtime.id, " W =", self.W
+        #print "Player", self.runtime.id, " d =", self.d
+
 
     def _extract_bits(self, string, no_of_bits):
         """Returns list of first no_of_bits from the given string."""
@@ -171,7 +181,7 @@ class ZKProof(object):
             h.update(repr(d))
         hash = h.digest()
         self.e = self._extract_bits(hash, self.s)
-
+        print "Player", self.runtime.id, " e =", self.e
 
     def _broadcast(self, values):
         msg = repr(values) if self.prover_id == self.runtime.id else None

@@ -115,16 +115,6 @@ class BeDOZaZeroKnowledgeTest(BeDOZaTestCase):
         zk._generate_e()
         self.assertEquals(e1, zk.e)
 
-    def _generate_test_ciphertexts(self, paillier, random, k, s):
-        xs, rs, cs = [], [], []
-        for i in range(s):
-            x = rand_int_signed(random, 2**k)
-            r, c = paillier.encrypt_r(x)
-            xs.append(x)
-            rs.append(r)
-            cs.append(c)
-        return xs, rs, cs
-
     def test_generate_Z_and_W_is_correct(self):
         s, Zn = 3, GF(17)
         zk = ZKProof(s, 1, Zn, 0, None, None)
@@ -137,17 +127,33 @@ class BeDOZaZeroKnowledgeTest(BeDOZaTestCase):
         self.assertEquals([1, 0, -1, 3, -3], zk.Z)
         self.assertEquals([3, 5, 14, 14, 14], zk.W)
 
+
+    def _generate_test_ciphertexts(self, random, runtime, k, s, prover_id):
+        paillier = ModifiedPaillier(runtime, random)
+        xs, rs, cs = [], [], []
+        for i in range(s):
+            x = rand_int_signed(random, 2**k)
+            r, c = paillier.encrypt_r(x, player_id=prover_id)
+            xs.append(x)
+            rs.append(r)
+            cs.append(c)
+        return xs, rs, cs
+
     @protocol
     def test_proof(self, runtime):
-        k, s, random, Zn = 3, 3, Random(342344 + runtime.id), GF(17)
-        prover_id = 1
-
-        paillier = ModifiedPaillier(runtime, Random(random.getrandbits(128)))
-        x, r, c = self._generate_test_ciphertexts(paillier, random, k, s)
+        seed = 2348838
+        k, s, Zn, prover_id = 3, 3, GF(17), 1
+        player_random = Random(seed + runtime.id)
+        shared_random = Random(seed)
+        paillier = ModifiedPaillier(runtime, Random(player_random.getrandbits(128)))
+        x, r, c = self._generate_test_ciphertexts(shared_random, runtime, k, s, prover_id)
+        print "Player", runtime.id, " x =", x
+        print "Player", runtime.id, " r =", r
+        print "Player", runtime.id, " c =", c
         if runtime.id == prover_id: 
-            zk = ZKProof(s, prover_id, Zn, k, runtime, c, paillier=paillier, random=random, x=x, r=r)
+            zk = ZKProof(s, prover_id, Zn, k, runtime, c, paillier=paillier, random=player_random, x=x, r=r)
         else:
-            zk = ZKProof(s, prover_id, Zn, k, runtime, c, paillier=paillier, random=random)
+            zk = ZKProof(s, prover_id, Zn, k, runtime, c, paillier=paillier, random=player_random)
 
         deferred_proof = zk.start()
         return deferred_proof
