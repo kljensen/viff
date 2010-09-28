@@ -101,9 +101,15 @@ class ZKProof(object):
             #print self.runtime.id, j, S[j] % n**2
             #print self.runtime.id, j, T[j]
             # TODO: Return false if S[j] != T[j].
+            if S[j] != T[j]:
+                # TODO: Proof failed, return false!
+                pass
             if abs(self.Z[j]) > 2**(2 * self.k):
-                print "WOOOOOOOOOOPS, PROOF NOT ACCEPTED"
+                # TODO: Proof failed, return false!
+                pass
 
+        return True
+        
 
     def _generate_u_v_and_d(self):
         self.u, self.v, self.d = [], [], []

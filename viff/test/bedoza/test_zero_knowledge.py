@@ -172,6 +172,9 @@ class BeDOZaZeroKnowledgeTest(BeDOZaTestCase):
             zk = ZKProof(s, prover_id, k, runtime, c, paillier=paillier, random=player_random)
 
         deferred_proof = zk.start()
+        def verify(result):
+            self.assertTrue(result)
+        runtime.schedule_callback(deferred_proof, verify)
         return deferred_proof
 
 # TODO: Test succeeding proof.
