@@ -30,8 +30,11 @@ from viff.test.util import protocol
 from viff.test.bedoza.util import BeDOZaTestCase, skip_if_missing_packages
 
 
+class StubPlayer(object):
+    pubkey = {'n': 123}
+
 class RuntimeStub(object):
-    def __init__(self, players=[1, 2, 3], id=1):
+    def __init__(self, players={1: StubPlayer(), 2: StubPlayer(), 3: StubPlayer()}, id=1):
         self.players = players
         self.id = id
 
@@ -57,7 +60,7 @@ class BeDOZaZeroKnowledgeTest(BeDOZaTestCase):
         y = [mpz(i) for i in range(1, 6)]
         zk = ZKProof(s, prover_id, k, RuntimeStub(), c)
         zk.e = [1, 0, 1, 1, 0]
-        y_pow_E = zk._vec_pow_E(y)
+        y_pow_E = zk._vec_pow_E(y, 117)
         self.assertEquals([mpz(v) for v in [1, 2, 3, 8, 30, 12, 20, 5, 1]],
                           y_pow_E)
 
@@ -67,7 +70,7 @@ class BeDOZaZeroKnowledgeTest(BeDOZaTestCase):
         y = [mpz(i) for i in [1, 7, 2]]
         zk = ZKProof(s, prover_id, k, RuntimeStub(), c)
         zk.e = [0, 1, 1]
-        y_pow_E = zk._vec_pow_E(y)
+        y_pow_E = zk._vec_pow_E(y, 117)
         self.assertEquals([mpz(v) for v in [1, 1, 7, 14, 2]], y_pow_E)
 
     def test_vec_mul_E_is_correct(self):

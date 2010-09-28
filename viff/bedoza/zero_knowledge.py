@@ -54,7 +54,10 @@ class ZKProof(object):
         self.c = c
         self.paillier = paillier
         self.random = random
+        self.prover_n = mpz(self.runtime.players[self.prover_id].pubkey['n'])
 
+        # TODO: Use the n**2 already in the pubkey.
+        self.prover_n2 = self.prover_n**2
 
     def start(self):
         """Executes this zero-knowledge proof.
@@ -86,11 +89,11 @@ class ZKProof(object):
             #print 'e', len(self.e)
             #print 'u', len(self.u)
             return True # TODO
-        n = self.runtime.players[self.prover_id].pubkey['n']
+        #n = self.runtime.players[self.prover_id].pubkey['n']
         #print "N_1:", n
         self._deserialize_proof(serialized_proof)
         self._generate_e()
-        S = self._vec_mul(self.d, self._vec_pow_E(self.c))
+        S = self._vec_mul(self.d, self._vec_pow_E(self.c, self.prover_n2))
         T = [mpz(self.paillier.encrypt(int(self.Z[j]), player_id=self.prover_id, random_elm=int(self.W[j])))
              for j in range(self.m)]
         #print 'Z', len(self.Z)
@@ -99,7 +102,7 @@ class ZKProof(object):
         for j in xrange(self.m):
             #print
             #print '---'
-            #print self.runtime.id, j, S[j] % n**2
+            #print self.runtime.id, j, S[j] % self.prover_n2
             #print self.runtime.id, j, T[j]
             # TODO: Return false if S[j] != T[j].
             if S[j] != T[j]:
@@ -126,13 +129,13 @@ class ZKProof(object):
 
     def _generate_Z_and_W(self):
         self.Z = self._vec_add(self.u, self._vec_mul_E(self.x))
-        self.W = self._vec_mul(self.v, self._vec_pow_E(self.r))
+        self.W = self._vec_mul(self.v, self._vec_pow_E(self.r, self.prover_n))
 
         #print self.runtime.id
         #print self.prover_id
-        n = self.runtime.players[self.prover_id].pubkey['n']
+        #n = self.runtime.players[self.prover_id].pubkey['n']
         #print "N_1:", n
-        self.W = [w % n**2 for w in self.W]
+        self.W = [w % self.prover_n2 for w in self.W]
 
         #print "Player", self.runtime.id, " Z =", self.Z
         #print "Player", self.runtime.id, " W =", self.W
@@ -239,7 +242,7 @@ class ZKProof(object):
     def _vec_mul(self, x, y):
         return [x * y for x, y in zip(x,y)]
 
-    def _vec_pow_E(self, y):
+    def _vec_pow_E(self, y, n):
         """Computes and returns the m := 2s-1 length vector y**E."""
         assert self.s == len(y), \
             "not same length: %d != %d" % (self.s, len(y))
@@ -247,5 +250,6 @@ class ZKProof(object):
         for j in range(self.m):
             for i in range(self.s):
                 if self._E(j, i) == mpz(1):
-                    res[j] *= y[i]
+                    # TODO: Should we reduce modulo n each time?
+                    res[j] = (res[j] * y[i]) % n
         return res
