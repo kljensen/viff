@@ -15,6 +15,8 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with VIFF. If not, see <http://www.gnu.org/licenses/>.
 
+from gmpy import gcd
+
 try:
     import pypaillier
 except ImportError:
@@ -61,7 +63,6 @@ class ModifiedPaillier(object):
         pseudo-random generator given when the ModifiedPaillier object
         was constructed.
         """
-        # TODO: Assert that random_elm is None eller in Zn*.
         assert isinstance(value, int) or isinstance(value, long), \
             "paillier: encrypts only integers and longs, got %s" % \
                 value.__class__
@@ -73,10 +74,19 @@ class ModifiedPaillier(object):
         assert min <= value <= max, \
             "paillier: plaintext %d outside legal range [-(n-1)/2 " \
             "; (n-1)/2] = [%d ; %d]"  % (value, min, max)
-        # TODO: This is not correct. Since n=pq, Zn* is only a subset
-        # of Zn \ {0}.
+
+        # Here we verify that random_elm is either None or in Zn*. But
+        # for realistical parameters, we can save time by not doing
+        # this, since for large n = pq, it is extremely unlikely that
+        # a random element in Zn is not also a member of Zn*.
         if random_elm == None:
-            random_elm = self.random.randint(1, long(n))
+            while True:
+                random_elm = self.random.randint(1, long(n))
+                if gcd(random_elm, n) == 1:
+                    break
+        elif not gcd(random_elm, n) == 1:
+            raise Exception("Random element must be an element in Zn*")
+
         pubkey = self.runtime.players[player_id].pubkey
         return random_elm, pypaillier.encrypt_r(
             self._f(value, n), random_elm, pubkey)
