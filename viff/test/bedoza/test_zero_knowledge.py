@@ -40,8 +40,6 @@ class RuntimeStub(object):
 
 class BeDOZaZeroKnowledgeTest(BeDOZaTestCase):
 
-    num_players = 3
-
     def test_zk_matrix_entries_are_correct(self):
         s, k, prover_id = 5, 1, 1
         c = [None] * s

@@ -32,6 +32,8 @@ def log(rt, msg):
 
 class BeDOZaTestCase(RuntimeTestCase):
 
+    num_players = 3
+
     runtime_class = BeDOZaRuntime
 
     # In production, paillier keys should be something like 2000

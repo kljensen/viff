@@ -40,10 +40,6 @@ from viff.test.bedoza.util import BeDOZaTestCase, skip_if_missing_packages
 
 
 class BeDOZaBasicCommandsTest(BeDOZaTestCase):
-    """Test for basic commands."""
-
-    # Number of players.
-    num_players = 3
 
     timeout = 3
 

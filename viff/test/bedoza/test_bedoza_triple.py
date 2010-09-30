@@ -49,7 +49,6 @@ import random
 
 
 class DataTransferTest(BeDOZaTestCase):
-    num_players = 3
 
     @protocol
     def test_convolute_int(self, runtime):
@@ -80,7 +79,6 @@ class DataTransferTest(BeDOZaTestCase):
 
 
 class ModifiedPaillierTest(BeDOZaTestCase):
-    num_players = 3
 
     @protocol
     def test_modified_paillier_can_decrypt_encrypted_one(self, runtime):
@@ -200,7 +198,6 @@ def partial_random_shares(random, runtime, Zp, n, paillier=None):
     return gen.generate_random_shares(n)
 
 class PartialShareGeneratorTest(BeDOZaTestCase):
-    num_players = 3
  
     @protocol
     def test_shares_have_correct_type(self, runtime):
@@ -271,7 +268,6 @@ class PartialShareGeneratorTest(BeDOZaTestCase):
         return shares
 
 class ShareGeneratorTest(BeDOZaTestCase):
-    num_players = 3
 
     @protocol
     def test_encrypted_real_share_open_correctly(self, runtime):
@@ -318,7 +314,6 @@ class ShareGeneratorTest(BeDOZaTestCase):
         return gather_shares(results)
 
 class AddMacsTest(BeDOZaTestCase): 
-    num_players = 3
 
     timeout = 10
 
@@ -384,7 +379,6 @@ class AddMacsTest(BeDOZaTestCase):
 # 
 
 class TripleTest(BeDOZaTestCase): 
-    num_players = 3
 
     timeout = 25
 
@@ -435,7 +429,6 @@ class TripleTest(BeDOZaTestCase):
         return d
 
 class MulTest(BeDOZaTestCase): 
-    num_players = 3
 
     timeout = 10
         
@@ -513,7 +506,6 @@ class MulTest(BeDOZaTestCase):
 
 
 class FullMulTest(BeDOZaTestCase): 
-    num_players = 3
 
     timeout = 10
         
