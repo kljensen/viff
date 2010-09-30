@@ -30,11 +30,11 @@ from viff.test.util import protocol
 from viff.test.bedoza.util import BeDOZaTestCase, skip_if_missing_packages
 
 
-class StubPlayer(object):
+class PlayerStub(object):
     pubkey = {'n': 123}
 
 class RuntimeStub(object):
-    def __init__(self, players={1: StubPlayer(), 2: StubPlayer(), 3: StubPlayer()}, id=1):
+    def __init__(self, players={1: PlayerStub(), 2: PlayerStub(), 3: PlayerStub()}, id=1):
         self.players = players
         self.id = id
 
