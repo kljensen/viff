@@ -23,6 +23,8 @@ from random import Random
 from twisted.internet.defer import gatherResults, DeferredList
 
 from viff.test.util import RuntimeTestCase, protocol
+from viff.test.bedoza.util import TestShareGenerator
+
 from viff.runtime import gather_shares, Share
 from viff.config import generate_configs
 from viff.bedoza.bedoza import BeDOZaRuntime
@@ -32,7 +34,6 @@ from viff.bedoza.maclist import BeDOZaMACList
 from viff.field import FieldElement, GF
 from viff.util import rand
 from viff.bedoza.modified_paillier import ModifiedPaillier
-from viff.bedoza.share_generators import ShareGenerator
 from viff.bedoza.bedoza_triple import TripleGenerator
 from viff.bedoza.zero_knowledge import ZKProof
 
@@ -75,8 +76,8 @@ class BeDOZaBasicCommandsTest(BeDOZaTestCase):
         share_random = Random(random.getrandbits(128))
         
         paillier = ModifiedPaillier(runtime, Random(random.getrandbits(128)))          
-        gen = ShareGenerator(self.Zp, runtime, share_random,
-                             paillier, self.u_bound, self.alpha)
+        gen = TestShareGenerator(self.Zp, runtime, share_random,
+                                 paillier, self.u_bound, self.alpha)
         
         x2 = gen.generate_share(8)
         y2 = gen.generate_share(9)
@@ -96,8 +97,8 @@ class BeDOZaBasicCommandsTest(BeDOZaTestCase):
         share_random = Random(random.getrandbits(128))
         
         paillier = ModifiedPaillier(runtime, Random(random.getrandbits(128)))          
-        gen = ShareGenerator(self.Zp, runtime, share_random,
-                             paillier, self.u_bound, self.alpha)
+        gen = TestShareGenerator(self.Zp, runtime, share_random,
+                                 paillier, self.u_bound, self.alpha)
         
         x2 = gen.generate_share(2)
         y2 = gen.generate_share(9)
@@ -119,8 +120,8 @@ class BeDOZaBasicCommandsTest(BeDOZaTestCase):
         share_random = Random(random.getrandbits(128))
         
         paillier = ModifiedPaillier(runtime, Random(random.getrandbits(128)))          
-        gen = ShareGenerator(self.Zp, runtime, share_random,
-                             paillier, self.u_bound, self.alpha)
+        gen = TestShareGenerator(self.Zp, runtime, share_random,
+                                 paillier, self.u_bound, self.alpha)
         
         x2 = gen.generate_share(8)
         z2 = x2 + y1
@@ -141,8 +142,8 @@ class BeDOZaBasicCommandsTest(BeDOZaTestCase):
         share_random = Random(random.getrandbits(128))
         
         paillier = ModifiedPaillier(runtime, Random(random.getrandbits(128)))          
-        gen = ShareGenerator(self.Zp, runtime, share_random,
-                             paillier, self.u_bound, self.alpha)
+        gen = TestShareGenerator(self.Zp, runtime, share_random,
+                                 paillier, self.u_bound, self.alpha)
         
         x2 = gen.generate_share(8)
         z2 = y1 + x2
@@ -174,8 +175,8 @@ class BeDOZaBasicCommandsTest(BeDOZaTestCase):
         share_random = Random(random.getrandbits(128))
         
         paillier = ModifiedPaillier(runtime, Random(random.getrandbits(128)))          
-        gen = ShareGenerator(self.Zp, runtime, share_random,
-                             paillier, self.u_bound, self.alpha)
+        gen = TestShareGenerator(self.Zp, runtime, share_random,
+                                 paillier, self.u_bound, self.alpha)
         
         x2 = gen.generate_share(9)
         y2 = gen.generate_share(8)
@@ -195,8 +196,8 @@ class BeDOZaBasicCommandsTest(BeDOZaTestCase):
         share_random = Random(random.getrandbits(128))
         
         paillier = ModifiedPaillier(runtime, Random(random.getrandbits(128)))          
-        gen = ShareGenerator(self.Zp, runtime, share_random,
-                             paillier, self.u_bound, self.alpha)
+        gen = TestShareGenerator(self.Zp, runtime, share_random,
+                                 paillier, self.u_bound, self.alpha)
         
         x2 = gen.generate_share(9)
         y2 = gen.generate_share(8)
@@ -218,8 +219,8 @@ class BeDOZaBasicCommandsTest(BeDOZaTestCase):
         share_random = Random(random.getrandbits(128))
         
         paillier = ModifiedPaillier(runtime, Random(random.getrandbits(128)))          
-        gen = ShareGenerator(self.Zp, runtime, share_random,
-                             paillier, self.u_bound, self.alpha)
+        gen = TestShareGenerator(self.Zp, runtime, share_random,
+                                 paillier, self.u_bound, self.alpha)
         
         x2 = gen.generate_share(8)
         z2 = x2 - y
@@ -240,8 +241,8 @@ class BeDOZaBasicCommandsTest(BeDOZaTestCase):
         share_random = Random(random.getrandbits(128))
         
         paillier = ModifiedPaillier(runtime, Random(random.getrandbits(128)))          
-        gen = ShareGenerator(self.Zp, runtime, share_random,
-                             paillier, self.u_bound, self.alpha)
+        gen = TestShareGenerator(self.Zp, runtime, share_random,
+                                 paillier, self.u_bound, self.alpha)
         
         x2 = gen.generate_share(5)
         z2 = y - x2
@@ -263,8 +264,8 @@ class BeDOZaBasicCommandsTest(BeDOZaTestCase):
         share_random = Random(random.getrandbits(128))
         
         paillier = ModifiedPaillier(runtime, Random(random.getrandbits(128)))          
-        gen = ShareGenerator(self.Zp, runtime, share_random,
-                             paillier, self.u_bound, self.alpha)
+        gen = TestShareGenerator(self.Zp, runtime, share_random,
+                                 paillier, self.u_bound, self.alpha)
         
         x2 = gen.generate_share(x1)
 
@@ -287,8 +288,8 @@ class BeDOZaBasicCommandsTest(BeDOZaTestCase):
         share_random = Random(random.getrandbits(128))
         
         paillier = ModifiedPaillier(runtime, Random(random.getrandbits(128)))          
-        gen = ShareGenerator(self.Zp, runtime, share_random,
-                             paillier, self.u_bound, self.alpha)
+        gen = TestShareGenerator(self.Zp, runtime, share_random,
+                                 paillier, self.u_bound, self.alpha)
         
         x2 = gen.generate_share(x1)
 
@@ -333,8 +334,8 @@ class BeDOZaBasicCommandsTest(BeDOZaTestCase):
             share_random = Random(random.getrandbits(128))
         
             paillier = ModifiedPaillier(runtime, Random(random.getrandbits(128)))          
-            gen = ShareGenerator(self.Zp, runtime, share_random,
-                                 paillier, self.u_bound, alpha)
+            gen = TestShareGenerator(self.Zp, runtime, share_random,
+                                     paillier, self.u_bound, alpha)
         
             x2 = gen.generate_share(x1)
             y2 = gen.generate_share(y1)
@@ -371,8 +372,8 @@ class BeDOZaBasicCommandsTest(BeDOZaTestCase):
             random = Random(3423993)
             share_random = Random(random.getrandbits(128))
             paillier = ModifiedPaillier(runtime, Random(random.getrandbits(128)))          
-            gen = ShareGenerator(self.Zp, runtime, share_random,
-                                 paillier, self.u_bound, alpha)
+            gen = TestShareGenerator(self.Zp, runtime, share_random,
+                                     paillier, self.u_bound, alpha)
         
             x2 = gen.generate_share(x1)
             y2 = gen.generate_share(y1)
@@ -400,8 +401,8 @@ class BeDOZaBasicCommandsTest(BeDOZaTestCase):
             share_random = Random(random.getrandbits(128))
         
             paillier = ModifiedPaillier(runtime, Random(random.getrandbits(128)))          
-            gen = ShareGenerator(self.Zp, runtime, share_random,
-                                 paillier, self.u_bound, alpha)
+            gen = TestShareGenerator(self.Zp, runtime, share_random,
+                                     paillier, self.u_bound, alpha)
         
             x2 = gen.generate_share(x1)
             y2 = gen.generate_share(y1)
@@ -434,8 +435,8 @@ class BeDOZaBasicCommandsTest(BeDOZaTestCase):
             share_random = Random(random.getrandbits(128))
         
             paillier = ModifiedPaillier(runtime, Random(random.getrandbits(128)))          
-            gen = ShareGenerator(self.Zp, runtime, share_random,
-                                 paillier, self.u_bound, alpha)
+            gen = TestShareGenerator(self.Zp, runtime, share_random,
+                                     paillier, self.u_bound, alpha)
         
             x2 = gen.generate_share(x1)
             y2 = gen.generate_share(y1)
@@ -465,8 +466,8 @@ class BeDOZaBasicCommandsTest(BeDOZaTestCase):
         share_random = Random(random.getrandbits(128))
         
         paillier = ModifiedPaillier(runtime, Random(random.getrandbits(128)))          
-        gen = ShareGenerator(self.Zp, runtime, share_random,
-                             paillier, self.u_bound, self.alpha)
+        gen = TestShareGenerator(self.Zp, runtime, share_random,
+                                 paillier, self.u_bound, self.alpha)
         
         x = gen.generate_share(6)
         y = gen.generate_share(6)
@@ -486,8 +487,8 @@ class BeDOZaBasicCommandsTest(BeDOZaTestCase):
         share_random = Random(random.getrandbits(128))
         
         paillier = ModifiedPaillier(runtime, Random(random.getrandbits(128)))          
-        gen = ShareGenerator(self.Zp, runtime, share_random,
-                             paillier, self.u_bound, self.alpha)
+        gen = TestShareGenerator(self.Zp, runtime, share_random,
+                                 paillier, self.u_bound, self.alpha)
         
         x = gen.generate_share(6)
         y = gen.generate_share(6)

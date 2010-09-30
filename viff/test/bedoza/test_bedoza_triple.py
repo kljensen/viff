@@ -29,19 +29,20 @@ from viff.test.util import protocol
 from viff.constants import TEXT
 from viff.runtime import gather_shares, Share
 from viff.config import generate_configs
-
-from viff.test.bedoza.util import BeDOZaTestCase, skip_if_missing_packages
+from viff.field import FieldElement, GF
+from viff.config import generate_configs
 
 from viff.bedoza.bedoza import BeDOZaShare
 from viff.bedoza.keylist import BeDOZaKeyList
 from viff.bedoza.bedoza_triple import TripleGenerator, ModifiedPaillier
-from viff.bedoza.share_generators import PartialShareGenerator, ShareGenerator
 from viff.bedoza.shares import PartialShare, PartialShareContents
 from viff.bedoza.util import _send, _convolute, _convolute_gf_elm
 from viff.bedoza.add_macs import add_macs
+from viff.bedoza.share_generators import ShareGenerator, PartialShareGenerator
 
-from viff.field import FieldElement, GF
-from viff.config import generate_configs
+from viff.test.bedoza.util import BeDOZaTestCase, skip_if_missing_packages
+from viff.test.bedoza.util import TestShareGenerator
+
 
 # Ok to use non-secure random generator in tests.
 #from viff.util import rand
@@ -301,7 +302,7 @@ class ShareGeneratorTest(BeDOZaTestCase):
         paillier = ModifiedPaillier(runtime, Random(random.getrandbits(128)))
 
         share_random = Random(random.getrandbits(128))
-        gen = ShareGenerator(Zp, runtime, share_random, paillier, u_bound, alpha)
+        gen = TestShareGenerator(Zp, runtime, share_random, paillier, u_bound, alpha)
         shares = gen.generate_random_shares(7)
         expected_result = [9,16,7,12,3,5,6]
         results = []
