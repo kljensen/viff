@@ -23,7 +23,7 @@ import itertools
 
 from twisted.internet.defer import Deferred, gatherResults, succeed
 
-from viff.runtime import Runtime, Share, ShareList, gather_shares
+from viff.runtime import Runtime, ShareList, gather_shares
 from viff.field import FieldElement, GF
 from viff.constants import TEXT
 from viff.util import rand
@@ -36,7 +36,7 @@ from viff.bedoza.add_macs import add_macs
 from viff.bedoza.modified_paillier import ModifiedPaillier
 from viff.bedoza.util import fast_pow
 from viff.bedoza.util import _convolute
-from viff.bedoza.share import Share
+from viff.bedoza.share import generate_partial_share_contents
 
 from viff.triple import Triple
 
@@ -296,7 +296,8 @@ class TripleGenerator(object):
                     s.callback(v)
                 return None
             
-            d.addCallback(lambda values: Share(values, self.runtime, self.paillier))
+            d.addCallback(lambda values: generate_partial_share_contents(
+                    values, self.runtime, self.paillier))
             d.addCallback(callBackPartialShareContents, result_shares)
             return d
         result_shares = [PartialShare(self.runtime, self.Zp) for _ in a]

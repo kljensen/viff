@@ -20,7 +20,7 @@ from twisted.internet.defer import gatherResults
 from viff.bedoza.shares import PartialShareContents
 from viff.bedoza.util import _convolute
 
-def Share(field_elements, runtime, paillier):
+def generate_partial_share_contents(field_elements, runtime, paillier):
     """Each party input a list of field elements *field_elements*.
     The value of the field elements are encrypted and the encrypted
     values are exchanged.
