@@ -34,6 +34,11 @@ class BeDOZaTestCase(RuntimeTestCase):
 
     runtime_class = BeDOZaRuntime
 
+    # In production, paillier keys should be something like 2000
+    # bit. For test purposes, it is ok to use small keys.
+    # TODO: paillier freezes if key size is too small, e.g. 13.
+    paillier_key_size = 250
+
     def setUp(self):
         RuntimeTestCase.setUp(self)
         self.security_parameter = 32
@@ -41,10 +46,8 @@ class BeDOZaTestCase(RuntimeTestCase):
     # TODO: During test, we would like generation of Paillier keys to
     # be deterministic. How do we obtain that?
     def generate_configs(self, *args):
-        # In production, paillier keys should be something like 2000
-        # bit. For test purposes, it is ok to use small keys.
-        # TODO: paillier freezes if key size is too small, e.g. 13.
-        return generate_configs(paillier=NaClPaillier(100), *args)
+        return generate_configs(
+            paillier=NaClPaillier(self.paillier_key_size), *args)
 
 
 def skip_if_missing_packages(*test_cases):
