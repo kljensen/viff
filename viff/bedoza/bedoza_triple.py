@@ -65,6 +65,7 @@ class TripleGenerator(object):
         self.k = self._bit_length_of(p)
         self.security_parameter = security_parameter
         self.u_bound = 2**(self.security_parameter + 4 * self.k)
+        self.zk_random = Random(self.random.getrandbits(128))
 
         paillier_random = Random(self.random.getrandbits(128))
         alpha_random = Random(self.random.getrandbits(128))
@@ -374,7 +375,7 @@ class TripleGenerator(object):
                 return None
             
             d.addCallback(lambda values: generate_partial_share_contents(
-                    values, self.runtime, self.paillier))
+                    values, self.runtime, self.paillier, self.k, self.zk_random))
             d.addCallback(callBackPartialShareContents, result_shares)
             return d
         result_shares = [PartialShare(self.runtime, self.Zp) for _ in a]
