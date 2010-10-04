@@ -384,12 +384,35 @@ class TripleTest(BeDOZaTestCase):
     timeout = 25
 
     @protocol
+    def test_generate_triples_generates_correct_single_triple(self, runtime):
+        p = 17
+        Zp = GF(p)
+        random = Random(574566 + runtime.id)        
+        triple_generator = TripleGenerator(runtime, self.security_parameter, p, random)
+        triples = triple_generator._generate_triples(1)
+
+        def check((a, b, c)):
+            self.assertEquals(c, a * b)
+
+        def open(triple):
+            d1 = runtime.open(triple.a)
+            d2 = runtime.open(triple.b)
+            d3 = runtime.open(triple.c)
+            d = gatherResults([d1, d2, d3])
+            runtime.schedule_callback(d, check)
+            return d
+
+        for triple in triples:
+            runtime.schedule_callback(triple, open)
+        return gatherResults(triples)
+
+    @protocol
     def test_generate_triples_generates_correct_triples(self, runtime):
         p = 17
 
         Zp = GF(p)
       
-        random = Random(283883)        
+        random = Random(574566 + runtime.id)        
         triple_generator = TripleGenerator(runtime, self.security_parameter, p, random)
 
         triples = triple_generator._generate_triples(10)

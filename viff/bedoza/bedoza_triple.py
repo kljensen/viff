@@ -20,6 +20,7 @@
 """
 
 import itertools
+import hashlib
 
 from twisted.internet.defer import Deferred, gatherResults, succeed
 
@@ -177,37 +178,67 @@ class TripleGenerator(object):
         """
         assert n == len(triple_candidates) / 6
 
-        def check(v, a, b, c):
+        def verify(v, a, b, c):
             if v.value != 0:
                 raise Exception(
                     "TripleTest failed - The two triple candidates were "
                     "inconsistent.")
             return Triple(a, b, c)
-        
-        def compute_value(r, a, b, c, x, y, z):
-            l = self.runtime._cmul(r, x, self.Zp)
-            m = self.runtime._cmul(r, y, self.Zp)
-            k = self.runtime._cmul(r * r, z, self.Zp)
-            v = c - self.runtime._basic_multiplication(a, b, l, m, k)
-            v = self.runtime.open(v)
-            v.addCallback(check, a, b, c)
-            return v
+
+        def prepare_verification(rs_serialized, results):
+            # Repr/eval deserialization.
+            rs = [eval(rss) for rss in rs_serialized]
+
+            for i in xrange(n):
+                a = triple_candidates[i]
+                b = triple_candidates[i + 2 * n]
+                c = triple_candidates[i + 4 * n]
+                x = triple_candidates[i + n]
+                y = triple_candidates[i + 3 * n]
+                z = triple_candidates[i + 5 * n]
+
+                # Hash all received random values to agree on a single
+                # random value for each triple.
+                hash = hashlib.sha1()
+                for rp in rs:
+                    hash.update(str(rp[i]))
+                # TODO: We should use a secure random generator here.
+                rand = Random(hash.digest())
+                r = self.Zp(rand.randint(0, self.p - 1))
+
+                l = self.runtime._cmul(r, x, self.Zp)
+                m = self.runtime._cmul(r, y, self.Zp)
+                k = self.runtime._cmul(r * r, z, self.Zp)
+                v = c - self.runtime._basic_multiplication(a, b, l, m, k)
+                v = self.runtime.open(v)
+                self.runtime.schedule_callback(v, verify, a, b, c)
+                v.addCallbacks(results[i].callback, results[i].errback)
+
+        # TODO: Handle errors better.
+        def err_handler(err):
+            print err
 
         results = [Deferred() for _ in xrange(n)]
-        gen = ShareGenerator(self.Zp, self.runtime, self.random, self.paillier,
-                             self.u_bound, self.alpha)
-        random_shares = gen.generate_random_shares(n)
 
-        for inx in xrange(n):
-            a = triple_candidates[inx]
-            b = triple_candidates[inx + 2 * n]
-            c = triple_candidates[inx + 4 * n]
-            x = triple_candidates[inx + n]
-            y = triple_candidates[inx + 3 * n]
-            z = triple_candidates[inx + 5 * n]
-            r = self.runtime.open(random_shares[inx])
-            self.runtime.schedule_callback(r, compute_value, a, b, c, x, y, z)
-            r.chainDeferred(results[inx])
+        ri = [self.random.randint(0, self.p - 1) for _ in xrange(n)]
+        # TODO: We use repr/eval as simple marshalling. Should be
+        # factored out and maybe optimized by using better compression
+        # here.
+        ris = self.runtime.broadcast(
+            self.runtime.players.keys(), self.runtime.players.keys(), repr(ri))
+        ris = gatherResults(ris)
+        self.runtime.schedule_callback(ris, prepare_verification, results)     
+        ris.addErrback(err_handler)
+        
+        # TODO: Which makes most sense?
+        # 
+        # 1) Compute each triple separately and return list of
+        #    deferred triples, or
+        #
+        # 2) Compute triples as a batch and return single deferred
+        #    that evaluates to list of triples.
+        #
+        
         return results
 
 
