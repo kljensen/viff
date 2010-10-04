@@ -85,25 +85,14 @@ class ZKProof(object):
     def _verify_proof(self, serialized_proof):
         # The prover don't need to prove to himself.
         if self.runtime.id == self.prover_id:
-            #print 'x', len(self.x)
-            #print 'e', len(self.e)
-            #print 'u', len(self.u)
-            return True # TODO
-        #n = self.runtime.players[self.prover_id].pubkey['n']
-        #print "N_1:", n
+            return True
         self._deserialize_proof(serialized_proof)
         self._generate_e()
-        S = self._vec_mul(self.d, self._vec_pow_E(self.c, self.prover_n2))
+        temp = self._vec_pow_E(self.c, self.prover_n2)
+        S = self._vec_mul(self.d, temp, self.prover_n2)
         T = [mpz(self.paillier.encrypt(int(self.Z[j]), player_id=self.prover_id, random_elm=int(self.W[j])))
              for j in range(self.m)]
-        #print 'Z', len(self.Z)
-        #print 'W', len(self.W)
-        
         for j in xrange(self.m):
-            #print
-            #print '---'
-            #print self.runtime.id, j, S[j] % self.prover_n2
-            #print self.runtime.id, j, T[j]
             # TODO: Return false if S[j] != T[j].
             if S[j] != T[j]:
                 # TODO: Proof failed, return false!
@@ -112,6 +101,7 @@ class ZKProof(object):
                 # TODO: Proof failed, return false!
                 pass
 
+        # TODO: Fix zero-knowledge proof!!!
         return True
         
 
@@ -124,29 +114,16 @@ class ZKProof(object):
             self.u.append(mpz(ui))
             self.v.append(mpz(vi))
             self.d.append(mpz(di))
-        #print "Player", self.runtime.id, " d =", self.d
-
 
     def _generate_Z_and_W(self):
         self.Z = self._vec_add(self.u, self._vec_mul_E(self.x))
-        self.W = self._vec_mul(self.v, self._vec_pow_E(self.r, self.prover_n))
+        self.W = self._vec_mul(self.v, self._vec_pow_E(self.r, self.prover_n2), self.prover_n2)
 
-        #print self.runtime.id
-        #print self.prover_id
-        #n = self.runtime.players[self.prover_id].pubkey['n']
-        #print "N_1:", n
-        self.W = [w % self.prover_n2 for w in self.W]
-
-        #print "Player", self.runtime.id, " Z =", self.Z
-        #print "Player", self.runtime.id, " W =", self.W
-
-        #n = self.runtime.players[self.runtime.id].pubkey['n']
-        #self.Z = [z % n for z in self.Z]
-        
     def _get_proof_broadcasted_by_prover(self):
         serialized_proof = None
         if self.runtime.id == self.prover_id:
-            # TODO: Should we somehow compress message for improved performance?
+            # TODO: Should we somehow compress message for improved
+            # performance?
             serialized_proof = self._serialize_proof()
         deferred_proof = self._broadcast(serialized_proof)
         return deferred_proof
@@ -160,10 +137,6 @@ class ZKProof(object):
         self.d = proof[0]
         self.Z = proof[1]
         self.W = proof[2]
-        #print "Player", self.runtime.id, " Z =", self.Z
-        #print "Player", self.runtime.id, " W =", self.W
-        #print "Player", self.runtime.id, " d =", self.d
-
 
     def _extract_bits(self, string, no_of_bits):
         """Returns list of first no_of_bits from the given string."""
@@ -200,7 +173,6 @@ class ZKProof(object):
             h.update(repr(d))
         hash = h.digest()
         self.e = self._extract_bits(hash, self.s)
-        #print "Player", self.runtime.id, " e =", self.e
 
     def _broadcast(self, values):
         msg = repr(values) if self.prover_id == self.runtime.id else None
@@ -239,8 +211,8 @@ class ZKProof(object):
             res.append(t)
         return res
     
-    def _vec_mul(self, x, y):
-        return [x * y for x, y in zip(x,y)]
+    def _vec_mul(self, x, y, n):
+        return [(x * y) % n for x, y in zip(x,y)]
 
     def _vec_pow_E(self, y, n):
         """Computes and returns the m := 2s-1 length vector y**E."""
