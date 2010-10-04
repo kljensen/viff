@@ -491,6 +491,57 @@ class MulTest(BeDOZaTestCase):
         return r1
 
 
+class ShareTest(BeDOZaTestCase):
+
+    timeout = 10
+
+    @protocol
+    def test_share_protocol_single(self, runtime):
+        p = 17
+        Zp = GF(p)
+        random = Random(3455433 + runtime.id)
+        elms = [Zp(runtime.id)]
+        paillier_random = Random(random.getrandbits(128))
+        paillier = ModifiedPaillier(runtime, paillier_random)
+        from viff.bedoza.share import generate_partial_share_contents
+        partial_shares = generate_partial_share_contents(elms, runtime, paillier)
+
+        def decrypt(share_contents):
+            self.assertEquals(1, len(share_contents))
+            decrypted_share = paillier.decrypt(share_contents[0].enc_shares[runtime.id - 1])
+            decrypted_shares = _convolute(runtime, decrypted_share)
+            def test_sum(vals):
+                self.assertEquals([Zp(e) for e in [1, 2, 3]], vals)
+            runtime.schedule_callback(decrypted_shares, test_sum)
+
+        runtime.schedule_callback(partial_shares, decrypt)
+        return partial_shares
+
+    @protocol
+    def test_share_protocol_multi(self, runtime):
+        p = 17
+        Zp = GF(p)
+        random = Random(3455433 + runtime.id)
+        elms = [Zp(runtime.id), Zp(runtime.id * 3)]
+        paillier_random = Random(random.getrandbits(128))
+        paillier = ModifiedPaillier(runtime, paillier_random)
+        from viff.bedoza.share import generate_partial_share_contents
+        partial_shares = generate_partial_share_contents(elms, runtime, paillier)
+
+        def decrypt(share_contents):
+            self.assertEquals(2, len(share_contents))
+            decrypted_shares = [paillier.decrypt(share_contents[i].enc_shares[runtime.id - 1])
+                                for i in range(2)]
+            decrypted_shares = [_convolute(runtime, decrypted_shares[i]) for i in range(2)]
+            def test_sum(vals, should_be):
+                self.assertEquals([Zp(e) for e in should_be], vals)
+            runtime.schedule_callback(decrypted_shares[0], test_sum, [1, 2, 3])
+            runtime.schedule_callback(decrypted_shares[1], test_sum, [3, 6, 9])
+
+        runtime.schedule_callback(partial_shares, decrypt)
+        return partial_shares
+
+
 class FullMulTest(BeDOZaTestCase): 
 
     timeout = 10
