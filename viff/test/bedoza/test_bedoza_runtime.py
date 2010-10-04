@@ -315,7 +315,7 @@ class BeDOZaBasicCommandsTest(BeDOZaTestCase):
 
         random = Random(3423993)
         gen = TripleGenerator(runtime, self.security_parameter, self.Zp.modulus, random)
-        [triple] = gen.generate_triples(1)
+        [triple] = gen._generate_triples(1)
         triple.addCallback(open)
         return triple
 
@@ -349,7 +349,7 @@ class BeDOZaBasicCommandsTest(BeDOZaTestCase):
 
         gen = TripleGenerator(runtime, self.security_parameter, self.Zp.modulus, Random(3423993))
         alpha = gen.alpha
-        [triple] = gen.generate_triples(1)
+        [triple] = gen._generate_triples(1)
         runtime.schedule_callback(triple, do_stuff, alpha)
         return triple
 
@@ -365,7 +365,7 @@ class BeDOZaBasicCommandsTest(BeDOZaTestCase):
 
         gen = TripleGenerator(runtime, self.security_parameter, self.Zp.modulus, Random(3423993))
         alpha = gen.alpha
-        triples = gen.generate_triples(1)
+        triples = gen._generate_triples(1)
         
         def do_mult(triples, alpha):
             runtime.triples = triples
@@ -416,7 +416,7 @@ class BeDOZaBasicCommandsTest(BeDOZaTestCase):
 
         gen = TripleGenerator(runtime, self.security_parameter, self.Zp.modulus, Random(3423993))
         alpha = gen.alpha
-        [triple] = gen.generate_triples(1)
+        [triple] = gen._generate_triples(1)
         runtime.schedule_callback(triple, do_stuff, alpha)
         return triple
 
@@ -450,7 +450,7 @@ class BeDOZaBasicCommandsTest(BeDOZaTestCase):
 
         gen = TripleGenerator(runtime, self.security_parameter, self.Zp.modulus, Random(3423993))
         alpha = gen.alpha
-        [triple] = gen.generate_triples(1)
+        [triple] = gen._generate_triples(1)
         runtime.schedule_callback(triple, do_stuff, alpha)
         return triple
 

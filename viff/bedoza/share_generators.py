@@ -20,7 +20,7 @@ from viff.bedoza.shares import PartialShareContents
 from viff.bedoza.util import _convolute
 from viff.bedoza.add_macs import add_macs
 
-class PartialShareGenerator:
+class PartialShareGenerator(object):
 
     def __init__(self, Zp, runtime, random, paillier):
         self.paillier = paillier

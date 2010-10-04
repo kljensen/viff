@@ -392,7 +392,7 @@ class TripleTest(BeDOZaTestCase):
         random = Random(283883)        
         triple_generator = TripleGenerator(runtime, self.security_parameter, p, random)
 
-        triples = triple_generator.generate_triples(10)
+        triples = triple_generator._generate_triples(10)
 
         def check((a, b, c)):
             self.assertEquals(c, a * b)
@@ -410,7 +410,7 @@ class TripleTest(BeDOZaTestCase):
         return gatherResults(triples)
 
     @protocol
-    def test_passive_triples_generates_correct_triples(self, runtime):
+    def test_generate_triple_candidates_generates_correct_triples(self, runtime):
         p = 17
 
         Zp = GF(p)
@@ -418,7 +418,7 @@ class TripleTest(BeDOZaTestCase):
         random = Random(283883)        
         triple_generator = TripleGenerator(runtime, self.security_parameter, p, random)
 
-        triples = triple_generator._generate_passive_triples(5)
+        triples = triple_generator._generate_triple_candidates(5)
         def verify(triples):
             for inx in xrange(len(triples) // 3):
                 self.assertEquals(triples[10 + inx], triples[inx] * triples[5 + inx])

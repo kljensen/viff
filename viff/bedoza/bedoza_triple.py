@@ -29,7 +29,7 @@ from viff.constants import TEXT
 from viff.util import rand
 from viff.bedoza.shares import BeDOZaShare, BeDOZaShareContents, PartialShare
 from viff.bedoza.shares import PartialShareContents
-from viff.bedoza.share_generators import PartialShareGenerator, ShareGenerator
+from viff.bedoza.share_generators import ShareGenerator, PartialShareGenerator
 from viff.bedoza.keylist import BeDOZaKeyList
 from viff.bedoza.maclist import BeDOZaMACList
 from viff.bedoza.add_macs import add_macs
@@ -81,76 +81,60 @@ class TripleGenerator(object):
         self.alpha = alpha_random.randint(0, p - 1)
         self.n2 = runtime.players[runtime.id].pubkey['n_square']
 
-    def _bit_length_of(self, i):
-        bit_length = 0
-        while i:
-            i >>= 1
-            bit_length += 1
-        return bit_length
 
     def generate_triples(self):
-        """Generates and returns a set with *self.security_parameter* triples."""
-        return generate_triples(self, self.security_parameter)
-        
-    def generate_triples(self, n):
-        """Generates and returns a set of n triples.
-        
+        """Generates triples for use in the BeDOZa protocol.
+
+        Returns a deferred that will eventually yield a list
+        containing *self.security_parameter* multiplicative
+        triples. Each of these triples is an object of type
+        viff.triple.Triple. The components of each triple t, e.g.
+
+            t.a, t.b, and t.c,
+
+        are each of type BeDOZaShare and guaranteed to satisfy the
+        equation
+
+            t.c = t.a * t.b.
+
+        This method carries out the off-line work that is needed for
+        the BeDOZa protocol to work.
+
         Data sent over the network is packaged in large hunks in order
         to optimize. TODO: Explain better.
 
         TODO: This method needs to have enough RAM to represent all n
         triples in memory at the same time. Is there a nice way to
         stream this, e.g. by using Python generators?
-        """
 
+        """
+        return self._generate_triples(self.security_parameter)
+
+
+    def _generate_triples(self, number_of_triples):
         self.runtime.increment_pc()
-        
-        def check(v, a, b, c):
-            if v.value != 0:
-                raise Exception("TripleTest failed - The two triples were "
-                                "inconsistent.")
-            return Triple(a, b, c)
-        
-        def compute_value(r, a, b, c, x, y, z):
-            l = self.runtime._cmul(r, x, self.Zp)
-            m = self.runtime._cmul(r, y, self.Zp)
-            k = self.runtime._cmul(r*r, z, self.Zp)
-            v = c - self.runtime._basic_multiplication(a, b, l, m, k)
-            v = self.runtime.open(v)
-            v.addCallback(check, a, b, c)
-            return v
+        triples = self._generate_triple_candidates(2 * number_of_triples)
+        return self._verify_triple_candidates(number_of_triples, triples)
 
-        gen = ShareGenerator(self.Zp, self.runtime, self.random, self.paillier,
-                             self.u_bound, self.alpha)
-        
-        random_shares = gen.generate_random_shares(n)
 
-        results = [Deferred() for _ in xrange(n)]
-        
-        triples = self._generate_passive_triples(2 * n)
+    def _generate_triple_candidates(self, n):
+        """Generates triple candidates for use in the BeDOZa protocol.
 
-        for inx in xrange(n):
-            a = triples[inx]
-            b = triples[inx + 2 * n]
-            c = triples[inx + 4 * n]
-            x = triples[inx + n]
-            y = triples[inx + 3 * n]
-            z = triples[inx + 5 * n]
-            r = self.runtime.open(random_shares[inx])
-            self.runtime.schedule_callback(r, compute_value, a, b, c, x, y, z)
-            r.chainDeferred(results[inx])
-        return results
-          
-        # TODO: Do some ZK stuff.
-
-    def _generate_passive_triples(self, n):
-        """Generates and returns a list of 3n shares corresponding to
-        n passive tuples. The first n are the a's, then comes n b's
-        followed by n c's.
+        Returns a deferred that will eventually yield a list of 3n
+        shares of type viff.bedoza.shares.BeDOZaShare corresponding to
+        n multiplicative tuples. The first n are the a's, then comes n
+        b's followed by n c's.
         
-        Consistency is only guaranteed if all players follow the protool.
+        The triples are only candidates because consistency of the
+        triples is only half-way guaranteed in the precense of active
+        adversaries. More concretely, the triples returned by this
+        method are guaranteed - even in the precense of an active
+        adversary - to be of the right size. But they may not satisfy
+        the equation
+
+            c = a * b.
+
         """
-
         self.runtime.increment_pc()
         
         gen = PartialShareGenerator(self.Zp, self.runtime, self.random,
@@ -160,21 +144,81 @@ class TripleGenerator(object):
              partial_shares.append(
                  gen.generate_share(
                      self.random.randint(0, self.Zp.modulus - 1)))
-
-
-        partial_shares_c = self._full_mul(partial_shares[0:n],
-                                          partial_shares[n:2*n])
-
+        partial_shares_c = self._full_mul(partial_shares[0: n],
+                                          partial_shares[n: 2 * n])
         full_shares = add_macs(self.runtime, self.Zp, self.u_bound, self.alpha,
                                self.random, self.paillier,
                                partial_shares + partial_shares_c)
-
         return full_shares  
 
-        # for player i:
-        #     receive c from player i and set 
-        #         m^i=Decrypt(c)
-    
+
+    def _verify_triple_candidates(self, n, triple_candidates):
+        """Verify remaining consistency of triple candidates.
+
+        Takes as input a deferred list of 2n triple candidates as
+        generated by _generate_triple_candidates(2 * n) and returns
+        another deferred that will eventually yield a list of
+        viff.triple.Triple objects that are guaranteed to be fully
+        consistent. That is, the shares of the triples are guaranteed
+        to be of the right size and for each triple, the shares are
+        quaranteed to satisfy c = a * b.
+
+        The technique implemented in this method is essentially that
+        listed in Figure 5.5 in the progress report "LEGO and Other
+        Cryptographic Constructions" by Claudio Orlandi.
+
+        However, since we only implement a protocol that is secure in
+        the Random Oracle Model and not the Common Reference String
+        Model, we can safely skip step 2 of Figure 5.5 and instead
+        generate r by having all players P_i broadcast a random
+        element r_i and then have each player compute r as the hash of
+        the sum of all r_i's.
+
+        """
+        assert n == len(triple_candidates) / 6
+
+        def check(v, a, b, c):
+            if v.value != 0:
+                raise Exception(
+                    "TripleTest failed - The two triple candidates were "
+                    "inconsistent.")
+            return Triple(a, b, c)
+        
+        def compute_value(r, a, b, c, x, y, z):
+            l = self.runtime._cmul(r, x, self.Zp)
+            m = self.runtime._cmul(r, y, self.Zp)
+            k = self.runtime._cmul(r * r, z, self.Zp)
+            v = c - self.runtime._basic_multiplication(a, b, l, m, k)
+            v = self.runtime.open(v)
+            v.addCallback(check, a, b, c)
+            return v
+
+        results = [Deferred() for _ in xrange(n)]
+        gen = ShareGenerator(self.Zp, self.runtime, self.random, self.paillier,
+                             self.u_bound, self.alpha)
+        random_shares = gen.generate_random_shares(n)
+
+        for inx in xrange(n):
+            a = triple_candidates[inx]
+            b = triple_candidates[inx + 2 * n]
+            c = triple_candidates[inx + 4 * n]
+            x = triple_candidates[inx + n]
+            y = triple_candidates[inx + 3 * n]
+            z = triple_candidates[inx + 5 * n]
+            r = self.runtime.open(random_shares[inx])
+            self.runtime.schedule_callback(r, compute_value, a, b, c, x, y, z)
+            r.chainDeferred(results[inx])
+        return results
+
+
+    def _bit_length_of(self, i):
+        bit_length = 0
+        while i:
+            i >>= 1
+            bit_length += 1
+        return bit_length
+
+
     def _mul(self, inx, jnx, n, ais=None, cjs=None):
         """Multiply each of the field elements in *ais* with the
         corresponding encrypted elements in *cjs*.
@@ -191,6 +235,7 @@ class TripleGenerator(object):
         TripleGenerator.generate_triples.
         TODO: How can we allow a user of the runtime to adjust this
         constraint at a higher level of abstraction?
+
         """
         transmission_restraint_constant = 425
 
@@ -247,7 +292,8 @@ class TripleGenerator(object):
             deferred = zis_deferred
 
         return deferred
-       
+
+
     def _full_mul(self, a, b):
         """Multiply each of the PartialShares in the list *a* with the
         corresponding PartialShare in the list *b*.
