@@ -30,7 +30,7 @@ from viff.constants import TEXT
 from viff.util import rand
 from viff.bedoza.shares import BeDOZaShare, BeDOZaShareContents, PartialShare
 from viff.bedoza.shares import PartialShareContents
-from viff.bedoza.share_generators import ShareGenerator, PartialShareGenerator
+from viff.bedoza.share_generators import PartialShareGenerator
 from viff.bedoza.keylist import BeDOZaKeyList
 from viff.bedoza.maclist import BeDOZaMACList
 from viff.bedoza.add_macs import add_macs

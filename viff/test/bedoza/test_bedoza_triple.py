@@ -190,13 +190,6 @@ def partial_share(random, runtime, Zp, val, paillier=None):
     gen = PartialShareGenerator(Zp, runtime, share_random, paillier)
     return gen.generate_share(Zp(val))
 
-def partial_random_shares(random, runtime, Zp, n, paillier=None):
-    if not paillier:
-        paillier_random = Random(random.getrandbits(128))
-        paillier = ModifiedPaillier(runtime, paillier_random)
-    share_random = Random(random.getrandbits(128))
-    gen = PartialShareGenerator(Zp, runtime, share_random, paillier)
-    return gen.generate_random_shares(n)
 
 class PartialShareGeneratorTest(BeDOZaTestCase):
  
@@ -236,37 +229,6 @@ class PartialShareGeneratorTest(BeDOZaTestCase):
             runtime.schedule_callback(decrypted_shares, test_sum)
         runtime.schedule_callback(share, decrypt)
         return share
-
-    @protocol
-    def test_random_shares_have_correct_type(self, runtime):
-        Zp = GF(23)
-        shares = partial_random_shares(Random(23499), runtime, Zp, 7)
-        for share in shares:
-            def test(share):
-                self.assertEquals(Zp, share.value.field)
-            runtime.schedule_callback(share, test)
-            
-        return shares
- 
-    @protocol
-    def test_encrypted_random_shares_decrypt_correctly(self, runtime):
-        random = Random(3423993)
-        modulus = 17
-        Zp = GF(modulus)
-        paillier = ModifiedPaillier(runtime, Random(random.getrandbits(128)))
-        shares = partial_random_shares(random, runtime, Zp, 7, paillier=paillier)
-        expected_result = [9,16,7,12,3,5,6]
-        for inx, share in enumerate(shares):
-            def decrypt(share, expected_result):
-                decrypted_share = paillier.decrypt(share.enc_shares[runtime.id - 1])
-                decrypted_shares = _convolute(runtime, decrypted_share)
-                def test_sum(vals, expected_result):
-                    v = Zp(sum(vals))
-                    self.assertEquals(expected_result, v)
-                runtime.schedule_callback(decrypted_shares, test_sum, expected_result)
-            runtime.schedule_callback(share, decrypt, expected_result[inx])
-            
-        return shares
 
 class ShareGeneratorTest(BeDOZaTestCase):
 

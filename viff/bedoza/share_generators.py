@@ -45,25 +45,6 @@ class PartialShareGenerator(object):
         self.runtime.schedule_callback(enc_shares, create_partial_share, share)
         return enc_shares
 
-    def generate_random_shares(self, n):
-        self.runtime.increment_pc()
-        N_squared_list = [self.runtime.players[player_id].pubkey['n_square']
-                          for player_id in self.runtime.players]
-        shares = [PartialShare(self.runtime, self.Zp) for _ in xrange(n)]
-        for inx in xrange(n):
-            r = self.random.randint(0, self.Zp.modulus - 1)
-            ri = self.Zp(r)
-            enc_share = self.paillier.encrypt(ri.value)
-            enc_shares = _convolute(self.runtime, enc_share)
-            def create_partial_share(enc_shares, ri, s, N_squared_list):
-                s.callback(PartialShareContents(ri, enc_shares,
-                                                N_squared_list))
-            self.runtime.schedule_callback(enc_shares,
-                                           create_partial_share,
-                                           ri,
-                                           shares[inx],
-                                           N_squared_list)
-        return shares
 
 class ShareGenerator(PartialShareGenerator):
 
@@ -78,9 +59,3 @@ class ShareGenerator(PartialShareGenerator):
         full_share = add_macs(self.runtime, self.Zp, self.u_bound, self.alpha,
                              self.random, self.paillier, [partial_share])
         return full_share[0]
-    
-    def generate_random_shares(self, n):
-        self.runtime.increment_pc()
-        partial_shares = PartialShareGenerator.generate_random_shares(self, n)
-        return add_macs(self.runtime, self.Zp, self.u_bound, self.alpha,
-                        self.random, self.paillier, partial_shares)
