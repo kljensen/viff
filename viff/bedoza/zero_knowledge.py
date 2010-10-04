@@ -23,12 +23,13 @@ from viff.runtime import gatherResults
 from viff.bedoza.util import rand_int_signed
 
 class ZKProof(object):
-    """Protocol proving that a player's plaintexts are of limited size.
-    
-    This is a zero-knowledge protocol in which player with prover_id
-    inputs s ciphertexts c[i] = E(x[j], r[j]), i = 1, ..., s, created
-    using the modified Paillier cipher and proves to the other players
-    that the x[i]'s are of limited size, e.g. that abs(x[i]) <= 2**k.
+    """Zero-knowledge protocol used as part of the Share protocol.
+
+    In this proof, a player (the player with id prover_id) inputs s
+    ciphertexts c[i] = E(x[j], r[j]), for i = 1, ..., s, created using
+    the modified Paillier cipher and proves to the other players that
+    he knows the plaintexts x[j] and that the x[i]'s are of limited
+    size, e.g. that abs(x[i]) <= 2**k.
     """
     
     def __init__(self, s, prover_id, k, runtime, c, random=None, paillier=None, x=None, r=None):

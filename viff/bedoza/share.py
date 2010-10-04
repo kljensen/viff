@@ -21,11 +21,19 @@ from viff.bedoza.shares import PartialShareContents
 from viff.bedoza.util import _convolute
 
 def generate_partial_share_contents(field_elements, runtime, paillier):
-    """Each party input a list of field elements *field_elements*.
-    The value of the field elements are encrypted and the encrypted
-    values are exchanged.
+    """Protocol for generating partial shares.
 
-    Returns a deferred, which yields a list of PartialShareContents.  
+    This protocol corresponds to the "Share" protocol in the document
+    "A new On- and Off-line Phase for MPC".
+
+    Each party inputs a list of field elements *field_elements*. The
+    values of the field elements are encrypted, the encrypted values
+    are exchanged, and for each player, a zero-knowledge proof is
+    carried out, proving that each player knows the plaintexts
+    corresponding to the ciphertexts, he broadcasts, and that the
+    plaintexts are of limited size.
+
+    Returns a deferred, which yields a list of PartialShareContents.
     """
     
     runtime.increment_pc()
