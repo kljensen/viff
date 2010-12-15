@@ -9,7 +9,7 @@ to the repository):
 * Martin Geisler <mg@daimi.au.dk>
 * Tomas Toft
 * Mikkel Krøigård <mk@daimi.au.dk>
-* Thomas Pelle Jakobsen <mas@daimi.au.dk>
+* Thomas Pelle Jakobsen <tpj@cs.au.dk>
 * Jakob Illeborg Pagter
 * Sigurd Meldgaard
 * Marcel Keller <mkeller@cs.au.dk>
